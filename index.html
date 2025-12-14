@@ -16,6 +16,17 @@
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
         .like-animation { animation: pop 0.3s ease-in-out; }
+        
+        /* Animation Gros Coeur Double Tap */
+        .big-heart { position: absolute; transform: translate(-50%, -50%) scale(0); animation: bigHeartAnim 0.8s ease-out forwards; pointer-events: none; z-index: 50; }
+        @keyframes bigHeartAnim {
+            0% { transform: translate(-50%, -50%) scale(0) rotate(-15deg); opacity: 1; }
+            15% { transform: translate(-50%, -50%) scale(1.5) rotate(0deg); opacity: 1; }
+            30% { transform: translate(-50%, -50%) scale(1.2) rotate(0deg); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.2) rotate(0deg); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0) rotate(0deg); opacity: 0; }
+        }
+
         .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; z-index: 10; background: black; }
         .screen.active { display: flex; }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 50; display: none; align-items: center; justify-content: center; }
@@ -32,8 +43,6 @@
         .msg-bubble { max-width: 75%; padding: 8px 12px; border-radius: 16px; margin-bottom: 8px; font-size: 14px; }
         .msg-me { align-self: flex-end; background-color: #ef4444; color: white; border-bottom-right-radius: 4px; }
         .msg-other { align-self: flex-start; background-color: #333; color: white; border-bottom-left-radius: 4px; }
-        /* Style Badge Certifié */
-        .verified-badge { fill: #3b82f6; color: white; display: inline-block; vertical-align: middle; margin-left: 4px; }
     </style>
 </head>
 <body class="relative">
@@ -42,7 +51,7 @@
     <script>
         const CLOUDINARY_CLOUD_NAME = "dh68eblab"; 
         const CLOUDINARY_UPLOAD_PRESET = "uxyhxrib"; 
-        const VIP_EMAIL = "virgulemili@gmail.com"; // Email Certifié
+        const VIP_EMAIL = "virgulemili@gmail.com"; 
     </script>
 
     <!-- AUTH -->
@@ -118,19 +127,15 @@
         </div>
         <div class="flex flex-col items-center mb-8">
             <div id="profile-avatar-container" class="w-24 h-24 rounded-full border-2 border-gray-700 flex items-center justify-center mb-4 overflow-hidden bg-gray-800"></div>
-            <!-- Pseudo + Badge -->
             <div class="flex items-center gap-1 mb-1">
                 <h1 id="profile-handle" class="text-xl font-bold">@utilisateur</h1>
-                <!-- Le badge sera injecté ici par JS -->
                 <span id="profile-badge-container"></span>
             </div>
-            
             <p id="profile-bio" class="text-gray-400 text-sm mb-4 text-center max-w-xs">...</p>
             <div class="flex gap-6 mt-2 text-center">
                 <div><div class="font-bold text-lg" id="profile-followers">0</div><div class="text-xs text-gray-400">Abonnés</div></div>
                 <div><div class="font-bold text-lg" id="profile-likes">0</div><div class="text-xs text-gray-400">J'aime</div></div>
             </div>
-            
             <div id="my-profile-actions" class="flex gap-2 mt-6 w-full px-8 hidden">
                 <button onclick="openEditProfile()" class="flex-1 bg-gray-800 py-2 rounded text-sm font-semibold border border-gray-600">Modifier le profil</button>
             </div>
@@ -263,9 +268,14 @@
         let currentChatReceiver = null;
         let viewedVideos = new Set();
 
-        // BADGE HTML GENERATOR
         function getBadgeHtml(isVerified) {
-            return isVerified ? `<i data-lucide="badge-check" class="w-4 h-4 text-blue-500 fill-blue-500 text-white ml-1 inline-block align-middle"></i>` : '';
+            if (!isVerified) return '';
+            // SVG EXACT du badge de certification (Etoile bleue + coche blanche)
+            return `
+            <svg class="w-4 h-4 ml-1 inline-block align-middle" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22.5 12.5C22.5 14.08 21.625 15.45 20.352 16.1C20.372 16.27 20.384 16.44 20.384 16.614C20.384 18.824 18.676 20.614 16.566 20.614C16.096 20.614 15.646 20.528 15.231 20.365C14.61 21.698 13.304 22.614 11.792 22.614C10.28 22.614 8.974 21.698 8.353 20.365C7.938 20.528 7.488 20.614 7.018 20.614C4.908 20.614 3.2 18.824 3.2 16.614C3.2 16.44 3.212 16.27 3.232 16.1C1.959 15.45 1.084 14.08 1.084 12.5C1.084 10.92 1.959 9.55 3.232 8.9C3.212 8.73 3.2 8.56 3.2 8.386C3.2 6.176 4.908 4.386 7.018 4.386C7.488 4.386 7.938 4.472 8.353 4.635C8.974 3.302 10.28 2.386 11.792 2.386C13.304 2.386 14.61 3.302 15.231 4.635C15.646 4.472 16.096 4.386 16.566 4.386C18.676 4.386 20.384 6.176 20.384 8.386C20.384 8.56 20.372 8.73 20.352 8.9C21.625 9.55 22.5 10.92 22.5 12.5Z" fill="#20D5EC"/>
+                <path d="M10.09 17.1L5.39 12.4L6.8 10.99L10.09 14.28L17.19 7.18005L18.6 8.59005L10.09 17.1Z" fill="white"/>
+            </svg>`;
         }
 
         function getAvatarHTML(photoURL, sizeClass = "w-full h-full") {
@@ -337,13 +347,12 @@
             
             try {
                 isRegistering = true; const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                // CHECK VIP STATUS
                 const isVerified = email === VIP_EMAIL;
                 
                 await setDoc(doc(db, "users", cred.user.uid), { 
                     username, email, photoURL: "", bio: "Nouveau membre", 
                     followers: [], following: [], uid: cred.user.uid, 
-                    isVerified: isVerified, // SAVE BADGE STATUS
+                    isVerified: isVerified, 
                     createdAt: serverTimestamp() 
                 });
                 await updateProfile(cred.user, { displayName: username });
@@ -380,10 +389,7 @@
                 document.getElementById('auth-screen').classList.remove('active'); document.getElementById('bottom-nav').classList.remove('hidden'); document.getElementById('bottom-nav').classList.add('flex');
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if(userDoc.exists()) currentUserData = userDoc.data();
-                
-                // FORCE LOCAL VIP CHECK (au cas où la DB n'a pas le champ)
                 if(currentUserData.email === VIP_EMAIL) currentUserData.isVerified = true;
-
                 subscribeToUnreadCount();
                 window.navigateTo('feed'); loadFeed();
             } else {
@@ -415,7 +421,7 @@
                     const iLiked = data.likedBy?.includes(auth.currentUser.uid);
                     const iFav = data.favorites?.includes(auth.currentUser.uid);
                     const optimizedUrl = getOptimizedVideoUrl(data.url, 720);
-                    const badge = getBadgeHtml(data.isVerified); // BADGE FEED
+                    const badge = getBadgeHtml(data.isVerified);
 
                     const avatarSection = `
                     <div class="relative mb-4 cursor-pointer" onclick="viewUserProfile('${data.userId}')">
@@ -429,7 +435,7 @@
 
                     html += `<div class="video-card w-full h-full relative snap-start bg-gray-900 border-b border-gray-800" data-id="${docSnap.id}">
                         <video class="w-full h-full object-cover pointer-events-none" loop playsinline preload="metadata" src="${optimizedUrl}"></video>
-                        <div class="absolute inset-0 z-10" onclick="togglePlay(this)"></div>
+                        <div class="absolute inset-0 z-10" onclick="togglePlay(this)" ondblclick="handleDoubleTap(event, '${docSnap.id}', '${data.userId}')"></div>
                         <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 pointer-events-none"></div>
                         <div class="absolute right-2 bottom-32 flex flex-col items-center gap-6 z-20 pb-4">
                             ${avatarSection}
@@ -465,6 +471,29 @@
         }
         
         window.togglePlay = (el) => { const v = el.parentElement.querySelector('video'); v.paused ? v.play().catch(()=>{}) : v.pause(); };
+        
+        window.handleDoubleTap = (e, docId, authorId) => {
+            e.stopPropagation();
+            const rect = e.target.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const heart = document.createElement('div');
+            heart.innerHTML = `<i data-lucide="heart" class="w-24 h-24 fill-red-500 text-red-500"></i>`;
+            heart.className = 'big-heart';
+            heart.style.left = x + 'px';
+            heart.style.top = y + 'px';
+            e.target.parentElement.appendChild(heart);
+            lucide.createIcons();
+            setTimeout(() => heart.remove(), 800);
+
+            const card = e.target.closest('.video-card');
+            const likeBtn = card.querySelector('.group');
+            if (!likeBtn.classList.contains('liked')) {
+                toggleLike(docId, likeBtn, authorId);
+            }
+        };
+
         function handleVideoPlayback() {
             if(videoObserver) videoObserver.disconnect();
             const options = { root: document.getElementById('feed-container'), threshold: 0.6 };
@@ -482,8 +511,7 @@
         }
         window.toggleLike = async (docId, el, authorId) => {
             if(!auth.currentUser) return;
-            const isLiked = el.classList.contains('liked');
-            const ref = doc(db, "videos", docId);
+            const isLiked = el.classList.contains('liked'); const ref = doc(db, "videos", docId);
             if(isLiked) { el.classList.remove('liked'); el.querySelector('svg').classList.remove('fill-red-500','text-red-500'); el.querySelector('svg').classList.add('text-white', 'fill-white'); await updateDoc(ref, {likes: increment(-1), likedBy: arrayRemove(auth.currentUser.uid)}); }
             else { el.classList.add('liked'); el.querySelector('svg').classList.add('fill-red-500','text-red-500','like-animation'); el.querySelector('svg').classList.remove('text-white', 'fill-white'); setTimeout(()=>el.querySelector('svg').classList.remove('like-animation'),300); await updateDoc(ref, {likes: increment(1), likedBy: arrayUnion(auth.currentUser.uid)}); sendNotification(authorId, "like", "a aimé votre vidéo"); }
         };
