@@ -7,22 +7,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* Force le plein écran sans défilement parasite */
         body, html { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; background-color: black; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        
-        /* Configuration Scroll Snap Stricte */
         .snap-y-mandatory { scroll-snap-type: y mandatory; }
         .snap-start { scroll-snap-align: start; }
-        
-        /* Cacher la barre de scroll */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
         .animate-spin-slow { animation: spin 4s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
         .like-animation { animation: pop 0.3s ease-in-out; }
-        
         .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; z-index: 10; background: black; }
         .screen.active { display: flex; }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 50; display: none; align-items: center; justify-content: center; }
@@ -33,13 +26,14 @@
         .full-screen-modal.open { transform: translateX(0); }
         .liked svg { fill: #ef4444; color: #ef4444; }
         .favorited svg { fill: #eab308; color: #eab308; }
-        
         .text-shadow { text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
         .icon-shadow { filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5)); }
         .auth-input { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 12px; border-radius: 8px; width: 100%; outline: none; }
         .msg-bubble { max-width: 75%; padding: 8px 12px; border-radius: 16px; margin-bottom: 8px; font-size: 14px; }
         .msg-me { align-self: flex-end; background-color: #ef4444; color: white; border-bottom-right-radius: 4px; }
         .msg-other { align-self: flex-start; background-color: #333; color: white; border-bottom-left-radius: 4px; }
+        /* Style Badge Certifié */
+        .verified-badge { fill: #3b82f6; color: white; display: inline-block; vertical-align: middle; margin-left: 4px; }
     </style>
 </head>
 <body class="relative">
@@ -48,11 +42,18 @@
     <script>
         const CLOUDINARY_CLOUD_NAME = "dh68eblab"; 
         const CLOUDINARY_UPLOAD_PRESET = "uxyhxrib"; 
+        const VIP_EMAIL = "virgulemili@gmail.com"; // Email Certifié
     </script>
 
     <!-- AUTH -->
-    <div id="auth-screen" class="screen active justify-center items-center p-8 bg-gradient-to-br from-gray-900 to-black">
-        <div class="w-full max-w-sm text-center">
+    <div id="auth-screen" class="screen active justify-center items-center p-8 bg-gradient-to-br from-gray-900 to-black relative">
+        <div class="absolute top-12 w-full text-center">
+            <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-medium">
+                Application créée par <br>
+                <span class="text-gray-400 font-bold">"Le Studio Ralph Nyamè"</span>. 2025
+            </p>
+        </div>
+        <div class="w-full max-w-sm text-center mt-10">
             <h1 class="text-4xl font-black mb-2 text-red-500 tracking-tighter">R-VIDEOS</h1>
             <p class="text-gray-400 mb-8 text-sm">Réseau Social Vidéo</p>
             <div id="auth-success" class="hidden mb-4 p-3 bg-green-900/50 border border-green-500 text-green-200 rounded-lg text-sm">Compte créé ! Connectez-vous.</div>
@@ -64,12 +65,12 @@
             </div>
             <div id="register-form" class="space-y-4 hidden">
                 <input type="text" id="reg-username" placeholder="Nom d'utilisateur" class="auth-input">
-                <input type="email" id="reg-email" placeholder="Email" class="auth-input">
+                <input type="email" id="reg-email" placeholder="Email (Gmail requis)" class="auth-input">
                 <input type="password" id="reg-pass" placeholder="Mot de passe" class="auth-input">
                 <button id="btn-register" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 rounded-lg transition">Créer mon compte</button>
                 <p class="text-xs text-gray-400 mt-4">Déjà un compte ? <span onclick="toggleAuthMode()" class="text-white font-bold cursor-pointer underline">Se connecter</span></p>
             </div>
-            <p id="auth-error" class="text-red-500 text-sm mt-4 hidden"></p>
+            <p id="auth-error" class="text-red-500 text-sm mt-4 hidden bg-red-900/30 p-2 rounded border border-red-800"></p>
         </div>
     </div>
 
@@ -81,7 +82,6 @@
                 <span class="text-white border-b-2 border-white pb-0.5 cursor-pointer shadow-lg">Pour toi</span>
             </div>
         </div>
-        <!-- IMPORTANT: h-full et pas de padding bottom pour que la vidéo prenne tout l'écran derrière le menu -->
         <div id="feed-container" class="h-full w-full overflow-y-scroll snap-y-mandatory no-scrollbar relative bg-black">
             <div id="loading-feed" class="flex items-center justify-center h-full text-gray-500"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>
         </div>
@@ -118,7 +118,13 @@
         </div>
         <div class="flex flex-col items-center mb-8">
             <div id="profile-avatar-container" class="w-24 h-24 rounded-full border-2 border-gray-700 flex items-center justify-center mb-4 overflow-hidden bg-gray-800"></div>
-            <h1 id="profile-handle" class="text-xl font-bold mb-1">@utilisateur</h1>
+            <!-- Pseudo + Badge -->
+            <div class="flex items-center gap-1 mb-1">
+                <h1 id="profile-handle" class="text-xl font-bold">@utilisateur</h1>
+                <!-- Le badge sera injecté ici par JS -->
+                <span id="profile-badge-container"></span>
+            </div>
+            
             <p id="profile-bio" class="text-gray-400 text-sm mb-4 text-center max-w-xs">...</p>
             <div class="flex gap-6 mt-2 text-center">
                 <div><div class="font-bold text-lg" id="profile-followers">0</div><div class="text-xs text-gray-400">Abonnés</div></div>
@@ -145,7 +151,10 @@
             <i data-lucide="chevron-left" class="w-6 h-6 cursor-pointer mr-4" onclick="closeChat()"></i>
             <div class="flex items-center gap-3">
                 <div id="chat-avatar" class="w-8 h-8 rounded-full bg-gray-700 overflow-hidden"></div>
-                <div id="chat-username" class="font-bold">Utilisateur</div>
+                <div class="flex items-center gap-1">
+                    <div id="chat-username" class="font-bold">Utilisateur</div>
+                    <span id="chat-badge-container"></span>
+                </div>
             </div>
         </div>
         <div id="chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col bg-black"></div>
@@ -170,7 +179,6 @@
         </div>
     </div>
 
-    <!-- Confirmation Suppression Video -->
     <div id="delete-confirm-modal" class="modal-overlay">
         <div class="bg-gray-900 w-10/12 max-w-sm p-6 rounded-xl border border-gray-700 text-center">
             <h3 class="text-lg font-bold mb-2 text-white text-red-500">Supprimer la vidéo ?</h3>
@@ -229,7 +237,9 @@
         <div onclick="navigateTo('feed')" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-100" id="nav-feed"><i data-lucide="home" class="w-6 h-6 fill-white"></i><span class="text-[10px]">Accueil</span></div>
         <div onclick="navigateTo('discover')" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50" id="nav-discover"><i data-lucide="search" class="w-6 h-6"></i><span class="text-[10px]">Découvrir</span></div>
         <div onclick="openUploadModal()" class="relative w-12 h-8 flex justify-center items-center cursor-pointer hover:scale-105 transition"><div class="absolute left-0 w-8 h-full bg-cyan-400 rounded-lg"></div><div class="absolute right-0 w-8 h-full bg-red-500 rounded-lg"></div><div class="relative w-10 h-full bg-white rounded-lg flex items-center justify-center"><i data-lucide="plus" class="w-5 h-5 text-black font-bold"></i></div></div>
-        <div onclick="navigateTo('inbox')" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50" id="nav-inbox"><i data-lucide="message-square" class="w-6 h-6"></i><span class="text-[10px]">Boîte</span></div>
+        <div onclick="navigateTo('inbox')" class="relative flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50" id="nav-inbox">
+            <div class="relative"><i data-lucide="message-square" class="w-6 h-6"></i><div id="inbox-badge" class="absolute -top-1 -right-2 bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full hidden border border-black min-w-[16px] text-center">0</div></div><span class="text-[10px]">Boîte</span>
+        </div>
         <div onclick="openMyProfile()" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50" id="nav-profile"><i data-lucide="user" class="w-6 h-6"></i><span class="text-[10px]">Profil</span></div>
     </div>
 
@@ -245,12 +255,18 @@
 
         let currentUserData = null;
         let videoObserver = null;
+        let unreadObserver = null;
         let isRegistering = false;
         let currentVideoIdForComments = null;
         let currentProfileUid = null;
         let currentChatId = null;
         let currentChatReceiver = null;
         let viewedVideos = new Set();
+
+        // BADGE HTML GENERATOR
+        function getBadgeHtml(isVerified) {
+            return isVerified ? `<i data-lucide="badge-check" class="w-4 h-4 text-blue-500 fill-blue-500 text-white ml-1 inline-block align-middle"></i>` : '';
+        }
 
         function getAvatarHTML(photoURL, sizeClass = "w-full h-full") {
             if (photoURL && photoURL.length > 5) {
@@ -281,61 +297,81 @@
             await addDoc(collection(db, "users", targetUid, "notifications"), { type, text, fromUid: auth.currentUser.uid, fromUsername: currentUserData.username, fromPhoto: currentUserData.photoURL, createdAt: serverTimestamp(), read: false });
         }
 
-        // DELETE VIDEO
+        function subscribeToUnreadCount() {
+            if (unreadObserver) unreadObserver();
+            const q = query(collection(db, "users", auth.currentUser.uid, "notifications"), limit(100));
+            unreadObserver = onSnapshot(q, (snapshot) => {
+                let unreadCount = 0; snapshot.forEach(doc => { if (doc.data().read === false) unreadCount++; });
+                const badge = document.getElementById('inbox-badge');
+                if (unreadCount > 0) { badge.classList.remove('hidden'); badge.innerText = unreadCount > 99 ? "+99" : unreadCount; } else { badge.classList.add('hidden'); }
+            });
+        }
+
         window.confirmDeleteVideo = (docId) => {
-            const modal = document.getElementById('delete-confirm-modal');
-            const confirmBtn = document.getElementById('btn-confirm-delete');
+            const modal = document.getElementById('delete-confirm-modal'); const confirmBtn = document.getElementById('btn-confirm-delete');
             modal.classList.add('open');
-            confirmBtn.onclick = async () => {
-                try {
-                    await deleteDoc(doc(db, "videos", docId));
-                    modal.classList.remove('open');
-                    if(document.getElementById('profile-screen').classList.contains('active')) renderProfile(currentUserData, true);
-                } catch(e) { alert("Erreur suppression: " + e.message); }
-            };
+            confirmBtn.onclick = async () => { try { await deleteDoc(doc(db, "videos", docId)); modal.classList.remove('open'); if(document.getElementById('profile-screen').classList.contains('active')) renderProfile(currentUserData, true); } catch(e) { alert("Erreur suppression: " + e.message); } };
         };
 
-        // SHARE VIDEO
         window.shareVideo = (url) => {
-            if (navigator.share) {
-                navigator.share({ title: 'R-Videos', text: 'Regarde cette vidéo incroyable !', url: url }).catch(err => { if(err.name !== 'AbortError') console.error(err); });
-            } else {
-                navigator.clipboard.writeText(url).then(() => alert("Lien copié !")).catch(()=>{});
-            }
+            if (navigator.share) navigator.share({ title: 'R-Videos', text: 'Regarde cette vidéo incroyable !', url: url }).catch(err => { if(err.name !== 'AbortError') console.error(err); });
+            else navigator.clipboard.writeText(url).then(() => alert("Lien copié !")).catch(()=>{});
         };
 
-        // FAVORITES
         window.toggleFavorite = async (docId, el) => {
             if(!auth.currentUser) return;
-            const isFav = el.classList.contains('favorited');
-            const ref = doc(db, "videos", docId);
-            if(isFav) {
-                el.classList.remove('favorited');
-                el.querySelector('svg').classList.remove('fill-yellow-500', 'text-yellow-500');
-                await updateDoc(ref, { favorites: arrayRemove(auth.currentUser.uid) });
-            } else {
-                el.classList.add('favorited');
-                el.querySelector('svg').classList.add('fill-yellow-500', 'text-yellow-500');
-                await updateDoc(ref, { favorites: arrayUnion(auth.currentUser.uid) });
-            }
+            const isFav = el.classList.contains('favorited'); const ref = doc(db, "videos", docId);
+            if(isFav) { el.classList.remove('favorited'); el.querySelector('svg').classList.remove('fill-yellow-500', 'text-yellow-500'); await updateDoc(ref, { favorites: arrayRemove(auth.currentUser.uid) }); }
+            else { el.classList.add('favorited'); el.querySelector('svg').classList.add('fill-yellow-500', 'text-yellow-500'); await updateDoc(ref, { favorites: arrayUnion(auth.currentUser.uid) }); }
         };
 
-        // AUTH & NAV
-        window.toggleAuthMode = () => { document.getElementById('login-form').classList.toggle('hidden'); document.getElementById('register-form').classList.toggle('hidden'); };
+        window.toggleAuthMode = () => { document.getElementById('login-form').classList.toggle('hidden'); document.getElementById('register-form').classList.toggle('hidden'); document.getElementById('auth-error').classList.add('hidden'); };
+        
+        function showAuthError(msg) { const err = document.getElementById('auth-error'); err.innerText = msg; err.classList.remove('hidden'); }
+
         document.getElementById('btn-register').addEventListener('click', async () => {
             const email = document.getElementById('reg-email').value, pass = document.getElementById('reg-pass').value, username = document.getElementById('reg-username').value;
-            if (!email || !pass || !username) return;
+            document.getElementById('auth-error').classList.add('hidden');
+            if (!email || !pass || !username) { showAuthError("Veuillez remplir tous les champs."); return; }
+            if (!email.toLowerCase().endsWith('@gmail.com')) { showAuthError("Adresse Gmail (@gmail.com) obligatoire."); return; }
+            
             try {
                 isRegistering = true; const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                await setDoc(doc(db, "users", cred.user.uid), { username, email, photoURL: "", bio: "Nouveau membre", followers: [], following: [], uid: cred.user.uid, createdAt: serverTimestamp() });
+                // CHECK VIP STATUS
+                const isVerified = email === VIP_EMAIL;
+                
+                await setDoc(doc(db, "users", cred.user.uid), { 
+                    username, email, photoURL: "", bio: "Nouveau membre", 
+                    followers: [], following: [], uid: cred.user.uid, 
+                    isVerified: isVerified, // SAVE BADGE STATUS
+                    createdAt: serverTimestamp() 
+                });
                 await updateProfile(cred.user, { displayName: username });
                 await signOut(auth); isRegistering = false; window.toggleAuthMode();
                 document.getElementById('auth-success').classList.remove('hidden'); document.getElementById('login-email').value = email;
-            } catch (e) { isRegistering = false; alert(e.message); }
+            } catch (e) { 
+                isRegistering = false; 
+                let msg = e.message;
+                if(e.code === 'auth/email-already-in-use') msg = "Cet email est déjà utilisé.";
+                else if(e.code === 'auth/weak-password') msg = "Mot de passe trop faible (6 car. min).";
+                else if(e.code === 'auth/invalid-email') msg = "Format d'email invalide.";
+                showAuthError(msg); 
+            }
         });
-        document.getElementById('btn-login').addEventListener('click', async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } catch(e) { alert("Erreur connexion"); } });
+
+        document.getElementById('btn-login').addEventListener('click', async () => { 
+            document.getElementById('auth-error').classList.add('hidden');
+            try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } 
+            catch(e) { 
+                let msg = "Erreur de connexion.";
+                if(e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') msg = "Email ou mot de passe incorrect.";
+                else if(e.code === 'auth/invalid-email') msg = "Format d'email invalide.";
+                showAuthError(msg); 
+            } 
+        });
+
         window.confirmLogout = () => { document.getElementById('logout-modal').classList.add('open'); };
-        window.logout = () => { document.getElementById('logout-modal').classList.remove('open'); signOut(auth); };
+        window.logout = () => { document.getElementById('logout-modal').classList.remove('open'); if(unreadObserver) unreadObserver(); signOut(auth); };
         window.closeModal = (id) => document.getElementById(id).classList.remove('open');
 
         onAuthStateChanged(auth, async (user) => {
@@ -344,6 +380,11 @@
                 document.getElementById('auth-screen').classList.remove('active'); document.getElementById('bottom-nav').classList.remove('hidden'); document.getElementById('bottom-nav').classList.add('flex');
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if(userDoc.exists()) currentUserData = userDoc.data();
+                
+                // FORCE LOCAL VIP CHECK (au cas où la DB n'a pas le champ)
+                if(currentUserData.email === VIP_EMAIL) currentUserData.isVerified = true;
+
+                subscribeToUnreadCount();
                 window.navigateTo('feed'); loadFeed();
             } else {
                 document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById('auth-screen').classList.add('active'); document.getElementById('bottom-nav').classList.add('hidden'); document.getElementById('bottom-nav').classList.remove('flex'); currentUserData = null;
@@ -363,7 +404,6 @@
             if(active) { active.classList.remove('opacity-50'); active.classList.add('opacity-100'); if(screen==='feed') active.querySelector('svg')?.classList.add('fill-white'); }
         }
 
-        // FEED
         function loadFeed() {
             onSnapshot(query(collection(db, "videos"), orderBy("createdAt", "desc"), limit(20)), (snapshot) => {
                 if (!auth.currentUser) return;
@@ -375,8 +415,8 @@
                     const iLiked = data.likedBy?.includes(auth.currentUser.uid);
                     const iFav = data.favorites?.includes(auth.currentUser.uid);
                     const optimizedUrl = getOptimizedVideoUrl(data.url, 720);
-                    
-                    // AVATAR AVEC BADGE PLUS
+                    const badge = getBadgeHtml(data.isVerified); // BADGE FEED
+
                     const avatarSection = `
                     <div class="relative mb-4 cursor-pointer" onclick="viewUserProfile('${data.userId}')">
                         <div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black transition transform hover:scale-110">
@@ -392,33 +432,30 @@
                         <div class="absolute inset-0 z-10" onclick="togglePlay(this)"></div>
                         <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 pointer-events-none"></div>
                         <div class="absolute right-2 bottom-32 flex flex-col items-center gap-6 z-20 pb-4">
-                            
                             ${avatarSection}
-                            
                             <div class="flex flex-col items-center gap-1 cursor-pointer group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${docSnap.id}', this, '${data.userId}')">
                                 <i data-lucide="heart" class="w-9 h-9 icon-shadow ${iLiked ? 'fill-red-500 text-red-500' : 'text-white fill-white'} transition-all"></i>
                                 <span class="text-xs font-bold text-shadow">${formatCount(data.likes)}</span>
                             </div>
-                            
                             <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openComments('${docSnap.id}')">
                                 <i data-lucide="message-circle" class="w-9 h-9 icon-shadow text-white fill-white"></i>
                                 <span class="text-xs font-bold text-shadow">${formatCount(data.commentCount)}</span>
                             </div>
-                            
                             <div class="flex flex-col items-center gap-1 cursor-pointer ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${docSnap.id}', this)">
                                 <i data-lucide="bookmark" class="w-9 h-9 icon-shadow ${iFav ? 'fill-yellow-500 text-yellow-500' : 'text-white fill-white'} transition-all"></i>
                                 <span class="text-xs font-bold text-shadow">${iFav ? 'Fav' : 'Fav'}</span>
                             </div>
-
                             <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="shareVideo('${data.url}')">
                                 <i data-lucide="share-2" class="w-9 h-9 icon-shadow text-white fill-white"></i>
-                                <span class="text-xs font-bold text-shadow">Partager</span>
+                                <span class="text-[10px] font-bold text-shadow">Partager</span>
                             </div>
-
                             <div class="mt-4 relative animate-spin-slow"><div class="w-10 h-10 bg-gray-800 rounded-full border-4 border-gray-900 flex items-center justify-center overflow-hidden">${getAvatarHTML(data.userPhotoURL, "w-full h-full")}</div></div>
                         </div>
                         <div class="absolute bottom-20 left-4 right-20 z-20 text-left pointer-events-none">
-                            <h3 class="font-bold text-lg text-shadow mb-1">@${data.username}</h3>
+                            <div class="flex items-center">
+                                <h3 class="font-bold text-lg text-shadow mb-1">@${data.username}</h3>
+                                ${badge}
+                            </div>
                             <p class="text-sm mb-2 text-shadow text-gray-100 line-clamp-3">${data.description}</p>
                         </div>
                     </div>`;
@@ -451,7 +488,6 @@
             else { el.classList.add('liked'); el.querySelector('svg').classList.add('fill-red-500','text-red-500','like-animation'); el.querySelector('svg').classList.remove('text-white', 'fill-white'); setTimeout(()=>el.querySelector('svg').classList.remove('like-animation'),300); await updateDoc(ref, {likes: increment(1), likedBy: arrayUnion(auth.currentUser.uid)}); sendNotification(authorId, "like", "a aimé votre vidéo"); }
         };
 
-        // COMMENTS, SEARCH, INBOX, CHAT (Même logique que précédemment)
         window.openComments = (id) => { currentVideoIdForComments = id; document.getElementById('comments-sheet').classList.add('open'); loadComments(id); };
         window.closeComments = () => { document.getElementById('comments-sheet').classList.remove('open'); currentVideoIdForComments = null; };
         function loadComments(id) {
@@ -482,7 +518,7 @@
             const list = document.getElementById('inbox-content'); list.innerHTML = "Chargement...";
             onSnapshot(query(collection(db, "users", auth.currentUser.uid, "notifications"), orderBy("createdAt", "desc"), limit(20)), (snap) => {
                 if(snap.empty) return list.innerHTML = "<div class='text-center text-gray-500 mt-4'>Aucune activité.</div>";
-                let html = ""; snap.forEach(d => { const n = d.data(); let icon = "bell"; let color = "text-yellow-500"; if(n.type === 'like') { icon = "heart"; color = "text-red-500"; } if(n.type === 'follow') { icon = "user-plus"; color = "text-blue-500"; } if(n.type === 'comment') { icon = "message-circle"; color = "text-green-500"; } html += `<div class="flex items-center gap-3 py-2 border-b border-gray-800"><div class="relative w-12 h-12">${getAvatarHTML(n.fromPhoto, "w-full h-full")}<div class="absolute -bottom-1 -right-1 bg-gray-900 rounded-full p-1"><i data-lucide="${icon}" class="w-4 h-4 ${color}"></i></div></div><div><p class="text-sm"><span class="font-bold">@${n.fromUsername}</span> ${n.text}</p></div></div>`; });
+                let html = ""; snap.forEach(d => { const n = d.data(); if(!n.read) updateDoc(doc(db, "users", auth.currentUser.uid, "notifications", d.id), {read: true}); let icon = "bell"; let color = "text-yellow-500"; if(n.type === 'like') { icon = "heart"; color = "text-red-500"; } if(n.type === 'follow') { icon = "user-plus"; color = "text-blue-500"; } if(n.type === 'comment') { icon = "message-circle"; color = "text-green-500"; } html += `<div class="flex items-center gap-3 py-2 border-b border-gray-800"><div class="relative w-12 h-12">${getAvatarHTML(n.fromPhoto, "w-full h-full")}<div class="absolute -bottom-1 -right-1 bg-gray-900 rounded-full p-1"><i data-lucide="${icon}" class="w-4 h-4 ${color}"></i></div></div><div><p class="text-sm"><span class="font-bold">@${n.fromUsername}</span> ${n.text}</p></div></div>`; });
                 list.innerHTML = html; lucide.createIcons();
             });
         }
@@ -491,8 +527,7 @@
             const q = query(collection(db, "chats"), where("participants", "array-contains", auth.currentUser.uid));
             onSnapshot(q, (snap) => {
                 if(snap.empty) return list.innerHTML = "<div class='text-center text-gray-500 mt-4'>Aucun message.</div>";
-                let chats = []; snap.forEach(d => chats.push(d.data()));
-                chats.sort((a, b) => (b.lastUpdated?.seconds || 0) - (a.lastUpdated?.seconds || 0));
+                let chats = []; snap.forEach(d => chats.push(d.data())); chats.sort((a, b) => (b.lastUpdated?.seconds || 0) - (a.lastUpdated?.seconds || 0));
                 let html = ""; chats.forEach(c => { const oId = c.participants.find(p => p !== auth.currentUser.uid); if(oId && c.names) html += `<div onclick="startChatWith('${oId}', '${c.names[oId]}', '${c.photos[oId]}')" class="flex items-center gap-3 py-3 border-b border-gray-800 cursor-pointer hover:bg-gray-900"><div class="w-12 h-12 flex-shrink-0">${getAvatarHTML(c.photos[oId], "w-full h-full")}</div><div class="flex-1 min-w-0"><div class="font-bold truncate">@${c.names[oId]}</div><div class="text-sm text-gray-400 truncate">${c.lastMessage}</div></div></div>`; });
                 list.innerHTML = html;
             });
@@ -520,11 +555,13 @@
             const container = document.getElementById('search-results'); if(!term || term.length < 2) { container.innerHTML = "<div class='text-gray-500 text-center text-sm mt-10'>Tapez un nom...</div>"; return; }
             const snap = await getDocs(query(collection(db, "users"), where('username', '>=', term), where('username', '<=', term + '\uf8ff'), limit(10)));
             if(snap.empty) { container.innerHTML = "<div class='text-gray-500 text-center text-sm mt-10'>Aucun utilisateur.</div>"; return; }
-            let html = ""; snap.forEach(doc => { const u = doc.data(); html += `<div onclick="viewUserProfile('${u.uid}')" class="flex items-center gap-3 p-3 bg-gray-900 rounded-lg cursor-pointer hover:bg-gray-800"><div class="w-10 h-10">${getAvatarHTML(u.photoURL, "w-full h-full")}</div><div><div class="font-bold">@${u.username}</div><div class="text-xs text-gray-400">${u.bio || ''}</div></div></div>`; });
-            container.innerHTML = html;
+            let html = ""; snap.forEach(doc => { const u = doc.data(); const badge = getBadgeHtml(u.isVerified); html += `<div onclick="viewUserProfile('${u.uid}')" class="flex items-center gap-3 p-3 bg-gray-900 rounded-lg cursor-pointer hover:bg-gray-800"><div class="w-10 h-10">${getAvatarHTML(u.photoURL, "w-full h-full")}</div><div><div class="font-bold flex items-center">@${u.username} ${badge}</div><div class="text-xs text-gray-400">${u.bio || ''}</div></div></div>`; });
+            container.innerHTML = html; lucide.createIcons();
         };
         async function renderProfile(data, isMe) {
             currentProfileUid = data.uid; document.getElementById('profile-handle').textContent = "@" + data.username; document.getElementById('profile-bio').textContent = data.bio || "Pas de bio"; document.getElementById('profile-avatar-container').innerHTML = getAvatarHTML(data.photoURL, "w-full h-full");
+            document.getElementById('profile-badge-container').innerHTML = getBadgeHtml(data.isVerified); // BADGE PROFIL
+            
             document.getElementById('my-profile-actions').classList.toggle('hidden', !isMe); document.getElementById('other-profile-actions').classList.toggle('hidden', isMe);
             document.getElementById('profile-followers').innerText = data.followers ? data.followers.length : 0;
             if(!isMe) { const btn = document.getElementById('btn-follow'); const isF = data.followers?.includes(auth.currentUser.uid); updateFollowButtonUI(btn, isF); }
@@ -535,9 +572,7 @@
                 const v = d.data();
                 if(v.userId === data.uid) {
                     likes += (v.likes || 0);
-                    // Add delete button on profile thumbnails if it's me
                     const delBtn = isMe ? `<div class="absolute top-1 right-1 bg-black/50 p-1 rounded-full cursor-pointer z-10" onclick="event.stopPropagation(); confirmDeleteVideo('${d.id}')"><i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i></div>` : '';
-                    
                     const div = document.createElement('div'); div.className = "bg-gray-800 aspect-[3/4] relative border border-black group"; 
                     div.innerHTML = `${delBtn}<video src="${getOptimizedVideoUrl(v.url, 300)}" class="w-full h-full object-cover" muted playsinline></video><div class="absolute bottom-1 left-1 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-md"><i data-lucide="play" class="w-3 h-3 fill-white"></i> ${formatCount(v.views)}</div>`;
                     grid.appendChild(div);
@@ -567,13 +602,28 @@
             window.closeModal('edit-modal'); renderProfile(currentUserData, true);
         };
         window.openUploadModal = () => document.getElementById('upload-modal').classList.add('open');
-        window.previewVideoUpload = (i) => { if(i.files[0]) { const v=document.getElementById('video-preview'); v.src=URL.createObjectURL(i.files[0]); v.classList.remove('hidden'); v.play(); document.getElementById('upload-preview-area').querySelector('i').classList.add('hidden'); document.getElementById('upload-preview-area').querySelector('p').classList.add('hidden'); } };
+        window.closeModal = (id) => document.getElementById(id).classList.remove('open');
+        window.previewVideoUpload = (i) => { 
+            if(i.files[0]) { 
+                const v=document.getElementById('video-preview'); 
+                v.src=URL.createObjectURL(i.files[0]); 
+                v.classList.remove('hidden'); 
+                v.play(); 
+                const area = document.getElementById('upload-preview-area');
+                // FIX: Check for i or svg
+                const icon = area.querySelector('i') || area.querySelector('svg');
+                if (icon) icon.classList.add('hidden');
+                // Hide text
+                const text = area.querySelector('p');
+                if (text) text.classList.add('hidden');
+            } 
+        };
         window.uploadVideo = async () => {
             const f = document.getElementById('video-file-input').files[0]; if(!f) return;
             const btn = document.getElementById('btn-publish'); btn.disabled=true; btn.innerText="Envoi...";
             try {
                 const url = await uploadToCloudinary(f);
-                await addDoc(collection(db, "videos"), { userId: auth.currentUser.uid, username: currentUserData.username, userPhotoURL: currentUserData.photoURL||"", url, description: document.getElementById('video-desc').value, likes: 0, likedBy: [], favorites: [], commentCount: 0, views: 0, createdAt: serverTimestamp() });
+                await addDoc(collection(db, "videos"), { userId: auth.currentUser.uid, username: currentUserData.username, userPhotoURL: currentUserData.photoURL||"", url, description: document.getElementById('video-desc').value, likes: 0, likedBy: [], favorites: [], commentCount: 0, views: 0, isVerified: currentUserData.isVerified || false, createdAt: serverTimestamp() });
                 window.closeModal('upload-modal'); navigateTo('feed');
             } catch(e) { alert(e.message); } finally { btn.disabled=false; btn.innerText="Publier"; }
         };
