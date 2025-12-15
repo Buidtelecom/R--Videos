@@ -16,17 +16,6 @@
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
         .like-animation { animation: pop 0.3s ease-in-out; }
-        
-        /* Animation Gros Coeur Double Tap */
-        .big-heart { position: absolute; transform: translate(-50%, -50%) scale(0); animation: bigHeartAnim 0.8s ease-out forwards; pointer-events: none; z-index: 50; }
-        @keyframes bigHeartAnim {
-            0% { transform: translate(-50%, -50%) scale(0) rotate(-15deg); opacity: 1; }
-            15% { transform: translate(-50%, -50%) scale(1.5) rotate(0deg); opacity: 1; }
-            30% { transform: translate(-50%, -50%) scale(1.2) rotate(0deg); opacity: 1; }
-            50% { transform: translate(-50%, -50%) scale(1.2) rotate(0deg); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(0) rotate(0deg); opacity: 0; }
-        }
-
         .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; z-index: 10; background: black; }
         .screen.active { display: flex; }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 50; display: none; align-items: center; justify-content: center; }
@@ -43,6 +32,18 @@
         .msg-bubble { max-width: 75%; padding: 8px 12px; border-radius: 16px; margin-bottom: 8px; font-size: 14px; }
         .msg-me { align-self: flex-end; background-color: #ef4444; color: white; border-bottom-right-radius: 4px; }
         .msg-other { align-self: flex-start; background-color: #333; color: white; border-bottom-left-radius: 4px; }
+        .verified-badge { fill: #3b82f6; color: white; display: inline-block; vertical-align: middle; margin-left: 4px; }
+        .custom-checkbox { accent-color: #ef4444; width: 16px; height: 16px; cursor: pointer; }
+        
+        /* Animation Gros Coeur Double Tap */
+        .big-heart { position: absolute; transform: translate(-50%, -50%) scale(0); animation: bigHeartAnim 0.8s ease-out forwards; pointer-events: none; z-index: 50; }
+        @keyframes bigHeartAnim {
+            0% { transform: translate(-50%, -50%) scale(0) rotate(-15deg); opacity: 1; }
+            15% { transform: translate(-50%, -50%) scale(1.5) rotate(0deg); opacity: 1; }
+            30% { transform: translate(-50%, -50%) scale(1.2) rotate(0deg); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.2) rotate(0deg); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0) rotate(0deg); opacity: 0; }
+        }
     </style>
 </head>
 <body class="relative">
@@ -69,14 +70,18 @@
             <div id="login-form" class="space-y-4">
                 <input type="email" id="login-email" placeholder="Email" class="auth-input">
                 <input type="password" id="login-pass" placeholder="Mot de passe" class="auth-input">
-                <button id="btn-login" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition">Se connecter</button>
+                <button id="btn-login" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition flex justify-center items-center h-12">Se connecter</button>
                 <p class="text-xs text-gray-400 mt-4">Pas encore de compte ? <span onclick="toggleAuthMode()" class="text-white font-bold cursor-pointer underline">S'inscrire</span></p>
             </div>
             <div id="register-form" class="space-y-4 hidden">
                 <input type="text" id="reg-username" placeholder="Nom d'utilisateur" class="auth-input">
                 <input type="email" id="reg-email" placeholder="Email (Gmail requis)" class="auth-input">
                 <input type="password" id="reg-pass" placeholder="Mot de passe" class="auth-input">
-                <button id="btn-register" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 rounded-lg transition">Créer mon compte</button>
+                <div class="flex items-start gap-2 text-left mt-2">
+                    <input type="checkbox" id="reg-privacy" class="custom-checkbox mt-1">
+                    <label for="reg-privacy" class="text-xs text-gray-400 leading-tight">En cochant cette case, j'accepte la <span onclick="openPrivacyPolicy()" class="text-blue-500 underline cursor-pointer">Politique de Confidentialité</span> de R-Videos.</label>
+                </div>
+                <button id="btn-register" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 rounded-lg transition mt-2 flex justify-center items-center h-12">Créer mon compte</button>
                 <p class="text-xs text-gray-400 mt-4">Déjà un compte ? <span onclick="toggleAuthMode()" class="text-white font-bold cursor-pointer underline">Se connecter</span></p>
             </div>
             <p id="auth-error" class="text-red-500 text-sm mt-4 hidden bg-red-900/30 p-2 rounded border border-red-800"></p>
@@ -136,6 +141,7 @@
                 <div><div class="font-bold text-lg" id="profile-followers">0</div><div class="text-xs text-gray-400">Abonnés</div></div>
                 <div><div class="font-bold text-lg" id="profile-likes">0</div><div class="text-xs text-gray-400">J'aime</div></div>
             </div>
+            
             <div id="my-profile-actions" class="flex gap-2 mt-6 w-full px-8 hidden">
                 <button onclick="openEditProfile()" class="flex-1 bg-gray-800 py-2 rounded text-sm font-semibold border border-gray-600">Modifier le profil</button>
             </div>
@@ -170,6 +176,26 @@
     </div>
 
     <!-- MODALS -->
+    <div id="privacy-modal" class="modal-overlay">
+        <div class="bg-gray-900 w-11/12 max-w-lg p-6 rounded-xl border border-gray-700 max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
+                <h3 class="text-lg font-bold">Politique de Confidentialité</h3>
+                <i data-lucide="x" class="cursor-pointer" onclick="closeModal('privacy-modal')"></i>
+            </div>
+            <div class="overflow-y-auto text-sm text-gray-300 space-y-4 pr-2">
+                <p class="font-bold text-white">Dernière mise à jour : 2025</p>
+                <p>Bienvenue sur R-Videos. Votre confidentialité est notre priorité.</p>
+                <h4 class="font-bold text-white">1. Informations Collectées</h4>
+                <ul class="list-disc pl-5"><li>Informations de profil (Nom, Email, Photo, Bio).</li><li>Contenu utilisateur (Vidéos, Commentaires, Messages).</li></ul>
+                <h4 class="font-bold text-white">2. Utilisation des Données</h4>
+                <p>Pour fournir et améliorer nos services.</p>
+                <h4 class="font-bold text-white">3. Vos Droits</h4>
+                <p>Vous avez le droit d'accéder à vos données ou de supprimer votre compte.</p>
+            </div>
+            <button onclick="closeModal('privacy-modal')" class="mt-4 w-full bg-gray-800 py-2 rounded text-white font-bold">Fermer</button>
+        </div>
+    </div>
+
     <div id="edit-modal" class="modal-overlay">
         <div class="bg-gray-900 w-11/12 max-w-md p-6 rounded-xl border border-gray-700">
             <h3 class="text-lg font-bold mb-4">Modifier le profil</h3>
@@ -179,7 +205,7 @@
             <textarea id="edit-bio" placeholder="Bio" class="auth-input mb-4" rows="3"></textarea>
             <div class="flex gap-2">
                 <button onclick="closeModal('edit-modal')" class="flex-1 py-2 bg-gray-800 rounded">Annuler</button>
-                <button onclick="saveProfileChanges()" class="flex-1 py-2 bg-white text-black font-bold rounded">Enregistrer</button>
+                <button id="btn-save-profile" onclick="saveProfileChanges()" class="flex-1 py-2 bg-white text-black font-bold rounded flex justify-center items-center">Enregistrer</button>
             </div>
         </div>
     </div>
@@ -221,7 +247,7 @@
                 <textarea id="video-desc" placeholder="Décris ta vidéo..." class="auth-input h-24 resize-none"></textarea>
             </div>
             <div id="upload-status" class="text-xs text-center text-gray-400 h-4"></div>
-            <button onclick="uploadVideo()" id="btn-publish" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg mt-2">Publier</button>
+            <button onclick="uploadVideo()" id="btn-publish" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg mt-2 flex justify-center items-center">Publier</button>
         </div>
     </div>
 
@@ -237,14 +263,12 @@
         </div>
     </div>
 
-    <!-- NAVBAR -->
+    <!-- NAVBAR PERSONNALISÉE -->
     <div id="bottom-nav" class="fixed bottom-0 left-0 w-full bg-black border-t border-gray-800 h-14 z-30 flex justify-around items-center text-white px-2 hidden">
         <div onclick="navigateTo('feed')" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-100" id="nav-feed"><i data-lucide="home" class="w-6 h-6 fill-white"></i><span class="text-[10px]">Accueil</span></div>
         <div onclick="navigateTo('discover')" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50" id="nav-discover"><i data-lucide="search" class="w-6 h-6"></i><span class="text-[10px]">Découvrir</span></div>
-        <div onclick="openUploadModal()" class="relative w-12 h-8 flex justify-center items-center cursor-pointer hover:scale-105 transition"><div class="absolute left-0 w-8 h-full bg-cyan-400 rounded-lg"></div><div class="absolute right-0 w-8 h-full bg-red-500 rounded-lg"></div><div class="relative w-10 h-full bg-white rounded-lg flex items-center justify-center"><i data-lucide="plus" class="w-5 h-5 text-black font-bold"></i></div></div>
-        <div onclick="navigateTo('inbox')" class="relative flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50" id="nav-inbox">
-            <div class="relative"><i data-lucide="message-square" class="w-6 h-6"></i><div id="inbox-badge" class="absolute -top-1 -right-2 bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full hidden border border-black min-w-[16px] text-center">0</div></div><span class="text-[10px]">Boîte</span>
-        </div>
+        <div onclick="openUploadModal()" class="cursor-pointer hover:scale-105 transition duration-200 flex items-center justify-center"><div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg shadow-white/20"><i data-lucide="plus" class="w-6 h-6 text-black font-bold"></i></div></div>
+        <div onclick="navigateTo('inbox')" class="relative flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50" id="nav-inbox"><div class="relative"><i data-lucide="message-square" class="w-6 h-6"></i><div id="inbox-badge" class="absolute -top-1 -right-2 bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full hidden border border-black min-w-[16px] text-center">0</div></div><span class="text-[10px]">Boîte</span></div>
         <div onclick="openMyProfile()" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50" id="nav-profile"><i data-lucide="user" class="w-6 h-6"></i><span class="text-[10px]">Profil</span></div>
     </div>
 
@@ -267,45 +291,14 @@
         let currentChatId = null;
         let currentChatReceiver = null;
         let viewedVideos = new Set();
+        let isInitialLoad = true;
 
-        function getBadgeHtml(isVerified) {
-            if (!isVerified) return '';
-            // SVG EXACT du badge de certification (Etoile bleue + coche blanche)
-            return `
-            <svg class="w-4 h-4 ml-1 inline-block align-middle" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M22.5 12.5C22.5 14.08 21.625 15.45 20.352 16.1C20.372 16.27 20.384 16.44 20.384 16.614C20.384 18.824 18.676 20.614 16.566 20.614C16.096 20.614 15.646 20.528 15.231 20.365C14.61 21.698 13.304 22.614 11.792 22.614C10.28 22.614 8.974 21.698 8.353 20.365C7.938 20.528 7.488 20.614 7.018 20.614C4.908 20.614 3.2 18.824 3.2 16.614C3.2 16.44 3.212 16.27 3.232 16.1C1.959 15.45 1.084 14.08 1.084 12.5C1.084 10.92 1.959 9.55 3.232 8.9C3.212 8.73 3.2 8.56 3.2 8.386C3.2 6.176 4.908 4.386 7.018 4.386C7.488 4.386 7.938 4.472 8.353 4.635C8.974 3.302 10.28 2.386 11.792 2.386C13.304 2.386 14.61 3.302 15.231 4.635C15.646 4.472 16.096 4.386 16.566 4.386C18.676 4.386 20.384 6.176 20.384 8.386C20.384 8.56 20.372 8.73 20.352 8.9C21.625 9.55 22.5 10.92 22.5 12.5Z" fill="#20D5EC"/>
-                <path d="M10.09 17.1L5.39 12.4L6.8 10.99L10.09 14.28L17.19 7.18005L18.6 8.59005L10.09 17.1Z" fill="white"/>
-            </svg>`;
-        }
-
-        function getAvatarHTML(photoURL, sizeClass = "w-full h-full") {
-            if (photoURL && photoURL.length > 5) {
-                const optimizedUrl = photoURL.includes('cloudinary') ? photoURL.replace('/upload/', '/upload/w_200,c_fill,q_auto,f_auto/') : photoURL;
-                return `<img src="${optimizedUrl}" class="${sizeClass} rounded-full object-cover border border-white">`;
-            }
-            return `<div class="${sizeClass} rounded-full bg-gray-700 flex items-center justify-center border border-white"><i data-lucide="user" class="text-gray-400 w-1/2 h-1/2"></i></div>`;
-        }
-        function formatCount(num) {
-            if(!num) return "0";
-            if(num >= 1000000) return (num/1000000).toFixed(1) + 'M';
-            if(num >= 1000) return (num/1000).toFixed(1) + 'k';
-            return num;
-        }
-        function getOptimizedVideoUrl(url, width = 720) {
-            if (!url) return "";
-            if (url.includes("cloudinary.com")) return url.replace('/upload/', `/upload/q_auto,f_auto,w_${width}/`);
-            return url;
-        }
-
-        async function uploadToCloudinary(file) {
-            const formData = new FormData(); formData.append('file', file); formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-            const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, { method: 'POST', body: formData });
-            const data = await response.json(); return data.secure_url;
-        }
-        async function sendNotification(targetUid, type, text) {
-            if(targetUid === auth.currentUser.uid) return;
-            await addDoc(collection(db, "users", targetUid, "notifications"), { type, text, fromUid: auth.currentUser.uid, fromUsername: currentUserData.username, fromPhoto: currentUserData.photoURL, createdAt: serverTimestamp(), read: false });
-        }
+        function getBadgeHtml(isVerified) { if (!isVerified) return ''; return `<svg class="w-4 h-4 ml-1 inline-block align-middle" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.5 12.5C22.5 14.08 21.625 15.45 20.352 16.1C20.372 16.27 20.384 16.44 20.384 16.614C20.384 18.824 18.676 20.614 16.566 20.614C16.096 20.614 15.646 20.528 15.231 20.365C14.61 21.698 13.304 22.614 11.792 22.614C10.28 22.614 8.974 21.698 8.353 20.365C7.938 20.528 7.488 20.614 7.018 20.614C4.908 20.614 3.2 18.824 3.2 16.614C3.2 16.44 3.212 16.27 3.232 16.1C1.959 15.45 1.084 14.08 1.084 12.5C1.084 10.92 1.959 9.55 3.232 8.9C3.212 8.73 3.2 8.56 3.2 8.386C3.2 6.176 4.908 4.386 7.018 4.386C7.488 4.386 7.938 4.472 8.353 4.635C8.974 3.302 10.28 2.386 11.792 2.386C13.304 2.386 14.61 3.302 15.231 4.635C15.646 4.472 16.096 4.386 16.566 4.386C18.676 4.386 20.384 6.176 20.384 8.386C20.384 8.56 20.372 8.73 20.352 8.9C21.625 9.55 22.5 10.92 22.5 12.5Z" fill="#20D5EC"/><path d="M10.09 17.1L5.39 12.4L6.8 10.99L10.09 14.28L17.19 7.18005L18.6 8.59005L10.09 17.1Z" fill="white"/></svg>`; }
+        function getAvatarHTML(photoURL, sizeClass = "w-full h-full") { if (photoURL && photoURL.length > 5) { const optimizedUrl = photoURL.includes('cloudinary') ? photoURL.replace('/upload/', '/upload/w_200,c_fill,q_auto,f_auto/') : photoURL; return `<img src="${optimizedUrl}" class="${sizeClass} rounded-full object-cover border border-white">`; } return `<div class="${sizeClass} rounded-full bg-gray-700 flex items-center justify-center border border-white"><i data-lucide="user" class="text-gray-400 w-1/2 h-1/2"></i></div>`; }
+        function formatCount(num) { if(!num) return "0"; if(num >= 1000000) return (num/1000000).toFixed(1) + 'M'; if(num >= 1000) return (num/1000).toFixed(1) + 'k'; return num; }
+        function getOptimizedVideoUrl(url, width = 720) { if (!url) return ""; if (url.includes("cloudinary.com")) return url.replace('/upload/', `/upload/q_auto,f_auto,w_${width}/`); return url; }
+        async function uploadToCloudinary(file) { const formData = new FormData(); formData.append('file', file); formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET); const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, { method: 'POST', body: formData }); const data = await response.json(); return data.secure_url; }
+        async function sendNotification(targetUid, type, text) { if(targetUid === auth.currentUser.uid) return; await addDoc(collection(db, "users", targetUid, "notifications"), { type, text, fromUid: auth.currentUser.uid, fromUsername: currentUserData.username, fromPhoto: currentUserData.photoURL, createdAt: serverTimestamp(), read: false }); }
 
         function subscribeToUnreadCount() {
             if (unreadObserver) unreadObserver();
@@ -314,69 +307,49 @@
                 let unreadCount = 0; snapshot.forEach(doc => { if (doc.data().read === false) unreadCount++; });
                 const badge = document.getElementById('inbox-badge');
                 if (unreadCount > 0) { badge.classList.remove('hidden'); badge.innerText = unreadCount > 99 ? "+99" : unreadCount; } else { badge.classList.add('hidden'); }
+                if (!isInitialLoad) {
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === "added") {
+                            const data = change.doc.data();
+                            if (data.read === false && "Notification" in window && Notification.permission === "granted") { new Notification("R-Videos", { body: `@${data.fromUsername} ${data.text}`, icon: data.fromPhoto || "" }); }
+                        }
+                    });
+                }
+                isInitialLoad = false;
             });
         }
 
-        window.confirmDeleteVideo = (docId) => {
-            const modal = document.getElementById('delete-confirm-modal'); const confirmBtn = document.getElementById('btn-confirm-delete');
-            modal.classList.add('open');
-            confirmBtn.onclick = async () => { try { await deleteDoc(doc(db, "videos", docId)); modal.classList.remove('open'); if(document.getElementById('profile-screen').classList.contains('active')) renderProfile(currentUserData, true); } catch(e) { alert("Erreur suppression: " + e.message); } };
-        };
-
-        window.shareVideo = (url) => {
-            if (navigator.share) navigator.share({ title: 'R-Videos', text: 'Regarde cette vidéo incroyable !', url: url }).catch(err => { if(err.name !== 'AbortError') console.error(err); });
-            else navigator.clipboard.writeText(url).then(() => alert("Lien copié !")).catch(()=>{});
-        };
-
-        window.toggleFavorite = async (docId, el) => {
-            if(!auth.currentUser) return;
-            const isFav = el.classList.contains('favorited'); const ref = doc(db, "videos", docId);
-            if(isFav) { el.classList.remove('favorited'); el.querySelector('svg').classList.remove('fill-yellow-500', 'text-yellow-500'); await updateDoc(ref, { favorites: arrayRemove(auth.currentUser.uid) }); }
-            else { el.classList.add('favorited'); el.querySelector('svg').classList.add('fill-yellow-500', 'text-yellow-500'); await updateDoc(ref, { favorites: arrayUnion(auth.currentUser.uid) }); }
-        };
+        window.confirmDeleteVideo = (docId) => { const modal = document.getElementById('delete-confirm-modal'); const confirmBtn = document.getElementById('btn-confirm-delete'); modal.classList.add('open'); confirmBtn.onclick = async () => { try { await deleteDoc(doc(db, "videos", docId)); modal.classList.remove('open'); if(document.getElementById('profile-screen').classList.contains('active')) renderProfile(currentUserData, true); } catch(e) { alert("Erreur suppression: " + e.message); } }; };
+        window.shareVideo = (url) => { if (navigator.share) navigator.share({ title: 'R-Videos', text: 'Regarde cette vidéo incroyable !', url: url }).catch(e=>{}); else navigator.clipboard.writeText(url).then(() => alert("Lien copié !")).catch(()=>{}); };
+        window.toggleFavorite = async (docId, el) => { if(!auth.currentUser) return; const isFav = el.classList.contains('favorited'); const ref = doc(db, "videos", docId); if(isFav) { el.classList.remove('favorited'); el.querySelector('svg').classList.remove('fill-yellow-500', 'text-yellow-500'); await updateDoc(ref, { favorites: arrayRemove(auth.currentUser.uid) }); } else { el.classList.add('favorited'); el.querySelector('svg').classList.add('fill-yellow-500', 'text-yellow-500'); await updateDoc(ref, { favorites: arrayUnion(auth.currentUser.uid) }); } };
 
         window.toggleAuthMode = () => { document.getElementById('login-form').classList.toggle('hidden'); document.getElementById('register-form').classList.toggle('hidden'); document.getElementById('auth-error').classList.add('hidden'); };
-        
         function showAuthError(msg) { const err = document.getElementById('auth-error'); err.innerText = msg; err.classList.remove('hidden'); }
+        window.openPrivacyPolicy = () => document.getElementById('privacy-modal').classList.add('open');
 
         document.getElementById('btn-register').addEventListener('click', async () => {
             const email = document.getElementById('reg-email').value, pass = document.getElementById('reg-pass').value, username = document.getElementById('reg-username').value;
+            const privacyChecked = document.getElementById('reg-privacy').checked;
             document.getElementById('auth-error').classList.add('hidden');
             if (!email || !pass || !username) { showAuthError("Veuillez remplir tous les champs."); return; }
             if (!email.toLowerCase().endsWith('@gmail.com')) { showAuthError("Adresse Gmail (@gmail.com) obligatoire."); return; }
-            
+            if (!privacyChecked) { showAuthError("Veuillez accepter la politique de confidentialité."); return; }
+            const btn = document.getElementById('btn-register'); const originalText = btn.innerText; btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`; btn.disabled = true;
             try {
                 isRegistering = true; const cred = await createUserWithEmailAndPassword(auth, email, pass);
                 const isVerified = email === VIP_EMAIL;
-                
-                await setDoc(doc(db, "users", cred.user.uid), { 
-                    username, email, photoURL: "", bio: "Nouveau membre", 
-                    followers: [], following: [], uid: cred.user.uid, 
-                    isVerified: isVerified, 
-                    createdAt: serverTimestamp() 
-                });
+                await setDoc(doc(db, "users", cred.user.uid), { username, email, photoURL: "", bio: "Nouveau membre", followers: [], following: [], uid: cred.user.uid, isVerified: isVerified, createdAt: serverTimestamp() });
                 await updateProfile(cred.user, { displayName: username });
                 await signOut(auth); isRegistering = false; window.toggleAuthMode();
                 document.getElementById('auth-success').classList.remove('hidden'); document.getElementById('login-email').value = email;
-            } catch (e) { 
-                isRegistering = false; 
-                let msg = e.message;
-                if(e.code === 'auth/email-already-in-use') msg = "Cet email est déjà utilisé.";
-                else if(e.code === 'auth/weak-password') msg = "Mot de passe trop faible (6 car. min).";
-                else if(e.code === 'auth/invalid-email') msg = "Format d'email invalide.";
-                showAuthError(msg); 
-            }
+            } catch (e) { isRegistering = false; let msg = e.message; if(e.code === 'auth/email-already-in-use') msg = "Cet email est déjà utilisé."; else if(e.code === 'auth/weak-password') msg = "Mot de passe trop faible."; else if(e.code === 'auth/invalid-email') msg = "Format d'email invalide."; showAuthError(msg); } finally { btn.innerHTML = originalText; btn.disabled = false; }
         });
 
         document.getElementById('btn-login').addEventListener('click', async () => { 
             document.getElementById('auth-error').classList.add('hidden');
+            const btn = document.getElementById('btn-login'); const originalText = btn.innerText; btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`; btn.disabled = true;
             try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } 
-            catch(e) { 
-                let msg = "Erreur de connexion.";
-                if(e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') msg = "Email ou mot de passe incorrect.";
-                else if(e.code === 'auth/invalid-email') msg = "Format d'email invalide.";
-                showAuthError(msg); 
-            } 
+            catch(e) { let msg = "Erreur de connexion."; if(e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') msg = "Email ou mot de passe incorrect."; showAuthError(msg); } finally { btn.innerHTML = originalText; btn.disabled = false; }
         });
 
         window.confirmLogout = () => { document.getElementById('logout-modal').classList.add('open'); };
@@ -393,7 +366,7 @@
                 subscribeToUnreadCount();
                 window.navigateTo('feed'); loadFeed();
             } else {
-                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById('auth-screen').classList.add('active'); document.getElementById('bottom-nav').classList.add('hidden'); document.getElementById('bottom-nav').classList.remove('flex'); currentUserData = null;
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById('auth-screen').classList.add('active'); document.getElementById('bottom-nav').classList.add('hidden'); document.getElementById('bottom-nav').classList.remove('flex'); currentUserData = null; isInitialLoad = true;
             }
         });
 
@@ -422,238 +395,71 @@
                     const iFav = data.favorites?.includes(auth.currentUser.uid);
                     const optimizedUrl = getOptimizedVideoUrl(data.url, 720);
                     const badge = getBadgeHtml(data.isVerified);
-
-                    const avatarSection = `
-                    <div class="relative mb-4 cursor-pointer" onclick="viewUserProfile('${data.userId}')">
-                        <div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black transition transform hover:scale-110">
-                            ${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}
-                        </div>
-                        <div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-red-600 rounded-full w-5 h-5 flex items-center justify-center shadow-md">
-                            <i data-lucide="plus" class="w-3 h-3 text-white font-bold"></i>
-                        </div>
-                    </div>`;
-
-                    html += `<div class="video-card w-full h-full relative snap-start bg-gray-900 border-b border-gray-800" data-id="${docSnap.id}">
-                        <video class="w-full h-full object-cover pointer-events-none" loop playsinline preload="metadata" src="${optimizedUrl}"></video>
-                        <div class="absolute inset-0 z-10" onclick="togglePlay(this)" ondblclick="handleDoubleTap(event, '${docSnap.id}', '${data.userId}')"></div>
-                        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 pointer-events-none"></div>
-                        <div class="absolute right-2 bottom-32 flex flex-col items-center gap-6 z-20 pb-4">
-                            ${avatarSection}
-                            <div class="flex flex-col items-center gap-1 cursor-pointer group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${docSnap.id}', this, '${data.userId}')">
-                                <i data-lucide="heart" class="w-9 h-9 icon-shadow ${iLiked ? 'fill-red-500 text-red-500' : 'text-white fill-white'} transition-all"></i>
-                                <span class="text-xs font-bold text-shadow">${formatCount(data.likes)}</span>
-                            </div>
-                            <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openComments('${docSnap.id}')">
-                                <i data-lucide="message-circle" class="w-9 h-9 icon-shadow text-white fill-white"></i>
-                                <span class="text-xs font-bold text-shadow">${formatCount(data.commentCount)}</span>
-                            </div>
-                            <div class="flex flex-col items-center gap-1 cursor-pointer ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${docSnap.id}', this)">
-                                <i data-lucide="bookmark" class="w-9 h-9 icon-shadow ${iFav ? 'fill-yellow-500 text-yellow-500' : 'text-white fill-white'} transition-all"></i>
-                                <span class="text-xs font-bold text-shadow">${iFav ? 'Fav' : 'Fav'}</span>
-                            </div>
-                            <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="shareVideo('${data.url}')">
-                                <i data-lucide="share-2" class="w-9 h-9 icon-shadow text-white fill-white"></i>
-                                <span class="text-[10px] font-bold text-shadow">Partager</span>
-                            </div>
-                            <div class="mt-4 relative animate-spin-slow"><div class="w-10 h-10 bg-gray-800 rounded-full border-4 border-gray-900 flex items-center justify-center overflow-hidden">${getAvatarHTML(data.userPhotoURL, "w-full h-full")}</div></div>
-                        </div>
-                        <div class="absolute bottom-20 left-4 right-20 z-20 text-left pointer-events-none">
-                            <div class="flex items-center">
-                                <h3 class="font-bold text-lg text-shadow mb-1">@${data.username}</h3>
-                                ${badge}
-                            </div>
-                            <p class="text-sm mb-2 text-shadow text-gray-100 line-clamp-3">${data.description}</p>
-                        </div>
-                    </div>`;
+                    const avatarSection = `<div class="relative mb-4 cursor-pointer" onclick="viewUserProfile('${data.userId}')"><div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black transition transform hover:scale-110">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div><div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-red-600 rounded-full w-5 h-5 flex items-center justify-center shadow-md"><i data-lucide="plus" class="w-3 h-3 text-white font-bold"></i></div></div>`;
+                    
+                    // Ajout Bouton Play Overlay
+                    const playOverlay = `<div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 opacity-0"><div class="bg-black/40 rounded-full p-4 backdrop-blur-sm"><i data-lucide="play" class="w-12 h-12 text-white fill-white"></i></div></div>`;
+                    
+                    html += `<div class="video-card w-full h-full relative snap-start bg-gray-900 border-b border-gray-800" data-id="${docSnap.id}"><video class="w-full h-full object-cover pointer-events-none" loop playsinline preload="metadata" src="${optimizedUrl}"></video>${playOverlay}<div class="absolute inset-0 z-10" onclick="togglePlay(this)" ondblclick="handleDoubleTap(event, '${docSnap.id}', '${data.userId}')"></div><div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 pointer-events-none"></div><div class="absolute right-2 bottom-32 flex flex-col items-center gap-6 z-20 pb-4">${avatarSection}<div class="flex flex-col items-center gap-1 cursor-pointer group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${docSnap.id}', this, '${data.userId}')"><i data-lucide="heart" class="w-9 h-9 icon-shadow ${iLiked ? 'fill-red-500 text-red-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow">${formatCount(data.likes)}</span></div><div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openComments('${docSnap.id}')"><i data-lucide="message-circle" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-xs font-bold text-shadow">${formatCount(data.commentCount)}</span></div><div class="flex flex-col items-center gap-1 cursor-pointer ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${docSnap.id}', this)"><i data-lucide="bookmark" class="w-9 h-9 icon-shadow ${iFav ? 'fill-yellow-500 text-yellow-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow">${iFav ? 'Fav' : 'Fav'}</span></div><div class="flex flex-col items-center gap-1 cursor-pointer" onclick="shareVideo('${data.url}')"><i data-lucide="share-2" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Partager</span></div><div class="mt-4 relative animate-spin-slow"><div class="w-10 h-10 bg-gray-800 rounded-full border-4 border-gray-900 flex items-center justify-center overflow-hidden">${getAvatarHTML(data.userPhotoURL, "w-full h-full")}</div></div></div><div class="absolute bottom-20 left-4 right-20 z-20 text-left pointer-events-none"><div class="flex items-center"><h3 class="font-bold text-lg text-shadow mb-1">@${data.username}</h3>${badge}</div><p class="text-sm mb-2 text-shadow text-gray-100 line-clamp-3">${data.description}</p></div></div>`;
                 });
                 document.getElementById('feed-container').innerHTML = html; lucide.createIcons(); handleVideoPlayback();
+                
+                // Attacher les écouteurs pour le bouton play
+                document.querySelectorAll('.video-card video').forEach(video => {
+                    const overlay = video.parentElement.querySelector('.play-overlay');
+                    video.addEventListener('play', () => { overlay.classList.add('opacity-0'); overlay.classList.remove('opacity-100'); });
+                    video.addEventListener('pause', () => { overlay.classList.remove('opacity-0'); overlay.classList.add('opacity-100'); });
+                    if (video.paused) { overlay.classList.remove('opacity-0'); overlay.classList.add('opacity-100'); }
+                });
             });
         }
         
         window.togglePlay = (el) => { const v = el.parentElement.querySelector('video'); v.paused ? v.play().catch(()=>{}) : v.pause(); };
-        
-        window.handleDoubleTap = (e, docId, authorId) => {
-            e.stopPropagation();
-            const rect = e.target.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            const heart = document.createElement('div');
-            heart.innerHTML = `<i data-lucide="heart" class="w-24 h-24 fill-red-500 text-red-500"></i>`;
-            heart.className = 'big-heart';
-            heart.style.left = x + 'px';
-            heart.style.top = y + 'px';
-            e.target.parentElement.appendChild(heart);
-            lucide.createIcons();
-            setTimeout(() => heart.remove(), 800);
-
-            const card = e.target.closest('.video-card');
-            const likeBtn = card.querySelector('.group');
-            if (!likeBtn.classList.contains('liked')) {
-                toggleLike(docId, likeBtn, authorId);
-            }
-        };
-
-        function handleVideoPlayback() {
-            if(videoObserver) videoObserver.disconnect();
-            const options = { root: document.getElementById('feed-container'), threshold: 0.6 };
-            videoObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => { 
-                    const v = entry.target.querySelector('video'); if (!v) return;
-                    if(entry.isIntersecting) {
-                        v.play().catch(e=>{});
-                        const vidId = entry.target.getAttribute('data-id');
-                        if(vidId && !viewedVideos.has(vidId)) { viewedVideos.add(vidId); updateDoc(doc(db, "videos", vidId), { views: increment(1) }).catch(e=>{}); }
-                    } else { v.currentTime = 0; v.pause(); } 
-                });
-            }, options);
-            document.querySelectorAll('.video-card').forEach(c => videoObserver.observe(c));
-        }
-        window.toggleLike = async (docId, el, authorId) => {
-            if(!auth.currentUser) return;
-            const isLiked = el.classList.contains('liked'); const ref = doc(db, "videos", docId);
-            if(isLiked) { el.classList.remove('liked'); el.querySelector('svg').classList.remove('fill-red-500','text-red-500'); el.querySelector('svg').classList.add('text-white', 'fill-white'); await updateDoc(ref, {likes: increment(-1), likedBy: arrayRemove(auth.currentUser.uid)}); }
-            else { el.classList.add('liked'); el.querySelector('svg').classList.add('fill-red-500','text-red-500','like-animation'); el.querySelector('svg').classList.remove('text-white', 'fill-white'); setTimeout(()=>el.querySelector('svg').classList.remove('like-animation'),300); await updateDoc(ref, {likes: increment(1), likedBy: arrayUnion(auth.currentUser.uid)}); sendNotification(authorId, "like", "a aimé votre vidéo"); }
-        };
+        window.handleDoubleTap = (e, docId, authorId) => { e.stopPropagation(); const rect = e.target.getBoundingClientRect(); const x = e.clientX - rect.left; const y = e.clientY - rect.top; const heart = document.createElement('div'); heart.innerHTML = `<i data-lucide="heart" class="w-24 h-24 fill-red-500 text-red-500"></i>`; heart.className = 'big-heart'; heart.style.left = x + 'px'; heart.style.top = y + 'px'; e.target.parentElement.appendChild(heart); lucide.createIcons(); setTimeout(() => heart.remove(), 800); const card = e.target.closest('.video-card'); const likeBtn = card.querySelector('.group'); if (!likeBtn.classList.contains('liked')) toggleLike(docId, likeBtn, authorId); };
+        function handleVideoPlayback() { if(videoObserver) videoObserver.disconnect(); const options = { root: document.getElementById('feed-container'), threshold: 0.6 }; videoObserver = new IntersectionObserver((entries) => { entries.forEach(entry => { const v = entry.target.querySelector('video'); if (!v) return; if(entry.isIntersecting) { v.play().catch(e=>{}); const vidId = entry.target.getAttribute('data-id'); if(vidId && !viewedVideos.has(vidId)) { viewedVideos.add(vidId); updateDoc(doc(db, "videos", vidId), { views: increment(1) }).catch(e=>{}); } } else { v.currentTime = 0; v.pause(); } }); }, options); document.querySelectorAll('.video-card').forEach(c => videoObserver.observe(c)); }
+        window.toggleLike = async (docId, el, authorId) => { if(!auth.currentUser) return; const isLiked = el.classList.contains('liked'); const ref = doc(db, "videos", docId); if(isLiked) { el.classList.remove('liked'); el.querySelector('svg').classList.remove('fill-red-500','text-red-500'); el.querySelector('svg').classList.add('text-white', 'fill-white'); await updateDoc(ref, {likes: increment(-1), likedBy: arrayRemove(auth.currentUser.uid)}); } else { el.classList.add('liked'); el.querySelector('svg').classList.add('fill-red-500','text-red-500','like-animation'); el.querySelector('svg').classList.remove('text-white', 'fill-white'); setTimeout(()=>el.querySelector('svg').classList.remove('like-animation'),300); await updateDoc(ref, {likes: increment(1), likedBy: arrayUnion(auth.currentUser.uid)}); sendNotification(authorId, "like", "a aimé votre vidéo"); } };
 
         window.openComments = (id) => { currentVideoIdForComments = id; document.getElementById('comments-sheet').classList.add('open'); loadComments(id); };
         window.closeComments = () => { document.getElementById('comments-sheet').classList.remove('open'); currentVideoIdForComments = null; };
-        function loadComments(id) {
-            const list = document.getElementById('comments-list'); list.innerHTML = "<div class='text-center text-sm py-4'>Chargement...</div>";
-            onSnapshot(query(collection(db, `videos/${id}/comments`), orderBy("createdAt", "asc")), (snap) => {
-                let html = ""; snap.forEach(d => { const c = d.data(); const isLiked = c.likedBy?.includes(auth.currentUser.uid); html += `<div class="flex gap-3 mb-4 w-full"><div class="flex-shrink-0 cursor-pointer" onclick="window.viewUserProfile('${c.userId}'); window.closeComments()">${getAvatarHTML(c.userPhotoURL, "w-8 h-8")}</div><div class="flex-1"><div class="text-xs font-bold text-gray-400 cursor-pointer" onclick="window.viewUserProfile('${c.userId}'); window.closeComments()">@${c.username}</div><div class="text-sm">${c.text}</div></div><div class="flex flex-col items-center justify-center cursor-pointer" onclick="toggleCommentLike('${id}', '${d.id}', '${c.userId}')"><i data-lucide="heart" class="w-4 h-4 ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-500'}"></i><span class="text-[10px] text-gray-500">${c.likes || 0}</span></div></div>`; });
-                list.innerHTML = html || "<div class='text-center text-sm py-4 text-gray-500'>Aucun commentaire.</div>"; lucide.createIcons();
-            });
-        }
-        window.toggleCommentLike = async (vidId, cId, aId) => {
-            const ref = doc(db, `videos/${vidId}/comments`, cId); const snap = await getDoc(ref); if(!snap.exists()) return;
-            if(snap.data().likedBy?.includes(auth.currentUser.uid)) await updateDoc(ref, { likes: increment(-1), likedBy: arrayRemove(auth.currentUser.uid) });
-            else { await updateDoc(ref, { likes: increment(1), likedBy: arrayUnion(auth.currentUser.uid) }); sendNotification(aId, "comment_like", "a aimé votre commentaire"); }
-        };
-        window.sendComment = async () => {
-            const inp = document.getElementById('comment-input'); const txt = inp.value.trim(); if(!txt || !currentVideoIdForComments) return;
-            inp.value = "";
-            await addDoc(collection(db, `videos/${currentVideoIdForComments}/comments`), { text: txt, userId: auth.currentUser.uid, username: currentUserData.username, userPhotoURL: currentUserData.photoURL||"", likes: 0, likedBy: [], createdAt: serverTimestamp() });
-            await updateDoc(doc(db, "videos", currentVideoIdForComments), { commentCount: increment(1) });
-            const vidSnap = await getDoc(doc(db, "videos", currentVideoIdForComments)); if(vidSnap.exists()) sendNotification(vidSnap.data().userId, "comment", "a commenté: " + txt);
-        };
-        window.switchInboxTab = (tab) => {
-            document.getElementById('tab-activities').classList.toggle('border-b-2', tab==='activities'); document.getElementById('tab-activities').classList.toggle('text-gray-500', tab!=='activities');
-            document.getElementById('tab-messages').classList.toggle('border-b-2', tab==='messages'); document.getElementById('tab-messages').classList.toggle('text-gray-500', tab!=='messages');
-            if(tab === 'activities') loadActivities(); else loadConversations();
-        };
-        function loadActivities() {
-            const list = document.getElementById('inbox-content'); list.innerHTML = "Chargement...";
-            onSnapshot(query(collection(db, "users", auth.currentUser.uid, "notifications"), orderBy("createdAt", "desc"), limit(20)), (snap) => {
-                if(snap.empty) return list.innerHTML = "<div class='text-center text-gray-500 mt-4'>Aucune activité.</div>";
-                let html = ""; snap.forEach(d => { const n = d.data(); if(!n.read) updateDoc(doc(db, "users", auth.currentUser.uid, "notifications", d.id), {read: true}); let icon = "bell"; let color = "text-yellow-500"; if(n.type === 'like') { icon = "heart"; color = "text-red-500"; } if(n.type === 'follow') { icon = "user-plus"; color = "text-blue-500"; } if(n.type === 'comment') { icon = "message-circle"; color = "text-green-500"; } html += `<div class="flex items-center gap-3 py-2 border-b border-gray-800"><div class="relative w-12 h-12">${getAvatarHTML(n.fromPhoto, "w-full h-full")}<div class="absolute -bottom-1 -right-1 bg-gray-900 rounded-full p-1"><i data-lucide="${icon}" class="w-4 h-4 ${color}"></i></div></div><div><p class="text-sm"><span class="font-bold">@${n.fromUsername}</span> ${n.text}</p></div></div>`; });
-                list.innerHTML = html; lucide.createIcons();
-            });
-        }
-        function loadConversations() {
-            const list = document.getElementById('inbox-content'); list.innerHTML = "Chargement...";
-            const q = query(collection(db, "chats"), where("participants", "array-contains", auth.currentUser.uid));
-            onSnapshot(q, (snap) => {
-                if(snap.empty) return list.innerHTML = "<div class='text-center text-gray-500 mt-4'>Aucun message.</div>";
-                let chats = []; snap.forEach(d => chats.push(d.data())); chats.sort((a, b) => (b.lastUpdated?.seconds || 0) - (a.lastUpdated?.seconds || 0));
-                let html = ""; chats.forEach(c => { const oId = c.participants.find(p => p !== auth.currentUser.uid); if(oId && c.names) html += `<div onclick="startChatWith('${oId}', '${c.names[oId]}', '${c.photos[oId]}')" class="flex items-center gap-3 py-3 border-b border-gray-800 cursor-pointer hover:bg-gray-900"><div class="w-12 h-12 flex-shrink-0">${getAvatarHTML(c.photos[oId], "w-full h-full")}</div><div class="flex-1 min-w-0"><div class="font-bold truncate">@${c.names[oId]}</div><div class="text-sm text-gray-400 truncate">${c.lastMessage}</div></div></div>`; });
-                list.innerHTML = html;
-            });
-        }
+        function loadComments(id) { const list = document.getElementById('comments-list'); list.innerHTML = "<div class='text-center text-sm py-4'>Chargement...</div>"; onSnapshot(query(collection(db, `videos/${id}/comments`), orderBy("createdAt", "asc")), (snap) => { let html = ""; snap.forEach(d => { const c = d.data(); const isLiked = c.likedBy?.includes(auth.currentUser.uid); html += `<div class="flex gap-3 mb-4 w-full"><div class="flex-shrink-0 cursor-pointer" onclick="window.viewUserProfile('${c.userId}'); window.closeComments()">${getAvatarHTML(c.userPhotoURL, "w-8 h-8")}</div><div class="flex-1"><div class="text-xs font-bold text-gray-400 cursor-pointer" onclick="window.viewUserProfile('${c.userId}'); window.closeComments()">@${c.username}</div><div class="text-sm">${c.text}</div></div><div class="flex flex-col items-center justify-center cursor-pointer" onclick="toggleCommentLike('${id}', '${d.id}', '${c.userId}')"><i data-lucide="heart" class="w-4 h-4 ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-500'}"></i><span class="text-[10px] text-gray-500">${c.likes || 0}</span></div></div>`; }); list.innerHTML = html || "<div class='text-center text-sm py-4 text-gray-500'>Aucun commentaire.</div>"; lucide.createIcons(); }); }
+        window.toggleCommentLike = async (vidId, cId, aId) => { const ref = doc(db, `videos/${vidId}/comments`, cId); const snap = await getDoc(ref); if(!snap.exists()) return; if(snap.data().likedBy?.includes(auth.currentUser.uid)) { await updateDoc(ref, { likes: increment(-1), likedBy: arrayRemove(auth.currentUser.uid) }); } else { await updateDoc(ref, { likes: increment(1), likedBy: arrayUnion(auth.currentUser.uid) }); sendNotification(aId, "comment_like", "a aimé votre commentaire"); } };
+        window.sendComment = async () => { const inp = document.getElementById('comment-input'); const txt = inp.value.trim(); if(!txt || !currentVideoIdForComments) return; inp.value = ""; await addDoc(collection(db, `videos/${currentVideoIdForComments}/comments`), { text: txt, userId: auth.currentUser.uid, username: currentUserData.username, userPhotoURL: currentUserData.photoURL||"", likes: 0, likedBy: [], createdAt: serverTimestamp() }); await updateDoc(doc(db, "videos", currentVideoIdForComments), { commentCount: increment(1) }); const vidSnap = await getDoc(doc(db, "videos", currentVideoIdForComments)); if(vidSnap.exists()) sendNotification(vidSnap.data().userId, "comment", "a commenté: " + txt); };
+        window.switchInboxTab = (tab) => { document.getElementById('tab-activities').classList.toggle('border-b-2', tab==='activities'); document.getElementById('tab-activities').classList.toggle('text-gray-500', tab!=='activities'); document.getElementById('tab-messages').classList.toggle('border-b-2', tab==='messages'); document.getElementById('tab-messages').classList.toggle('text-gray-500', tab!=='messages'); if(tab === 'activities') loadActivities(); else loadConversations(); };
+        function loadActivities() { const list = document.getElementById('inbox-content'); list.innerHTML = "Chargement..."; onSnapshot(query(collection(db, "users", auth.currentUser.uid, "notifications"), orderBy("createdAt", "desc"), limit(20)), (snap) => { if(snap.empty) return list.innerHTML = "<div class='text-center text-gray-500 mt-4'>Aucune activité.</div>"; let html = ""; snap.forEach(d => { const n = d.data(); if(!n.read) updateDoc(doc(db, "users", auth.currentUser.uid, "notifications", d.id), {read: true}); let icon = "bell"; let color = "text-yellow-500"; if(n.type === 'like') { icon = "heart"; color = "text-red-500"; } if(n.type === 'follow') { icon = "user-plus"; color = "text-blue-500"; } if(n.type === 'comment') { icon = "message-circle"; color = "text-green-500"; } html += `<div class="flex items-center gap-3 py-2 border-b border-gray-800"><div class="relative w-12 h-12">${getAvatarHTML(n.fromPhoto, "w-full h-full")}<div class="absolute -bottom-1 -right-1 bg-gray-900 rounded-full p-1"><i data-lucide="${icon}" class="w-4 h-4 ${color}"></i></div></div><div><p class="text-sm"><span class="font-bold">@${n.fromUsername}</span> ${n.text}</p></div></div>`; }); list.innerHTML = html; lucide.createIcons(); }); }
+        function loadConversations() { const list = document.getElementById('inbox-content'); list.innerHTML = "Chargement..."; const q = query(collection(db, "chats"), where("participants", "array-contains", auth.currentUser.uid)); onSnapshot(q, (snap) => { if(snap.empty) return list.innerHTML = "<div class='text-center text-gray-500 mt-4'>Aucun message.</div>"; let chats = []; snap.forEach(d => chats.push(d.data())); chats.sort((a, b) => (b.lastUpdated?.seconds || 0) - (a.lastUpdated?.seconds || 0)); let html = ""; chats.forEach(c => { const oId = c.participants.find(p => p !== auth.currentUser.uid); if(oId && c.names) html += `<div onclick="startChatWith('${oId}', '${c.names[oId]}', '${c.photos[oId]}')" class="flex items-center gap-3 py-3 border-b border-gray-800 cursor-pointer hover:bg-gray-900"><div class="w-12 h-12 flex-shrink-0">${getAvatarHTML(c.photos[oId], "w-full h-full")}</div><div class="flex-1 min-w-0"><div class="font-bold truncate">@${c.names[oId]}</div><div class="text-sm text-gray-400 truncate">${c.lastMessage}</div></div></div>`; }); list.innerHTML = html; }); }
         window.startChat = () => { if(currentProfileUid) startChatWith(currentProfileUid, document.getElementById('profile-handle').innerText.substring(1), document.getElementById('profile-avatar-container').querySelector('img')?.src || ""); };
         window.startChatWith = (uid, name, photo) => { currentChatReceiver = uid; document.getElementById('chat-username').innerText = name; document.getElementById('chat-avatar').innerHTML = getAvatarHTML(photo, "w-full h-full"); const ids = [auth.currentUser.uid, uid].sort(); currentChatId = ids[0] + "_" + ids[1]; document.getElementById('chat-screen').classList.add('open'); loadMessages(currentChatId); };
         window.closeChat = () => document.getElementById('chat-screen').classList.remove('open');
-        function loadMessages(cId) {
-            const box = document.getElementById('chat-messages'); box.innerHTML = "";
-            onSnapshot(query(collection(db, "chats", cId, "messages"), orderBy("createdAt", "asc")), (snap) => {
-                let html = ""; snap.forEach(d => { const m = d.data(); html += `<div class="msg-bubble ${m.senderId === auth.currentUser.uid ? 'msg-me' : 'msg-other'}">${m.text}</div>`; });
-                box.innerHTML = html; box.scrollTop = box.scrollHeight;
-            });
-        }
-        window.sendMessage = async () => {
-            const inp = document.getElementById('chat-input'); const txt = inp.value.trim(); if(!txt || !currentChatId) return;
-            inp.value = ""; await addDoc(collection(db, "chats", currentChatId, "messages"), { text: txt, senderId: auth.currentUser.uid, createdAt: serverTimestamp() });
-            const cref = doc(db, "chats", currentChatId); const csnap = await getDoc(cref);
-            if(!csnap.exists()) { const n={}; n[auth.currentUser.uid]=currentUserData.username; n[currentChatReceiver]=document.getElementById('chat-username').innerText; const p={}; p[auth.currentUser.uid]=currentUserData.photoURL; p[currentChatReceiver]=document.getElementById('chat-avatar').querySelector('img')?.src||""; await setDoc(cref, {participants:[auth.currentUser.uid, currentChatReceiver], names:n, photos:p, lastMessage:txt, lastUpdated:serverTimestamp()}); }
-            else await updateDoc(cref, { lastMessage: txt, lastUpdated: serverTimestamp() });
-        };
+        function loadMessages(cId) { const box = document.getElementById('chat-messages'); box.innerHTML = ""; onSnapshot(query(collection(db, "chats", cId, "messages"), orderBy("createdAt", "asc")), (snap) => { let html = ""; snap.forEach(d => { const m = d.data(); html += `<div class="msg-bubble ${m.senderId === auth.currentUser.uid ? 'msg-me' : 'msg-other'}">${m.text}</div>`; }); box.innerHTML = html; box.scrollTop = box.scrollHeight; }); }
+        window.sendMessage = async () => { const inp = document.getElementById('chat-input'); const txt = inp.value.trim(); if(!txt || !currentChatId) return; inp.value = ""; await addDoc(collection(db, "chats", currentChatId, "messages"), { text: txt, senderId: auth.currentUser.uid, createdAt: serverTimestamp() }); const cref = doc(db, "chats", currentChatId); const csnap = await getDoc(cref); if(!csnap.exists()) { const n={}; n[auth.currentUser.uid]=currentUserData.username; n[currentChatReceiver]=document.getElementById('chat-username').innerText; const p={}; p[auth.currentUser.uid]=currentUserData.photoURL; p[currentChatReceiver]=document.getElementById('chat-avatar').querySelector('img')?.src||""; await setDoc(cref, {participants:[auth.currentUser.uid, currentChatReceiver], names:n, photos:p, lastMessage:txt, lastUpdated:serverTimestamp()}); } else await updateDoc(cref, { lastMessage: txt, lastUpdated: serverTimestamp() }); };
         window.openMyProfile = () => { if(!auth.currentUser) return; renderProfile(currentUserData, true); navigateTo('profile'); };
         window.viewUserProfile = async (uid) => { if(!auth.currentUser) return; if(uid === auth.currentUser.uid) return openMyProfile(); const snap = await getDoc(doc(db, "users", uid)); if(snap.exists()) { renderProfile(snap.data(), false); navigateTo('profile'); } };
-        window.searchUsers = async (term) => {
-            const container = document.getElementById('search-results'); if(!term || term.length < 2) { container.innerHTML = "<div class='text-gray-500 text-center text-sm mt-10'>Tapez un nom...</div>"; return; }
-            const snap = await getDocs(query(collection(db, "users"), where('username', '>=', term), where('username', '<=', term + '\uf8ff'), limit(10)));
-            if(snap.empty) { container.innerHTML = "<div class='text-gray-500 text-center text-sm mt-10'>Aucun utilisateur.</div>"; return; }
-            let html = ""; snap.forEach(doc => { const u = doc.data(); const badge = getBadgeHtml(u.isVerified); html += `<div onclick="viewUserProfile('${u.uid}')" class="flex items-center gap-3 p-3 bg-gray-900 rounded-lg cursor-pointer hover:bg-gray-800"><div class="w-10 h-10">${getAvatarHTML(u.photoURL, "w-full h-full")}</div><div><div class="font-bold flex items-center">@${u.username} ${badge}</div><div class="text-xs text-gray-400">${u.bio || ''}</div></div></div>`; });
-            container.innerHTML = html; lucide.createIcons();
-        };
-        async function renderProfile(data, isMe) {
-            currentProfileUid = data.uid; document.getElementById('profile-handle').textContent = "@" + data.username; document.getElementById('profile-bio').textContent = data.bio || "Pas de bio"; document.getElementById('profile-avatar-container').innerHTML = getAvatarHTML(data.photoURL, "w-full h-full");
-            document.getElementById('profile-badge-container').innerHTML = getBadgeHtml(data.isVerified); // BADGE PROFIL
-            
-            document.getElementById('my-profile-actions').classList.toggle('hidden', !isMe); document.getElementById('other-profile-actions').classList.toggle('hidden', isMe);
-            document.getElementById('profile-followers').innerText = data.followers ? data.followers.length : 0;
-            if(!isMe) { const btn = document.getElementById('btn-follow'); const isF = data.followers?.includes(auth.currentUser.uid); updateFollowButtonUI(btn, isF); }
-            const grid = document.getElementById('profile-videos-grid'); grid.innerHTML = "<div class='col-span-3 text-center text-gray-500'>Chargement...</div>";
-            let likes = 0; const snap = await getDocs(query(collection(db, "videos"), orderBy("createdAt", "desc")));
-            grid.innerHTML = "";
-            snap.forEach(d => {
-                const v = d.data();
-                if(v.userId === data.uid) {
-                    likes += (v.likes || 0);
-                    const delBtn = isMe ? `<div class="absolute top-1 right-1 bg-black/50 p-1 rounded-full cursor-pointer z-10" onclick="event.stopPropagation(); confirmDeleteVideo('${d.id}')"><i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i></div>` : '';
-                    const div = document.createElement('div'); div.className = "bg-gray-800 aspect-[3/4] relative border border-black group"; 
-                    div.innerHTML = `${delBtn}<video src="${getOptimizedVideoUrl(v.url, 300)}" class="w-full h-full object-cover" muted playsinline></video><div class="absolute bottom-1 left-1 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-md"><i data-lucide="play" class="w-3 h-3 fill-white"></i> ${formatCount(v.views)}</div>`;
-                    grid.appendChild(div);
-                }
-            });
-            document.getElementById('profile-likes').innerText = formatCount(likes); lucide.createIcons();
-        }
-        function updateFollowButtonUI(btn, isFollowing) {
-            btn.innerText = isFollowing ? "Abonné" : "S'abonner";
-            btn.className = isFollowing ? "flex-1 bg-gray-200 text-black py-2 rounded text-sm font-semibold" : "flex-1 bg-red-600 text-white py-2 rounded text-sm font-semibold";
-        }
-        window.toggleFollow = async () => {
-            if (!currentProfileUid || !auth.currentUser) return;
-            const tRef = doc(db, "users", currentProfileUid); const mRef = doc(db, "users", auth.currentUser.uid);
-            const snap = await getDoc(tRef); const isF = snap.data().followers?.includes(auth.currentUser.uid);
-            const btn = document.getElementById('btn-follow'); const cnt = document.getElementById('profile-followers');
-            let n = parseInt(cnt.innerText);
-            if (isF) { await updateDoc(tRef, {followers:arrayRemove(auth.currentUser.uid)}); await updateDoc(mRef, {following:arrayRemove(currentProfileUid)}); updateFollowButtonUI(btn, false); cnt.innerText = n-1; }
-            else { await updateDoc(tRef, {followers:arrayUnion(auth.currentUser.uid)}); await updateDoc(mRef, {following:arrayUnion(currentProfileUid)}); updateFollowButtonUI(btn, true); cnt.innerText = n+1; sendNotification(currentProfileUid, "follow", "a commencé à vous suivre"); }
-        };
+        window.searchUsers = async (term) => { const container = document.getElementById('search-results'); if(!term || term.length < 2) { container.innerHTML = "<div class='text-gray-500 text-center text-sm mt-10'>Tapez un nom...</div>"; return; } const snap = await getDocs(query(collection(db, "users"), where('username', '>=', term), where('username', '<=', term + '\uf8ff'), limit(10))); if(snap.empty) { container.innerHTML = "<div class='text-gray-500 text-center text-sm mt-10'>Aucun utilisateur.</div>"; return; } let html = ""; snap.forEach(doc => { const u = doc.data(); const badge = getBadgeHtml(u.isVerified); html += `<div onclick="viewUserProfile('${u.uid}')" class="flex items-center gap-3 p-3 bg-gray-900 rounded-lg cursor-pointer hover:bg-gray-800"><div class="w-10 h-10">${getAvatarHTML(u.photoURL, "w-full h-full")}</div><div><div class="font-bold flex items-center">@${u.username} ${badge}</div><div class="text-xs text-gray-400">${u.bio || ''}</div></div></div>`; }); container.innerHTML = html; lucide.createIcons(); };
+        async function renderProfile(data, isMe) { currentProfileUid = data.uid; document.getElementById('profile-handle').textContent = "@" + data.username; document.getElementById('profile-bio').textContent = data.bio || "Pas de bio"; document.getElementById('profile-avatar-container').innerHTML = getAvatarHTML(data.photoURL, "w-full h-full"); document.getElementById('profile-badge-container').innerHTML = getBadgeHtml(data.isVerified); document.getElementById('my-profile-actions').classList.toggle('hidden', !isMe); document.getElementById('other-profile-actions').classList.toggle('hidden', isMe); document.getElementById('profile-followers').innerText = data.followers ? data.followers.length : 0; if(!isMe) { const btn = document.getElementById('btn-follow'); const isF = data.followers?.includes(auth.currentUser.uid); updateFollowButtonUI(btn, isF); } const grid = document.getElementById('profile-videos-grid'); grid.innerHTML = "<div class='col-span-3 text-center text-gray-500'>Chargement...</div>"; let likes = 0; const snap = await getDocs(query(collection(db, "videos"), orderBy("createdAt", "desc"))); grid.innerHTML = ""; snap.forEach(d => { const v = d.data(); if(v.userId === data.uid) { likes += (v.likes || 0); const delBtn = isMe ? `<div class="absolute top-1 right-1 bg-black/50 p-1 rounded-full cursor-pointer z-10" onclick="event.stopPropagation(); confirmDeleteVideo('${d.id}')"><i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i></div>` : ''; const div = document.createElement('div'); div.className = "bg-gray-800 aspect-[3/4] relative border border-black group"; div.innerHTML = `${delBtn}<video src="${getOptimizedVideoUrl(v.url, 300)}" class="w-full h-full object-cover" muted playsinline></video><div class="absolute bottom-1 left-1 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-md"><i data-lucide="play" class="w-3 h-3 fill-white"></i> ${formatCount(v.views)}</div>`; grid.appendChild(div); } }); document.getElementById('profile-likes').innerText = formatCount(likes); lucide.createIcons(); }
+        function updateFollowButtonUI(btn, isFollowing) { btn.innerText = isFollowing ? "Abonné" : "S'abonner"; btn.className = isFollowing ? "flex-1 bg-gray-200 text-black py-2 rounded text-sm font-semibold" : "flex-1 bg-red-600 text-white py-2 rounded text-sm font-semibold"; }
+        window.toggleFollow = async () => { if (!currentProfileUid || !auth.currentUser) return; const tRef = doc(db, "users", currentProfileUid); const mRef = doc(db, "users", auth.currentUser.uid); const snap = await getDoc(tRef); const isF = snap.data().followers?.includes(auth.currentUser.uid); const btn = document.getElementById('btn-follow'); const cnt = document.getElementById('profile-followers'); let n = parseInt(cnt.innerText); if (isF) { await updateDoc(tRef, {followers:arrayRemove(auth.currentUser.uid)}); await updateDoc(mRef, {following:arrayRemove(currentProfileUid)}); updateFollowButtonUI(btn, false); cnt.innerText = n-1; } else { await updateDoc(tRef, {followers:arrayUnion(auth.currentUser.uid)}); await updateDoc(mRef, {following:arrayUnion(currentProfileUid)}); updateFollowButtonUI(btn, true); cnt.innerText = n+1; sendNotification(currentProfileUid, "follow", "a commencé à vous suivre"); } };
         window.openEditProfile = () => { document.getElementById('edit-username').value = currentUserData.username; document.getElementById('edit-bio').value = currentUserData.bio; document.getElementById('edit-modal').classList.add('open'); };
-        window.saveProfileChanges = async () => {
-            const file = document.getElementById('edit-file-input').files[0]; let url = currentUserData.photoURL; if(file) url = await uploadToCloudinary(file);
-            await updateDoc(doc(db, "users", auth.currentUser.uid), { username: document.getElementById('edit-username').value, bio: document.getElementById('edit-bio').value, photoURL: url });
-            currentUserData = (await getDoc(doc(db, "users", auth.currentUser.uid))).data();
-            if(file) { const vidSnap = await getDocs(query(collection(db, "videos"), where("userId", "==", auth.currentUser.uid))); vidSnap.forEach(async (v) => { await updateDoc(doc(db, "videos", v.id), { userPhotoURL: url }); }); }
-            window.closeModal('edit-modal'); renderProfile(currentUserData, true);
-        };
+        
+        window.saveProfileChanges = async () => { const btn = document.getElementById('btn-save-profile'); const originalText = btn.innerText; btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-black border-t-transparent rounded-full mx-auto"></div>`; btn.disabled = true; try { const file = document.getElementById('edit-file-input').files[0]; let url = currentUserData.photoURL; if(file) url = await uploadToCloudinary(file); await updateDoc(doc(db, "users", auth.currentUser.uid), { username: document.getElementById('edit-username').value, bio: document.getElementById('edit-bio').value, photoURL: url }); currentUserData = (await getDoc(doc(db, "users", auth.currentUser.uid))).data(); if(file) { const vidSnap = await getDocs(query(collection(db, "videos"), where("userId", "==", auth.currentUser.uid))); vidSnap.forEach(async (v) => { await updateDoc(doc(db, "videos", v.id), { userPhotoURL: url }); }); } window.closeModal('edit-modal'); renderProfile(currentUserData, true); } catch(e) { alert("Erreur: " + e.message); } finally { btn.innerHTML = originalText; btn.disabled = false; } };
+
         window.openUploadModal = () => document.getElementById('upload-modal').classList.add('open');
         window.closeModal = (id) => document.getElementById(id).classList.remove('open');
-        window.previewVideoUpload = (i) => { 
-            if(i.files[0]) { 
-                const v=document.getElementById('video-preview'); 
-                v.src=URL.createObjectURL(i.files[0]); 
-                v.classList.remove('hidden'); 
-                v.play(); 
-                const area = document.getElementById('upload-preview-area');
-                // FIX: Check for i or svg
-                const icon = area.querySelector('i') || area.querySelector('svg');
-                if (icon) icon.classList.add('hidden');
-                // Hide text
-                const text = area.querySelector('p');
-                if (text) text.classList.add('hidden');
-            } 
-        };
+        window.previewVideoUpload = (i) => { if(i.files[0]) { const v=document.getElementById('video-preview'); v.src=URL.createObjectURL(i.files[0]); v.classList.remove('hidden'); v.play(); document.getElementById('upload-preview-area').querySelector('i').classList.add('hidden'); document.getElementById('upload-preview-area').querySelector('p').classList.add('hidden'); } };
+        
         window.uploadVideo = async () => {
-            const f = document.getElementById('video-file-input').files[0]; if(!f) return;
-            const btn = document.getElementById('btn-publish'); btn.disabled=true; btn.innerText="Envoi...";
+            const f = document.getElementById('video-file-input').files[0];
+            if(!f) { alert("Veuillez sélectionner une vidéo avant de publier."); return; }
+            
+            const btn = document.getElementById('btn-publish');
+            const originalText = btn.innerText;
+            btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`;
+            btn.disabled = true;
+
             try {
                 const url = await uploadToCloudinary(f);
                 await addDoc(collection(db, "videos"), { userId: auth.currentUser.uid, username: currentUserData.username, userPhotoURL: currentUserData.photoURL||"", url, description: document.getElementById('video-desc').value, likes: 0, likedBy: [], favorites: [], commentCount: 0, views: 0, isVerified: currentUserData.isVerified || false, createdAt: serverTimestamp() });
                 window.closeModal('upload-modal'); navigateTo('feed');
-            } catch(e) { alert(e.message); } finally { btn.disabled=false; btn.innerText="Publier"; }
+            } catch(e) { alert(e.message); } finally { btn.disabled=false; btn.innerHTML=originalText; }
         };
 
         lucide.createIcons();
