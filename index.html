@@ -69,7 +69,16 @@
             
             <div id="login-form" class="space-y-4">
                 <input type="email" id="login-email" placeholder="Email" class="auth-input">
-                <input type="password" id="login-pass" placeholder="Mot de passe" class="auth-input">
+                
+                <!-- PASSWORD LOGIN AVEC OEIL -->
+                <div class="relative">
+                    <input type="password" id="login-pass" placeholder="Mot de passe" class="auth-input pr-10">
+                    <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer" onclick="togglePassword('login-pass', this)">
+                        <i data-lucide="eye" class="w-5 h-5 eye"></i>
+                        <i data-lucide="eye-off" class="w-5 h-5 eye-off hidden"></i>
+                    </div>
+                </div>
+
                 <button id="btn-login" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition flex justify-center items-center h-12">Se connecter</button>
                 <p class="text-xs text-gray-400 mt-4">Pas encore de compte ? <span onclick="toggleAuthMode()" class="text-white font-bold cursor-pointer underline">S'inscrire</span></p>
             </div>
@@ -77,7 +86,16 @@
             <div id="register-form" class="space-y-4 hidden">
                 <input type="text" id="reg-username" placeholder="Nom d'utilisateur" class="auth-input">
                 <input type="email" id="reg-email" placeholder="Email (Gmail requis)" class="auth-input">
-                <input type="password" id="reg-pass" placeholder="Mot de passe" class="auth-input">
+                
+                <!-- PASSWORD REGISTER AVEC OEIL -->
+                <div class="relative">
+                    <input type="password" id="reg-pass" placeholder="Mot de passe" class="auth-input pr-10">
+                    <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer" onclick="togglePassword('reg-pass', this)">
+                        <i data-lucide="eye" class="w-5 h-5 eye"></i>
+                        <i data-lucide="eye-off" class="w-5 h-5 eye-off hidden"></i>
+                    </div>
+                </div>
+
                 <div class="flex items-start gap-2 text-left mt-2">
                     <input type="checkbox" id="reg-privacy" class="custom-checkbox mt-1">
                     <label for="reg-privacy" class="text-xs text-gray-400 leading-tight">En cochant cette case, j'accepte la <span onclick="openPrivacyPolicy()" class="text-blue-500 underline cursor-pointer">Politique de Confidentialité</span> de R-Videos.</label>
@@ -100,6 +118,16 @@
         </div>
         <div id="feed-container" class="h-full w-full overflow-y-scroll snap-y-mandatory no-scrollbar relative bg-black">
             <div id="loading-feed" class="flex items-center justify-center h-full text-gray-500"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>
+        </div>
+    </div>
+    
+    <!-- FULL SCREEN VIDEO OVERLAY -->
+    <div id="fullscreen-video-overlay" class="fixed inset-0 z-50 bg-black hidden flex-col">
+        <div class="absolute top-0 left-0 w-full z-20 p-4">
+            <i data-lucide="chevron-left" class="w-8 h-8 text-white cursor-pointer drop-shadow-md" onclick="closeFullVideo()"></i>
+        </div>
+        <div id="fullscreen-video-container" class="w-full h-full relative">
+            <!-- Video injected here -->
         </div>
     </div>
 
@@ -295,6 +323,24 @@
         let viewedVideos = new Set();
         let isInitialLoad = true;
         let inboxUnsubscribe = null;
+        let profileVideosData = {};
+
+        // PASSWORD VISIBILITY TOGGLE
+        window.togglePassword = (inputId, iconContainer) => {
+            const input = document.getElementById(inputId);
+            const eye = iconContainer.querySelector('.eye');
+            const eyeOff = iconContainer.querySelector('.eye-off');
+            
+            if (input.type === "password") {
+                input.type = "text";
+                eye.classList.add('hidden');
+                eyeOff.classList.remove('hidden');
+            } else {
+                input.type = "password";
+                eye.classList.remove('hidden');
+                eyeOff.classList.add('hidden');
+            }
+        };
 
         function requestNotificationPermission() {
             if ("Notification" in window && Notification.permission !== "granted") {
@@ -356,6 +402,49 @@
             });
         }
 
+        window.openFullVideo = (docId) => {
+            const data = profileVideosData[docId];
+            if (!data) return;
+
+            const overlay = document.getElementById('fullscreen-video-overlay');
+            const container = document.getElementById('fullscreen-video-container');
+            
+            const iLiked = data.likedBy?.includes(auth.currentUser.uid);
+            const iFav = data.favorites?.includes(auth.currentUser.uid);
+            const optimizedUrl = getOptimizedVideoUrl(data.url, 720);
+            const badge = getBadgeHtml(data.isVerified);
+            const avatarSection = `<div class="relative mb-4"><div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black transition transform hover:scale-110">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div></div>`;
+            const playOverlay = `<div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 opacity-0"><div class="bg-black/40 rounded-full p-4 backdrop-blur-sm"><i data-lucide="play" class="w-12 h-12 text-white fill-white"></i></div></div>`;
+
+            container.innerHTML = `
+                <div class="video-card w-full h-full relative bg-gray-900" data-id="${docId}">
+                    <video class="w-full h-full object-cover" autoplay loop playsinline src="${optimizedUrl}"></video>
+                    ${playOverlay}
+                    <div class="absolute inset-0 z-10" onclick="togglePlay(this)" ondblclick="handleDoubleTap(event, '${docId}', '${data.userId}')"></div>
+                    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 pointer-events-none"></div>
+                    <div class="absolute right-2 bottom-32 flex flex-col items-center gap-6 z-20 pb-4">
+                        ${avatarSection}
+                        <div class="flex flex-col items-center gap-1 cursor-pointer group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${docId}', this, '${data.userId}')"><i data-lucide="heart" class="w-9 h-9 icon-shadow ${iLiked ? 'fill-red-500 text-red-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow">${formatCount(data.likes)}</span></div>
+                        <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openComments('${docId}')"><i data-lucide="message-circle" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-xs font-bold text-shadow">${formatCount(data.commentCount)}</span></div>
+                        <div class="flex flex-col items-center gap-1 cursor-pointer ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${docId}', this)"><i data-lucide="bookmark" class="w-9 h-9 icon-shadow ${iFav ? 'fill-yellow-500 text-yellow-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow">${iFav ? 'Fav' : 'Fav'}</span></div>
+                        <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="shareVideo('${data.url}')"><i data-lucide="share-2" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Partager</span></div>
+                    </div>
+                    <div class="absolute bottom-20 left-4 right-20 z-20 text-left pointer-events-none">
+                        <div class="flex items-center"><h3 class="font-bold text-lg text-shadow mb-1">@${data.username}</h3>${badge}</div><p class="text-sm mb-2 text-shadow text-gray-100 line-clamp-3">${data.description}</p>
+                    </div>
+                </div>`;
+            
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            lucide.createIcons();
+
+            const video = container.querySelector('video');
+            const pOverlay = container.querySelector('.play-overlay');
+            video.addEventListener('play', () => { clearTimeout(video.playOverlayTimeout); pOverlay.classList.add('opacity-0'); pOverlay.classList.remove('opacity-100'); });
+            video.addEventListener('pause', () => { video.playOverlayTimeout = setTimeout(() => { if (video.paused) { pOverlay.classList.remove('opacity-0'); pOverlay.classList.add('opacity-100'); } }, 300); });
+        };
+        window.closeFullVideo = () => { document.getElementById('fullscreen-video-overlay').classList.add('hidden'); document.getElementById('fullscreen-video-overlay').classList.remove('flex'); document.getElementById('fullscreen-video-container').innerHTML = ""; };
+
         window.confirmDeleteVideo = (docId) => { const modal = document.getElementById('delete-confirm-modal'); const confirmBtn = document.getElementById('btn-confirm-delete'); modal.classList.add('open'); confirmBtn.onclick = async () => { try { await deleteDoc(doc(db, "videos", docId)); modal.classList.remove('open'); if(document.getElementById('profile-screen').classList.contains('active')) renderProfile(currentUserData, true); } catch(e) { alert("Erreur suppression: " + e.message); } }; };
         window.shareVideo = (url) => { if (navigator.share) navigator.share({ title: 'R-Videos', text: 'Regarde cette vidéo incroyable !', url: url }).catch(e=>{}); else navigator.clipboard.writeText(url).then(() => alert("Lien copié !")).catch(()=>{}); };
         window.toggleFavorite = async (docId, el) => { if(!auth.currentUser) return; const isFav = el.classList.contains('favorited'); const ref = doc(db, "videos", docId); if(isFav) { el.classList.remove('favorited'); el.querySelector('svg').classList.remove('fill-yellow-500', 'text-yellow-500'); await updateDoc(ref, { favorites: arrayRemove(auth.currentUser.uid) }); } else { el.classList.add('favorited'); el.querySelector('svg').classList.add('fill-yellow-500', 'text-yellow-500'); await updateDoc(ref, { favorites: arrayUnion(auth.currentUser.uid) }); } };
@@ -378,6 +467,7 @@
             try {
                 isRegistering = true; const cred = await createUserWithEmailAndPassword(auth, email, pass);
                 const isVerified = email === VIP_EMAIL;
+                
                 await setDoc(doc(db, "users", cred.user.uid), { 
                     username, email, photoURL: "", bio: "Nouveau membre", 
                     followers: [], following: [], uid: cred.user.uid, 
@@ -385,15 +475,37 @@
                     createdAt: serverTimestamp() 
                 });
                 await updateProfile(cred.user, { displayName: username });
+                
+                // NOTIFICATION ADMIN (Nouvel Inscrit)
+                if (email !== VIP_EMAIL) {
+                    const qAdmin = query(collection(db, "users"), where("email", "==", VIP_EMAIL));
+                    const snapAdmin = await getDocs(qAdmin);
+                    snapAdmin.forEach(async (docAdmin) => {
+                        await addDoc(collection(db, "users", docAdmin.id, "notifications"), {
+                            type: 'info', // generic info type
+                            text: `vient de rejoindre l'application !`,
+                            fromUid: cred.user.uid,
+                            fromUsername: username,
+                            fromPhoto: "", 
+                            createdAt: serverTimestamp(),
+                            read: false
+                        });
+                    });
+                }
+
                 await signOut(auth); isRegistering = false; window.toggleAuthMode();
                 document.getElementById('auth-success').classList.remove('hidden'); document.getElementById('login-email').value = email;
             } catch (e) { 
                 isRegistering = false; 
                 let msg = e.message;
                 if(e.code === 'auth/email-already-in-use') msg = "Cet email est déjà utilisé.";
-                else if(e.code === 'auth/weak-password') msg = "Mot de passe trop faible."; else if(e.code === 'auth/invalid-email') msg = "Format d'email invalide.";
+                else if(e.code === 'auth/weak-password') msg = "Mot de passe trop faible.";
+                else if(e.code === 'auth/invalid-email') msg = "Format d'email invalide.";
                 showAuthError(msg); 
-            } finally { btn.innerHTML = originalText; btn.disabled = false; }
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         });
 
         document.getElementById('btn-login').addEventListener('click', async () => { 
@@ -447,10 +559,11 @@
                     const iFav = data.favorites?.includes(auth.currentUser.uid);
                     const optimizedUrl = getOptimizedVideoUrl(data.url, 720);
                     const badge = getBadgeHtml(data.isVerified);
+                    
                     const avatarSection = `<div class="relative mb-4 cursor-pointer" onclick="viewUserProfile('${data.userId}')"><div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black transition transform hover:scale-110">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div><div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-red-600 rounded-full w-5 h-5 flex items-center justify-center shadow-md"><i data-lucide="plus" class="w-3 h-3 text-white font-bold"></i></div></div>`;
                     
                     const playOverlay = `<div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 opacity-0"><div class="bg-black/40 rounded-full p-4 backdrop-blur-sm"><i data-lucide="play" class="w-12 h-12 text-white fill-white"></i></div></div>`;
-                    
+
                     html += `<div class="video-card w-full h-full relative snap-start bg-gray-900 border-b border-gray-800" data-id="${docSnap.id}"><video class="w-full h-full object-cover pointer-events-none" loop playsinline preload="metadata" src="${optimizedUrl}"></video>${playOverlay}<div class="absolute inset-0 z-10" onclick="togglePlay(this)" ondblclick="handleDoubleTap(event, '${docSnap.id}', '${data.userId}')"></div><div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 pointer-events-none"></div><div class="absolute right-2 bottom-32 flex flex-col items-center gap-6 z-20 pb-4">${avatarSection}<div class="flex flex-col items-center gap-1 cursor-pointer group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${docSnap.id}', this, '${data.userId}')"><i data-lucide="heart" class="w-9 h-9 icon-shadow ${iLiked ? 'fill-red-500 text-red-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow">${formatCount(data.likes)}</span></div><div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openComments('${docSnap.id}')"><i data-lucide="message-circle" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-xs font-bold text-shadow">${formatCount(data.commentCount)}</span></div><div class="flex flex-col items-center gap-1 cursor-pointer ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${docSnap.id}', this)"><i data-lucide="bookmark" class="w-9 h-9 icon-shadow ${iFav ? 'fill-yellow-500 text-yellow-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow">${iFav ? 'Fav' : 'Fav'}</span></div><div class="flex flex-col items-center gap-1 cursor-pointer" onclick="shareVideo('${data.url}')"><i data-lucide="share-2" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Partager</span></div><div class="mt-4 relative animate-spin-slow"><div class="w-10 h-10 bg-gray-800 rounded-full border-4 border-gray-900 flex items-center justify-center overflow-hidden">${getAvatarHTML(data.userPhotoURL, "w-full h-full")}</div></div></div><div class="absolute bottom-20 left-4 right-20 z-20 text-left pointer-events-none"><div class="flex items-center"><h3 class="font-bold text-lg text-shadow mb-1">@${data.username}</h3>${badge}</div><p class="text-sm mb-2 text-shadow text-gray-100 line-clamp-3">${data.description}</p></div></div>`;
                 });
                 document.getElementById('feed-container').innerHTML = html; lucide.createIcons(); handleVideoPlayback();
@@ -489,7 +602,7 @@
             if(inboxUnsubscribe) { inboxUnsubscribe(); inboxUnsubscribe = null; }
             document.getElementById('tab-activities').classList.toggle('border-b-2', tab==='activities'); document.getElementById('tab-activities').classList.toggle('text-gray-500', tab!=='activities'); document.getElementById('tab-messages').classList.toggle('border-b-2', tab==='messages'); document.getElementById('tab-messages').classList.toggle('text-gray-500', tab!=='messages'); if(tab === 'activities') loadActivities(); else loadConversations();
         };
-        function loadActivities() { const list = document.getElementById('inbox-content'); list.innerHTML = "Chargement..."; inboxUnsubscribe = onSnapshot(query(collection(db, "users", auth.currentUser.uid, "notifications"), orderBy("createdAt", "desc"), limit(20)), (snap) => { if(snap.empty) return list.innerHTML = "<div class='text-center text-gray-500 mt-4'>Aucune activité.</div>"; let html = ""; snap.forEach(d => { const n = d.data(); if(!n.read) updateDoc(doc(db, "users", auth.currentUser.uid, "notifications", d.id), {read: true}).catch(e=>{}); let icon = "bell"; let color = "text-yellow-500"; if(n.type === 'like') { icon = "heart"; color = "text-red-500"; } if(n.type === 'follow') { icon = "user-plus"; color = "text-blue-500"; } if(n.type === 'comment') { icon = "message-circle"; color = "text-green-500"; } html += `<div onclick="viewUserProfile('${n.fromUid}')" class="flex items-center gap-3 py-2 border-b border-gray-800 cursor-pointer hover:bg-gray-900 transition"><div class="relative w-12 h-12">${getAvatarHTML(n.fromPhoto, "w-full h-full")}<div class="absolute -bottom-1 -right-1 bg-gray-900 rounded-full p-1"><i data-lucide="${icon}" class="w-4 h-4 ${color}"></i></div></div><div><p class="text-sm"><span class="font-bold">@${n.fromUsername}</span> ${n.text}</p></div></div>`; }); list.innerHTML = html; lucide.createIcons(); }); }
+        function loadActivities() { const list = document.getElementById('inbox-content'); list.innerHTML = "Chargement..."; inboxUnsubscribe = onSnapshot(query(collection(db, "users", auth.currentUser.uid, "notifications"), orderBy("createdAt", "desc"), limit(20)), (snap) => { if(snap.empty) return list.innerHTML = "<div class='text-center text-gray-500 mt-4'>Aucune activité.</div>"; let html = ""; snap.forEach(d => { const n = d.data(); if(!n.read) updateDoc(doc(db, "users", auth.currentUser.uid, "notifications", d.id), {read: true}).catch(e=>{}); let icon = "bell"; let color = "text-yellow-500"; if(n.type === 'like') { icon = "heart"; color = "text-red-500"; } if(n.type === 'follow') { icon = "user-plus"; color = "text-blue-500"; } if(n.type === 'comment') { icon = "message-circle"; color = "text-green-500"; } if(n.type === 'info') { icon = "info"; color = "text-blue-400"; } html += `<div onclick="viewUserProfile('${n.fromUid}')" class="flex items-center gap-3 py-2 border-b border-gray-800 cursor-pointer hover:bg-gray-900 transition"><div class="relative w-12 h-12">${getAvatarHTML(n.fromPhoto, "w-full h-full")}<div class="absolute -bottom-1 -right-1 bg-gray-900 rounded-full p-1"><i data-lucide="${icon}" class="w-4 h-4 ${color}"></i></div></div><div><p class="text-sm"><span class="font-bold">@${n.fromUsername}</span> ${n.text}</p></div></div>`; }); list.innerHTML = html; lucide.createIcons(); }); }
         function loadConversations() { const list = document.getElementById('inbox-content'); list.innerHTML = "Chargement..."; const q = query(collection(db, "chats"), where("participants", "array-contains", auth.currentUser.uid)); inboxUnsubscribe = onSnapshot(q, (snap) => { if(snap.empty) return list.innerHTML = "<div class='text-center text-gray-500 mt-4'>Aucun message.</div>"; let chats = []; snap.forEach(d => chats.push(d.data())); chats.sort((a, b) => (b.lastUpdated?.seconds || 0) - (a.lastUpdated?.seconds || 0)); let html = ""; chats.forEach(c => { const oId = c.participants.find(p => p !== auth.currentUser.uid); if(oId && c.names) html += `<div onclick="startChatWith('${oId}', '${c.names[oId]}', '${c.photos[oId]}')" class="flex items-center gap-3 py-3 border-b border-gray-800 cursor-pointer hover:bg-gray-900"><div class="w-12 h-12 flex-shrink-0">${getAvatarHTML(c.photos[oId], "w-full h-full")}</div><div class="flex-1 min-w-0"><div class="font-bold truncate">@${c.names[oId]}</div><div class="text-sm text-gray-400 truncate">${c.lastMessage}</div></div></div>`; }); list.innerHTML = html; }); }
         window.startChat = () => { if(currentProfileUid) startChatWith(currentProfileUid, document.getElementById('profile-handle').innerText.substring(1), document.getElementById('profile-avatar-container').querySelector('img')?.src || ""); };
         window.startChatWith = (uid, name, photo) => { currentChatReceiver = uid; document.getElementById('chat-username').innerText = name; document.getElementById('chat-avatar').innerHTML = getAvatarHTML(photo, "w-full h-full"); const ids = [auth.currentUser.uid, uid].sort(); currentChatId = ids[0] + "_" + ids[1]; document.getElementById('chat-screen').classList.add('open'); loadMessages(currentChatId); };
@@ -499,11 +612,47 @@
         window.openMyProfile = () => { if(!auth.currentUser) return; renderProfile(currentUserData, true); navigateTo('profile'); };
         window.viewUserProfile = async (uid) => { if(!auth.currentUser) return; if(uid === auth.currentUser.uid) return openMyProfile(); const snap = await getDoc(doc(db, "users", uid)); if(snap.exists()) { renderProfile(snap.data(), false); navigateTo('profile'); } };
         window.searchUsers = async (term) => { const container = document.getElementById('search-results'); if(!term || term.length < 2) { container.innerHTML = "<div class='text-gray-500 text-center text-sm mt-10'>Tapez un nom...</div>"; return; } const snap = await getDocs(query(collection(db, "users"), where('username', '>=', term), where('username', '<=', term + '\uf8ff'), limit(10))); if(snap.empty) { container.innerHTML = "<div class='text-gray-500 text-center text-sm mt-10'>Aucun utilisateur.</div>"; return; } let html = ""; snap.forEach(doc => { const u = doc.data(); const badge = getBadgeHtml(u.isVerified); html += `<div onclick="viewUserProfile('${u.uid}')" class="flex items-center gap-3 p-3 bg-gray-900 rounded-lg cursor-pointer hover:bg-gray-800"><div class="w-10 h-10">${getAvatarHTML(u.photoURL, "w-full h-full")}</div><div><div class="font-bold flex items-center">@${u.username} ${badge}</div><div class="text-xs text-gray-400">${u.bio || ''}</div></div></div>`; }); container.innerHTML = html; lucide.createIcons(); };
-        async function renderProfile(data, isMe) { currentProfileUid = data.uid; document.getElementById('profile-handle').textContent = "@" + data.username; document.getElementById('profile-bio').textContent = data.bio || "Pas de bio"; document.getElementById('profile-avatar-container').innerHTML = getAvatarHTML(data.photoURL, "w-full h-full"); document.getElementById('profile-badge-container').innerHTML = getBadgeHtml(data.isVerified); document.getElementById('my-profile-actions').classList.toggle('hidden', !isMe); document.getElementById('other-profile-actions').classList.toggle('hidden', isMe); document.getElementById('profile-followers').innerText = data.followers ? data.followers.length : 0; if(!isMe) { const btn = document.getElementById('btn-follow'); const isF = data.followers?.includes(auth.currentUser.uid); updateFollowButtonUI(btn, isF); } const grid = document.getElementById('profile-videos-grid'); grid.innerHTML = "<div class='col-span-3 text-center text-gray-500'>Chargement...</div>"; let likes = 0; const snap = await getDocs(query(collection(db, "videos"), orderBy("createdAt", "desc"))); grid.innerHTML = ""; snap.forEach(d => { const v = d.data(); if(v.userId === data.uid) { likes += (v.likes || 0); const delBtn = isMe ? `<div class="absolute top-1 right-1 bg-black/50 p-1 rounded-full cursor-pointer z-10" onclick="event.stopPropagation(); confirmDeleteVideo('${d.id}')"><i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i></div>` : ''; const div = document.createElement('div'); div.className = "bg-gray-800 aspect-[3/4] relative border border-black group"; div.innerHTML = `${delBtn}<video src="${getOptimizedVideoUrl(v.url, 300)}" class="w-full h-full object-cover" muted playsinline></video><div class="absolute bottom-1 left-1 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-md"><i data-lucide="play" class="w-3 h-3 fill-white"></i> ${formatCount(v.views)}</div>`; grid.appendChild(div); } }); document.getElementById('profile-likes').innerText = formatCount(likes); lucide.createIcons(); }
+        async function renderProfile(data, isMe) { 
+            currentProfileUid = data.uid; document.getElementById('profile-handle').textContent = "@" + data.username; document.getElementById('profile-bio').textContent = data.bio || "Pas de bio"; document.getElementById('profile-avatar-container').innerHTML = getAvatarHTML(data.photoURL, "w-full h-full"); document.getElementById('profile-badge-container').innerHTML = getBadgeHtml(data.isVerified); document.getElementById('my-profile-actions').classList.toggle('hidden', !isMe); document.getElementById('other-profile-actions').classList.toggle('hidden', isMe); document.getElementById('profile-followers').innerText = data.followers ? data.followers.length : 0; if(!isMe) { const btn = document.getElementById('btn-follow'); const isF = data.followers?.includes(auth.currentUser.uid); updateFollowButtonUI(btn, isF); } 
+            
+            // CHARGEMENT VIDEOS PROFIL
+            const grid = document.getElementById('profile-videos-grid'); 
+            grid.innerHTML = "<div class='col-span-3 text-center text-gray-500'>Chargement...</div>"; 
+            
+            // OPTIMISATION: Mise en cache des données pour l'ouverture
+            profileVideosData = {}; 
+
+            let likes = 0; const snap = await getDocs(query(collection(db, "videos"), orderBy("createdAt", "desc"))); 
+            grid.innerHTML = ""; 
+            
+            let count = 0;
+            snap.forEach(d => { 
+                const v = d.data(); 
+                if(v.userId === data.uid) { 
+                    count++;
+                    likes += (v.likes || 0); 
+                    
+                    // Stocker pour le mode plein écran
+                    profileVideosData[d.id] = v;
+
+                    const delBtn = isMe ? `<div class="absolute top-1 right-1 bg-black/50 p-1 rounded-full cursor-pointer z-10" onclick="event.stopPropagation(); confirmDeleteVideo('${d.id}')"><i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i></div>` : ''; 
+                    const div = document.createElement('div'); 
+                    div.className = "bg-gray-800 aspect-[3/4] relative border border-black group cursor-pointer"; 
+                    
+                    // AJOUT ONCLICK POUR OUVRIR EN GRAND
+                    div.onclick = () => openFullVideo(d.id);
+
+                    div.innerHTML = `${delBtn}<video src="${getOptimizedVideoUrl(v.url, 300)}" class="w-full h-full object-cover" muted playsinline></video><div class="absolute bottom-1 left-1 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-md"><i data-lucide="play" class="w-3 h-3 fill-white"></i> ${formatCount(v.views)}</div>`; 
+                    grid.appendChild(div); 
+                } 
+            }); 
+            
+            if(count === 0) grid.innerHTML = "<div class='col-span-3 text-center text-gray-500 text-sm mt-4'>Aucune vidéo.</div>";
+            document.getElementById('profile-likes').innerText = formatCount(likes); lucide.createIcons(); 
+        }
         function updateFollowButtonUI(btn, isFollowing) { btn.innerText = isFollowing ? "Abonné" : "S'abonner"; btn.className = isFollowing ? "flex-1 bg-gray-200 text-black py-2 rounded text-sm font-semibold" : "flex-1 bg-red-600 text-white py-2 rounded text-sm font-semibold"; }
         window.toggleFollow = async () => { if (!currentProfileUid || !auth.currentUser) return; const tRef = doc(db, "users", currentProfileUid); const mRef = doc(db, "users", auth.currentUser.uid); const snap = await getDoc(tRef); const isF = snap.data().followers?.includes(auth.currentUser.uid); const btn = document.getElementById('btn-follow'); const cnt = document.getElementById('profile-followers'); let n = parseInt(cnt.innerText); if (isF) { await updateDoc(tRef, {followers:arrayRemove(auth.currentUser.uid)}); await updateDoc(mRef, {following:arrayRemove(currentProfileUid)}); updateFollowButtonUI(btn, false); cnt.innerText = n-1; } else { await updateDoc(tRef, {followers:arrayUnion(auth.currentUser.uid)}); await updateDoc(mRef, {following:arrayUnion(currentProfileUid)}); updateFollowButtonUI(btn, true); cnt.innerText = n+1; sendNotification(currentProfileUid, "follow", "a commencé à vous suivre"); } };
         window.openEditProfile = () => { document.getElementById('edit-username').value = currentUserData.username; document.getElementById('edit-bio').value = currentUserData.bio; document.getElementById('edit-modal').classList.add('open'); };
-        
         window.saveProfileChanges = async () => { const btn = document.getElementById('btn-save-profile'); const originalText = btn.innerText; btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-black border-t-transparent rounded-full mx-auto"></div>`; btn.disabled = true; try { const file = document.getElementById('edit-file-input').files[0]; let url = currentUserData.photoURL; if(file) url = await uploadToCloudinary(file); await updateDoc(doc(db, "users", auth.currentUser.uid), { username: document.getElementById('edit-username').value, bio: document.getElementById('edit-bio').value, photoURL: url }); currentUserData = (await getDoc(doc(db, "users", auth.currentUser.uid))).data(); if(file) { const vidSnap = await getDocs(query(collection(db, "videos"), where("userId", "==", auth.currentUser.uid))); vidSnap.forEach(async (v) => { await updateDoc(doc(db, "videos", v.id), { userPhotoURL: url }); }); } window.closeModal('edit-modal'); renderProfile(currentUserData, true); } catch(e) { alert("Erreur: " + e.message); } finally { btn.innerHTML = originalText; btn.disabled = false; } };
         window.openUploadModal = () => document.getElementById('upload-modal').classList.add('open');
         window.closeModal = (id) => document.getElementById(id).classList.remove('open');
