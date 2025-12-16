@@ -35,6 +35,11 @@
         .verified-badge { fill: #3b82f6; color: white; display: inline-block; vertical-align: middle; margin-left: 4px; }
         .custom-checkbox { accent-color: #ef4444; width: 16px; height: 16px; cursor: pointer; }
         
+        /* Pull to refresh styles */
+        #ptr-loader { transition: transform 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28); z-index: 9999; }
+        .ptr-icon { transition: transform 0.2s; }
+        .body-content { transition: transform 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28); height: 100%; width: 100%; }
+
         .big-heart { position: absolute; transform: translate(-50%, -50%) scale(0); animation: bigHeartAnim 0.8s ease-out forwards; pointer-events: none; z-index: 50; }
         @keyframes bigHeartAnim {
             0% { transform: translate(-50%, -50%) scale(0) rotate(-15deg); opacity: 1; }
@@ -45,261 +50,271 @@
         }
     </style>
 </head>
-<body class="relative">
+<body class="relative overflow-hidden">
 
-    <!-- CONFIGURATION -->
-    <script>
-        const CLOUDINARY_CLOUD_NAME = "dh68eblab"; 
-        const CLOUDINARY_UPLOAD_PRESET = "uxyhxrib"; 
-        const VIP_EMAIL = "virgulemili@gmail.com"; 
-    </script>
-
-    <!-- AUTH -->
-    <div id="auth-screen" class="screen active justify-center items-center p-8 bg-gradient-to-br from-gray-900 to-black relative">
-        <div class="absolute top-12 w-full text-center">
-            <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-medium">
-                Application créée par <br>
-                <span class="text-gray-400 font-bold">"Le Studio Ralph Nyamè"</span>. 2025
-            </p>
+    <!-- LOADER ACTUALISATION -->
+    <div id="ptr-loader" class="fixed top-0 left-0 w-full flex justify-center pt-4 -translate-y-16 pointer-events-none">
+        <div class="bg-white rounded-full p-2 shadow-xl border border-gray-200">
+            <svg id="ptr-spinner" class="w-6 h-6 text-red-600 animate-spin hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <i id="ptr-arrow" data-lucide="arrow-down" class="w-6 h-6 text-black"></i>
         </div>
-        <div class="w-full max-w-sm text-center mt-10">
-            <h1 class="text-4xl font-black mb-2 text-red-500 tracking-tighter">R-VIDEOS</h1>
-            <p class="text-gray-400 mb-8 text-sm">Réseau Social Vidéo</p>
-            <div id="auth-success" class="hidden mb-4 p-3 bg-green-900/50 border border-green-500 text-green-200 rounded-lg text-sm">Compte créé ! Connectez-vous.</div>
-            
-            <div id="login-form" class="space-y-4">
-                <input type="email" id="login-email" placeholder="Email" class="auth-input">
-                <div class="relative">
-                    <input type="password" id="login-pass" placeholder="Mot de passe" class="auth-input pr-10">
-                    <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer" onclick="togglePassword('login-pass', this)">
-                        <i data-lucide="eye" class="w-5 h-5 eye"></i>
-                        <i data-lucide="eye-off" class="w-5 h-5 eye-off hidden"></i>
+    </div>
+
+    <div id="main-app-container" class="body-content relative">
+        <!-- CONFIGURATION -->
+        <script>
+            const CLOUDINARY_CLOUD_NAME = "dh68eblab"; 
+            const CLOUDINARY_UPLOAD_PRESET = "uxyhxrib"; 
+            const VIP_EMAIL = "virgulemili@gmail.com"; 
+        </script>
+
+        <!-- AUTH -->
+        <div id="auth-screen" class="screen active justify-center items-center p-8 bg-gradient-to-br from-gray-900 to-black relative">
+            <div class="absolute top-12 w-full text-center">
+                <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-medium">
+                    Application créée par <br>
+                    <span class="text-gray-400 font-bold">"Le Studio Ralph Nyamè"</span>. 2025
+                </p>
+            </div>
+            <div class="w-full max-w-sm text-center mt-10">
+                <h1 class="text-4xl font-black mb-2 text-red-500 tracking-tighter">R-VIDEOS</h1>
+                <p class="text-gray-400 mb-8 text-sm">Réseau Social Vidéo</p>
+                <div id="auth-success" class="hidden mb-4 p-3 bg-green-900/50 border border-green-500 text-green-200 rounded-lg text-sm">Compte créé ! Connectez-vous.</div>
+                
+                <div id="login-form" class="space-y-4">
+                    <input type="email" id="login-email" placeholder="Email" class="auth-input">
+                    <div class="relative">
+                        <input type="password" id="login-pass" placeholder="Mot de passe" class="auth-input pr-10">
+                        <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer" onclick="togglePassword('login-pass', this)">
+                            <i data-lucide="eye" class="w-5 h-5 eye"></i>
+                            <i data-lucide="eye-off" class="w-5 h-5 eye-off hidden"></i>
+                        </div>
                     </div>
+                    <button id="btn-login" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition flex justify-center items-center h-12">Se connecter</button>
+                    <p class="text-xs text-gray-400 mt-4">Pas encore de compte ? <span onclick="toggleAuthMode()" class="text-white font-bold cursor-pointer underline">S'inscrire</span></p>
                 </div>
-                <button id="btn-login" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition flex justify-center items-center h-12">Se connecter</button>
-                <p class="text-xs text-gray-400 mt-4">Pas encore de compte ? <span onclick="toggleAuthMode()" class="text-white font-bold cursor-pointer underline">S'inscrire</span></p>
-            </div>
 
-            <div id="register-form" class="space-y-4 hidden">
-                <input type="text" id="reg-username" placeholder="Nom d'utilisateur" class="auth-input">
-                <input type="email" id="reg-email" placeholder="Email (Gmail requis)" class="auth-input">
-                <div class="relative">
-                    <input type="password" id="reg-pass" placeholder="Mot de passe" class="auth-input pr-10">
-                    <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer" onclick="togglePassword('reg-pass', this)">
-                        <i data-lucide="eye" class="w-5 h-5 eye"></i>
-                        <i data-lucide="eye-off" class="w-5 h-5 eye-off hidden"></i>
+                <div id="register-form" class="space-y-4 hidden">
+                    <input type="text" id="reg-username" placeholder="Nom d'utilisateur" class="auth-input">
+                    <input type="email" id="reg-email" placeholder="Email (Gmail requis)" class="auth-input">
+                    <div class="relative">
+                        <input type="password" id="reg-pass" placeholder="Mot de passe" class="auth-input pr-10">
+                        <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer" onclick="togglePassword('reg-pass', this)">
+                            <i data-lucide="eye" class="w-5 h-5 eye"></i>
+                            <i data-lucide="eye-off" class="w-5 h-5 eye-off hidden"></i>
+                        </div>
                     </div>
+                    <div class="flex items-start gap-2 text-left mt-2">
+                        <input type="checkbox" id="reg-privacy" class="custom-checkbox mt-1">
+                        <label for="reg-privacy" class="text-xs text-gray-400 leading-tight">En cochant cette case, j'accepte la <span onclick="openPrivacyPolicy()" class="text-blue-500 underline cursor-pointer">Politique de Confidentialité</span> de R-Videos.</label>
+                    </div>
+                    <button id="btn-register" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 rounded-lg transition mt-2 flex justify-center items-center h-12">Créer mon compte</button>
+                    <p class="text-xs text-gray-400 mt-4">Déjà un compte ? <span onclick="toggleAuthMode()" class="text-white font-bold cursor-pointer underline">Se connecter</span></p>
                 </div>
-                <div class="flex items-start gap-2 text-left mt-2">
-                    <input type="checkbox" id="reg-privacy" class="custom-checkbox mt-1">
-                    <label for="reg-privacy" class="text-xs text-gray-400 leading-tight">En cochant cette case, j'accepte la <span onclick="openPrivacyPolicy()" class="text-blue-500 underline cursor-pointer">Politique de Confidentialité</span> de R-Videos.</label>
+                
+                <p id="auth-error" class="text-red-500 text-sm mt-4 hidden bg-red-900/30 p-2 rounded border border-red-800"></p>
+            </div>
+        </div>
+
+        <!-- FEED -->
+        <div id="feed-screen" class="screen relative">
+            <div class="absolute top-0 left-0 w-full z-20 pt-4 pb-2 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
+                <div class="flex justify-center items-center gap-4 text-base font-semibold pointer-events-auto">
+                    <span id="tab-following" class="text-gray-400 cursor-pointer transition-colors" onclick="switchFeed('following')">Abonnements</span>
+                    <span id="tab-foryou" class="text-white border-b-2 border-white pb-0.5 cursor-pointer shadow-lg transition-colors" onclick="switchFeed('foryou')">Pour toi</span>
                 </div>
-                <button id="btn-register" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 rounded-lg transition mt-2 flex justify-center items-center h-12">Créer mon compte</button>
-                <p class="text-xs text-gray-400 mt-4">Déjà un compte ? <span onclick="toggleAuthMode()" class="text-white font-bold cursor-pointer underline">Se connecter</span></p>
             </div>
-            
-            <p id="auth-error" class="text-red-500 text-sm mt-4 hidden bg-red-900/30 p-2 rounded border border-red-800"></p>
-        </div>
-    </div>
-
-    <!-- FEED -->
-    <div id="feed-screen" class="screen relative">
-        <div class="absolute top-0 left-0 w-full z-20 pt-4 pb-2 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
-            <div class="flex justify-center items-center gap-4 text-base font-semibold pointer-events-auto">
-                <span class="text-gray-400 cursor-pointer">Abonnements</span>
-                <span class="text-white border-b-2 border-white pb-0.5 cursor-pointer shadow-lg">Pour toi</span>
-            </div>
-        </div>
-        <div id="feed-container" class="h-full w-full overflow-y-scroll snap-y-mandatory no-scrollbar relative bg-black">
-            <div id="loading-feed" class="flex items-center justify-center h-full text-gray-500"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>
-        </div>
-    </div>
-    
-    <!-- FULL SCREEN VIDEO OVERLAY -->
-    <div id="fullscreen-video-overlay" class="fixed inset-0 z-50 bg-black hidden flex-col">
-        <div class="absolute top-0 left-0 w-full z-20 p-4">
-            <i data-lucide="chevron-left" class="w-8 h-8 text-white cursor-pointer drop-shadow-md" onclick="closeFullVideo()"></i>
-        </div>
-        <div id="fullscreen-video-container" class="w-full h-full relative"></div>
-    </div>
-
-    <!-- DECOUVRIR -->
-    <div id="discover-screen" class="screen bg-black pt-4 px-4 pb-20">
-        <h2 class="font-bold text-xl mb-4">Découvrir</h2>
-        <div class="relative mb-6">
-            <i data-lucide="search" class="absolute left-3 top-3 text-gray-400 w-5 h-5"></i>
-            <input type="text" id="search-input" placeholder="Rechercher des utilisateurs..." class="w-full bg-gray-900 rounded-lg py-3 pl-10 pr-4 text-white outline-none focus:ring-1 focus:ring-gray-700" oninput="searchUsers(this.value)">
-        </div>
-        <div id="search-results" class="space-y-4 overflow-y-auto h-full pb-20">
-            <div class="text-gray-500 text-center text-sm mt-10">Tapez un nom pour chercher...</div>
-        </div>
-    </div>
-
-    <!-- BOITE (INBOX) -->
-    <div id="inbox-screen" class="screen bg-black pt-4 px-0 pb-20">
-        <h2 class="font-bold text-xl mb-4 px-4">Boîte de réception</h2>
-        <div class="flex border-b border-gray-800 px-4 mb-4">
-            <div onclick="switchInboxTab('activities')" id="tab-activities" class="pb-2 border-b-2 border-white font-semibold mr-6 cursor-pointer">Activités</div>
-            <div onclick="switchInboxTab('messages')" id="tab-messages" class="pb-2 text-gray-500 font-semibold cursor-pointer">Messages</div>
-        </div>
-        <div id="inbox-content" class="px-4 space-y-4 overflow-y-auto h-full pb-20"></div>
-    </div>
-
-    <!-- PROFIL -->
-    <div id="profile-screen" class="screen bg-black pt-10 px-4 overflow-y-auto pb-20">
-        <div class="flex justify-between items-center mb-6">
-            <i data-lucide="chevron-left" class="w-6 h-6 text-white cursor-pointer" onclick="navigateTo('feed')"></i>
-            <h2 class="font-bold text-lg" id="profile-header-name">Profil</h2>
-            <i data-lucide="more-horizontal" class="w-6 h-6 text-white cursor-pointer" onclick="confirmLogout()"></i>
-        </div>
-        <div class="flex flex-col items-center mb-8">
-            <div id="profile-avatar-container" class="w-24 h-24 rounded-full border-2 border-gray-700 flex items-center justify-center mb-4 overflow-hidden bg-gray-800"></div>
-            <div class="flex items-center gap-1 mb-1">
-                <h1 id="profile-handle" class="text-xl font-bold">@utilisateur</h1>
-                <span id="profile-badge-container"></span>
-            </div>
-            <p id="profile-bio" class="text-gray-400 text-sm mb-4 text-center max-w-xs">...</p>
-            <div class="flex gap-6 mt-2 text-center">
-                <div><div class="font-bold text-lg" id="profile-followers">0</div><div class="text-xs text-gray-400">Abonnés</div></div>
-                <div><div class="font-bold text-lg" id="profile-likes">0</div><div class="text-xs text-gray-400">J'aime</div></div>
-            </div>
-            
-            <div id="my-profile-actions" class="flex gap-2 mt-6 w-full px-8 hidden">
-                <button onclick="openEditProfile()" class="flex-1 bg-gray-800 py-2 rounded text-sm font-semibold border border-gray-600">Modifier le profil</button>
-            </div>
-            <div id="other-profile-actions" class="flex gap-2 mt-6 w-full px-8 hidden">
-                <button id="btn-follow" onclick="toggleFollow()" class="flex-1 bg-red-600 text-white py-2 rounded text-sm font-semibold transition-colors">S'abonner</button>
-                <button onclick="startChat()" class="flex-1 bg-gray-800 text-white py-2 rounded text-sm font-semibold border border-gray-600">Message</button>
+            <div id="feed-container" class="h-full w-full overflow-y-scroll snap-y-mandatory no-scrollbar relative bg-black">
+                <div id="loading-feed" class="flex items-center justify-center h-full text-gray-500"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>
             </div>
         </div>
         
-        <!-- TABS PROFIL -->
-        <div class="flex border-b border-gray-800 mb-1">
-            <div id="tab-profile-videos" class="flex-1 py-3 text-center border-b-2 border-white cursor-pointer transition-colors" onclick="switchProfileTab('videos')">
-                <i data-lucide="grid-3x3" class="mx-auto w-5 h-5"></i>
+        <!-- FULL SCREEN VIDEO OVERLAY -->
+        <div id="fullscreen-video-overlay" class="fixed inset-0 z-50 bg-black hidden flex-col">
+            <div class="absolute top-0 left-0 w-full z-20 p-4">
+                <i data-lucide="chevron-left" class="w-8 h-8 text-white cursor-pointer drop-shadow-md" onclick="closeFullVideo()"></i>
             </div>
-            <div id="tab-profile-favs" class="flex-1 py-3 text-center border-b-2 border-transparent text-gray-500 cursor-pointer transition-colors" onclick="switchProfileTab('favs')">
-                <i data-lucide="bookmark" class="mx-auto w-5 h-5"></i>
+            <div id="fullscreen-video-container" class="w-full h-full relative"></div>
+        </div>
+
+        <!-- DECOUVRIR -->
+        <div id="discover-screen" class="screen bg-black pt-4 px-4 pb-20">
+            <h2 class="font-bold text-xl mb-4">Découvrir</h2>
+            <div class="relative mb-6">
+                <i data-lucide="search" class="absolute left-3 top-3 text-gray-400 w-5 h-5"></i>
+                <input type="text" id="search-input" placeholder="Rechercher des utilisateurs..." class="w-full bg-gray-900 rounded-lg py-3 pl-10 pr-4 text-white outline-none focus:ring-1 focus:ring-gray-700" oninput="searchUsers(this.value)">
+            </div>
+            <div id="search-results" class="space-y-4 overflow-y-auto h-full pb-20">
+                <div class="text-gray-500 text-center text-sm mt-10">Tapez un nom pour chercher...</div>
             </div>
         </div>
 
-        <div id="profile-videos-grid" class="grid grid-cols-3 gap-0.5 mt-1"></div>
-    </div>
-
-    <!-- CHAT SCREEN -->
-    <div id="chat-screen" class="full-screen-modal">
-        <div class="flex items-center p-4 border-b border-gray-800 bg-gray-900">
-            <i data-lucide="chevron-left" class="w-6 h-6 cursor-pointer mr-4" onclick="closeChat()"></i>
-            <div class="flex items-center gap-3">
-                <div id="chat-avatar" class="w-8 h-8 rounded-full bg-gray-700 overflow-hidden"></div>
-                <div class="flex items-center gap-1">
-                    <div id="chat-username" class="font-bold">Utilisateur</div>
-                    <span id="chat-badge-container"></span>
-                </div>
+        <!-- BOITE (INBOX) -->
+        <div id="inbox-screen" class="screen bg-black pt-4 px-0 pb-20">
+            <h2 class="font-bold text-xl mb-4 px-4">Boîte de réception</h2>
+            <div class="flex border-b border-gray-800 px-4 mb-4">
+                <div onclick="switchInboxTab('activities')" id="tab-activities" class="pb-2 border-b-2 border-white font-semibold mr-6 cursor-pointer">Activités</div>
+                <div onclick="switchInboxTab('messages')" id="tab-messages" class="pb-2 text-gray-500 font-semibold cursor-pointer">Messages</div>
             </div>
+            <div id="inbox-content" class="px-4 space-y-4 overflow-y-auto h-full pb-20"></div>
         </div>
-        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col bg-black"></div>
-        <div class="p-3 bg-gray-900 flex items-center gap-2">
-            <input type="text" id="chat-input" placeholder="Envoyer..." class="flex-1 bg-gray-800 border-none rounded-full px-4 py-2 text-sm text-white outline-none">
-            <button onclick="sendMessage()" class="bg-red-600 p-2 rounded-full"><i data-lucide="send" class="w-4 h-4 text-white"></i></button>
-        </div>
-    </div>
 
-    <!-- MODALS -->
-    <div id="privacy-modal" class="modal-overlay">
-        <div class="bg-gray-900 w-11/12 max-w-lg p-6 rounded-xl border border-gray-700 max-h-[80vh] flex flex-col">
-            <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
-                <h3 class="text-lg font-bold">Politique de Confidentialité</h3>
-                <i data-lucide="x" class="cursor-pointer" onclick="closeModal('privacy-modal')"></i>
-            </div>
-            <div class="overflow-y-auto text-sm text-gray-300 space-y-4 pr-2">
-                <p class="font-bold text-white">Dernière mise à jour : 2025</p>
-                <p>Bienvenue sur R-Videos. Votre confidentialité est notre priorité.</p>
-                <h4 class="font-bold text-white">1. Informations Collectées</h4>
-                <ul class="list-disc pl-5"><li>Informations de profil (Nom, Email, Photo, Bio).</li><li>Contenu utilisateur (Vidéos, Commentaires, Messages).</li></ul>
-                <h4 class="font-bold text-white">2. Utilisation des Données</h4>
-                <p>Pour fournir et améliorer nos services.</p>
-                <h4 class="font-bold text-white">3. Vos Droits</h4>
-                <p>Vous avez le droit d'accéder à vos données ou de supprimer votre compte.</p>
-            </div>
-            <button onclick="closeModal('privacy-modal')" class="mt-4 w-full bg-gray-800 py-2 rounded text-white font-bold">Fermer</button>
-        </div>
-    </div>
-
-    <div id="edit-modal" class="modal-overlay">
-        <div class="bg-gray-900 w-11/12 max-w-md p-6 rounded-xl border border-gray-700">
-            <h3 class="text-lg font-bold mb-4">Modifier le profil</h3>
-            <label class="block text-xs text-gray-400 mb-1">Photo de profil</label>
-            <input type="file" id="edit-file-input" accept="image/*" class="block w-full text-sm text-gray-400 file:bg-gray-800 file:text-white mb-4"/>
-            <input type="text" id="edit-username" placeholder="Nom d'utilisateur" class="auth-input mb-3">
-            <textarea id="edit-bio" placeholder="Bio" class="auth-input mb-4" rows="3"></textarea>
-            <div class="flex gap-2">
-                <button onclick="closeModal('edit-modal')" class="flex-1 py-2 bg-gray-800 rounded">Annuler</button>
-                <button id="btn-save-profile" onclick="saveProfileChanges()" class="flex-1 py-2 bg-white text-black font-bold rounded flex justify-center items-center">Enregistrer</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="delete-confirm-modal" class="modal-overlay">
-        <div class="bg-gray-900 w-10/12 max-w-sm p-6 rounded-xl border border-gray-700 text-center">
-            <h3 class="text-lg font-bold mb-2 text-white text-red-500">Supprimer la vidéo ?</h3>
-            <p class="text-gray-400 text-sm mb-6">Cette action est irréversible.</p>
-            <div class="flex gap-3">
-                <button onclick="closeModal('delete-confirm-modal')" class="flex-1 py-2 bg-gray-800 text-white rounded font-semibold text-sm">Annuler</button>
-                <button id="btn-confirm-delete" class="flex-1 py-2 bg-red-600 text-white rounded font-semibold text-sm">Supprimer</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="logout-modal" class="modal-overlay">
-        <div class="bg-gray-900 w-10/12 max-w-sm p-6 rounded-xl border border-gray-700 text-center">
-            <h3 class="text-lg font-bold mb-2 text-white">Déconnexion</h3>
-            <div class="flex gap-3">
-                <button onclick="closeModal('logout-modal')" class="flex-1 py-2 bg-gray-800 text-white rounded font-semibold text-sm">Non</button>
-                <button onclick="logout()" class="flex-1 py-2 bg-red-600 text-white rounded font-semibold text-sm">Oui</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="upload-modal" class="modal-overlay">
-        <div class="bg-gray-900 w-full h-full md:h-auto md:w-11/12 max-w-md p-6 md:rounded-xl flex flex-col">
+        <!-- PROFIL -->
+        <div id="profile-screen" class="screen bg-black pt-10 px-4 overflow-y-auto pb-20">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-lg font-bold">Nouvelle Publication</h3>
-                <i data-lucide="x" class="cursor-pointer" onclick="closeModal('upload-modal')"></i>
+                <i data-lucide="chevron-left" class="w-6 h-6 text-white cursor-pointer" onclick="navigateTo('feed')"></i>
+                <h2 class="font-bold text-lg" id="profile-header-name">Profil</h2>
+                <i data-lucide="more-horizontal" class="w-6 h-6 text-white cursor-pointer" onclick="confirmLogout()"></i>
             </div>
-            <div class="flex-1 flex flex-col gap-4">
-                <div class="border-2 border-dashed border-gray-700 rounded-lg h-64 flex flex-col items-center justify-center relative bg-black overflow-hidden" id="upload-preview-area">
-                    <i data-lucide="upload-cloud" class="w-12 h-12 text-gray-500 mb-2"></i>
-                    <p class="text-gray-500 text-sm">Sélectionner une vidéo</p>
-                    <input type="file" id="video-file-input" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="previewVideoUpload(this)">
-                    <video id="video-preview" class="absolute inset-0 w-full h-full object-cover hidden" loop playsinline></video>
+            <div class="flex flex-col items-center mb-8">
+                <div id="profile-avatar-container" class="w-24 h-24 rounded-full border-2 border-gray-700 flex items-center justify-center mb-4 overflow-hidden bg-gray-800"></div>
+                <div class="flex items-center gap-1 mb-1">
+                    <h1 id="profile-handle" class="text-xl font-bold">@utilisateur</h1>
+                    <span id="profile-badge-container"></span>
                 </div>
-                <textarea id="video-desc" placeholder="Décris ta vidéo..." class="auth-input h-24 resize-none"></textarea>
+                <p id="profile-bio" class="text-gray-400 text-sm mb-4 text-center max-w-xs">...</p>
+                <div class="flex gap-6 mt-2 text-center">
+                    <div><div class="font-bold text-lg" id="profile-followers">0</div><div class="text-xs text-gray-400">Abonnés</div></div>
+                    <div><div class="font-bold text-lg" id="profile-likes">0</div><div class="text-xs text-gray-400">J'aime</div></div>
+                </div>
+                
+                <div id="my-profile-actions" class="flex gap-2 mt-6 w-full px-8 hidden">
+                    <button onclick="openEditProfile()" class="flex-1 bg-gray-800 py-2 rounded text-sm font-semibold border border-gray-600">Modifier le profil</button>
+                </div>
+                <div id="other-profile-actions" class="flex gap-2 mt-6 w-full px-8 hidden">
+                    <button id="btn-follow" onclick="toggleFollow()" class="flex-1 bg-red-600 text-white py-2 rounded text-sm font-semibold transition-colors">S'abonner</button>
+                    <button onclick="startChat()" class="flex-1 bg-gray-800 text-white py-2 rounded text-sm font-semibold border border-gray-600">Message</button>
+                </div>
             </div>
-            <div id="upload-status" class="text-xs text-center text-gray-400 h-4"></div>
-            <button onclick="uploadVideo()" id="btn-publish" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg mt-2 flex justify-center items-center">Publier</button>
-        </div>
-    </div>
+            
+            <!-- TABS PROFIL -->
+            <div class="flex border-b border-gray-800 mb-1">
+                <div id="tab-profile-videos" class="flex-1 py-3 text-center border-b-2 border-white cursor-pointer transition-colors" onclick="switchProfileTab('videos')">
+                    <i data-lucide="grid-3x3" class="mx-auto w-5 h-5"></i>
+                </div>
+                <div id="tab-profile-favs" class="flex-1 py-3 text-center border-b-2 border-transparent text-gray-500 cursor-pointer transition-colors" onclick="switchProfileTab('favs')">
+                    <i data-lucide="bookmark" class="mx-auto w-5 h-5"></i>
+                </div>
+            </div>
 
-    <div id="comments-sheet" class="bottom-sheet">
-        <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900 rounded-t-xl">
-            <div class="text-sm font-bold mx-auto">Commentaires</div>
-            <i data-lucide="x" class="w-5 h-5 cursor-pointer absolute right-4" onclick="closeComments()"></i>
+            <div id="profile-videos-grid" class="grid grid-cols-3 gap-0.5 mt-1"></div>
         </div>
-        <div id="comments-list" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
-        <div class="p-3 border-t border-gray-800 bg-black flex items-center gap-2">
-            <input type="text" id="comment-input" placeholder="Ajouter un commentaire..." class="flex-1 bg-gray-900 border-none rounded-full px-4 py-2 text-sm text-white outline-none">
-            <button onclick="sendComment()" class="text-cyan-500 font-bold text-sm px-2">Publier</button>
-        </div>
-    </div>
 
-    <!-- NAVBAR PERSONNALISÉE -->
-    <div id="bottom-nav" class="fixed bottom-0 left-0 w-full bg-black border-t border-gray-800 h-14 z-30 flex justify-around items-center text-white px-2 hidden">
-        <div onclick="navigateTo('feed')" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-100" id="nav-feed"><i data-lucide="home" class="w-6 h-6 fill-white"></i><span class="text-[10px]">Accueil</span></div>
-        <div onclick="navigateTo('discover')" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50" id="nav-discover"><i data-lucide="search" class="w-6 h-6"></i><span class="text-[10px]">Découvrir</span></div>
-        <div onclick="openUploadModal()" class="cursor-pointer hover:scale-105 transition duration-200 flex items-center justify-center"><div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg shadow-white/20"><i data-lucide="plus" class="w-6 h-6 text-black font-bold"></i></div></div>
-        <div onclick="navigateTo('inbox')" class="relative flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50" id="nav-inbox"><div class="relative"><i data-lucide="message-square" class="w-6 h-6"></i><div id="inbox-badge" class="absolute -top-1 -right-2 bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full hidden border border-black min-w-[16px] text-center">0</div></div><span class="text-[10px]">Boîte</span></div>
-        <div onclick="openMyProfile()" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50" id="nav-profile"><i data-lucide="user" class="w-6 h-6"></i><span class="text-[10px]">Profil</span></div>
+        <!-- CHAT SCREEN -->
+        <div id="chat-screen" class="full-screen-modal">
+            <div class="flex items-center p-4 border-b border-gray-800 bg-gray-900">
+                <i data-lucide="chevron-left" class="w-6 h-6 cursor-pointer mr-4" onclick="closeChat()"></i>
+                <div class="flex items-center gap-3">
+                    <div id="chat-avatar" class="w-8 h-8 rounded-full bg-gray-700 overflow-hidden"></div>
+                    <div class="flex items-center gap-1">
+                        <div id="chat-username" class="font-bold">Utilisateur</div>
+                        <span id="chat-badge-container"></span>
+                    </div>
+                </div>
+            </div>
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col bg-black"></div>
+            <div class="p-3 bg-gray-900 flex items-center gap-2">
+                <input type="text" id="chat-input" placeholder="Envoyer..." class="flex-1 bg-gray-800 border-none rounded-full px-4 py-2 text-sm text-white outline-none">
+                <button onclick="sendMessage()" class="bg-red-600 p-2 rounded-full"><i data-lucide="send" class="w-4 h-4 text-white"></i></button>
+            </div>
+        </div>
+
+        <!-- MODALS -->
+        <div id="privacy-modal" class="modal-overlay">
+            <div class="bg-gray-900 w-11/12 max-w-lg p-6 rounded-xl border border-gray-700 max-h-[80vh] flex flex-col">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
+                    <h3 class="text-lg font-bold">Politique de Confidentialité</h3>
+                    <i data-lucide="x" class="cursor-pointer" onclick="closeModal('privacy-modal')"></i>
+                </div>
+                <div class="overflow-y-auto text-sm text-gray-300 space-y-4 pr-2">
+                    <p class="font-bold text-white">Dernière mise à jour : 2025</p>
+                    <p>Bienvenue sur R-Videos. Votre confidentialité est notre priorité.</p>
+                    <h4 class="font-bold text-white">1. Informations Collectées</h4>
+                    <ul class="list-disc pl-5"><li>Informations de profil (Nom, Email, Photo, Bio).</li><li>Contenu utilisateur (Vidéos, Commentaires, Messages).</li></ul>
+                    <h4 class="font-bold text-white">2. Utilisation des Données</h4>
+                    <p>Pour fournir et améliorer nos services.</p>
+                    <h4 class="font-bold text-white">3. Vos Droits</h4>
+                    <p>Vous avez le droit d'accéder à vos données ou de supprimer votre compte.</p>
+                </div>
+                <button onclick="closeModal('privacy-modal')" class="mt-4 w-full bg-gray-800 py-2 rounded text-white font-bold">Fermer</button>
+            </div>
+        </div>
+
+        <div id="edit-modal" class="modal-overlay">
+            <div class="bg-gray-900 w-11/12 max-w-md p-6 rounded-xl border border-gray-700">
+                <h3 class="text-lg font-bold mb-4">Modifier le profil</h3>
+                <label class="block text-xs text-gray-400 mb-1">Photo de profil</label>
+                <input type="file" id="edit-file-input" accept="image/*" class="block w-full text-sm text-gray-400 file:bg-gray-800 file:text-white mb-4"/>
+                <input type="text" id="edit-username" placeholder="Nom d'utilisateur" class="auth-input mb-3">
+                <textarea id="edit-bio" placeholder="Bio" class="auth-input mb-4" rows="3"></textarea>
+                <div class="flex gap-2">
+                    <button onclick="closeModal('edit-modal')" class="flex-1 py-2 bg-gray-800 rounded">Annuler</button>
+                    <button id="btn-save-profile" onclick="saveProfileChanges()" class="flex-1 py-2 bg-white text-black font-bold rounded flex justify-center items-center">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="delete-confirm-modal" class="modal-overlay">
+            <div class="bg-gray-900 w-10/12 max-w-sm p-6 rounded-xl border border-gray-700 text-center">
+                <h3 class="text-lg font-bold mb-2 text-white text-red-500">Supprimer la vidéo ?</h3>
+                <p class="text-gray-400 text-sm mb-6">Cette action est irréversible.</p>
+                <div class="flex gap-3">
+                    <button onclick="closeModal('delete-confirm-modal')" class="flex-1 py-2 bg-gray-800 text-white rounded font-semibold text-sm">Annuler</button>
+                    <button id="btn-confirm-delete" class="flex-1 py-2 bg-red-600 text-white rounded font-semibold text-sm">Supprimer</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="logout-modal" class="modal-overlay">
+            <div class="bg-gray-900 w-10/12 max-w-sm p-6 rounded-xl border border-gray-700 text-center">
+                <h3 class="text-lg font-bold mb-2 text-white">Déconnexion</h3>
+                <div class="flex gap-3">
+                    <button onclick="closeModal('logout-modal')" class="flex-1 py-2 bg-gray-800 text-white rounded font-semibold text-sm">Non</button>
+                    <button onclick="logout()" class="flex-1 py-2 bg-red-600 text-white rounded font-semibold text-sm">Oui</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="upload-modal" class="modal-overlay">
+            <div class="bg-gray-900 w-full h-full md:h-auto md:w-11/12 max-w-md p-6 md:rounded-xl flex flex-col">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold">Nouvelle Publication</h3>
+                    <i data-lucide="x" class="cursor-pointer" onclick="closeModal('upload-modal')"></i>
+                </div>
+                <div class="flex-1 flex flex-col gap-4">
+                    <div class="border-2 border-dashed border-gray-700 rounded-lg h-64 flex flex-col items-center justify-center relative bg-black overflow-hidden" id="upload-preview-area">
+                        <i data-lucide="upload-cloud" class="w-12 h-12 text-gray-500 mb-2"></i>
+                        <p class="text-gray-500 text-sm">Sélectionner une vidéo</p>
+                        <input type="file" id="video-file-input" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="previewVideoUpload(this)">
+                        <video id="video-preview" class="absolute inset-0 w-full h-full object-cover hidden" loop playsinline></video>
+                    </div>
+                    <textarea id="video-desc" placeholder="Décris ta vidéo..." class="auth-input h-24 resize-none"></textarea>
+                </div>
+                <div id="upload-status" class="text-xs text-center text-gray-400 h-4"></div>
+                <button onclick="uploadVideo()" id="btn-publish" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg mt-2 flex justify-center items-center">Publier</button>
+            </div>
+        </div>
+
+        <div id="comments-sheet" class="bottom-sheet">
+            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900 rounded-t-xl">
+                <div class="text-sm font-bold mx-auto">Commentaires</div>
+                <i data-lucide="x" class="w-5 h-5 cursor-pointer absolute right-4" onclick="closeComments()"></i>
+            </div>
+            <div id="comments-list" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+            <div class="p-3 border-t border-gray-800 bg-black flex items-center gap-2">
+                <input type="text" id="comment-input" placeholder="Ajouter un commentaire..." class="flex-1 bg-gray-900 border-none rounded-full px-4 py-2 text-sm text-white outline-none">
+                <button onclick="sendComment()" class="text-cyan-500 font-bold text-sm px-2">Publier</button>
+            </div>
+        </div>
+
+        <!-- NAVBAR PERSONNALISÉE -->
+        <div id="bottom-nav" class="fixed bottom-0 left-0 w-full bg-black border-t border-gray-800 h-14 z-30 flex justify-around items-center text-white px-2 hidden">
+            <div onclick="navigateTo('feed')" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-100" id="nav-feed"><i data-lucide="home" class="w-6 h-6 fill-white"></i><span class="text-[10px]">Accueil</span></div>
+            <div onclick="navigateTo('discover')" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50" id="nav-discover"><i data-lucide="search" class="w-6 h-6"></i><span class="text-[10px]">Découvrir</span></div>
+            <div onclick="openUploadModal()" class="cursor-pointer hover:scale-105 transition duration-200 flex items-center justify-center"><div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg shadow-white/20"><i data-lucide="plus" class="w-6 h-6 text-black font-bold"></i></div></div>
+            <div onclick="navigateTo('inbox')" class="relative flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50" id="nav-inbox"><div class="relative"><i data-lucide="message-square" class="w-6 h-6"></i><div id="inbox-badge" class="absolute -top-1 -right-2 bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full hidden border border-black min-w-[16px] text-center">0</div></div><span class="text-[10px]">Boîte</span></div>
+            <div onclick="openMyProfile()" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50" id="nav-profile"><i data-lucide="user" class="w-6 h-6"></i><span class="text-[10px]">Profil</span></div>
+        </div>
     </div>
 
     <script type="module">
@@ -325,6 +340,7 @@
         let inboxUnsubscribe = null;
         let profileVideosData = {};
         let currentProfileTab = 'videos'; 
+        let currentFeedMode = 'foryou'; 
 
         window.togglePassword = (inputId, iconContainer) => {
             const input = document.getElementById(inputId);
@@ -360,6 +376,15 @@
         function getOptimizedVideoUrl(url, width = 720) {
             if (!url) return "";
             if (url.includes("cloudinary.com")) return url.replace('/upload/', `/upload/q_auto,f_auto,w_${width}/`);
+            return url;
+        }
+
+        function getVideoThumbnail(url) {
+            if (!url) return "";
+            if (url.includes("cloudinary.com")) {
+                let newUrl = url.replace('/upload/', '/upload/w_300,q_auto,f_jpg,so_0/');
+                return newUrl.replace(/\.[^/.]+$/, ".jpg"); 
+            }
             return url;
         }
 
@@ -473,11 +498,20 @@
             if (isRegistering) return;
             if (user) {
                 document.getElementById('auth-screen').classList.remove('active'); document.getElementById('bottom-nav').classList.remove('hidden'); document.getElementById('bottom-nav').classList.add('flex');
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if(userDoc.exists()) currentUserData = userDoc.data();
-                if(currentUserData.email === VIP_EMAIL) currentUserData.isVerified = true;
+                // Seulement fetch si currentUserData n'est pas déjà chargé
+                if (!currentUserData) {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if(userDoc.exists()) currentUserData = userDoc.data();
+                    if(currentUserData && currentUserData.email === VIP_EMAIL) currentUserData.isVerified = true;
+                }
                 subscribeToUnreadCount();
-                window.navigateTo('feed'); loadFeed();
+                
+                // Si on n'est pas déjà sur un écran actif (hors auth), on va sur le feed
+                const currentActive = document.querySelector('.screen.active');
+                if(!currentActive || currentActive.id === 'auth-screen') {
+                    window.navigateTo('feed'); 
+                    loadFeed();
+                }
             } else {
                 document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById('auth-screen').classList.add('active'); document.getElementById('bottom-nav').classList.add('hidden'); document.getElementById('bottom-nav').classList.remove('flex'); currentUserData = null; isInitialLoad = true;
             }
@@ -512,14 +546,55 @@
             if (currentProfileUid) viewUserProfile(currentProfileUid);
         };
 
+        window.switchFeed = (mode) => {
+            currentFeedMode = mode;
+            const tabFollowing = document.getElementById('tab-following');
+            const tabForyou = document.getElementById('tab-foryou');
+
+            if (mode === 'following') {
+                tabFollowing.classList.add('text-white', 'border-b-2', 'border-white', 'pb-0.5', 'shadow-lg');
+                tabFollowing.classList.remove('text-gray-400');
+                
+                tabForyou.classList.remove('text-white', 'border-b-2', 'border-white', 'pb-0.5', 'shadow-lg');
+                tabForyou.classList.add('text-gray-400');
+            } else {
+                tabForyou.classList.add('text-white', 'border-b-2', 'border-white', 'pb-0.5', 'shadow-lg');
+                tabForyou.classList.remove('text-gray-400');
+                
+                tabFollowing.classList.remove('text-white', 'border-b-2', 'border-white', 'pb-0.5', 'shadow-lg');
+                tabFollowing.classList.add('text-gray-400');
+            }
+            loadFeed();
+        };
+
         function loadFeed() {
-            onSnapshot(query(collection(db, "videos"), orderBy("createdAt", "desc"), limit(20)), (snapshot) => {
+            onSnapshot(query(collection(db, "videos"), orderBy("createdAt", "desc"), limit(50)), (snapshot) => {
                 if (!auth.currentUser) return;
                 if(videoObserver) videoObserver.disconnect();
-                if(snapshot.empty) return document.getElementById('feed-container').innerHTML = '<div class="h-full flex items-center justify-center text-gray-500">Aucune vidéo.</div>';
+                
+                const container = document.getElementById('feed-container');
+                
+                if (currentFeedMode === 'following') {
+                     // Safety check added
+                     if (!currentUserData || !currentUserData.following || currentUserData.following.length === 0) {
+                        return container.innerHTML = '<div class="h-full flex flex-col items-center justify-center text-gray-500 gap-2"><i data-lucide="user-plus" class="w-10 h-10"></i><p>Abonnez-vous à des créateurs<br>pour voir leurs vidéos ici.</p></div>';
+                     }
+                }
+
+                if(snapshot.empty) return container.innerHTML = '<div class="h-full flex items-center justify-center text-gray-500">Aucune vidéo.</div>';
+                
                 let html = "";
+                let count = 0;
+
                 snapshot.forEach(docSnap => {
                     const data = docSnap.data();
+                    
+                    if (currentFeedMode === 'following') {
+                        // Safety check added
+                        if (!currentUserData || !currentUserData.following || !currentUserData.following.includes(data.userId)) return;
+                    }
+
+                    count++;
                     const iLiked = data.likedBy?.includes(auth.currentUser.uid);
                     const iFav = data.favorites?.includes(auth.currentUser.uid);
                     const optimizedUrl = getOptimizedVideoUrl(data.url, 720);
@@ -563,25 +638,32 @@
                         </div>
                     </div>`;
                 });
-                document.getElementById('feed-container').innerHTML = html; lucide.createIcons(); handleVideoPlayback();
                 
-                document.querySelectorAll('.video-card video').forEach(video => {
-                    const overlay = video.parentElement.querySelector('.play-overlay');
-                    video.addEventListener('play', () => { 
-                        clearTimeout(video.playOverlayTimeout);
-                        overlay.classList.add('opacity-0'); overlay.classList.remove('opacity-100'); 
+                if (count === 0 && currentFeedMode === 'following') {
+                     container.innerHTML = '<div class="h-full flex flex-col items-center justify-center text-gray-500 gap-2"><p>Aucune vidéo récente de vos abonnements.</p></div>';
+                } else {
+                    container.innerHTML = html; 
+                    lucide.createIcons(); 
+                    handleVideoPlayback();
+                    
+                    document.querySelectorAll('.video-card video').forEach(video => {
+                        const overlay = video.parentElement.querySelector('.play-overlay');
+                        video.addEventListener('play', () => { 
+                            clearTimeout(video.playOverlayTimeout);
+                            overlay.classList.add('opacity-0'); overlay.classList.remove('opacity-100'); 
+                        });
+                        video.addEventListener('pause', () => { 
+                            video.playOverlayTimeout = setTimeout(() => {
+                                if (video.paused) { overlay.classList.remove('opacity-0'); overlay.classList.add('opacity-100'); }
+                            }, 300);
+                        });
+                        if (video.paused) { 
+                             video.playOverlayTimeout = setTimeout(() => {
+                                 overlay.classList.remove('opacity-0'); overlay.classList.add('opacity-100'); 
+                             }, 300);
+                        }
                     });
-                    video.addEventListener('pause', () => { 
-                        video.playOverlayTimeout = setTimeout(() => {
-                            if (video.paused) { overlay.classList.remove('opacity-0'); overlay.classList.add('opacity-100'); }
-                        }, 300);
-                    });
-                    if (video.paused) { 
-                         video.playOverlayTimeout = setTimeout(() => {
-                             overlay.classList.remove('opacity-0'); overlay.classList.add('opacity-100'); 
-                         }, 300);
-                    }
-                });
+                }
             });
         }
         
@@ -718,7 +800,8 @@
                     // AJOUT ONCLICK POUR OUVRIR EN GRAND
                     div.onclick = () => openFullVideo(d.id);
 
-                    div.innerHTML = `${delBtn}<video src="${getOptimizedVideoUrl(v.url, 300)}" class="w-full h-full object-cover" muted playsinline></video><div class="absolute bottom-1 left-1 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-md"><i data-lucide="play" class="w-3 h-3 fill-white"></i> ${formatCount(v.views)}</div>`; 
+                    // UTILISATION DE LA MINIATURE IMAGE AU LIEU DE LA VIDEO
+                    div.innerHTML = `${delBtn}<img src="${getVideoThumbnail(v.url)}" class="w-full h-full object-cover"><div class="absolute bottom-1 left-1 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-md"><i data-lucide="play" class="w-3 h-3 fill-white"></i> ${formatCount(v.views)}</div>`; 
                     grid.appendChild(div); 
                 } 
             }); 
@@ -765,6 +848,111 @@
                 navigateTo('feed');
             } catch(e) { alert(e.message); } finally { btn.disabled=false; btn.innerHTML=originalText; }
         };
+
+        // --- NOUVELLE LOGIQUE DE REFRESH DOUX (Sans rechargement de page) ---
+        async function refreshCurrentScreen() {
+            if (!auth.currentUser) return;
+
+            const activeScreenEl = document.querySelector('.screen.active');
+            if (!activeScreenEl) return; // FIX: Safety check
+            const activeScreen = activeScreenEl.id;
+            
+            // 1. Rafraîchir les données de l'utilisateur courant pour être sûr
+            const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
+            if(userDoc.exists()) currentUserData = userDoc.data();
+
+            // 2. Rafraîchir l'écran actif spécifique
+            if (activeScreen === 'feed-screen') {
+                loadFeed();
+            } else if (activeScreen === 'profile-screen') {
+                if (currentProfileUid) viewUserProfile(currentProfileUid);
+            } else if (activeScreen === 'inbox-screen') {
+                const isActivity = document.getElementById('tab-activities').classList.contains('border-b-2');
+                switchInboxTab(isActivity ? 'activities' : 'messages');
+            } else if (activeScreen === 'discover-screen') {
+                const term = document.getElementById('search-input').value;
+                searchUsers(term);
+            }
+        }
+
+        // --- PULL TO REFRESH LOGIC ---
+        (function() {
+            let startY = 0;
+            let currentY = 0;
+            let isPulling = false;
+            const threshold = 120; // Distance to trigger refresh
+            const bodyContent = document.getElementById('main-app-container');
+            const loader = document.getElementById('ptr-loader');
+            const spinner = document.getElementById('ptr-spinner');
+            const arrow = document.getElementById('ptr-arrow');
+
+            document.addEventListener('touchstart', (e) => {
+                const activeScreen = document.querySelector('.screen.active');
+                if (!activeScreen) return;
+                
+                let scrollContainer = activeScreen.querySelector('.overflow-y-scroll, .overflow-y-auto');
+                if (!scrollContainer) scrollContainer = activeScreen;
+
+                // On active le pull seulement si on est tout en haut
+                if (scrollContainer.scrollTop <= 0) {
+                    startY = e.touches[0].clientY;
+                    isPulling = true;
+                } else {
+                    isPulling = false;
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchmove', (e) => {
+                if (!isPulling) return;
+                
+                currentY = e.touches[0].clientY;
+                const diff = currentY - startY;
+
+                // Si on tire vers le bas
+                if (diff > 0) {
+                    const translateVal = Math.min(diff * 0.4, 150); // Resistance
+                    loader.style.transform = `translateY(${translateVal - 64}px)`; 
+                    bodyContent.style.transform = `translateY(${translateVal}px)`;
+                    
+                    if (translateVal > 60) {
+                        arrow.style.transform = "rotate(180deg)";
+                    } else {
+                        arrow.style.transform = "rotate(0deg)";
+                    }
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchend', (e) => {
+                if (!isPulling) return;
+                isPulling = false;
+                
+                const diff = currentY - startY;
+                if (diff > threshold) {
+                    // Trigger Refresh
+                    bodyContent.style.transform = `translateY(80px)`;
+                    loader.style.transform = `translateY(20px)`;
+                    arrow.classList.add('hidden');
+                    spinner.classList.remove('hidden');
+                    
+                    // APPEL DE LA FONCTION DOUCE AU LIEU DE RELOAD
+                    refreshCurrentScreen().then(() => {
+                        setTimeout(() => {
+                            // Reset UI après 1s
+                            bodyContent.style.transform = '';
+                            loader.style.transform = '';
+                            arrow.classList.remove('hidden');
+                            arrow.style.transform = "rotate(0deg)";
+                            spinner.classList.add('hidden');
+                        }, 800);
+                    });
+
+                } else {
+                    // Reset immédiat si pas assez tiré
+                    bodyContent.style.transform = '';
+                    loader.style.transform = '';
+                }
+            });
+        })();
 
         lucide.createIcons();
     </script>
