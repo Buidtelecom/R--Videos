@@ -940,6 +940,7 @@
                 // On active le pull seulement si on est tout en haut
                 if (scrollContainer.scrollTop <= 0) {
                     startY = e.touches[0].clientY;
+                    currentY = startY; // RESET IMPORTANT pour éviter le bug du tap
                     isPulling = true;
                 } else {
                     isPulling = false;
