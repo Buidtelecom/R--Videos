@@ -417,8 +417,8 @@
                 const safeUser = username ? username.replace(/[^a-zA-Z0-9_.-]/g, '') : 'User';
                 // Filigrane: R-VIDEOS (Haut Droite) + @Username (Bas Droite)
                 const watermark = `l_text:Arial_40_bold:R-VIDEOS,g_north_east,x_20,y_20,co_white,o_60/l_text:Arial_25_bold:@${safeUser},g_south_east,x_20,y_20,co_white,o_80`;
-                downloadUrl = url.replace('/upload/', `/upload/${watermark}/`);
-                if (!downloadUrl.endsWith('.mp4')) downloadUrl += '.mp4';
+                // SEPARATE F_MP4 with a slash to apply to RESULT
+                downloadUrl = url.replace('/upload/', `/upload/${watermark}/f_mp4/`);
             }
 
             const toast = document.getElementById('download-toast');
@@ -427,7 +427,11 @@
             try {
                 const response = await fetch(downloadUrl);
                 const blob = await response.blob();
-                const blobUrl = window.URL.createObjectURL(blob);
+                
+                // Force MIME type to video/mp4
+                const newBlob = new Blob([blob], { type: 'video/mp4' });
+                const blobUrl = window.URL.createObjectURL(newBlob);
+                
                 const a = document.createElement('a');
                 a.href = blobUrl;
                 a.download = `R-Videos_${videoId}.mp4`;
@@ -687,10 +691,6 @@
                 let html = ""; let count = 0;
                 snapshot.forEach(docSnap => {
                     const data = docSnap.data();
-                    // FILTER OUT BLOCKED USERS
-                    if (currentUserData.blockedUsers && currentUserData.blockedUsers.includes(data.userId)) return;
-                    if (currentUserData.blockedBy && currentUserData.blockedBy.includes(data.userId)) return;
-
                     if (currentFeedMode === 'following') { if (!currentUserData || !currentUserData.following || !currentUserData.following.includes(data.userId)) return; }
                     count++;
                     const iLiked = data.likedBy?.includes(auth.currentUser.uid);
@@ -714,7 +714,6 @@
 
         window.openComments = async (id) => { 
             currentVideoIdForComments = id; 
-            // FETCH VIDEO TO GET AUTHOR
             const vidSnap = await getDoc(doc(db, "videos", id));
             if (vidSnap.exists()) {
                 currentVideoAuthorId = vidSnap.data().userId;
@@ -733,7 +732,6 @@
                     const c = d.data(); 
                     const isLiked = c.likedBy?.includes(auth.currentUser.uid); 
                     
-                    // DELETE LOGIC: I can delete if I am the comment author OR I am the video author
                     const canDelete = (c.userId === auth.currentUser.uid) || (currentVideoAuthorId === auth.currentUser.uid);
                     
                     html += `<div class="flex gap-3 mb-4 w-full group relative">
@@ -1001,7 +999,13 @@
         window.viewUserProfile = async (uid) => { if(!auth.currentUser) return; if(uid === auth.currentUser.uid) return openMyProfile(); const snap = await getDoc(doc(db, "users", uid)); if(snap.exists()) { renderProfile(snap.data(), false); navigateTo('profile'); } };
         window.searchUsers = async (term) => { const container = document.getElementById('search-results'); if(!term || term.length < 2) { container.innerHTML = "<div class='text-gray-500 text-center text-sm mt-10'>Tapez un nom...</div>"; return; } const snap = await getDocs(query(collection(db, "users"), where('username', '>=', term), where('username', '<=', term + '\uf8ff'), limit(10))); if(snap.empty) { container.innerHTML = "<div class='text-gray-500 text-center text-sm mt-10'>Aucun utilisateur.</div>"; return; } let html = ""; snap.forEach(doc => { const u = doc.data(); const badge = getBadgeHtml(u.isVerified); html += `<div onclick="viewUserProfile('${u.uid}')" class="flex items-center gap-3 p-3 bg-gray-900 rounded-lg cursor-pointer hover:bg-gray-800"><div class="w-10 h-10">${getAvatarHTML(u.photoURL, "w-full h-full")}</div><div><div class="font-bold flex items-center">@${u.username} ${badge}</div><div class="text-xs text-gray-400">${u.bio || ''}</div></div></div>`; }); container.innerHTML = html; lucide.createIcons(); };
         async function renderProfile(data, isMe) { 
-            currentProfileUid = data.uid; document.getElementById('profile-handle').textContent = "@" + data.username; document.getElementById('profile-bio').textContent = data.bio || "Pas de bio"; document.getElementById('profile-avatar-container').innerHTML = getAvatarHTML(data.photoURL, "w-full h-full"); document.getElementById('profile-badge-container').innerHTML = getBadgeHtml(data.isVerified); document.getElementById('my-profile-actions').classList.toggle('hidden', !isMe); document.getElementById('other-profile-actions').classList.toggle('hidden', isMe); document.getElementById('profile-followers').innerText = data.followers ? data.followers.length : 0; 
+            currentProfileUid = data.uid; document.getElementById('profile-handle').textContent = "@" + data.username; document.getElementById('profile-bio').textContent = data.bio || "Pas de bio"; document.getElementById('profile-avatar-container').innerHTML = getAvatarHTML(data.photoURL, "w-full h-full"); 
+            
+            // CORRECTION: Check email explicitly for badge rendering on profile
+            const isCertif = data.isVerified || (data.email === VIP_EMAIL);
+            document.getElementById('profile-badge-container').innerHTML = getBadgeHtml(isCertif); 
+            
+            document.getElementById('my-profile-actions').classList.toggle('hidden', !isMe); document.getElementById('other-profile-actions').classList.toggle('hidden', isMe); document.getElementById('profile-followers').innerText = data.followers ? data.followers.length : 0; 
             
             // BLOCK BUTTON UI
             if(!isMe) { 
