@@ -721,7 +721,8 @@
                 container.innerHTML = '<div id="loading-feed" class="flex items-center justify-center h-full text-gray-500"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>';
             }
 
-            const q = query(collection(db, "videos"), orderBy("createdAt", "desc"), limit(50));
+            // REDUCTION DE LA LIMITE POUR PERFORMANCE
+            const q = query(collection(db, "videos"), orderBy("createdAt", "desc"), limit(10));
             
             window.feedUnsubscribe = onSnapshot(q, (snapshot) => {
                 if (!auth.currentUser) return;
