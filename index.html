@@ -52,6 +52,9 @@
             50% { transform: translate(-50%, -50%) scale(1.2) rotate(0deg); opacity: 1; }
             100% { transform: translate(-50%, -50%) scale(0) rotate(0deg); opacity: 0; }
         }
+        
+        /* Trim controls */
+        .trim-input { @apply bg-gray-800 text-white border border-gray-600 rounded px-2 py-1 text-xs w-20 text-center; }
     </style>
 </head>
 <body class="relative overflow-hidden">
@@ -303,6 +306,30 @@
                         <p class="text-gray-500 text-sm">Sélectionner une vidéo</p>
                         <input type="file" id="video-file-input" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="previewVideoUpload(this)">
                         <video id="video-preview" class="absolute inset-0 w-full h-full object-cover hidden" loop playsinline></video>
+                        
+                        <!-- CONTROLES MODIFICATION -->
+                        <div id="video-controls-overlay" class="absolute bottom-2 left-0 w-full px-4 hidden flex-col gap-2 z-20">
+                            <div class="flex justify-between items-center mb-1">
+                                <button onclick="changeVideoFile()" class="bg-gray-800/80 hover:bg-gray-700 text-white text-xs px-3 py-1.5 rounded flex items-center gap-1 border border-gray-600">
+                                    <i data-lucide="refresh-cw" class="w-3 h-3"></i> Changer
+                                </button>
+                                <button onclick="deleteVideoFile()" class="bg-red-900/80 hover:bg-red-800 text-red-200 text-xs px-3 py-1.5 rounded flex items-center gap-1 border border-red-800">
+                                    <i data-lucide="trash-2" class="w-3 h-3"></i> Supprimer
+                                </button>
+                            </div>
+                            <!-- TRIM CONTROLS -->
+                            <div class="bg-black/70 p-2 rounded-lg border border-gray-700 backdrop-blur-sm">
+                                <div class="text-[10px] text-gray-400 mb-1 flex justify-between">
+                                    <span>Couper (< 120s)</span>
+                                    <span id="trim-duration-display">0s</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" id="trim-start" class="bg-gray-800 text-white border border-gray-600 rounded px-2 py-1 text-xs w-20 text-center outline-none" placeholder="Début (s)" min="0" onchange="updateTrimPreview()">
+                                    <span class="text-gray-500 text-xs">-</span>
+                                    <input type="number" id="trim-end" class="bg-gray-800 text-white border border-gray-600 rounded px-2 py-1 text-xs w-20 text-center outline-none" placeholder="Fin (s)" min="0" onchange="updateTrimPreview()">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <textarea id="video-desc" placeholder="Décris ta vidéo..." class="auth-input h-24 resize-none"></textarea>
                 </div>
@@ -334,9 +361,9 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, deleteUser } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs, onSnapshot, query, orderBy, serverTimestamp, updateDoc, limit, arrayUnion, arrayRemove, increment, where, deleteDoc, writeBatch, startAfter } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, deleteUser } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs, onSnapshot, query, orderBy, serverTimestamp, updateDoc, limit, arrayUnion, arrayRemove, increment, where, deleteDoc, writeBatch, startAfter } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCfiExPZwsF53-Ix3cCeIa3tq1MJ5359RU", authDomain: "nanofinance-9192a.firebaseapp.com", projectId: "nanofinance-9192a", storageBucket: "nanofinance-9192a.firebasestorage.app", messagingSenderId: "376434082116", appId: "1:376434082116:web:838ef702670608bc959711", measurementId: "G-9455DCWCNL" };
         const app = initializeApp(firebaseConfig);
@@ -366,7 +393,8 @@
         let feedUnsubscribes = [];
         let lastVisibleDoc = null;
         let isFetchingMore = false;
-        const BATCH_SIZE = 10; // Load 10 videos at a time for economy
+        let isFirstLoad = true;
+        const BATCH_SIZE = 40; 
 
         // --- XSS HELPER ---
         function escapeHtml(text) {
@@ -424,9 +452,16 @@
             return num;
         }
 
-        function getOptimizedVideoUrl(url, width = 720) {
+        function getOptimizedVideoUrl(url, width = 720, trimStart = 0, trimEnd = 0) {
             if (!url) return "";
-            if (url.includes("cloudinary.com")) return url.replace('/upload/', `/upload/q_auto,f_auto,w_${width}/`);
+            if (url.includes("cloudinary.com")) {
+                let transformation = `q_auto,f_auto,w_${width}`;
+                if (trimStart > 0 || (trimEnd > 0 && trimEnd < 9999)) {
+                    transformation += `,so_${trimStart}`;
+                    if (trimEnd > 0) transformation += `,eo_${trimEnd}`;
+                }
+                return url.replace('/upload/', `/upload/${transformation}/`);
+            }
             return url;
         }
 
@@ -702,36 +737,29 @@
             loadFeed();
         };
 
-        window.handleRewatch = async (docId, authorId) => {
+        // --- UPDATED BUMP LOGIC (Watch Time > 10s OR Rewatch) ---
+        window.handleBump = async (docId, authorId) => {
             if (!auth.currentUser) return;
-            if (auth.currentUser.uid === authorId) return; // Ne pas compter ses propres rewatchs comme likes +11
-
-            // Update likes + 11
             const ref = doc(db, "videos", docId);
-            await updateDoc(ref, { likes: increment(11) }).catch(e => console.log(e));
-
-            // Send notification
-            sendNotification(authorId, "rewatch", "vient de rewach votre vidéo");
+            await updateDoc(ref, { createdAt: serverTimestamp() }).catch(e => console.log(e));
         };
 
         // --- INFINITE SCROLL LOGIC ---
         function loadFeed() {
-            // Reset everything
             const container = document.getElementById('feed-container');
+            
             feedUnsubscribes.forEach(unsub => unsub());
             feedUnsubscribes = [];
             lastVisibleDoc = null;
             isFetchingMore = false;
+            isFirstLoad = true; // Reset first load flag
             
             container.innerHTML = '<div id="loading-feed" class="flex items-center justify-center h-full text-gray-500"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>';
             
-            // Initial load
             subscribeToFeed(null);
 
-            // Scroll Listener for Infinite Scroll
             container.onscroll = () => {
                 const { scrollTop, scrollHeight, clientHeight } = container;
-                // If close to bottom (200px buffer)
                 if (scrollTop + clientHeight >= scrollHeight - 200) {
                     subscribeToFeed(lastVisibleDoc);
                 }
@@ -741,12 +769,10 @@
         function subscribeToFeed(startAfterDoc) {
             if (!auth.currentUser || isFetchingMore) return;
             
-            // If it's a pagination call and we have no more docs to load (flag needed? For now we rely on snapshot not firing empty)
-            // Ideally we'd have a 'hasMore' flag, but for simple snapshot logic:
-            
             isFetchingMore = true;
             const container = document.getElementById('feed-container');
 
+            // --- ALGORITHME DE TRI : PAR DATE DE CRÉATION (Newest First) ---
             let q = query(collection(db, "videos"), orderBy("createdAt", "desc"), limit(BATCH_SIZE));
             
             if (startAfterDoc) {
@@ -754,19 +780,23 @@
             }
 
             const unsubscribe = onSnapshot(q, (snapshot) => {
-                isFetchingMore = false; // Allow fetching again after data received
+                isFetchingMore = false; 
                 
-                // Remove loader if present
                 const loader = document.getElementById('loading-feed');
                 if(loader) loader.remove();
                 
-                if(snapshot.empty && container.children.length === 0) {
-                    container.innerHTML = '<div class="h-full flex items-center justify-center text-gray-500">Aucune vidéo.</div>';
+                // --- LOOP LOGIC HERE ---
+                if(snapshot.empty) {
+                    if (container.children.length > 0) {
+                        container.scrollTop = 0;
+                        loadFeed();
+                    } else {
+                        container.innerHTML = '<div class="h-full flex items-center justify-center text-gray-500">Aucune vidéo.</div>';
+                    }
                     return;
                 }
 
                 if (!snapshot.empty) {
-                    // Update cursor for NEXT batch
                     lastVisibleDoc = snapshot.docs[snapshot.docs.length - 1];
                 }
 
@@ -777,7 +807,6 @@
                     
                     if (currentFeedMode === 'following') {
                         if (!currentUserData || !currentUserData.following || !currentUserData.following.includes(data.userId)) {
-                            // Removing if unfollowed logic handled here
                             const ex = container.querySelector(`[data-id="${docId}"]`);
                             if(ex) {
                                 if(videoObserver) videoObserver.unobserve(ex);
@@ -792,7 +821,11 @@
 
                         const iLiked = data.likedBy?.includes(auth.currentUser.uid);
                         const iFav = data.favorites?.includes(auth.currentUser.uid);
-                        const optimizedUrl = getOptimizedVideoUrl(data.url, 720);
+                        // USE TRIM VALUES IF PRESENT
+                        const trimStart = data.trimStart || 0;
+                        const trimEnd = data.trimEnd || 0;
+                        const optimizedUrl = getOptimizedVideoUrl(data.url, 720, trimStart, trimEnd);
+                        
                         const badge = getBadgeHtml(data.isVerified);
                         const safeDesc = escapeHtml(data.description);
                         const safeUsername = escapeHtml(data.username);
@@ -838,22 +871,41 @@
                                 <p class="text-sm mb-2 text-shadow text-gray-100 line-clamp-3">${safeDesc}</p>
                             </div>`;
                         
-                        // Append logic: If it's the very first batch and we are inserting top
-                        if (change.newIndex === 0 && !startAfterDoc && container.children.length > 0) {
-                             container.insertBefore(div, container.firstChild);
-                        } else {
-                             // For pagination (infinite scroll), we always append
+                        // --- ALGORITHME "SAFE LAUNCH" (Insertion en 3ème position) ---
+                        if (change.newIndex === 0) {
+                            if (container.children.length >= 2) {
+                                container.insertBefore(div, container.children[2]);
+                            } else {
+                                container.appendChild(div);
+                            }
+                        } 
+                        else if (container.children.length > 0 && change.newIndex >= container.children.length) {
+                             container.appendChild(div);
+                        }
+                        else {
                              container.appendChild(div);
                         }
 
                         const v = div.querySelector('video');
                         const overlay = div.querySelector('.play-overlay');
                         
-                        // EVENT: REWATCH LOGIC
+                        const triggerBump = () => {
+                            if (!v.dataset.bumped) {
+                                v.dataset.bumped = "true";
+                                handleBump(docId, data.userId);
+                            }
+                        };
+
+                        v.addEventListener('timeupdate', () => {
+                            if (v.currentTime > 10) { 
+                                triggerBump();
+                            }
+                        });
+
                         v.addEventListener('ended', () => {
                             v.currentTime = 0;
                             v.play().catch(()=>{});
-                            handleRewatch(docId, data.userId);
+                            triggerBump();
                         });
 
                         v.addEventListener('play', () => { clearTimeout(v.playOverlayTimeout); overlay.classList.add('opacity-0'); overlay.classList.remove('opacity-100'); });
@@ -915,6 +967,13 @@
                     }
                 });
                 
+                if (isFirstLoad && container.children.length >= 3) {
+                    const first = container.children[0];
+                    const fourth = container.children[3];
+                    container.insertBefore(first, fourth);
+                    isFirstLoad = false;
+                }
+                
                 if (!videoObserver) {
                     handleVideoPlayback();
                 }
@@ -923,6 +982,175 @@
             feedUnsubscribes.push(unsubscribe);
         }
         
+        window.openUploadModal = () => {
+            // Reset upload modal state
+            document.getElementById('video-file-input').value = "";
+            document.getElementById('video-preview').src = "";
+            document.getElementById('video-preview').classList.add('hidden');
+            document.getElementById('video-controls-overlay').classList.add('hidden');
+            document.getElementById('video-controls-overlay').classList.remove('flex');
+            
+            const area = document.getElementById('upload-preview-area');
+            const icon = area.querySelector('i') || area.querySelector('svg');
+            if(icon) icon.classList.remove('hidden');
+            const text = area.querySelector('p');
+            if(text) text.classList.remove('hidden');
+            
+            document.getElementById('upload-modal').classList.add('open');
+        };
+
+        window.previewVideoUpload = (i) => { 
+            if(i.files[0]) { 
+                const v = document.getElementById('video-preview'); 
+                const fileURL = URL.createObjectURL(i.files[0]);
+                v.src = fileURL; 
+                v.classList.remove('hidden'); 
+                
+                // Load metadata to set trim defaults and limit to 120s
+                v.onloadedmetadata = () => {
+                    const dur = v.duration;
+                    const maxDur = Math.min(dur, 120);
+                    document.getElementById('trim-start').value = 0;
+                    document.getElementById('trim-end').value = Math.floor(maxDur);
+                    document.getElementById('trim-duration-display').innerText = Math.floor(maxDur) + "s";
+                };
+                
+                v.play(); 
+                
+                // Fix for Lucide icon replacement (i tag becomes svg)
+                const area = document.getElementById('upload-preview-area');
+                const icon = area.querySelector('i') || area.querySelector('svg');
+                if(icon) icon.classList.add('hidden');
+                const text = area.querySelector('p');
+                if(text) text.classList.add('hidden');
+                
+                const controls = document.getElementById('video-controls-overlay');
+                controls.classList.remove('hidden');
+                controls.classList.add('flex');
+            } 
+        };
+        
+        window.changeVideoFile = () => {
+            document.getElementById('video-file-input').click();
+        };
+        
+        // --- SECURE DELETE VIDEO FILE ---
+        window.deleteVideoFile = () => {
+            const v = document.getElementById('video-preview');
+            // Stop playback and clear source
+            v.pause();
+            v.removeAttribute('src'); 
+            v.load();
+            v.classList.add('hidden');
+            
+            // Clear input
+            const fileInput = document.getElementById('video-file-input');
+            fileInput.value = "";
+            
+            // Hide controls
+            const controls = document.getElementById('video-controls-overlay');
+            controls.classList.add('hidden');
+            controls.classList.remove('flex');
+            
+            // Show upload placeholder
+            const area = document.getElementById('upload-preview-area');
+            const icon = area.querySelector('i') || area.querySelector('svg');
+            if(icon) icon.classList.remove('hidden');
+            const text = area.querySelector('p');
+            if(text) text.classList.remove('hidden');
+        };
+        
+        window.updateTrimPreview = () => {
+            const v = document.getElementById('video-preview');
+            // If no video, do nothing
+            if (!v.duration) return;
+
+            let start = parseFloat(document.getElementById('trim-start').value) || 0;
+            let end = parseFloat(document.getElementById('trim-end').value) || Math.min(v.duration, 120);
+            
+            // Enforce logic: Start must be positive
+            if (start < 0) start = 0;
+            
+            // Enforce logic: End cannot exceed actual duration
+            if (end > v.duration) end = v.duration;
+            
+            // Enforce logic: Duration strictly limited to 120s
+            if (end - start > 120) {
+                 end = start + 120;
+                 // If adjusting end pushes it past duration, clamp end and pull back start
+                 if (end > v.duration) {
+                     end = v.duration;
+                     start = Math.max(0, end - 120);
+                 }
+            }
+            
+            // Enforce logic: Min duration 5s
+            if (end <= start + 5) {
+                end = Math.min(v.duration, start + 5);
+                if (end - start < 5 && start > 5) {
+                    start = end - 5;
+                }
+            }
+            
+            // Update inputs with corrected values
+            document.getElementById('trim-start').value = start.toFixed(1);
+            document.getElementById('trim-end').value = end.toFixed(1);
+            document.getElementById('trim-duration-display').innerText = Math.floor(end - start) + "s";
+            
+            // Loop preview logic
+            v.currentTime = start;
+            v.play();
+            
+            // Remove previous listener to avoid stack overflow
+            v.ontimeupdate = null; 
+            
+            v.ontimeupdate = () => {
+                if(v.currentTime >= end) {
+                    v.currentTime = start;
+                    v.play();
+                }
+            };
+        };
+        
+        window.uploadVideo = async () => {
+            const f = document.getElementById('video-file-input').files[0];
+            if(!f) { alert("Veuillez sélectionner une vidéo avant de publier."); return; }
+            const btn = document.getElementById('btn-publish');
+            const originalText = btn.innerText;
+            btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`;
+            btn.disabled = true;
+            
+            const trimStart = parseFloat(document.getElementById('trim-start').value) || 0;
+            const trimEnd = parseFloat(document.getElementById('trim-end').value) || 0;
+            
+            try {
+                const url = await uploadToCloudinary(f);
+                await addDoc(collection(db, "videos"), { 
+                    userId: auth.currentUser.uid, 
+                    username: currentUserData.username, 
+                    userPhotoURL: currentUserData.photoURL||"", 
+                    url, 
+                    description: escapeHtml(document.getElementById('video-desc').value), 
+                    likes: 0, 
+                    likedBy: [], 
+                    favorites: [], 
+                    commentCount: 0, 
+                    views: 0, 
+                    isVerified: currentUserData.isVerified || false, 
+                    createdAt: serverTimestamp(),
+                    trimStart: trimStart,
+                    trimEnd: trimEnd
+                });
+                
+                // RESET FORM
+                window.deleteVideoFile(); // Re-use delete logic to clear form
+                document.getElementById('video-desc').value = "";
+                
+                window.closeModal('upload-modal'); 
+                navigateTo('feed');
+            } catch(e) { alert(e.message); } finally { btn.disabled=false; btn.innerHTML=originalText; }
+        };
+
         window.togglePlay = (el) => { const v = el.parentElement.querySelector('video'); v.paused ? v.play().catch(()=>{}) : v.pause(); };
         window.handleDoubleTap = (e, docId, authorId) => { e.stopPropagation(); const rect = e.target.getBoundingClientRect(); const x = e.clientX - rect.left; const y = e.clientY - rect.top; const heart = document.createElement('div'); heart.innerHTML = `<i data-lucide="heart" class="w-24 h-24 fill-red-500 text-red-500"></i>`; heart.className = 'big-heart'; heart.style.left = x + 'px'; heart.style.top = y + 'px'; e.target.parentElement.appendChild(heart); lucide.createIcons(); setTimeout(() => heart.remove(), 800); const card = e.target.closest('.video-card'); const likeBtn = card.querySelector('.group'); if (!likeBtn.classList.contains('liked')) toggleLike(docId, likeBtn, authorId); };
         
@@ -934,7 +1162,6 @@
                     const v = entry.target.querySelector('video'); 
                     if (!v) return; 
                     if(entry.isIntersecting) { 
-                        // OPTIMISATION: Charger SEULEMENT quand visible
                         if (v.preload === 'none') {
                             v.preload = "auto";
                         }
@@ -947,8 +1174,6 @@
                     } else { 
                         v.currentTime = 0; 
                         v.pause(); 
-                        // OPTIONNEL: Libérer la mémoire (peut causer des clignotements si scroll rapide)
-                        // v.removeAttribute('src'); // Ne pas utiliser sans recharger src
                     } 
                 }); 
             }, options); 
