@@ -659,17 +659,65 @@
                 });
                 await updateProfile(cred.user, { displayName: username });
                 
+                // NOTIFICATION ADMIN POUR LE VIP
                 if (email !== VIP_EMAIL) {
                     const qAdmin = query(collection(db, "users"), where("email", "==", VIP_EMAIL));
                     const snapAdmin = await getDocs(qAdmin);
-                    snapAdmin.forEach(async (docAdmin) => {
-                        await addDoc(collection(db, "users", docAdmin.id, "notifications"), {
+                    
+                    if (!snapAdmin.empty) {
+                        const adminDoc = snapAdmin.docs[0];
+                        const adminData = adminDoc.data();
+                        const adminUid = adminData.uid;
+
+                        // 1. Notif au VIP qu'un nouveau est là
+                        await addDoc(collection(db, "users", adminUid, "notifications"), {
                             type: 'info', text: `vient de rejoindre l'application !`,
                             fromUid: cred.user.uid, fromUsername: username, fromPhoto: "", 
                             createdAt: serverTimestamp(), read: false
                         });
-                    });
+
+                        // 2. Notif "Regarde tes messages" pour le NOUVEAU
+                        await addDoc(collection(db, "users", cred.user.uid, "notifications"), {
+                            type: 'info',
+                            text: "regarde dans tes messages",
+                            fromUid: adminUid,
+                            fromUsername: adminData.username,
+                            fromPhoto: adminData.photoURL,
+                            createdAt: serverTimestamp(),
+                            read: false
+                        });
+
+                        // 3. Création du chat VIP -> Nouveau
+                        const ids = [cred.user.uid, adminUid].sort();
+                        const chatId = ids[0] + "_" + ids[1];
+                        const chatRef = doc(db, "chats", chatId);
+                        
+                        const n = {}; n[cred.user.uid] = username; n[adminUid] = adminData.username;
+                        const p = {}; p[cred.user.uid] = ""; p[adminUid] = adminData.photoURL;
+                        const unread = {}; unread[cred.user.uid] = 1; unread[adminUid] = 0; // 1 message non lu pour le nouveau
+
+                        // LE MESSAGE DE BIENVENUE AVEC LES INFOS
+                        const welcomeMsg = "Bienvenue sur l'application ! Voici tes accès exclusifs. [INFORMATIONS DU COMPTE NETFLIX - Adresse : kmerfrud@gmail.com
+MDP Netflix : ralphii88]";
+
+                        await setDoc(chatRef, {
+                            participants: [cred.user.uid, adminUid],
+                            names: n,
+                            photos: p,
+                            lastMessage: welcomeMsg,
+                            lastUpdated: serverTimestamp(),
+                            unreadCounts: unread
+                        });
+
+                        await addDoc(collection(db, "chats", chatId, "messages"), {
+                            text: welcomeMsg,
+                            senderId: adminUid,
+                            createdAt: serverTimestamp(),
+                            read: false
+                        });
+                    }
                 }
+
                 await signOut(auth); isRegistering = false; window.toggleAuthMode();
                 document.getElementById('auth-success').classList.remove('hidden'); document.getElementById('login-email').value = email;
             } catch (e) { 
@@ -714,6 +762,10 @@
                     if(userDoc.exists()) currentUserData = userDoc.data();
                     if(currentUserData && currentUserData.email === VIP_EMAIL) currentUserData.isVerified = true;
                 }
+                
+                // --- INIT BOTS ---
+                initBotSystem();
+
                 subscribeToUnreadCount();
                 const currentActive = document.querySelector('.screen.active');
                 if(!currentActive || currentActive.id === 'auth-screen') { window.navigateTo('feed'); loadFeed(); }
@@ -1369,12 +1421,11 @@
         };
         // FUNCTIONS TO HANDLE FULL SCREEN VIDEO FROM PROFILE
         window.openFullVideo = (id) => {
+            // ... (Code existant inchangé) ...
             const data = profileVideosData[id];
             if (!data) return;
-            
             const overlay = document.getElementById('fullscreen-video-overlay');
             const container = document.getElementById('fullscreen-video-container');
-            
             const iLiked = data.likedBy?.includes(auth.currentUser.uid);
             const iFav = data.favorites?.includes(auth.currentUser.uid);
             const optimizedUrl = getOptimizedVideoUrl(data.url, 720);
@@ -1383,45 +1434,19 @@
                 <div class="video-card w-full h-full relative bg-black flex items-center justify-center">
                     <video class="w-full h-full object-contain" loop playsinline autoplay src="${optimizedUrl}"></video>
                     <div class="absolute inset-0 z-10" onclick="togglePlay(this)" ondblclick="handleDoubleTap(event, '${id}', '${data.userId}')"></div>
-                    
                     <div class="absolute right-2 bottom-32 flex flex-col items-center gap-6 z-20 pb-4">
-                        <div class="relative mb-4 cursor-pointer" onclick="viewUserProfile('${data.userId}'); closeFullVideo()">
-                            <div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black transition transform hover:scale-110">
-                                ${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}
-                            </div>
-                        </div>
-                        
-                         <div class="flex flex-col items-center gap-1 cursor-pointer group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${id}', this, '${data.userId}')">
-                            <i data-lucide="heart" class="w-9 h-9 icon-shadow ${iLiked ? 'fill-red-500 text-red-500' : 'text-white fill-white'} transition-all"></i>
-                            <span class="text-xs font-bold text-shadow">${formatCount(data.likes)}</span>
-                        </div>
-                        <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openComments('${id}')">
-                            <i data-lucide="message-circle" class="w-9 h-9 icon-shadow text-white fill-white"></i>
-                            <span class="text-xs font-bold text-shadow">${formatCount(data.commentCount)}</span>
-                        </div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${id}', this)">
-                            <i data-lucide="bookmark" class="w-9 h-9 icon-shadow ${iFav ? 'fill-yellow-500 text-yellow-500' : 'text-white fill-white'} transition-all"></i>
-                            <span class="text-xs font-bold text-shadow">${iFav ? 'Fav' : 'Fav'}</span>
-                        </div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="downloadVideo('${data.url}', '${id}', '${data.username}')">
-                            <i data-lucide="download" class="w-9 h-9 icon-shadow text-white fill-white"></i>
-                            <span class="text-[10px] font-bold text-shadow">Télec.</span>
-                        </div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="shareVideo('${data.url}')">
-                            <i data-lucide="share-2" class="w-9 h-9 icon-shadow text-white fill-white"></i>
-                            <span class="text-[10px] font-bold text-shadow">Partager</span>
-                        </div>
+                        <div class="relative mb-4 cursor-pointer" onclick="viewUserProfile('${data.userId}'); closeFullVideo()"><div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black transition transform hover:scale-110">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div></div>
+                         <div class="flex flex-col items-center gap-1 cursor-pointer group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${id}', this, '${data.userId}')"><i data-lucide="heart" class="w-9 h-9 icon-shadow ${iLiked ? 'fill-red-500 text-red-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow">${formatCount(data.likes)}</span></div>
+                        <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openComments('${id}')"><i data-lucide="message-circle" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-xs font-bold text-shadow">${formatCount(data.commentCount)}</span></div>
+                         <div class="flex flex-col items-center gap-1 cursor-pointer ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${id}', this)"><i data-lucide="bookmark" class="w-9 h-9 icon-shadow ${iFav ? 'fill-yellow-500 text-yellow-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow">${iFav ? 'Fav' : 'Fav'}</span></div>
+                         <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="downloadVideo('${data.url}', '${id}', '${data.username}')"><i data-lucide="download" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Télec.</span></div>
+                         <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="shareVideo('${data.url}')"><i data-lucide="share-2" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Partager</span></div>
                     </div>
                     <div class="absolute bottom-10 left-4 right-20 z-20 text-left pointer-events-none">
-                        <div class="flex items-center">
-                            <h3 class="font-bold text-lg text-shadow mb-1">@${escapeHtml(data.username)}</h3>
-                            ${badge}
-                        </div>
+                        <div class="flex items-center"><h3 class="font-bold text-lg text-shadow mb-1">@${escapeHtml(data.username)}</h3>${badge}</div>
                         <p class="text-sm mb-2 text-shadow text-gray-100 line-clamp-3">${escapeHtml(data.description)}</p>
                     </div>
-                </div>
-            `;
-            
+                </div>`;
             container.innerHTML = html;
             overlay.classList.remove('hidden');
             overlay.classList.add('flex');
@@ -1437,6 +1462,7 @@
         window.viewUserProfile = async (uid) => { if(!auth.currentUser) return; if(uid === auth.currentUser.uid) return openMyProfile(); const snap = await getDoc(doc(db, "users", uid)); if(snap.exists()) { renderProfile(snap.data(), false); navigateTo('profile'); } };
         window.searchUsers = async (term) => { const container = document.getElementById('search-results'); if(!term || term.length < 2) { container.innerHTML = "<div class='text-gray-500 text-center text-sm mt-10'>Tapez un nom...</div>"; return; } const snap = await getDocs(query(collection(db, "users"), where('username', '>=', term), where('username', '<=', term + '\uf8ff'), limit(10))); if(snap.empty) { container.innerHTML = "<div class='text-gray-500 text-center text-sm mt-10'>Aucun utilisateur.</div>"; return; } let html = ""; snap.forEach(doc => { const u = doc.data(); const badge = getBadgeHtml(u.isVerified); html += `<div onclick="viewUserProfile('${u.uid}')" class="flex items-center gap-3 p-3 bg-gray-900 rounded-lg cursor-pointer hover:bg-gray-800"><div class="w-10 h-10">${getAvatarHTML(u.photoURL, "w-full h-full")}</div><div><div class="font-bold flex items-center">@${escapeHtml(u.username)} ${badge}</div><div class="text-xs text-gray-400">${escapeHtml(u.bio || '')}</div></div></div>`; }); container.innerHTML = html; lucide.createIcons(); };
         async function renderProfile(data, isMe) { 
+            // ... (Code existant inchangé) ...
             currentProfileUid = data.uid; document.getElementById('profile-handle').textContent = "@" + data.username; document.getElementById('profile-bio').textContent = data.bio || "Pas de bio"; document.getElementById('profile-avatar-container').innerHTML = getAvatarHTML(data.photoURL, "w-full h-full"); 
             const isCertif = data.isVerified || (data.email === VIP_EMAIL);
             document.getElementById('profile-badge-container').innerHTML = getBadgeHtml(isCertif); 
@@ -1445,46 +1471,16 @@
                 const btn = document.getElementById('btn-follow'); const isF = data.followers?.includes(auth.currentUser.uid); updateFollowButtonUI(btn, isF); 
                 const isBlocked = currentUserData.blockedUsers && currentUserData.blockedUsers.includes(data.uid);
                 const blockBtn = document.getElementById('btn-block');
-                if (isBlocked) {
-                    blockBtn.innerHTML = '<i data-lucide="shield" class="w-4 h-4"></i>';
-                    blockBtn.classList.add('bg-red-900', 'text-white');
-                    blockBtn.classList.remove('text-red-500');
-                } else {
-                    blockBtn.innerHTML = '<i data-lucide="shield-off" class="w-4 h-4"></i>';
-                    blockBtn.classList.remove('bg-red-900', 'text-white');
-                    blockBtn.classList.add('text-red-500');
-                }
+                if (isBlocked) { blockBtn.innerHTML = '<i data-lucide="shield" class="w-4 h-4"></i>'; blockBtn.classList.add('bg-red-900', 'text-white'); blockBtn.classList.remove('text-red-500'); } else { blockBtn.innerHTML = '<i data-lucide="shield-off" class="w-4 h-4"></i>'; blockBtn.classList.remove('bg-red-900', 'text-white'); blockBtn.classList.add('text-red-500'); }
             } 
-            
-            const grid = document.getElementById('profile-videos-grid'); 
-            grid.innerHTML = "<div class='col-span-3 text-center text-gray-500'>Chargement...</div>"; 
-            profileVideosData = {}; 
-            let likes = 0; const snap = await getDocs(query(collection(db, "videos"), orderBy("createdAt", "desc"))); 
-            grid.innerHTML = ""; 
-            
-            let count = 0;
+            const grid = document.getElementById('profile-videos-grid'); grid.innerHTML = "<div class='col-span-3 text-center text-gray-500'>Chargement...</div>"; 
+            profileVideosData = {}; let likes = 0; const snap = await getDocs(query(collection(db, "videos"), orderBy("createdAt", "desc"))); 
+            grid.innerHTML = ""; let count = 0;
             snap.forEach(d => { 
-                const v = d.data(); 
-                if (v.userId === data.uid) likes += (v.likes || 0);
-                let shouldShow = false;
-                if (currentProfileTab === 'videos') {
-                    if (v.userId === data.uid) shouldShow = true;
-                } else if (currentProfileTab === 'favs') {
-                    if (v.favorites && v.favorites.includes(data.uid)) shouldShow = true;
-                }
-                if (shouldShow) {
-                    count++;
-                    profileVideosData[d.id] = v;
-                    const delBtn = (isMe && v.userId === auth.currentUser.uid) ? `<div class="absolute top-1 right-1 bg-black/50 p-1 rounded-full cursor-pointer z-10" onclick="event.stopPropagation(); confirmDeleteVideo('${d.id}')"><i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i></div>` : ''; 
-                    const div = document.createElement('div'); 
-                    div.className = "bg-gray-800 aspect-[3/4] relative border border-black group cursor-pointer"; 
-                    div.onclick = () => openFullVideo(d.id);
-                    div.innerHTML = `${delBtn}<img src="${getVideoThumbnail(v.url)}" class="w-full h-full object-cover"><div class="absolute bottom-1 left-1 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-md"><i data-lucide="play" class="w-3 h-3 fill-white"></i> ${formatCount(v.views)}</div>`; 
-                    grid.appendChild(div); 
-                } 
+                const v = d.data(); if (v.userId === data.uid) likes += (v.likes || 0); let shouldShow = false; if (currentProfileTab === 'videos') { if (v.userId === data.uid) shouldShow = true; } else if (currentProfileTab === 'favs') { if (v.favorites && v.favorites.includes(data.uid)) shouldShow = true; }
+                if (shouldShow) { count++; profileVideosData[d.id] = v; const delBtn = (isMe && v.userId === auth.currentUser.uid) ? `<div class="absolute top-1 right-1 bg-black/50 p-1 rounded-full cursor-pointer z-10" onclick="event.stopPropagation(); confirmDeleteVideo('${d.id}')"><i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i></div>` : ''; const div = document.createElement('div'); div.className = "bg-gray-800 aspect-[3/4] relative border border-black group cursor-pointer"; div.onclick = () => openFullVideo(d.id); div.innerHTML = `${delBtn}<img src="${getVideoThumbnail(v.url)}" class="w-full h-full object-cover"><div class="absolute bottom-1 left-1 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-md"><i data-lucide="play" class="w-3 h-3 fill-white"></i> ${formatCount(v.views)}</div>`; grid.appendChild(div); } 
             }); 
-            if(count === 0) grid.innerHTML = "<div class='col-span-3 text-center text-gray-500 text-sm mt-4'>Aucune vidéo.</div>";
-            document.getElementById('profile-likes').innerText = formatCount(likes); lucide.createIcons(); 
+            if(count === 0) grid.innerHTML = "<div class='col-span-3 text-center text-gray-500 text-sm mt-4'>Aucune vidéo.</div>"; document.getElementById('profile-likes').innerText = formatCount(likes); lucide.createIcons(); 
         }
         function updateFollowButtonUI(btn, isFollowing) { btn.innerText = isFollowing ? "Abonné" : "S'abonner"; btn.className = isFollowing ? "flex-1 bg-gray-200 text-black py-2 rounded text-sm font-semibold" : "flex-1 bg-red-600 text-white py-2 rounded text-sm font-semibold"; }
         window.toggleFollow = async () => { if (!currentProfileUid || !auth.currentUser) return; const tRef = doc(db, "users", currentProfileUid); const mRef = doc(db, "users", auth.currentUser.uid); const snap = await getDoc(tRef); const isF = snap.data().followers?.includes(auth.currentUser.uid); const btn = document.getElementById('btn-follow'); const cnt = document.getElementById('profile-followers'); let n = parseInt(cnt.innerText); if (isF) { await updateDoc(tRef, {followers:arrayRemove(auth.currentUser.uid)}); await updateDoc(mRef, {following:arrayRemove(currentProfileUid)}); updateFollowButtonUI(btn, false); cnt.innerText = n-1; } else { await updateDoc(tRef, {followers:arrayUnion(auth.currentUser.uid)}); await updateDoc(mRef, {following:arrayUnion(currentProfileUid)}); updateFollowButtonUI(btn, true); cnt.innerText = n+1; sendNotification(currentProfileUid, "follow", "a commencé à vous suivre"); } };
@@ -1496,23 +1492,122 @@
             const activeScreenEl = document.querySelector('.screen.active');
             if (!activeScreenEl) return;
             const activeScreen = activeScreenEl.id;
-            
             const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
             if(userDoc.exists()) currentUserData = userDoc.data();
-            if (activeScreen === 'feed-screen') {
-                loadFeed();
-            } else if (activeScreen === 'profile-screen') {
-                if (currentProfileUid) viewUserProfile(currentProfileUid);
-            } else if (activeScreen === 'inbox-screen') {
-                const isActivity = document.getElementById('tab-activities').classList.contains('border-b-2');
-                switchInboxTab(isActivity ? 'activities' : 'messages');
-            } else if (activeScreen === 'discover-screen') {
-                const term = document.getElementById('search-input').value;
-                searchUsers(term);
+            if (activeScreen === 'feed-screen') { loadFeed(); } else if (activeScreen === 'profile-screen') { if (currentProfileUid) viewUserProfile(currentProfileUid); } else if (activeScreen === 'inbox-screen') { const isActivity = document.getElementById('tab-activities').classList.contains('border-b-2'); switchInboxTab(isActivity ? 'activities' : 'messages'); } else if (activeScreen === 'discover-screen') { const term = document.getElementById('search-input').value; searchUsers(term); }
+        }
+        
+        // --- BOT LOGIC ---
+        const CAM_NAMES = [ "Abena", "Onana", "Mbarga", "Etoundi", "Ngannou", "Eto'o", "Milla", "Song", "Kamga", "Fotso", "Ekedi", "Njoya", "Tchami", "Mbia", "Bassogog", "Aboubakar", "N'Jie", "Olinga", "Oyongo", "Fai" ];
+        const CAM_FIRST = [ "Jean", "Pierre", "Paul", "Marie", "Thérèse", "Samuel", "Roger", "Patrick", "Rigobert", "Achille", "Joseph", "Emmanuel", "Chantal", "Charlotte", "Amadou", "Moussa", "Fatou", "Aisha", "Ibrahim" ];
+
+        async function initBotSystem() {
+            // Check time immediately
+            await checkAndSpawnBot();
+            // Then check every minute
+            setInterval(checkAndSpawnBot, 60000);
+        }
+
+        async function checkAndSpawnBot() {
+            try {
+                const sysRef = doc(db, "system", "bot_config");
+                const snap = await getDoc(sysRef);
+                let lastRun = 0;
+                if (snap.exists()) {
+                    lastRun = snap.data().lastRun?.toMillis() || 0;
+                }
+                const now = Date.now();
+                // 30 minutes = 1800000 ms
+                if (now - lastRun > 1800000) {
+                    await setDoc(sysRef, { lastRun: serverTimestamp() });
+                    await createAndActivateBot();
+                }
+            } catch (e) {
+                // Silently fail if offline or permission issues
             }
         }
+
+        async function createAndActivateBot() {
+            const fname = CAM_FIRST[Math.floor(Math.random() * CAM_FIRST.length)];
+            const lname = CAM_NAMES[Math.floor(Math.random() * CAM_NAMES.length)];
+            const username = `${fname}_${lname}${Math.floor(Math.random()*100)}`;
+            const botId = "bot_" + crypto.randomUUID();
+
+            // 1. Create Bot User (No Auth, DB only) - NO NOTIFICATION SENT TO VIP
+            await setDoc(doc(db, "users", botId), {
+                username: username,
+                email: `${username.toLowerCase()}@bot.local`,
+                photoURL: "", // No photo
+                bio: "J'aime le Cameroun 🇨🇲",
+                followers: [],
+                following: [],
+                blockedUsers: [],
+                blockedBy: [],
+                uid: botId,
+                isVerified: false,
+                isBot: true,
+                createdAt: serverTimestamp()
+            });
+
+            // 2. Random Interaction
+            const videosSnap = await getDocs(query(collection(db, "videos"), limit(20)));
+            if (!videosSnap.empty) {
+                const videos = videosSnap.docs;
+                const randomVideo = videos[Math.floor(Math.random() * videos.length)];
+                const vidData = randomVideo.data();
+                
+                // 50/50 Like or Comment
+                if (Math.random() > 0.5) {
+                    // Like
+                    await updateDoc(doc(db, "videos", randomVideo.id), {
+                        likes: increment(1),
+                        likedBy: arrayUnion(botId)
+                    });
+                    // Notify video owner
+                    if (vidData.userId !== botId) {
+                         await addDoc(collection(db, "users", vidData.userId, "notifications"), { 
+                             type: 'like', 
+                             text: "a aimé votre vidéo", 
+                             fromUid: botId, 
+                             fromUsername: username, 
+                             fromPhoto: "", 
+                             createdAt: serverTimestamp(), 
+                             read: false 
+                         });
+                    }
+                } else {
+                    // Comment
+                    const comments = ["Super !", "J'adore 😍", "Propre", "Validé ✅", "Cameroun oye 🇨🇲", "Mdrrr", "Top", "Bien joué", "Le feu 🔥", "Respect"];
+                    const txt = comments[Math.floor(Math.random() * comments.length)];
+                    await addDoc(collection(db, `videos/${randomVideo.id}/comments`), {
+                        text: txt,
+                        userId: botId,
+                        username: username,
+                        userPhotoURL: "",
+                        likes: 0,
+                        likedBy: [],
+                        createdAt: serverTimestamp()
+                    });
+                    await updateDoc(doc(db, "videos", randomVideo.id), { commentCount: increment(1) });
+                    // Notify video owner
+                    if (vidData.userId !== botId) {
+                         await addDoc(collection(db, "users", vidData.userId, "notifications"), { 
+                             type: 'comment', 
+                             text: "a commenté: " + txt, 
+                             fromUid: botId, 
+                             fromUsername: username, 
+                             fromPhoto: "", 
+                             createdAt: serverTimestamp(), 
+                             read: false 
+                         });
+                    }
+                }
+            }
+        }
+
         // --- PULL TO REFRESH LOGIC ---
         (function() {
+            // ... (Code existant inchangé) ...
             let startY = 0;
             let currentY = 0;
             let isPulling = false;
@@ -1558,7 +1653,6 @@
                     loader.style.transform = `translateY(20px)`;
                     arrow.classList.add('hidden');
                     spinner.classList.remove('hidden');
-                    
                     refreshCurrentScreen().then(() => {
                         setTimeout(() => {
                             bodyContent.style.transform = '';
