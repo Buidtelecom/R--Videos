@@ -12,18 +12,35 @@
     <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function(OneSignal) {
-        try {
-            await OneSignal.init({
-              appId: "784b7423-3539-448c-8d8d-80e8b0bed456",
-              safari_web_id: "web.onesignal.auto.35c3b21f-3634-4ed2-bd52-fd09e2637415",
-              notifyButton: {
-                enable: false, // Désactivé pour ne pas gêner la navigation
-              },
-              // Permet de tester sur localhost si nécessaire
-              allowLocalhostAsSecureOrigin: true,
-            });
-        } catch (e) {
-            console.warn("OneSignal Warning: Initialization failed. This is normal in preview if the domain is not whitelisted.", e);
+        // CONDITION DE SÉCURITÉ : N'initialise OneSignal QUE sur le vrai site
+        if (window.location.hostname === 'buidtelecom.github.io') {
+            try {
+                await OneSignal.init({
+                  appId: "784b7423-3539-448c-8d8d-80e8b0bed456",
+                  safari_web_id: "web.onesignal.auto.35c3b21f-3634-4ed2-bd52-fd09e2637415",
+                  notifyButton: {
+                    enable: false, // Cloche désactivée
+                  },
+                  // CONFIGURATION DU PROMPT (DEMANDE D'INSCRIPTION)
+                  promptOptions: {
+                    slidedown: {
+                      enabled: true,
+                      autoPrompt: true,
+                      actionMessage: "Active les notifications pour recevoir les likes et commentaires 🔔",
+                      acceptButtonText: "Autoriser",
+                      cancelButtonText: "Plus tard"
+                    }
+                  }
+                });
+                
+                // FORCE L'AFFICHAGE DU PROMPT
+                OneSignal.Slidedown.promptPush();
+                
+            } catch (e) {
+                console.warn("Erreur OneSignal:", e);
+            }
+        } else {
+            console.log("OneSignal désactivé en mode prévisualisation (domaine non autorisé)");
         }
       });
     </script>
@@ -415,8 +432,8 @@
             if ("Notification" in window && Notification.permission !== "granted") {
                 Notification.requestPermission();
             }
-            // OneSignal Prompt
-            if (window.OneSignalDeferred) {
+            // OneSignal Prompt ONLY if supported
+            if (window.OneSignalDeferred && window.location.hostname === 'buidtelecom.github.io') {
                 window.OneSignalDeferred.push(function(OneSignal) {
                     try {
                         OneSignal.Slidedown.promptPush();
@@ -671,7 +688,7 @@
             document.getElementById('logout-modal').classList.remove('open'); 
             if(unreadObserver) unreadObserver(); 
             // OneSignal Logout
-            if (window.OneSignalDeferred) {
+            if (window.OneSignalDeferred && window.location.hostname === 'buidtelecom.github.io') {
                 window.OneSignalDeferred.push(function(OneSignal) {
                     try { OneSignal.logout(); } catch(e) {}
                 });
@@ -684,8 +701,8 @@
             if (user) {
                 requestNotificationPermission();
                 
-                // ONE SIGNAL LOGIN
-                if (window.OneSignalDeferred) {
+                // ONE SIGNAL LOGIN (Protected)
+                if (window.OneSignalDeferred && window.location.hostname === 'buidtelecom.github.io') {
                     window.OneSignalDeferred.push(function(OneSignal) {
                         try { OneSignal.login(user.uid); } catch(e) {}
                     });
