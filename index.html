@@ -34,7 +34,8 @@
       });
     </script>
     <style>
-        body, html { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; background-color: black; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overscroll-behavior-y: contain; }
+        /* THEME COULEUR : MIDNIGHT BLUE (#0f172a) au lieu de BLACK */
+        body, html { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overscroll-behavior-y: contain; }
         .snap-y-mandatory { scroll-snap-type: y mandatory; }
         .snap-start { scroll-snap-align: start; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -43,29 +44,43 @@
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
         .like-animation { animation: pop 0.3s ease-in-out; }
-        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; z-index: 10; background: black; }
+        
+        /* Background screen updated */
+        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; z-index: 10; background: #0f172a; }
         .screen.active { display: flex; }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 50; display: none; align-items: center; justify-content: center; }
+        
+        .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); z-index: 50; display: none; align-items: center; justify-content: center; }
         .modal-overlay.open { display: flex; }
-        .bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100%; height: 75%; background: #111; border-t-left-radius: 16px; border-t-right-radius: 16px; z-index: 60; transform: translateY(100%); transition: transform 0.3s ease-out; display: flex; flex-direction: column; }
+        
+        /* Bottom sheet lighter blue */
+        .bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100%; height: auto; max-height: 75%; background: #1e293b; border-t-left-radius: 16px; border-t-right-radius: 16px; z-index: 60; transform: translateY(100%); transition: transform 0.3s ease-out; display: flex; flex-direction: column; }
         .bottom-sheet.open { transform: translateY(0); }
-        .full-screen-modal { position: fixed; inset: 0; background: #000; z-index: 70; transform: translateX(100%); transition: transform 0.3s ease-in-out; display: flex; flex-direction: column; }
+        
+        .full-screen-modal { position: fixed; inset: 0; background: #0f172a; z-index: 70; transform: translateX(100%); transition: transform 0.3s ease-in-out; display: flex; flex-direction: column; }
         .full-screen-modal.open { transform: translateX(0); }
+        
         .liked svg { fill: #ef4444; color: #ef4444; }
         .favorited svg { fill: #eab308; color: #eab308; }
         .text-shadow { text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
         .icon-shadow { filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5)); }
+        
         .auth-input { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 12px; border-radius: 8px; width: 100%; outline: none; }
+        
         .msg-bubble { max-width: 75%; padding: 8px 12px; border-radius: 16px; margin-bottom: 2px; font-size: 14px; position: relative; word-break: break-word; }
         .msg-me { align-self: flex-end; background-color: #ef4444; color: white; border-bottom-right-radius: 4px; }
-        .msg-other { align-self: flex-start; background-color: #333; color: white; border-bottom-left-radius: 4px; }
+        .msg-other { align-self: flex-start; background-color: #334155; color: white; border-bottom-left-radius: 4px; }
+        
         .msg-status { align-self: flex-end; margin-bottom: 8px; margin-right: 4px; display: flex; align-items: center; }
         .verified-badge { fill: #3b82f6; color: white; display: inline-block; vertical-align: middle; margin-left: 4px; }
         .custom-checkbox { accent-color: #ef4444; width: 16px; height: 16px; cursor: pointer; }
-        .app-watermark { position: absolute; top: 16px; left: 16px; z-index: 30; font-weight: 900; font-size: 16px; color: rgba(255, 255, 255, 0.6); text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 1px 2px rgba(0,0,0,0.5); pointer-events: none; font-family: sans-serif; }
+        
+        /* Watermark Removed from CSS display, strictly handled in JS for removal or specific cases */
+        /* .app-watermark { ... } -> Removed to comply with request */
+        
         #ptr-loader { transition: transform 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28); z-index: 9999; }
         .ptr-icon { transition: transform 0.2s; }
         .body-content { transition: transform 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28); height: 100%; width: 100%; }
+        
         .big-heart { position: absolute; transform: translate(-50%, -50%) scale(0); animation: bigHeartAnim 0.8s ease-out forwards; pointer-events: none; z-index: 50; }
         @keyframes bigHeartAnim {
             0% { transform: translate(-50%, -50%) scale(0) rotate(-15deg); opacity: 1; }
@@ -77,7 +92,7 @@
         .trim-input { @apply bg-gray-800 text-white border border-gray-600 rounded px-2 py-1 text-xs w-20 text-center; }
     </style>
 </head>
-<body class="relative overflow-hidden">
+<body class="relative overflow-hidden bg-[#0f172a]">
 
     <!-- LOADER ACTUALISATION -->
     <div id="ptr-loader" class="fixed top-0 left-0 w-full flex justify-center pt-4 -translate-y-16 pointer-events-none">
@@ -100,7 +115,7 @@
         </script>
 
         <!-- SPLASH SCREEN (CHARGEMENT) -->
-        <div id="splash-screen" class="screen active justify-center items-center bg-black z-[100]">
+        <div id="splash-screen" class="screen active justify-center items-center bg-[#0f172a] z-[100]">
             <div class="text-center animate-pulse">
                 <h1 class="text-5xl font-black text-red-600 tracking-tighter mb-4">R-VIDEOS</h1>
                 <div class="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
@@ -108,7 +123,7 @@
         </div>
 
         <!-- ECRAN HORS LIGNE -->
-        <div id="offline-screen" class="screen justify-center items-center bg-black z-[99]">
+        <div id="offline-screen" class="screen justify-center items-center bg-[#0f172a] z-[99]">
             <div class="text-center p-8">
                 <i data-lucide="wifi-off" class="w-16 h-16 text-gray-500 mx-auto mb-4"></i>
                 <h2 class="text-xl font-bold mb-2">Pas de connexion internet</h2>
@@ -117,8 +132,8 @@
             </div>
         </div>
 
-        <!-- AUTH (Initialement caché, pas active par défaut) -->
-        <div id="auth-screen" class="screen justify-center items-center p-8 bg-gradient-to-br from-gray-900 to-black relative">
+        <!-- AUTH -->
+        <div id="auth-screen" class="screen justify-center items-center p-8 bg-gradient-to-br from-[#0f172a] to-[#1e293b] relative">
             <div class="absolute top-12 w-full text-center">
                 <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-medium">
                     Application créée par <br>
@@ -165,53 +180,53 @@
         </div>
         <!-- FEED -->
         <div id="feed-screen" class="screen relative">
-            <div class="absolute top-0 left-0 w-full z-20 pt-4 pb-2 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
+            <div class="absolute top-0 left-0 w-full z-20 pt-4 pb-2 bg-gradient-to-b from-[#0f172a]/90 to-transparent pointer-events-none">
                 <div class="flex justify-center items-center gap-4 text-base font-semibold pointer-events-auto">
                     <span id="tab-following" class="text-gray-400 cursor-pointer transition-colors" onclick="switchFeed('following')">Abonnements</span>
                     <span id="tab-foryou" class="text-white border-b-2 border-white pb-0.5 cursor-pointer shadow-lg transition-colors" onclick="switchFeed('foryou')">Pour toi</span>
                 </div>
             </div>
-            <div id="feed-container" class="h-full w-full overflow-y-scroll snap-y-mandatory no-scrollbar relative bg-black">
+            <div id="feed-container" class="h-full w-full overflow-y-scroll snap-y-mandatory no-scrollbar relative bg-[#0f172a]">
                 <div id="loading-feed" class="flex items-center justify-center h-full text-gray-500"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>
             </div>
         </div>
         
         <!-- FULL SCREEN VIDEO OVERLAY -->
-        <div id="fullscreen-video-overlay" class="fixed inset-0 z-50 bg-black hidden flex-col">
+        <div id="fullscreen-video-overlay" class="fixed inset-0 z-50 bg-[#0f172a] hidden flex-col">
             <div class="absolute top-0 left-0 w-full z-20 p-4">
                 <i data-lucide="chevron-left" class="w-8 h-8 text-white cursor-pointer drop-shadow-md" onclick="closeFullVideo()"></i>
             </div>
             <div id="fullscreen-video-container" class="w-full h-full relative"></div>
         </div>
         <!-- DECOUVRIR -->
-        <div id="discover-screen" class="screen bg-black pt-4 px-4 pb-20">
+        <div id="discover-screen" class="screen bg-[#0f172a] pt-4 px-4 pb-20">
             <h2 class="font-bold text-xl mb-4">Découvrir</h2>
             <div class="relative mb-6">
                 <i data-lucide="search" class="absolute left-3 top-3 text-gray-400 w-5 h-5"></i>
-                <input type="text" id="search-input" placeholder="Rechercher des utilisateurs..." class="w-full bg-gray-900 rounded-lg py-3 pl-10 pr-4 text-white outline-none focus:ring-1 focus:ring-gray-700" oninput="searchUsers(this.value)">
+                <input type="text" id="search-input" placeholder="Rechercher des utilisateurs..." class="w-full bg-[#1e293b] rounded-lg py-3 pl-10 pr-4 text-white outline-none focus:ring-1 focus:ring-gray-700" oninput="searchUsers(this.value)">
             </div>
             <div id="search-results" class="space-y-4 overflow-y-auto h-full pb-20">
                 <div class="text-gray-500 text-center text-sm mt-10">Tapez un nom pour chercher...</div>
             </div>
         </div>
         <!-- BOITE (INBOX) -->
-        <div id="inbox-screen" class="screen bg-black pt-4 px-0 pb-20">
+        <div id="inbox-screen" class="screen bg-[#0f172a] pt-4 px-0 pb-20">
             <h2 class="font-bold text-xl mb-4 px-4">Boîte de réception</h2>
-            <div class="flex border-b border-gray-800 px-4 mb-4">
+            <div class="flex border-b border-[#334155] px-4 mb-4">
                 <div onclick="switchInboxTab('activities')" id="tab-activities" class="pb-2 border-b-2 border-white font-semibold mr-6 cursor-pointer">Activités</div>
                 <div onclick="switchInboxTab('messages')" id="tab-messages" class="pb-2 text-gray-500 font-semibold cursor-pointer">Messages</div>
             </div>
             <div id="inbox-content" class="px-4 space-y-4 overflow-y-auto h-full pb-20"></div>
         </div>
         <!-- PROFIL -->
-        <div id="profile-screen" class="screen bg-black pt-10 px-4 overflow-y-auto pb-20">
+        <div id="profile-screen" class="screen bg-[#0f172a] pt-10 px-4 overflow-y-auto pb-20">
             <div class="flex justify-between items-center mb-6">
                 <i data-lucide="chevron-left" class="w-6 h-6 text-white cursor-pointer" onclick="navigateTo('feed')"></i>
                 <h2 class="font-bold text-lg" id="profile-header-name">Profil</h2>
                 <i data-lucide="more-horizontal" class="w-6 h-6 text-white cursor-pointer" onclick="confirmLogout()"></i>
             </div>
             <div class="flex flex-col items-center mb-8">
-                <div id="profile-avatar-container" class="w-24 h-24 rounded-full border-2 border-gray-700 flex items-center justify-center mb-4 overflow-hidden bg-gray-800"></div>
+                <div id="profile-avatar-container" class="w-24 h-24 rounded-full border-2 border-gray-700 flex items-center justify-center mb-4 overflow-hidden bg-[#1e293b]"></div>
                 <div class="flex items-center gap-1 mb-1">
                     <h1 id="profile-handle" class="text-xl font-bold">@utilisateur</h1>
                     <span id="profile-badge-container"></span>
@@ -223,13 +238,13 @@
                 </div>
                 
                 <div id="my-profile-actions" class="flex gap-2 mt-6 w-full px-8 hidden">
-                    <button onclick="openEditProfile()" class="flex-1 bg-gray-800 py-2 rounded text-sm font-semibold border border-gray-600">Modifier le profil</button>
+                    <button onclick="openEditProfile()" class="flex-1 bg-[#1e293b] py-2 rounded text-sm font-semibold border border-gray-600">Modifier le profil</button>
                 </div>
                 <div id="other-profile-actions" class="flex gap-2 mt-6 w-full px-8 hidden">
                     <button id="btn-follow" onclick="toggleFollow()" class="flex-1 bg-red-600 text-white py-2 rounded text-sm font-semibold transition-colors">S'abonner</button>
-                    <button onclick="startChat()" class="flex-1 bg-gray-800 text-white py-2 rounded text-sm font-semibold border border-gray-600">Message</button>
+                    <button onclick="startChat()" class="flex-1 bg-[#1e293b] text-white py-2 rounded text-sm font-semibold border border-gray-600">Message</button>
                     <!-- BOUTON BLOQUER -->
-                    <button id="btn-block" onclick="toggleBlock()" class="bg-gray-900 border border-red-900 text-red-500 py-2 px-3 rounded text-sm font-semibold"><i data-lucide="shield-off" class="w-4 h-4"></i></button>
+                    <button id="btn-block" onclick="toggleBlock()" class="bg-[#1e293b] border border-red-900 text-red-500 py-2 px-3 rounded text-sm font-semibold"><i data-lucide="shield-off" class="w-4 h-4"></i></button>
                 </div>
                 
                 <!-- CONTAINER ADMIN (BANNISSEMENT) -->
@@ -237,7 +252,7 @@
             </div>
             
             <!-- TABS PROFIL -->
-            <div class="flex border-b border-gray-800 mb-1">
+            <div class="flex border-b border-[#334155] mb-1">
                 <div id="tab-profile-videos" class="flex-1 py-3 text-center border-b-2 border-white cursor-pointer transition-colors" onclick="switchProfileTab('videos')">
                     <i data-lucide="grid-3x3" class="mx-auto w-5 h-5"></i>
                 </div>
@@ -249,7 +264,7 @@
         </div>
         <!-- CHAT SCREEN -->
         <div id="chat-screen" class="full-screen-modal">
-            <div class="flex items-center p-4 border-b border-gray-800 bg-gray-900">
+            <div class="flex items-center p-4 border-b border-[#334155] bg-[#1e293b]">
                 <i data-lucide="chevron-left" class="w-6 h-6 cursor-pointer mr-4" onclick="closeChat()"></i>
                 <div class="flex items-center gap-3">
                     <div id="chat-avatar" class="w-8 h-8 rounded-full bg-gray-700 overflow-hidden"></div>
@@ -259,15 +274,15 @@
                     </div>
                 </div>
             </div>
-            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col bg-black"></div>
-            <div class="p-3 bg-gray-900 flex items-center gap-2">
-                <input type="text" id="chat-input" placeholder="Envoyer..." class="flex-1 bg-gray-800 border-none rounded-full px-4 py-2 text-sm text-white outline-none">
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col bg-[#0f172a]"></div>
+            <div class="p-3 bg-[#1e293b] flex items-center gap-2">
+                <input type="text" id="chat-input" placeholder="Envoyer..." class="flex-1 bg-[#334155] border-none rounded-full px-4 py-2 text-sm text-white outline-none">
                 <button onclick="sendMessage()" class="bg-red-600 p-2 rounded-full"><i data-lucide="send" class="w-4 h-4 text-white"></i></button>
             </div>
         </div>
         <!-- MODALS -->
         <div id="privacy-modal" class="modal-overlay">
-            <div class="bg-gray-900 w-11/12 max-w-lg p-6 rounded-xl border border-gray-700 max-h-[80vh] flex flex-col">
+            <div class="bg-[#1e293b] w-11/12 max-w-lg p-6 rounded-xl border border-gray-700 max-h-[80vh] flex flex-col">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
                     <h3 class="text-lg font-bold">Politique de Confidentialité</h3>
                     <i data-lucide="x" class="cursor-pointer" onclick="closeModal('privacy-modal')"></i>
@@ -290,18 +305,18 @@
                     </div>
 
                 </div>
-                <button onclick="closeModal('privacy-modal')" class="mt-4 w-full bg-gray-800 py-2 rounded text-white font-bold">Fermer</button>
+                <button onclick="closeModal('privacy-modal')" class="mt-4 w-full bg-[#334155] py-2 rounded text-white font-bold">Fermer</button>
             </div>
         </div>
         <div id="edit-modal" class="modal-overlay">
-            <div class="bg-gray-900 w-11/12 max-w-md p-6 rounded-xl border border-gray-700">
+            <div class="bg-[#1e293b] w-11/12 max-w-md p-6 rounded-xl border border-gray-700">
                 <h3 class="text-lg font-bold mb-4">Modifier le profil</h3>
                 <label class="block text-xs text-gray-400 mb-1">Photo de profil</label>
-                <input type="file" id="edit-file-input" accept="image/*" class="block w-full text-sm text-gray-400 file:bg-gray-800 file:text-white mb-4"/>
+                <input type="file" id="edit-file-input" accept="image/*" class="block w-full text-sm text-gray-400 file:bg-[#334155] file:text-white mb-4"/>
                 <input type="text" id="edit-username" placeholder="Nom d'utilisateur" class="auth-input mb-3">
                 <textarea id="edit-bio" placeholder="Bio" class="auth-input mb-4" rows="3"></textarea>
                 <div class="flex gap-2 mb-4">
-                    <button onclick="closeModal('edit-modal')" class="flex-1 py-2 bg-gray-800 rounded">Annuler</button>
+                    <button onclick="closeModal('edit-modal')" class="flex-1 py-2 bg-[#334155] rounded">Annuler</button>
                     <button id="btn-save-profile" onclick="saveProfileChanges()" class="flex-1 py-2 bg-white text-black font-bold rounded flex justify-center items-center">Enregistrer</button>
                 </div>
                 <div class="border-t border-gray-800 pt-4">
@@ -311,26 +326,26 @@
         </div>
         <!-- MODAL CONFIRMATION SUPPRESSION -->
         <div id="delete-confirm-modal" class="modal-overlay">
-            <div class="bg-gray-900 w-10/12 max-w-sm p-6 rounded-xl border border-gray-700 text-center">
+            <div class="bg-[#1e293b] w-10/12 max-w-sm p-6 rounded-xl border border-gray-700 text-center">
                 <h3 class="text-lg font-bold mb-2 text-white text-red-500" id="delete-modal-title">Supprimer ?</h3>
                 <p class="text-gray-400 text-sm mb-6">Cette action est irréversible.</p>
                 <div class="flex gap-3">
-                    <button onclick="closeModal('delete-confirm-modal')" class="flex-1 py-2 bg-gray-800 text-white rounded font-semibold text-sm">Annuler</button>
+                    <button onclick="closeModal('delete-confirm-modal')" class="flex-1 py-2 bg-[#334155] text-white rounded font-semibold text-sm">Annuler</button>
                     <button id="btn-confirm-delete" class="flex-1 py-2 bg-red-600 text-white rounded font-semibold text-sm">Supprimer</button>
                 </div>
             </div>
         </div>
         <div id="logout-modal" class="modal-overlay">
-            <div class="bg-gray-900 w-10/12 max-w-sm p-6 rounded-xl border border-gray-700 text-center">
+            <div class="bg-[#1e293b] w-10/12 max-w-sm p-6 rounded-xl border border-gray-700 text-center">
                 <h3 class="text-lg font-bold mb-2 text-white">Déconnexion</h3>
                 <div class="flex gap-3">
-                    <button onclick="closeModal('logout-modal')" class="flex-1 py-2 bg-gray-800 text-white rounded font-semibold text-sm">Non</button>
+                    <button onclick="closeModal('logout-modal')" class="flex-1 py-2 bg-[#334155] text-white rounded font-semibold text-sm">Non</button>
                     <button onclick="logout()" class="flex-1 py-2 bg-red-600 text-white rounded font-semibold text-sm">Oui</button>
                 </div>
             </div>
         </div>
         <div id="upload-modal" class="modal-overlay">
-            <div class="bg-gray-900 w-full h-full md:h-auto md:w-11/12 max-w-md p-6 md:rounded-xl flex flex-col">
+            <div class="bg-[#1e293b] w-full h-full md:h-auto md:w-11/12 max-w-md p-6 md:rounded-xl flex flex-col">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-lg font-bold">Nouvelle Publication</h3>
                     <i data-lucide="x" class="cursor-pointer" onclick="closeModal('upload-modal')"></i>
@@ -372,19 +387,40 @@
                 <button onclick="uploadVideo()" id="btn-publish" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg mt-2 flex justify-center items-center">Publier</button>
             </div>
         </div>
+        
         <div id="comments-sheet" class="bottom-sheet">
-            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900 rounded-t-xl">
+            <div class="p-4 border-b border-[#334155] flex justify-between items-center bg-[#1e293b] rounded-t-xl">
                 <div class="text-sm font-bold mx-auto">Commentaires</div>
                 <i data-lucide="x" class="w-5 h-5 cursor-pointer absolute right-4" onclick="closeComments()"></i>
             </div>
             <div id="comments-list" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
-            <div class="p-3 border-t border-gray-800 bg-black flex items-center gap-2">
-                <input type="text" id="comment-input" placeholder="Ajouter un commentaire..." class="flex-1 bg-gray-900 border-none rounded-full px-4 py-2 text-sm text-white outline-none">
+            <div class="p-3 border-t border-[#334155] bg-[#0f172a] flex items-center gap-2">
+                <input type="text" id="comment-input" placeholder="Ajouter un commentaire..." class="flex-1 bg-[#1e293b] border-none rounded-full px-4 py-2 text-sm text-white outline-none">
                 <button onclick="sendComment()" class="text-cyan-500 font-bold text-sm px-2">Publier</button>
             </div>
         </div>
+
+        <!-- NEW OPTIONS SHEET -->
+        <div id="options-modal" class="bottom-sheet z-50">
+            <div class="p-4 border-b border-[#334155] flex justify-between items-center bg-[#1e293b] rounded-t-xl">
+                <div class="text-sm font-bold mx-auto">Options</div>
+                <i data-lucide="x" class="w-5 h-5 cursor-pointer absolute right-4" onclick="closeOptions()"></i>
+            </div>
+            <div class="p-4 flex flex-col gap-4 bg-[#0f172a] h-full">
+                <button id="opt-share" class="flex items-center gap-3 p-3 bg-[#1e293b] rounded-lg text-white font-semibold">
+                    <i data-lucide="share-2"></i> Partager
+                </button>
+                <button id="opt-download" class="flex items-center gap-3 p-3 bg-[#1e293b] rounded-lg text-white font-semibold">
+                    <i data-lucide="download"></i> Télécharger
+                </button>
+                <button id="opt-report" class="flex items-center gap-3 p-3 bg-[#1e293b] rounded-lg text-red-500 font-semibold border border-red-900">
+                    <i data-lucide="flag"></i> Signaler
+                </button>
+            </div>
+        </div>
+
         <!-- NAVBAR PERSONNALISÉE -->
-        <div id="bottom-nav" class="fixed bottom-0 left-0 w-full bg-black border-t border-gray-800 h-14 z-30 flex justify-around items-center text-white px-2 hidden">
+        <div id="bottom-nav" class="fixed bottom-0 left-0 w-full bg-[#0f172a] border-t border-[#334155] h-14 z-30 flex justify-around items-center text-white px-2 hidden">
             <div onclick="navigateTo('feed')" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-100" id="nav-feed"><i data-lucide="home" class="w-6 h-6 fill-white"></i><span class="text-[10px]">Accueil</span></div>
             <div onclick="navigateTo('discover')" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50" id="nav-discover"><i data-lucide="search" class="w-6 h-6"></i><span class="text-[10px]">Découvrir</span></div>
             <div onclick="openUploadModal()" class="cursor-pointer hover:scale-105 transition duration-200 flex items-center justify-center"><div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg shadow-white/20"><i data-lucide="plus" class="w-6 h-6 text-black font-bold"></i></div></div>
@@ -746,10 +782,8 @@
         window.closeModal = (id) => document.getElementById(id).classList.remove('open');
 
         onAuthStateChanged(auth, async (user) => {
-            // Pas de splash screen ici, c'est géré par la logique offline/online et DOMContentLoaded
             if (isRegistering) return;
             
-            // Masquer le splash screen dès que Firebase répond (sauf si offline géré ailleurs)
             document.getElementById('splash-screen').classList.remove('active');
 
             if (user) {
@@ -774,7 +808,6 @@
                 initBotSystem();
                 subscribeToUnreadCount();
                 const currentActive = document.querySelector('.screen.active');
-                // Si on était sur le splash, on va au feed
                 if(!currentActive || currentActive.id === 'auth-screen' || currentActive.id === 'splash-screen') { window.navigateTo('feed'); loadFeed(); }
             } else {
                 document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
@@ -821,29 +854,32 @@
             await updateDoc(ref, { createdAt: serverTimestamp() }).catch(e => console.log(e));
         };
         
+        // --- OPEN OPTIONS (NEW) ---
+        window.openOptions = (id, url, username) => {
+            document.getElementById('opt-share').onclick = () => { window.shareVideo(url); window.closeOptions(); };
+            document.getElementById('opt-download').onclick = () => { window.downloadVideo(url, id, username); window.closeOptions(); };
+            document.getElementById('opt-report').onclick = () => { window.reportVideo(id); window.closeOptions(); };
+            document.getElementById('options-modal').classList.add('open');
+        };
+        window.closeOptions = () => document.getElementById('options-modal').classList.remove('open');
+
         // --- REPORT VIDEO LOGIC ---
         window.reportVideo = async (docId) => {
             if(!auth.currentUser) return;
-            // 1. Demande de confirmation et masquage
             if(!confirm("Souhaitez-vous ne plus voir les publications de cet utilisateur et signaler ce contenu ?")) return;
-
-            // 2. Saisie de la raison
             const reason = prompt("Veuillez rédiger la raison du signalement :");
             if(!reason) return;
 
-            // UI Feedback immédiat
             const card = document.querySelector(`[data-id="${docId}"]`);
             if(card) {
-                card.innerHTML = "<div class='flex items-center justify-center h-full w-full bg-gray-900 text-gray-500 font-bold p-4 text-center'>Contenu signalé et masqué.</div>";
+                card.innerHTML = "<div class='flex items-center justify-center h-full w-full bg-[#1e293b] text-gray-500 font-bold p-4 text-center'>Contenu signalé et masqué.</div>";
             }
 
             try {
-                // Get Video Author for Blocking
                 const vidSnap = await getDoc(doc(db, "videos", docId));
                 let authorId = null;
                 if(vidSnap.exists()) authorId = vidSnap.data().userId;
 
-                // Bloquer l'utilisateur localement
                 if(authorId) {
                     await updateDoc(doc(db, "users", auth.currentUser.uid), {
                         blockedUsers: arrayUnion(authorId),
@@ -851,13 +887,11 @@
                     });
                 }
 
-                // Trouver l'Admin pour envoyer le message
                 const qAdmin = query(collection(db, "users"), where("email", "==", VIP_EMAIL));
                 const snapAdmin = await getDocs(qAdmin);
                 
                 if(!snapAdmin.empty) {
                     const adminUid = snapAdmin.docs[0].id;
-                    // Envoyer le "message" (via notification système Admin)
                     await addDoc(collection(db, "users", adminUid, "notifications"), {
                         type: 'report', 
                         text: `a signalé une vidéo (ID: ${docId}). Raison : "${escapeHtml(reason)}".`,
@@ -870,27 +904,17 @@
                         read: false
                     });
                 }
-
                 alert("Merci. Le signalement a été envoyé à l'administration.");
-            } catch(e) {
-                console.error(e);
-                alert("Erreur lors de l'envoi du signalement.");
-            }
+            } catch(e) { console.error(e); alert("Erreur lors de l'envoi du signalement."); }
         };
 
-        // --- BAN LOGIC (ADMIN ONLY) ---
         window.toggleBan = async (targetUid) => {
             if(!confirm("Êtes-vous sûr de vouloir BANNIR cet utilisateur définitivement ?")) return;
             try {
                 await updateDoc(doc(db, "users", targetUid), { isBanned: true });
                 alert("L'utilisateur a été banni.");
-                // Refresh UI if on profile page
-                if (currentProfileUid === targetUid) {
-                    viewUserProfile(targetUid);
-                }
-            } catch(e) {
-                alert("Erreur bannissement: " + e.message);
-            }
+                if (currentProfileUid === targetUid) viewUserProfile(targetUid);
+            } catch(e) { alert("Erreur bannissement: " + e.message); }
         };
 
         function loadFeed() {
@@ -940,7 +964,6 @@
                             return;
                         }
                     }
-                    // Filter blocked users
                     if (currentUserData.blockedUsers && currentUserData.blockedUsers.includes(data.userId)) return;
 
                     if (change.type === "added") {
@@ -954,25 +977,28 @@
                         const safeDesc = escapeHtml(data.description);
                         const safeUsername = escapeHtml(data.username);
                         const div = document.createElement('div');
-                        div.className = "video-card w-full h-full relative snap-start bg-gray-900 border-b border-gray-800";
+                        div.className = "video-card w-full h-full relative snap-start bg-[#0f172a] border-b border-gray-800";
                         div.setAttribute('data-id', docId);
                         
+                        // NEW LAYOUT: Buttons centered low right + Options
                         div.innerHTML = `
-                            <div class="app-watermark">R-VIDEOS</div>
+                            <!-- R-VIDEOS Watermark Removed from here -->
                             <video class="w-full h-full object-cover pointer-events-none" playsinline preload="none" src="${optimizedUrl}"></video>
                             <div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 opacity-0"><div class="bg-black/40 rounded-full p-4 backdrop-blur-sm"><i data-lucide="play" class="w-12 h-12 text-white fill-white"></i></div></div>
                             <div class="absolute inset-0 z-10" onclick="togglePlay(this)" ondblclick="handleDoubleTap(event, '${docId}', '${data.userId}')"></div>
-                            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 pointer-events-none"></div>
-                            <div class="absolute right-2 bottom-32 flex flex-col items-center gap-6 z-20 pb-4">
-                                <div class="relative mb-4 cursor-pointer" onclick="viewUserProfile('${data.userId}')"><div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black transition transform hover:scale-110">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div></div>
+                            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0f172a]/80 pointer-events-none"></div>
+                            
+                            <div class="absolute right-2 bottom-20 flex flex-col items-center gap-5 z-20 pb-20">
+                                <div class="relative mb-2 cursor-pointer" onclick="viewUserProfile('${data.userId}')"><div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black transition transform hover:scale-110">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div></div>
                                 <div class="flex flex-col items-center gap-1 cursor-pointer group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${docId}', this, '${data.userId}')"><i data-lucide="heart" class="w-9 h-9 icon-shadow like-icon ${iLiked ? 'fill-red-500 text-red-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow like-count">${formatCount(data.likes)}</span></div>
                                 <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openComments('${docId}')"><i data-lucide="message-circle" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-xs font-bold text-shadow comment-count">${formatCount(data.commentCount)}</span></div>
                                 <div class="flex flex-col items-center gap-1 cursor-pointer ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${docId}', this)"><i data-lucide="bookmark" class="w-9 h-9 icon-shadow fav-icon ${iFav ? 'fill-yellow-500 text-yellow-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow fav-text">${iFav ? 'Fav' : 'Fav'}</span></div>
-                                <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="downloadVideo('${data.url}', '${docId}', '${safeUsername}')"><i data-lucide="download" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Télec.</span></div>
-                                <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="shareVideo('${data.url}')"><i data-lucide="share-2" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Partager</span></div>
-                                <!-- BOUTON SIGNALER -->
-                                <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="reportVideo('${docId}')"><i data-lucide="flag" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Signaler</span></div>
-                                <div class="mt-4 relative animate-spin-slow"><div class="w-10 h-10 bg-gray-800 rounded-full border-4 border-gray-900 flex items-center justify-center overflow-hidden">${getAvatarHTML(data.userPhotoURL, "w-full h-full")}</div></div>
+                                
+                                <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openOptions('${docId}', '${data.url}', '${safeUsername}')">
+                                    <i data-lucide="more-horizontal" class="w-9 h-9 icon-shadow text-white fill-white"></i>
+                                </div>
+
+                                <div class="mt-2 relative animate-spin-slow"><div class="w-10 h-10 bg-gray-800 rounded-full border-4 border-gray-900 flex items-center justify-center overflow-hidden">${getAvatarHTML(data.userPhotoURL, "w-full h-full")}</div></div>
                             </div>
                             <div class="absolute bottom-20 left-4 right-20 z-20 text-left pointer-events-none">
                                 <div class="flex items-center"><h3 class="font-bold text-lg text-shadow mb-1">@${safeUsername}</h3>${badge}</div>
