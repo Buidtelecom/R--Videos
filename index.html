@@ -12,16 +12,12 @@
     <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function(OneSignal) {
-        // CONDITION DE SÉCURITÉ : N'initialise OneSignal QUE sur le vrai site
         if (window.location.hostname === 'buidtelecom.github.io') {
             try {
                 await OneSignal.init({
                   appId: "784b7423-3539-448c-8d8d-80e8b0bed456",
                   safari_web_id: "web.onesignal.auto.35c3b21f-3634-4ed2-bd52-fd09e2637415",
-                  notifyButton: {
-                    enable: false, // Cloche désactivée
-                  },
-                  // CONFIGURATION DU PROMPT (DEMANDE D'INSCRIPTION)
+                  notifyButton: { enable: false },
                   promptOptions: {
                     slidedown: {
                       enabled: true,
@@ -32,19 +28,11 @@
                     }
                   }
                 });
-                
-                // FORCE L'AFFICHAGE DU PROMPT
                 OneSignal.Slidedown.promptPush();
-                
-            } catch (e) {
-                console.warn("Erreur OneSignal:", e);
-            }
-        } else {
-            console.log("OneSignal désactivé en mode prévisualisation (domaine non autorisé)");
-        }
+            } catch (e) { console.warn("Erreur OneSignal:", e); }
+        } else { console.log("OneSignal désactivé (dev mode)"); }
       });
     </script>
-
     <style>
         body, html { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; background-color: black; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overscroll-behavior-y: contain; }
         .snap-y-mandatory { scroll-snap-type: y mandatory; }
@@ -74,15 +62,10 @@
         .msg-status { align-self: flex-end; margin-bottom: 8px; margin-right: 4px; display: flex; align-items: center; }
         .verified-badge { fill: #3b82f6; color: white; display: inline-block; vertical-align: middle; margin-left: 4px; }
         .custom-checkbox { accent-color: #ef4444; width: 16px; height: 16px; cursor: pointer; }
-        
-        /* Watermark Style */
         .app-watermark { position: absolute; top: 16px; left: 16px; z-index: 30; font-weight: 900; font-size: 16px; color: rgba(255, 255, 255, 0.6); text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 1px 2px rgba(0,0,0,0.5); pointer-events: none; font-family: sans-serif; }
-        
-        /* Pull to refresh styles */
         #ptr-loader { transition: transform 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28); z-index: 9999; }
         .ptr-icon { transition: transform 0.2s; }
         .body-content { transition: transform 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28); height: 100%; width: 100%; }
-        
         .big-heart { position: absolute; transform: translate(-50%, -50%) scale(0); animation: bigHeartAnim 0.8s ease-out forwards; pointer-events: none; z-index: 50; }
         @keyframes bigHeartAnim {
             0% { transform: translate(-50%, -50%) scale(0) rotate(-15deg); opacity: 1; }
@@ -91,12 +74,11 @@
             50% { transform: translate(-50%, -50%) scale(1.2) rotate(0deg); opacity: 1; }
             100% { transform: translate(-50%, -50%) scale(0) rotate(0deg); opacity: 0; }
         }
-        
-        /* Trim controls */
         .trim-input { @apply bg-gray-800 text-white border border-gray-600 rounded px-2 py-1 text-xs w-20 text-center; }
     </style>
 </head>
 <body class="relative overflow-hidden">
+
     <!-- LOADER ACTUALISATION -->
     <div id="ptr-loader" class="fixed top-0 left-0 w-full flex justify-center pt-4 -translate-y-16 pointer-events-none">
         <div class="bg-white rounded-full p-2 shadow-xl border border-gray-200">
@@ -104,13 +86,11 @@
             <i id="ptr-arrow" data-lucide="arrow-down" class="w-6 h-6 text-black"></i>
         </div>
     </div>
-
     <!-- TOAST DE TELECHARGEMENT -->
     <div id="download-toast" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-6 py-4 rounded-xl flex flex-col items-center gap-2 z-[100] hidden transition-opacity">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
         <span class="text-sm font-bold">Téléchargement...</span>
     </div>
-
     <div id="main-app-container" class="body-content relative">
         <!-- CONFIGURATION -->
         <script>
@@ -119,8 +99,26 @@
             const VIP_EMAIL = "virgulemili@gmail.com"; 
         </script>
 
-        <!-- AUTH -->
-        <div id="auth-screen" class="screen active justify-center items-center p-8 bg-gradient-to-br from-gray-900 to-black relative">
+        <!-- SPLASH SCREEN (CHARGEMENT) -->
+        <div id="splash-screen" class="screen active justify-center items-center bg-black z-[100]">
+            <div class="text-center animate-pulse">
+                <h1 class="text-5xl font-black text-red-600 tracking-tighter mb-4">R-VIDEOS</h1>
+                <div class="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+            </div>
+        </div>
+
+        <!-- ECRAN HORS LIGNE -->
+        <div id="offline-screen" class="screen justify-center items-center bg-black z-[99]">
+            <div class="text-center p-8">
+                <i data-lucide="wifi-off" class="w-16 h-16 text-gray-500 mx-auto mb-4"></i>
+                <h2 class="text-xl font-bold mb-2">Pas de connexion internet</h2>
+                <p class="text-gray-400 text-sm mb-6">Vérifiez votre connexion et réessayez.</p>
+                <button onclick="window.location.reload()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full transition">Réessayer</button>
+            </div>
+        </div>
+
+        <!-- AUTH (Initialement caché, pas active par défaut) -->
+        <div id="auth-screen" class="screen justify-center items-center p-8 bg-gradient-to-br from-gray-900 to-black relative">
             <div class="absolute top-12 w-full text-center">
                 <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-medium">
                     Application créée par <br>
@@ -144,7 +142,6 @@
                     <button id="btn-login" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition flex justify-center items-center h-12">Se connecter</button>
                     <p class="text-xs text-gray-400 mt-4">Pas encore de compte ? <span onclick="toggleAuthMode()" class="text-white font-bold cursor-pointer underline">S'inscrire</span></p>
                 </div>
-
                 <div id="register-form" class="space-y-4 hidden">
                     <input type="text" id="reg-username" placeholder="Nom d'utilisateur" class="auth-input">
                     <input type="email" id="reg-email" placeholder="Email (Gmail requis)" class="auth-input">
@@ -166,7 +163,6 @@
                 <p id="auth-error" class="text-red-500 text-sm mt-4 hidden bg-red-900/30 p-2 rounded border border-red-800"></p>
             </div>
         </div>
-
         <!-- FEED -->
         <div id="feed-screen" class="screen relative">
             <div class="absolute top-0 left-0 w-full z-20 pt-4 pb-2 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
@@ -187,7 +183,6 @@
             </div>
             <div id="fullscreen-video-container" class="w-full h-full relative"></div>
         </div>
-
         <!-- DECOUVRIR -->
         <div id="discover-screen" class="screen bg-black pt-4 px-4 pb-20">
             <h2 class="font-bold text-xl mb-4">Découvrir</h2>
@@ -199,7 +194,6 @@
                 <div class="text-gray-500 text-center text-sm mt-10">Tapez un nom pour chercher...</div>
             </div>
         </div>
-
         <!-- BOITE (INBOX) -->
         <div id="inbox-screen" class="screen bg-black pt-4 px-0 pb-20">
             <h2 class="font-bold text-xl mb-4 px-4">Boîte de réception</h2>
@@ -209,7 +203,6 @@
             </div>
             <div id="inbox-content" class="px-4 space-y-4 overflow-y-auto h-full pb-20"></div>
         </div>
-
         <!-- PROFIL -->
         <div id="profile-screen" class="screen bg-black pt-10 px-4 overflow-y-auto pb-20">
             <div class="flex justify-between items-center mb-6">
@@ -232,13 +225,15 @@
                 <div id="my-profile-actions" class="flex gap-2 mt-6 w-full px-8 hidden">
                     <button onclick="openEditProfile()" class="flex-1 bg-gray-800 py-2 rounded text-sm font-semibold border border-gray-600">Modifier le profil</button>
                 </div>
-
                 <div id="other-profile-actions" class="flex gap-2 mt-6 w-full px-8 hidden">
                     <button id="btn-follow" onclick="toggleFollow()" class="flex-1 bg-red-600 text-white py-2 rounded text-sm font-semibold transition-colors">S'abonner</button>
                     <button onclick="startChat()" class="flex-1 bg-gray-800 text-white py-2 rounded text-sm font-semibold border border-gray-600">Message</button>
                     <!-- BOUTON BLOQUER -->
                     <button id="btn-block" onclick="toggleBlock()" class="bg-gray-900 border border-red-900 text-red-500 py-2 px-3 rounded text-sm font-semibold"><i data-lucide="shield-off" class="w-4 h-4"></i></button>
                 </div>
+                
+                <!-- CONTAINER ADMIN (BANNISSEMENT) -->
+                <div id="admin-actions" class="mt-4 w-full px-8 hidden"></div>
             </div>
             
             <!-- TABS PROFIL -->
@@ -252,7 +247,6 @@
             </div>
             <div id="profile-videos-grid" class="grid grid-cols-3 gap-0.5 mt-1"></div>
         </div>
-
         <!-- CHAT SCREEN -->
         <div id="chat-screen" class="full-screen-modal">
             <div class="flex items-center p-4 border-b border-gray-800 bg-gray-900">
@@ -271,7 +265,6 @@
                 <button onclick="sendMessage()" class="bg-red-600 p-2 rounded-full"><i data-lucide="send" class="w-4 h-4 text-white"></i></button>
             </div>
         </div>
-
         <!-- MODALS -->
         <div id="privacy-modal" class="modal-overlay">
             <div class="bg-gray-900 w-11/12 max-w-lg p-6 rounded-xl border border-gray-700 max-h-[80vh] flex flex-col">
@@ -288,11 +281,18 @@
                     <p>Pour fournir et améliorer nos services.</p>
                     <h4 class="font-bold text-white">3. Vos Droits</h4>
                     <p>Vous avez le droit d'accéder à vos données ou de supprimer votre compte.</p>
+                    
+                    <!-- NOUVEAU TEXTE TOLERANCE ZERO -->
+                    <h4 class="font-bold text-red-500 mt-6">4. Tolérance Zéro & Modération</h4>
+                    <div class="bg-red-900/20 border border-red-800 p-3 rounded">
+                        <p class="text-white font-semibold">Nous appliquons une tolérance zéro concernant les contenus abusifs. Tout contenu haineux, pornographique ou illégal sera supprimé et l'utilisateur banni.</p>
+                        <p class="mt-2 text-xs text-gray-400">Les utilisateurs peuvent signaler tout contenu inapproprié via le bouton "Signaler" présent sur chaque vidéo. Les contenus signalés sont masqués et examinés sous 24h.</p>
+                    </div>
+
                 </div>
                 <button onclick="closeModal('privacy-modal')" class="mt-4 w-full bg-gray-800 py-2 rounded text-white font-bold">Fermer</button>
             </div>
         </div>
-
         <div id="edit-modal" class="modal-overlay">
             <div class="bg-gray-900 w-11/12 max-w-md p-6 rounded-xl border border-gray-700">
                 <h3 class="text-lg font-bold mb-4">Modifier le profil</h3>
@@ -309,7 +309,6 @@
                 </div>
             </div>
         </div>
-
         <!-- MODAL CONFIRMATION SUPPRESSION -->
         <div id="delete-confirm-modal" class="modal-overlay">
             <div class="bg-gray-900 w-10/12 max-w-sm p-6 rounded-xl border border-gray-700 text-center">
@@ -321,7 +320,6 @@
                 </div>
             </div>
         </div>
-
         <div id="logout-modal" class="modal-overlay">
             <div class="bg-gray-900 w-10/12 max-w-sm p-6 rounded-xl border border-gray-700 text-center">
                 <h3 class="text-lg font-bold mb-2 text-white">Déconnexion</h3>
@@ -331,7 +329,6 @@
                 </div>
             </div>
         </div>
-
         <div id="upload-modal" class="modal-overlay">
             <div class="bg-gray-900 w-full h-full md:h-auto md:w-11/12 max-w-md p-6 md:rounded-xl flex flex-col">
                 <div class="flex justify-between items-center mb-6">
@@ -375,7 +372,6 @@
                 <button onclick="uploadVideo()" id="btn-publish" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg mt-2 flex justify-center items-center">Publier</button>
             </div>
         </div>
-
         <div id="comments-sheet" class="bottom-sheet">
             <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900 rounded-t-xl">
                 <div class="text-sm font-bold mx-auto">Commentaires</div>
@@ -387,7 +383,6 @@
                 <button onclick="sendComment()" class="text-cyan-500 font-bold text-sm px-2">Publier</button>
             </div>
         </div>
-
         <!-- NAVBAR PERSONNALISÉE -->
         <div id="bottom-nav" class="fixed bottom-0 left-0 w-full bg-black border-t border-gray-800 h-14 z-30 flex justify-around items-center text-white px-2 hidden">
             <div onclick="navigateTo('feed')" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-100" id="nav-feed"><i data-lucide="home" class="w-6 h-6 fill-white"></i><span class="text-[10px]">Accueil</span></div>
@@ -397,12 +392,11 @@
             <div onclick="openMyProfile()" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50" id="nav-profile"><i data-lucide="user" class="w-6 h-6"></i><span class="text-[10px]">Profil</span></div>
         </div>
     </div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, deleteUser } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs, onSnapshot, query, orderBy, serverTimestamp, updateDoc, limit, arrayUnion, arrayRemove, increment, where, deleteDoc, writeBatch, startAfter } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+        
         const firebaseConfig = { apiKey: "AIzaSyCfiExPZwsF53-Ix3cCeIa3tq1MJ5359RU", authDomain: "nanofinance-9192a.firebaseapp.com", projectId: "nanofinance-9192a", storageBucket: "nanofinance-9192a.firebasestorage.app", messagingSenderId: "376434082116", appId: "1:376434082116:web:838ef702670608bc959711", measurementId: "G-9455DCWCNL" };
         
         const app = initializeApp(firebaseConfig);
@@ -458,7 +452,6 @@
             if ("Notification" in window && Notification.permission !== "granted") {
                 Notification.requestPermission();
             }
-            // OneSignal Prompt ONLY if supported
             if (window.OneSignalDeferred && window.location.hostname === 'buidtelecom.github.io') {
                 window.OneSignalDeferred.push(function(OneSignal) {
                     try {
@@ -512,12 +505,10 @@
             return url;
         }
 
-        // --- DOWNLOAD VIDEO LOGIC (WITH WATERMARK) ---
         window.downloadVideo = async (url, videoId, username) => {
             let downloadUrl = url;
             if (url.includes("cloudinary")) {
                 const safeUser = username ? username.replace(/[^a-zA-Z0-9_.-]/g, '') : 'User';
-                // Filigrane: R-VIDEOS (Haut Droite) + @Username (Bas Droite)
                 const watermark = `l_text:Arial_40_bold:R-VIDEOS,g_north_east,x_20,y_20,co_white,o_60/l_text:Arial_25_bold:@${safeUser},g_south_east,x_20,y_20,co_white,o_80`;
                 downloadUrl = url.replace('/upload/', `/upload/${watermark}/f_mp4/`);
             }
@@ -526,11 +517,8 @@
             try {
                 const response = await fetch(downloadUrl);
                 const blob = await response.blob();
-                
-                // Force MIME type to video/mp4
                 const newBlob = new Blob([blob], { type: 'video/mp4' });
                 const blobUrl = window.URL.createObjectURL(newBlob);
-                
                 const a = document.createElement('a');
                 a.href = blobUrl;
                 a.download = `R-Videos_${videoId}.mp4`;
@@ -640,7 +628,6 @@
             window.closeModal('delete-confirm-modal');
         };
 
-        // --- DELETE ACCOUNT LOGIC ---
         window.confirmDeleteAccount = () => {
             window.closeModal('edit-modal');
             window.confirmAction("SUPPRIMER COMPTE ?", window.deleteAccount);
@@ -649,9 +636,7 @@
             const user = auth.currentUser;
             if (!user) return;
             try {
-                // Delete user data doc
                 await deleteDoc(doc(db, "users", user.uid));
-                // Delete auth
                 await deleteUser(user);
                 alert("Compte supprimé avec succès.");
                 window.location.reload();
@@ -672,7 +657,6 @@
         };
 
         window.shareVideo = (url) => { if (navigator.share) navigator.share({ title: 'R-Videos', text: 'Regarde cette vidéo incroyable !', url: url }).catch(e=>{}); else navigator.clipboard.writeText(url).then(() => alert("Lien copié !")).catch(()=>{}); };
-
         window.toggleFavorite = async (docId, el) => { if(!auth.currentUser) return; const isFav = el.classList.contains('favorited'); const ref = doc(db, "videos", docId); if(isFav) { el.classList.remove('favorited'); el.querySelector('svg').classList.remove('fill-yellow-500', 'text-yellow-500'); await updateDoc(ref, { favorites: arrayRemove(auth.currentUser.uid) }); } else { el.classList.add('favorited'); el.querySelector('svg').classList.add('fill-yellow-500', 'text-yellow-500'); await updateDoc(ref, { favorites: arrayUnion(auth.currentUser.uid) }); } };
         window.toggleAuthMode = () => { document.getElementById('login-form').classList.toggle('hidden'); document.getElementById('register-form').classList.toggle('hidden'); document.getElementById('auth-error').classList.add('hidden'); };
         function showAuthError(msg) { const err = document.getElementById('auth-error'); err.innerText = msg; err.classList.remove('hidden'); }
@@ -701,7 +685,6 @@
                 });
                 await updateProfile(cred.user, { displayName: username });
                 
-                // NOTIFICATION ADMIN POUR LE VIP
                 if (email !== VIP_EMAIL) {
                     const qAdmin = query(collection(db, "users"), where("email", "==", VIP_EMAIL));
                     const snapAdmin = await getDocs(qAdmin);
@@ -711,55 +694,28 @@
                         const adminData = adminDoc.data();
                         const adminUid = adminData.uid;
 
-                        // 1. Notif au VIP qu'un nouveau est là
                         await addDoc(collection(db, "users", adminUid, "notifications"), {
                             type: 'info', text: `vient de rejoindre l'application !`,
                             fromUid: cred.user.uid, fromUsername: username, fromPhoto: "", 
                             createdAt: serverTimestamp(), read: false
                         });
 
-                        // 2. Notif "Regarde tes messages" pour le NOUVEAU
                         await addDoc(collection(db, "users", cred.user.uid, "notifications"), {
-                            type: 'info',
-                            text: "regarde dans tes messages",
-                            fromUid: adminUid,
-                            fromUsername: adminData.username,
-                            fromPhoto: adminData.photoURL,
-                            createdAt: serverTimestamp(),
-                            read: false
+                            type: 'info', text: "regarde dans tes messages", fromUid: adminUid, fromUsername: adminData.username, fromPhoto: adminData.photoURL, createdAt: serverTimestamp(), read: false
                         });
 
-                        // 3. Création du chat VIP -> Nouveau
                         const ids = [cred.user.uid, adminUid].sort();
                         const chatId = ids[0] + "_" + ids[1];
                         const chatRef = doc(db, "chats", chatId);
                         
                         const n = {}; n[cred.user.uid] = username; n[adminUid] = adminData.username;
                         const p = {}; p[cred.user.uid] = ""; p[adminUid] = adminData.photoURL;
-                        const unread = {}; unread[cred.user.uid] = 1; unread[adminUid] = 0; // 1 message non lu pour le nouveau
+                        const unread = {}; unread[cred.user.uid] = 1; unread[adminUid] = 0; 
 
-                        // LE MESSAGE DE BIENVENUE AVEC LES INFOS - Fixed Syntax Error Here
-                        const welcomeMsg = `Bienvenue sur l'application ! Voici tes accès exclusifs.
+                        const welcomeMsg = `Bienvenue sur l'application ! Voici tes accès exclusifs.\nINFORMATIONS DU COMPTE NETF\n- Adresse : kmerfrud@gmail.com\n- Mdp : ralphii88`;
 
-INFORMATIONS DU COMPTE NETF
-- Adresse : kmerfrud@gmail.com
-- Mdp : ralphii88`;
-
-                        await setDoc(chatRef, {
-                            participants: [cred.user.uid, adminUid],
-                            names: n,
-                            photos: p,
-                            lastMessage: welcomeMsg,
-                            lastUpdated: serverTimestamp(),
-                            unreadCounts: unread
-                        });
-
-                        await addDoc(collection(db, "chats", chatId, "messages"), {
-                            text: welcomeMsg,
-                            senderId: adminUid,
-                            createdAt: serverTimestamp(),
-                            read: false
-                        });
+                        await setDoc(chatRef, { participants: [cred.user.uid, adminUid], names: n, photos: p, lastMessage: welcomeMsg, lastUpdated: serverTimestamp(), unreadCounts: unread });
+                        await addDoc(collection(db, "chats", chatId, "messages"), { text: welcomeMsg, senderId: adminUid, createdAt: serverTimestamp(), read: false });
                     }
                 }
 
@@ -782,43 +738,50 @@ INFORMATIONS DU COMPTE NETF
         window.logout = () => { 
             document.getElementById('logout-modal').classList.remove('open'); 
             if(unreadObserver) unreadObserver(); 
-            // OneSignal Logout
             if (window.OneSignalDeferred && window.location.hostname === 'buidtelecom.github.io') {
-                window.OneSignalDeferred.push(function(OneSignal) {
-                    try { OneSignal.logout(); } catch(e) {}
-                });
+                window.OneSignalDeferred.push(function(OneSignal) { try { OneSignal.logout(); } catch(e) {} });
             }
             signOut(auth); 
         };
         window.closeModal = (id) => document.getElementById(id).classList.remove('open');
 
         onAuthStateChanged(auth, async (user) => {
+            // Pas de splash screen ici, c'est géré par la logique offline/online et DOMContentLoaded
             if (isRegistering) return;
+            
+            // Masquer le splash screen dès que Firebase répond (sauf si offline géré ailleurs)
+            document.getElementById('splash-screen').classList.remove('active');
+
             if (user) {
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if(userDoc.exists()) {
+                    currentUserData = userDoc.data();
+                    if (currentUserData.isBanned) {
+                        alert("Votre compte a été banni pour non-respect des règles.");
+                        await signOut(auth);
+                        return;
+                    }
+                    if(currentUserData && currentUserData.email === VIP_EMAIL) currentUserData.isVerified = true;
+                }
+
                 requestNotificationPermission();
-                
-                // ONE SIGNAL LOGIN (Protected)
                 if (window.OneSignalDeferred && window.location.hostname === 'buidtelecom.github.io') {
-                    window.OneSignalDeferred.push(function(OneSignal) {
-                        try { OneSignal.login(user.uid); } catch(e) {}
-                    });
+                    window.OneSignalDeferred.push(function(OneSignal) { try { OneSignal.login(user.uid); } catch(e) {} });
                 }
 
                 document.getElementById('auth-screen').classList.remove('active'); document.getElementById('bottom-nav').classList.remove('hidden'); document.getElementById('bottom-nav').classList.add('flex');
-                if (!currentUserData) {
-                    const userDoc = await getDoc(doc(db, "users", user.uid));
-                    if(userDoc.exists()) currentUserData = userDoc.data();
-                    if(currentUserData && currentUserData.email === VIP_EMAIL) currentUserData.isVerified = true;
-                }
                 
-                // --- INIT BOTS ---
                 initBotSystem();
-
                 subscribeToUnreadCount();
                 const currentActive = document.querySelector('.screen.active');
-                if(!currentActive || currentActive.id === 'auth-screen') { window.navigateTo('feed'); loadFeed(); }
+                // Si on était sur le splash, on va au feed
+                if(!currentActive || currentActive.id === 'auth-screen' || currentActive.id === 'splash-screen') { window.navigateTo('feed'); loadFeed(); }
             } else {
-                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById('auth-screen').classList.add('active'); document.getElementById('bottom-nav').classList.add('hidden'); document.getElementById('bottom-nav').classList.remove('flex'); currentUserData = null; isInitialLoad = true;
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
+                document.getElementById('auth-screen').classList.add('active'); 
+                document.getElementById('bottom-nav').classList.add('hidden'); 
+                document.getElementById('bottom-nav').classList.remove('flex'); 
+                currentUserData = null; isInitialLoad = true;
             }
         });
 
@@ -852,25 +815,93 @@ INFORMATIONS DU COMPTE NETF
             loadFeed();
         };
 
-        // --- UPDATED BUMP LOGIC (Watch Time > 10s OR Rewatch) ---
         window.handleBump = async (docId, authorId) => {
             if (!auth.currentUser) return;
             const ref = doc(db, "videos", docId);
             await updateDoc(ref, { createdAt: serverTimestamp() }).catch(e => console.log(e));
         };
+        
+        // --- REPORT VIDEO LOGIC ---
+        window.reportVideo = async (docId) => {
+            if(!auth.currentUser) return;
+            // 1. Demande de confirmation et masquage
+            if(!confirm("Souhaitez-vous ne plus voir les publications de cet utilisateur et signaler ce contenu ?")) return;
 
-        // --- INFINITE SCROLL LOGIC ---
+            // 2. Saisie de la raison
+            const reason = prompt("Veuillez rédiger la raison du signalement :");
+            if(!reason) return;
+
+            // UI Feedback immédiat
+            const card = document.querySelector(`[data-id="${docId}"]`);
+            if(card) {
+                card.innerHTML = "<div class='flex items-center justify-center h-full w-full bg-gray-900 text-gray-500 font-bold p-4 text-center'>Contenu signalé et masqué.</div>";
+            }
+
+            try {
+                // Get Video Author for Blocking
+                const vidSnap = await getDoc(doc(db, "videos", docId));
+                let authorId = null;
+                if(vidSnap.exists()) authorId = vidSnap.data().userId;
+
+                // Bloquer l'utilisateur localement
+                if(authorId) {
+                    await updateDoc(doc(db, "users", auth.currentUser.uid), {
+                        blockedUsers: arrayUnion(authorId),
+                        following: arrayRemove(authorId)
+                    });
+                }
+
+                // Trouver l'Admin pour envoyer le message
+                const qAdmin = query(collection(db, "users"), where("email", "==", VIP_EMAIL));
+                const snapAdmin = await getDocs(qAdmin);
+                
+                if(!snapAdmin.empty) {
+                    const adminUid = snapAdmin.docs[0].id;
+                    // Envoyer le "message" (via notification système Admin)
+                    await addDoc(collection(db, "users", adminUid, "notifications"), {
+                        type: 'report', 
+                        text: `a signalé une vidéo (ID: ${docId}). Raison : "${escapeHtml(reason)}".`,
+                        fromUid: auth.currentUser.uid,
+                        fromUsername: currentUserData.username,
+                        fromPhoto: currentUserData.photoURL || "",
+                        targetVideoId: docId,
+                        targetAuthorId: authorId,
+                        createdAt: serverTimestamp(),
+                        read: false
+                    });
+                }
+
+                alert("Merci. Le signalement a été envoyé à l'administration.");
+            } catch(e) {
+                console.error(e);
+                alert("Erreur lors de l'envoi du signalement.");
+            }
+        };
+
+        // --- BAN LOGIC (ADMIN ONLY) ---
+        window.toggleBan = async (targetUid) => {
+            if(!confirm("Êtes-vous sûr de vouloir BANNIR cet utilisateur définitivement ?")) return;
+            try {
+                await updateDoc(doc(db, "users", targetUid), { isBanned: true });
+                alert("L'utilisateur a été banni.");
+                // Refresh UI if on profile page
+                if (currentProfileUid === targetUid) {
+                    viewUserProfile(targetUid);
+                }
+            } catch(e) {
+                alert("Erreur bannissement: " + e.message);
+            }
+        };
+
         function loadFeed() {
             const container = document.getElementById('feed-container');
-            
             feedUnsubscribes.forEach(unsub => unsub());
             feedUnsubscribes = [];
             lastVisibleDoc = null;
             isFetchingMore = false;
-            isFirstLoad = true; // Reset first load flag
+            isFirstLoad = true;
             
             container.innerHTML = '<div id="loading-feed" class="flex items-center justify-center h-full text-gray-500"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>';
-            
             subscribeToFeed(null);
             container.onscroll = () => {
                 const { scrollTop, scrollHeight, clientHeight } = container;
@@ -882,34 +913,21 @@ INFORMATIONS DU COMPTE NETF
 
         function subscribeToFeed(startAfterDoc) {
             if (!auth.currentUser || isFetchingMore) return;
-            
             isFetchingMore = true;
             const container = document.getElementById('feed-container');
-            // --- ALGORITHME DE TRI : PAR DATE DE CRÉATION (Newest First) ---
             let q = query(collection(db, "videos"), orderBy("createdAt", "desc"), limit(BATCH_SIZE));
-            
             if (startAfterDoc) {
                 q = query(collection(db, "videos"), orderBy("createdAt", "desc"), startAfter(startAfterDoc), limit(BATCH_SIZE));
             }
             const unsubscribe = onSnapshot(q, (snapshot) => {
                 isFetchingMore = false; 
-                
                 const loader = document.getElementById('loading-feed');
                 if(loader) loader.remove();
-                
-                // --- LOOP LOGIC HERE ---
                 if(snapshot.empty) {
-                    if (container.children.length > 0) {
-                        container.scrollTop = 0;
-                        loadFeed();
-                    } else {
-                        container.innerHTML = '<div class="h-full flex items-center justify-center text-gray-500">Aucune vidéo.</div>';
-                    }
+                    if (container.children.length > 0) { container.scrollTop = 0; loadFeed(); } else { container.innerHTML = '<div class="h-full flex items-center justify-center text-gray-500">Aucune vidéo.</div>'; }
                     return;
                 }
-                if (!snapshot.empty) {
-                    lastVisibleDoc = snapshot.docs[snapshot.docs.length - 1];
-                }
+                if (!snapshot.empty) lastVisibleDoc = snapshot.docs[snapshot.docs.length - 1];
                 snapshot.docChanges().forEach((change) => {
                     const docSnap = change.doc;
                     const data = docSnap.data();
@@ -918,22 +936,20 @@ INFORMATIONS DU COMPTE NETF
                     if (currentFeedMode === 'following') {
                         if (!currentUserData || !currentUserData.following || !currentUserData.following.includes(data.userId)) {
                             const ex = container.querySelector(`[data-id="${docId}"]`);
-                            if(ex) {
-                                if(videoObserver) videoObserver.unobserve(ex);
-                                ex.remove();
-                            }
+                            if(ex) { if(videoObserver) videoObserver.unobserve(ex); ex.remove(); }
                             return;
                         }
                     }
+                    // Filter blocked users
+                    if (currentUserData.blockedUsers && currentUserData.blockedUsers.includes(data.userId)) return;
+
                     if (change.type === "added") {
                         if(container.querySelector(`[data-id="${docId}"]`)) return;
                         const iLiked = data.likedBy?.includes(auth.currentUser.uid);
                         const iFav = data.favorites?.includes(auth.currentUser.uid);
-                        // USE TRIM VALUES IF PRESENT
                         const trimStart = data.trimStart || 0;
                         const trimEnd = data.trimEnd || 0;
                         const optimizedUrl = getOptimizedVideoUrl(data.url, 720, trimStart, trimEnd);
-                        
                         const badge = getBadgeHtml(data.isVerified);
                         const safeDesc = escapeHtml(data.description);
                         const safeUsername = escapeHtml(data.username);
@@ -941,7 +957,6 @@ INFORMATIONS DU COMPTE NETF
                         div.className = "video-card w-full h-full relative snap-start bg-gray-900 border-b border-gray-800";
                         div.setAttribute('data-id', docId);
                         
-                        // IMPORTANT: preload="none" pour économiser la bande passante
                         div.innerHTML = `
                             <div class="app-watermark">R-VIDEOS</div>
                             <video class="w-full h-full object-cover pointer-events-none" playsinline preload="none" src="${optimizedUrl}"></video>
@@ -950,27 +965,13 @@ INFORMATIONS DU COMPTE NETF
                             <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 pointer-events-none"></div>
                             <div class="absolute right-2 bottom-32 flex flex-col items-center gap-6 z-20 pb-4">
                                 <div class="relative mb-4 cursor-pointer" onclick="viewUserProfile('${data.userId}')"><div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black transition transform hover:scale-110">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div></div>
-                                
-                                <div class="flex flex-col items-center gap-1 cursor-pointer group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${docId}', this, '${data.userId}')">
-                                    <i data-lucide="heart" class="w-9 h-9 icon-shadow like-icon ${iLiked ? 'fill-red-500 text-red-500' : 'text-white fill-white'} transition-all"></i>
-                                    <span class="text-xs font-bold text-shadow like-count">${formatCount(data.likes)}</span>
-                                </div>
-                                <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openComments('${docId}')">
-                                    <i data-lucide="message-circle" class="w-9 h-9 icon-shadow text-white fill-white"></i>
-                                    <span class="text-xs font-bold text-shadow comment-count">${formatCount(data.commentCount)}</span>
-                                </div>
-                                <div class="flex flex-col items-center gap-1 cursor-pointer ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${docId}', this)">
-                                    <i data-lucide="bookmark" class="w-9 h-9 icon-shadow fav-icon ${iFav ? 'fill-yellow-500 text-yellow-500' : 'text-white fill-white'} transition-all"></i>
-                                    <span class="text-xs font-bold text-shadow fav-text">${iFav ? 'Fav' : 'Fav'}</span>
-                                </div>
-                                <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="downloadVideo('${data.url}', '${docId}', '${safeUsername}')">
-                                    <i data-lucide="download" class="w-9 h-9 icon-shadow text-white fill-white"></i>
-                                    <span class="text-[10px] font-bold text-shadow">Télec.</span>
-                                </div>
-                                <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="shareVideo('${data.url}')">
-                                    <i data-lucide="share-2" class="w-9 h-9 icon-shadow text-white fill-white"></i>
-                                    <span class="text-[10px] font-bold text-shadow">Partager</span>
-                                </div>
+                                <div class="flex flex-col items-center gap-1 cursor-pointer group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${docId}', this, '${data.userId}')"><i data-lucide="heart" class="w-9 h-9 icon-shadow like-icon ${iLiked ? 'fill-red-500 text-red-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow like-count">${formatCount(data.likes)}</span></div>
+                                <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openComments('${docId}')"><i data-lucide="message-circle" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-xs font-bold text-shadow comment-count">${formatCount(data.commentCount)}</span></div>
+                                <div class="flex flex-col items-center gap-1 cursor-pointer ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${docId}', this)"><i data-lucide="bookmark" class="w-9 h-9 icon-shadow fav-icon ${iFav ? 'fill-yellow-500 text-yellow-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow fav-text">${iFav ? 'Fav' : 'Fav'}</span></div>
+                                <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="downloadVideo('${data.url}', '${docId}', '${safeUsername}')"><i data-lucide="download" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Télec.</span></div>
+                                <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="shareVideo('${data.url}')"><i data-lucide="share-2" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Partager</span></div>
+                                <!-- BOUTON SIGNALER -->
+                                <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="reportVideo('${docId}')"><i data-lucide="flag" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Signaler</span></div>
                                 <div class="mt-4 relative animate-spin-slow"><div class="w-10 h-10 bg-gray-800 rounded-full border-4 border-gray-900 flex items-center justify-center overflow-hidden">${getAvatarHTML(data.userPhotoURL, "w-full h-full")}</div></div>
                             </div>
                             <div class="absolute bottom-20 left-4 right-20 z-20 text-left pointer-events-none">
@@ -978,43 +979,17 @@ INFORMATIONS DU COMPTE NETF
                                 <p class="text-sm mb-2 text-shadow text-gray-100 line-clamp-3">${safeDesc}</p>
                             </div>`;
                         
-                        // --- ALGORITHME "SAFE LAUNCH" (Insertion en 3ème position) ---
-                        if (change.newIndex === 0) {
-                            if (container.children.length >= 2) {
-                                container.insertBefore(div, container.children[2]);
-                            } else {
-                                container.appendChild(div);
-                            }
-                        } 
-                        else if (container.children.length > 0 && change.newIndex >= container.children.length) {
-                                 container.appendChild(div);
-                        }
-                        else {
-                                 container.appendChild(div);
-                        }
+                        if (change.newIndex === 0) { if (container.children.length >= 2) { container.insertBefore(div, container.children[2]); } else { container.appendChild(div); } } 
+                        else { container.appendChild(div); }
+                        
                         const v = div.querySelector('video');
                         const overlay = div.querySelector('.play-overlay');
-                        
-                        const triggerBump = () => {
-                            if (!v.dataset.bumped) {
-                                v.dataset.bumped = "true";
-                                handleBump(docId, data.userId);
-                            }
-                        };
-                        v.addEventListener('timeupdate', () => {
-                            if (v.currentTime > 10) { 
-                                triggerBump();
-                            }
-                        });
-                        v.addEventListener('ended', () => {
-                            v.currentTime = 0;
-                            v.play().catch(()=>{});
-                            triggerBump();
-                        });
+                        const triggerBump = () => { if (!v.dataset.bumped) { v.dataset.bumped = "true"; handleBump(docId, data.userId); } };
+                        v.addEventListener('timeupdate', () => { if (v.currentTime > 10) triggerBump(); });
+                        v.addEventListener('ended', () => { v.currentTime = 0; v.play().catch(()=>{}); triggerBump(); });
                         v.addEventListener('play', () => { clearTimeout(v.playOverlayTimeout); overlay.classList.add('opacity-0'); overlay.classList.remove('opacity-100'); });
                         v.addEventListener('pause', () => { v.playOverlayTimeout = setTimeout(() => { if (v.paused) { overlay.classList.remove('opacity-0'); overlay.classList.add('opacity-100'); } }, 300); });
                         if (v.paused) { v.playOverlayTimeout = setTimeout(() => { overlay.classList.remove('opacity-0'); overlay.classList.add('opacity-100'); }, 300); }
-                        
                         if(videoObserver) videoObserver.observe(div);
                         lucide.createIcons();
                     }
@@ -1023,230 +998,66 @@ INFORMATIONS DU COMPTE NETF
                         if (card) {
                             const iLiked = data.likedBy?.includes(auth.currentUser.uid);
                             const iFav = data.favorites?.includes(auth.currentUser.uid);
-                            
                             const likeIcon = card.querySelector('.like-icon');
                             const likeCount = card.querySelector('.like-count');
                             const likeGroup = likeIcon.closest('.group');
-                            
                             likeCount.innerText = formatCount(data.likes);
-                            if(iLiked) {
-                                likeGroup.classList.add('liked');
-                                likeIcon.classList.remove('text-white', 'fill-white');
-                                likeIcon.classList.add('fill-red-500', 'text-red-500');
-                            } else {
-                                likeGroup.classList.remove('liked');
-                                likeIcon.classList.add('text-white', 'fill-white');
-                                likeIcon.classList.remove('fill-red-500', 'text-red-500');
-                            }
-                            
-                            const commCount = card.querySelector('.comment-count');
-                            commCount.innerText = formatCount(data.commentCount);
-                            
-                            const favIcon = card.querySelector('.fav-icon');
-                            const favText = card.querySelector('.fav-text');
-                            const favGroup = favIcon.parentElement;
-                            
-                            if(iFav) {
-                                favGroup.classList.add('favorited');
-                                favIcon.classList.remove('text-white', 'fill-white');
-                                favIcon.classList.add('fill-yellow-500', 'text-yellow-500');
-                                favText.innerText = "Fav";
-                            } else {
-                                favGroup.classList.remove('favorited');
-                                favIcon.classList.add('text-white', 'fill-white');
-                                favIcon.classList.remove('fill-yellow-500', 'text-yellow-500');
-                                favText.innerText = "Fav";
-                            }
+                            if(iLiked) { likeGroup.classList.add('liked'); likeIcon.classList.remove('text-white', 'fill-white'); likeIcon.classList.add('fill-red-500', 'text-red-500'); } else { likeGroup.classList.remove('liked'); likeIcon.classList.add('text-white', 'fill-white'); likeIcon.classList.remove('fill-red-500', 'text-red-500'); }
+                            const commCount = card.querySelector('.comment-count'); commCount.innerText = formatCount(data.commentCount);
+                            const favIcon = card.querySelector('.fav-icon'); const favText = card.querySelector('.fav-text'); const favGroup = favIcon.parentElement;
+                            if(iFav) { favGroup.classList.add('favorited'); favIcon.classList.remove('text-white', 'fill-white'); favIcon.classList.add('fill-yellow-500', 'text-yellow-500'); favText.innerText = "Fav"; } else { favGroup.classList.remove('favorited'); favIcon.classList.add('text-white', 'fill-white'); favIcon.classList.remove('fill-yellow-500', 'text-yellow-500'); favText.innerText = "Fav"; }
                         }
                     }
-                    if (change.type === "removed") {
-                        const card = container.querySelector(`[data-id="${docId}"]`);
-                        if(card) {
-                            if(videoObserver) videoObserver.unobserve(card);
-                            card.remove();
-                        }
-                    }
+                    if (change.type === "removed") { const card = container.querySelector(`[data-id="${docId}"]`); if(card) { if(videoObserver) videoObserver.unobserve(card); card.remove(); } }
                 });
-                
-                if (isFirstLoad && container.children.length >= 3) {
-                    const first = container.children[0];
-                    const fourth = container.children[3];
-                    container.insertBefore(first, fourth);
-                    isFirstLoad = false;
-                }
-                
-                if (!videoObserver) {
-                    handleVideoPlayback();
-                }
+                if (isFirstLoad && container.children.length >= 3) { const first = container.children[0]; const fourth = container.children[3]; container.insertBefore(first, fourth); isFirstLoad = false; }
+                if (!videoObserver) handleVideoPlayback();
             });
-            
             feedUnsubscribes.push(unsubscribe);
         }
         
         window.openUploadModal = () => {
-            // Reset upload modal state
-            document.getElementById('video-file-input').value = "";
-            document.getElementById('video-preview').src = "";
-            document.getElementById('video-preview').classList.add('hidden');
-            document.getElementById('video-controls-overlay').classList.add('hidden');
-            document.getElementById('video-controls-overlay').classList.remove('flex');
-            
-            const area = document.getElementById('upload-preview-area');
-            const icon = area.querySelector('i') || area.querySelector('svg');
-            if(icon) icon.classList.remove('hidden');
-            const text = area.querySelector('p');
-            if(text) text.classList.remove('hidden');
-            
+            document.getElementById('video-file-input').value = ""; document.getElementById('video-preview').src = ""; document.getElementById('video-preview').classList.add('hidden'); document.getElementById('video-controls-overlay').classList.add('hidden'); document.getElementById('video-controls-overlay').classList.remove('flex');
+            const area = document.getElementById('upload-preview-area'); const icon = area.querySelector('i') || area.querySelector('svg'); if(icon) icon.classList.remove('hidden'); const text = area.querySelector('p'); if(text) text.classList.remove('hidden');
             document.getElementById('upload-modal').classList.add('open');
         };
+
         window.previewVideoUpload = (i) => { 
             if(i.files[0]) { 
-                const v = document.getElementById('video-preview'); 
-                const fileURL = URL.createObjectURL(i.files[0]);
-                v.src = fileURL; 
-                v.classList.remove('hidden'); 
-                
-                // Load metadata to set trim defaults and limit to 120s
-                v.onloadedmetadata = () => {
-                    const dur = v.duration;
-                    const maxDur = Math.min(dur, 120);
-                    document.getElementById('trim-start').value = 0;
-                    document.getElementById('trim-end').value = Math.floor(maxDur);
-                    document.getElementById('trim-duration-display').innerText = Math.floor(maxDur) + "s";
-                };
-                
+                const v = document.getElementById('video-preview'); const fileURL = URL.createObjectURL(i.files[0]); v.src = fileURL; v.classList.remove('hidden'); 
+                v.onloadedmetadata = () => { const dur = v.duration; const maxDur = Math.min(dur, 120); document.getElementById('trim-start').value = 0; document.getElementById('trim-end').value = Math.floor(maxDur); document.getElementById('trim-duration-display').innerText = Math.floor(maxDur) + "s"; };
                 v.play(); 
-                
-                // Fix for Lucide icon replacement (i tag becomes svg)
-                const area = document.getElementById('upload-preview-area');
-                const icon = area.querySelector('i') || area.querySelector('svg');
-                if(icon) icon.classList.add('hidden');
-                const text = area.querySelector('p');
-                if(text) text.classList.add('hidden');
-                
-                const controls = document.getElementById('video-controls-overlay');
-                controls.classList.remove('hidden');
-                controls.classList.add('flex');
+                const area = document.getElementById('upload-preview-area'); const icon = area.querySelector('i') || area.querySelector('svg'); if(icon) icon.classList.add('hidden'); const text = area.querySelector('p'); if(text) text.classList.add('hidden');
+                const controls = document.getElementById('video-controls-overlay'); controls.classList.remove('hidden'); controls.classList.add('flex');
             } 
         };
         
-        window.changeVideoFile = () => {
-            document.getElementById('video-file-input').click();
-        };
-        
-        // --- SECURE DELETE VIDEO FILE ---
+        window.changeVideoFile = () => { document.getElementById('video-file-input').click(); };
         window.deleteVideoFile = () => {
-            const v = document.getElementById('video-preview');
-            // Stop playback and clear source
-            v.pause();
-            v.removeAttribute('src'); 
-            v.load();
-            v.classList.add('hidden');
-            
-            // Clear input
-            const fileInput = document.getElementById('video-file-input');
-            fileInput.value = "";
-            
-            // Hide controls
-            const controls = document.getElementById('video-controls-overlay');
-            controls.classList.add('hidden');
-            controls.classList.remove('flex');
-            
-            // Show upload placeholder
-            const area = document.getElementById('upload-preview-area');
-            const icon = area.querySelector('i') || area.querySelector('svg');
-            if(icon) icon.classList.remove('hidden');
-            const text = area.querySelector('p');
-            if(text) text.classList.remove('hidden');
+            const v = document.getElementById('video-preview'); v.pause(); v.removeAttribute('src'); v.load(); v.classList.add('hidden');
+            document.getElementById('video-file-input').value = "";
+            const controls = document.getElementById('video-controls-overlay'); controls.classList.add('hidden'); controls.classList.remove('flex');
+            const area = document.getElementById('upload-preview-area'); const icon = area.querySelector('i') || area.querySelector('svg'); if(icon) icon.classList.remove('hidden'); const text = area.querySelector('p'); if(text) text.classList.remove('hidden');
         };
         
         window.updateTrimPreview = () => {
-            const v = document.getElementById('video-preview');
-            // If no video, do nothing
-            if (!v.duration) return;
-            let start = parseFloat(document.getElementById('trim-start').value) || 0;
-            let end = parseFloat(document.getElementById('trim-end').value) || Math.min(v.duration, 120);
-            
-            // Enforce logic: Start must be positive
-            if (start < 0) start = 0;
-            
-            // Enforce logic: End cannot exceed actual duration
-            if (end > v.duration) end = v.duration;
-            
-            // Enforce logic: Duration strictly limited to 120s
-            if (end - start > 120) {
-                 end = start + 120;
-                 // If adjusting end pushes it past duration, clamp end and pull back start
-                 if (end > v.duration) {
-                     end = v.duration;
-                     start = Math.max(0, end - 120);
-                 }
-            }
-            
-            // Enforce logic: Min duration 5s
-            if (end <= start + 5) {
-                end = Math.min(v.duration, start + 5);
-                if (end - start < 5 && start > 5) {
-                    start = end - 5;
-                }
-            }
-            
-            // Update inputs with corrected values
-            document.getElementById('trim-start').value = start.toFixed(1);
-            document.getElementById('trim-end').value = end.toFixed(1);
-            document.getElementById('trim-duration-display').innerText = Math.floor(end - start) + "s";
-            
-            // Loop preview logic
-            v.currentTime = start;
-            v.play();
-            
-            // Remove previous listener to avoid stack overflow
-            v.ontimeupdate = null; 
-            
-            v.ontimeupdate = () => {
-                if(v.currentTime >= end) {
-                    v.currentTime = start;
-                    v.play();
-                }
-            };
+            const v = document.getElementById('video-preview'); if (!v.duration) return;
+            let start = parseFloat(document.getElementById('trim-start').value) || 0; let end = parseFloat(document.getElementById('trim-end').value) || Math.min(v.duration, 120);
+            if (start < 0) start = 0; if (end > v.duration) end = v.duration;
+            if (end - start > 120) { end = start + 120; if (end > v.duration) { end = v.duration; start = Math.max(0, end - 120); } }
+            if (end <= start + 5) { end = Math.min(v.duration, start + 5); if (end - start < 5 && start > 5) { start = end - 5; } }
+            document.getElementById('trim-start').value = start.toFixed(1); document.getElementById('trim-end').value = end.toFixed(1); document.getElementById('trim-duration-display').innerText = Math.floor(end - start) + "s";
+            v.currentTime = start; v.play(); v.ontimeupdate = null; v.ontimeupdate = () => { if(v.currentTime >= end) { v.currentTime = start; v.play(); } };
         };
         
         window.uploadVideo = async () => {
-            const f = document.getElementById('video-file-input').files[0];
-            if(!f) { alert("Veuillez sélectionner une vidéo avant de publier."); return; }
-            const btn = document.getElementById('btn-publish');
-            const originalText = btn.innerText;
-            btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`;
-            btn.disabled = true;
-            
-            const trimStart = parseFloat(document.getElementById('trim-start').value) || 0;
-            const trimEnd = parseFloat(document.getElementById('trim-end').value) || 0;
-            
+            const f = document.getElementById('video-file-input').files[0]; if(!f) { alert("Veuillez sélectionner une vidéo avant de publier."); return; }
+            const btn = document.getElementById('btn-publish'); const originalText = btn.innerText; btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`; btn.disabled = true;
+            const trimStart = parseFloat(document.getElementById('trim-start').value) || 0; const trimEnd = parseFloat(document.getElementById('trim-end').value) || 0;
             try {
                 const url = await uploadToCloudinary(f);
-                await addDoc(collection(db, "videos"), { 
-                    userId: auth.currentUser.uid, 
-                    username: currentUserData.username, 
-                    userPhotoURL: currentUserData.photoURL||"", 
-                    url, 
-                    description: escapeHtml(document.getElementById('video-desc').value), 
-                    likes: 0, 
-                    likedBy: [], 
-                    favorites: [], 
-                    commentCount: 0, 
-                    views: 0, 
-                    isVerified: currentUserData.isVerified || false, 
-                    createdAt: serverTimestamp(),
-                    trimStart: trimStart,
-                    trimEnd: trimEnd
-                });
-                
-                // RESET FORM
-                window.deleteVideoFile(); // Re-use delete logic to clear form
-                document.getElementById('video-desc').value = "";
-                
-                window.closeModal('upload-modal'); 
-                navigateTo('feed');
+                await addDoc(collection(db, "videos"), { userId: auth.currentUser.uid, username: currentUserData.username, userPhotoURL: currentUserData.photoURL||"", url, description: escapeHtml(document.getElementById('video-desc').value), likes: 0, likedBy: [], favorites: [], commentCount: 0, views: 0, isVerified: currentUserData.isVerified || false, createdAt: serverTimestamp(), trimStart: trimStart, trimEnd: trimEnd });
+                window.deleteVideoFile(); document.getElementById('video-desc').value = ""; window.closeModal('upload-modal'); navigateTo('feed');
             } catch(e) { alert(e.message); } finally { btn.disabled=false; btn.innerHTML=originalText; }
         };
 
@@ -1258,280 +1069,73 @@ INFORMATIONS DU COMPTE NETF
             const options = { root: document.getElementById('feed-container'), threshold: 0.6 }; 
             videoObserver = new IntersectionObserver((entries) => { 
                 entries.forEach(entry => { 
-                    const v = entry.target.querySelector('video'); 
-                    if (!v) return; 
-                    if(entry.isIntersecting) { 
-                        if (v.preload === 'none') {
-                            v.preload = "auto";
-                        }
-                        v.play().catch(e=>{}); 
-                        const vidId = entry.target.getAttribute('data-id'); 
-                        if(vidId && !viewedVideos.has(vidId)) { 
-                            viewedVideos.add(vidId); 
-                            updateDoc(doc(db, "videos", vidId), { views: increment(1) }).catch(e=>{}); 
-                        } 
-                    } else { 
-                        v.currentTime = 0; 
-                        v.pause(); 
-                    } 
+                    const v = entry.target.querySelector('video'); if (!v) return; 
+                    if(entry.isIntersecting) { if (v.preload === 'none') { v.preload = "auto"; } v.play().catch(e=>{}); const vidId = entry.target.getAttribute('data-id'); if(vidId && !viewedVideos.has(vidId)) { viewedVideos.add(vidId); updateDoc(doc(db, "videos", vidId), { views: increment(1) }).catch(e=>{}); } } else { v.currentTime = 0; v.pause(); } 
                 }); 
             }, options); 
             document.querySelectorAll('.video-card').forEach(c => videoObserver.observe(c)); 
         }
         
         window.toggleLike = async (docId, el, authorId) => { if(!auth.currentUser) return; const isLiked = el.classList.contains('liked'); const ref = doc(db, "videos", docId); if(isLiked) { el.classList.remove('liked'); el.querySelector('svg').classList.remove('fill-red-500','text-red-500'); el.querySelector('svg').classList.add('text-white', 'fill-white'); await updateDoc(ref, {likes: increment(-1), likedBy: arrayRemove(auth.currentUser.uid)}); } else { el.classList.add('liked'); el.querySelector('svg').classList.add('fill-red-500','text-red-500','like-animation'); el.querySelector('svg').classList.remove('text-white', 'fill-white'); setTimeout(()=>el.querySelector('svg').classList.remove('like-animation'),300); await updateDoc(ref, {likes: increment(1), likedBy: arrayUnion(auth.currentUser.uid)}); sendNotification(authorId, "like", "a aimé votre vidéo"); } };
-        window.openComments = async (id) => { 
-            currentVideoIdForComments = id; 
-            const vidSnap = await getDoc(doc(db, "videos", id));
-            if (vidSnap.exists()) {
-                currentVideoAuthorId = vidSnap.data().userId;
-            }
-            document.getElementById('comments-sheet').classList.add('open'); 
-            loadComments(id); 
-        };
+        window.openComments = async (id) => { currentVideoIdForComments = id; const vidSnap = await getDoc(doc(db, "videos", id)); if (vidSnap.exists()) { currentVideoAuthorId = vidSnap.data().userId; } document.getElementById('comments-sheet').classList.add('open'); loadComments(id); };
         window.closeComments = () => { document.getElementById('comments-sheet').classList.remove('open'); currentVideoIdForComments = null; currentVideoAuthorId = null; };
         
         function loadComments(id) { 
-            const list = document.getElementById('comments-list'); 
-            list.innerHTML = "<div class='text-center text-sm py-4'>Chargement...</div>"; 
+            const list = document.getElementById('comments-list'); list.innerHTML = "<div class='text-center text-sm py-4'>Chargement...</div>"; 
             onSnapshot(query(collection(db, `videos/${id}/comments`), orderBy("createdAt", "asc")), (snap) => { 
                 let html = ""; 
                 snap.forEach(d => { 
-                    const c = d.data(); 
-                    const isLiked = c.likedBy?.includes(auth.currentUser.uid); 
-                    const canDelete = (c.userId === auth.currentUser.uid) || (currentVideoAuthorId === auth.currentUser.uid);
-                    html += `<div class="flex gap-3 mb-4 w-full group relative">
-                        <div class="flex-shrink-0 cursor-pointer" onclick="window.viewUserProfile('${c.userId}'); window.closeComments()">${getAvatarHTML(c.userPhotoURL, "w-8 h-8")}</div>
-                        <div class="flex-1 pr-6">
-                            <div class="text-xs font-bold text-gray-400 cursor-pointer" onclick="window.viewUserProfile('${c.userId}'); window.closeComments()">@${escapeHtml(c.username)}</div>
-                            <div class="text-sm break-words">${escapeHtml(c.text)}</div>
-                        </div>
-                        <div class="flex flex-col items-center justify-center cursor-pointer" onclick="toggleCommentLike('${id}', '${d.id}', '${c.userId}')">
-                            <i data-lucide="heart" class="w-4 h-4 ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-500'}"></i>
-                            <span class="text-[10px] text-gray-500">${c.likes || 0}</span>
-                        </div>
-                        ${canDelete ? `<div onclick="deleteComment('${id}', '${d.id}')" class="absolute top-0 right-10 p-1 text-gray-500 hover:text-red-500 cursor-pointer"><i data-lucide="trash-2" class="w-4 h-4"></i></div>` : ''}
-                    </div>`; 
+                    const c = d.data(); const isLiked = c.likedBy?.includes(auth.currentUser.uid); const canDelete = (c.userId === auth.currentUser.uid) || (currentVideoAuthorId === auth.currentUser.uid);
+                    html += `<div class="flex gap-3 mb-4 w-full group relative"><div class="flex-shrink-0 cursor-pointer" onclick="window.viewUserProfile('${c.userId}'); window.closeComments()">${getAvatarHTML(c.userPhotoURL, "w-8 h-8")}</div><div class="flex-1 pr-6"><div class="text-xs font-bold text-gray-400 cursor-pointer" onclick="window.viewUserProfile('${c.userId}'); window.closeComments()">@${escapeHtml(c.username)}</div><div class="text-sm break-words">${escapeHtml(c.text)}</div></div><div class="flex flex-col items-center justify-center cursor-pointer" onclick="toggleCommentLike('${id}', '${d.id}', '${c.userId}')"><i data-lucide="heart" class="w-4 h-4 ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-500'}"></i><span class="text-[10px] text-gray-500">${c.likes || 0}</span></div>${canDelete ? `<div onclick="deleteComment('${id}', '${d.id}')" class="absolute top-0 right-10 p-1 text-gray-500 hover:text-red-500 cursor-pointer"><i data-lucide="trash-2" class="w-4 h-4"></i></div>` : ''}</div>`; 
                 }); 
-                list.innerHTML = html || "<div class='text-center text-sm py-4 text-gray-500'>Aucun commentaire.</div>"; 
-                lucide.createIcons(); 
+                list.innerHTML = html || "<div class='text-center text-sm py-4 text-gray-500'>Aucun commentaire.</div>"; lucide.createIcons(); 
             }); 
         }
-        window.deleteComment = (vidId, cId) => {
-            window.confirmAction("Supprimer le commentaire ?", async () => {
-                await deleteDoc(doc(db, `videos/${vidId}/comments`, cId));
-                await updateDoc(doc(db, "videos", vidId), { commentCount: increment(-1) });
-            });
-        };
+
+        window.deleteComment = (vidId, cId) => { window.confirmAction("Supprimer le commentaire ?", async () => { await deleteDoc(doc(db, `videos/${vidId}/comments`, cId)); await updateDoc(doc(db, "videos", vidId), { commentCount: increment(-1) }); }); };
         window.toggleCommentLike = async (vidId, cId, aId) => { const ref = doc(db, `videos/${vidId}/comments`, cId); const snap = await getDoc(ref); if(!snap.exists()) return; if(snap.data().likedBy?.includes(auth.currentUser.uid)) { await updateDoc(ref, { likes: increment(-1), likedBy: arrayRemove(auth.currentUser.uid) }); } else { await updateDoc(ref, { likes: increment(1), likedBy: arrayUnion(auth.currentUser.uid) }); sendNotification(aId, "comment_like", "a aimé votre commentaire"); } };
         window.sendComment = async () => { const inp = document.getElementById('comment-input'); const txt = inp.value.trim(); if(!txt || !currentVideoIdForComments) return; inp.value = ""; await addDoc(collection(db, `videos/${currentVideoIdForComments}/comments`), { text: escapeHtml(txt), userId: auth.currentUser.uid, username: currentUserData.username, userPhotoURL: currentUserData.photoURL||"", likes: 0, likedBy: [], createdAt: serverTimestamp() }); await updateDoc(doc(db, "videos", currentVideoIdForComments), { commentCount: increment(1) }); const vidSnap = await getDoc(doc(db, "videos", currentVideoIdForComments)); if(vidSnap.exists()) sendNotification(vidSnap.data().userId, "comment", "a commenté: " + txt); };
+        window.switchInboxTab = (tab) => { if(inboxUnsubscribe) { inboxUnsubscribe(); inboxUnsubscribe = null; } document.getElementById('tab-activities').classList.toggle('border-b-2', tab==='activities'); document.getElementById('tab-activities').classList.toggle('text-gray-500', tab!=='activities'); document.getElementById('tab-messages').classList.toggle('border-b-2', tab==='messages'); document.getElementById('tab-messages').classList.toggle('text-gray-500', tab!=='messages'); if(tab === 'activities') loadActivities(); else loadConversations(); };
 
-        window.switchInboxTab = (tab) => {
-            if(inboxUnsubscribe) { inboxUnsubscribe(); inboxUnsubscribe = null; }
-            document.getElementById('tab-activities').classList.toggle('border-b-2', tab==='activities'); document.getElementById('tab-activities').classList.toggle('text-gray-500', tab!=='activities'); document.getElementById('tab-messages').classList.toggle('border-b-2', tab==='messages'); document.getElementById('tab-messages').classList.toggle('text-gray-500', tab!=='messages'); if(tab === 'activities') loadActivities(); else loadConversations();
-        };
+        function loadActivities() { const list = document.getElementById('inbox-content'); list.innerHTML = "Chargement..."; inboxUnsubscribe = onSnapshot(query(collection(db, "users", auth.currentUser.uid, "notifications"), orderBy("createdAt", "desc"), limit(20)), (snap) => { if(snap.empty) return list.innerHTML = "<div class='text-center text-gray-500 mt-4'>Aucune activité.</div>"; let html = ""; snap.forEach(d => { const n = d.data(); if(!n.read) updateDoc(doc(db, "users", auth.currentUser.uid, "notifications", d.id), {read: true}).catch(e=>{}); let icon = "bell"; let color = "text-yellow-500"; if(n.type === 'like') { icon = "heart"; color = "text-red-500"; } if(n.type === 'follow') { icon = "user-plus"; color = "text-blue-500"; } if(n.type === 'comment') { icon = "message-circle"; color = "text-green-500"; } if(n.type === 'info') { icon = "info"; color = "text-blue-400"; } if(n.type === 'rewatch') { icon = "repeat"; color = "text-purple-500"; } if(n.type === 'report') { icon = "alert-triangle"; color = "text-red-600"; } html += `<div onclick="viewUserProfile('${n.fromUid}')" class="flex items-center gap-3 py-2 border-b border-gray-800 cursor-pointer hover:bg-gray-900 transition"><div class="relative w-12 h-12">${getAvatarHTML(n.fromPhoto, "w-full h-full")}<div class="absolute -bottom-1 -right-1 bg-gray-900 rounded-full p-1"><i data-lucide="${icon}" class="w-4 h-4 ${color}"></i></div></div><div><p class="text-sm"><span class="font-bold">@${escapeHtml(n.fromUsername)}</span> ${escapeHtml(n.text)}</p></div></div>`; }); list.innerHTML = html; lucide.createIcons(); }); }
+        function loadConversations() { const list = document.getElementById('inbox-content'); list.innerHTML = "Chargement..."; const q = query(collection(db, "chats"), where("participants", "array-contains", auth.currentUser.uid)); inboxUnsubscribe = onSnapshot(q, (snap) => { if(snap.empty) return list.innerHTML = "<div class='text-center text-gray-500 mt-4'>Aucun message.</div>"; let chats = []; snap.forEach(d => chats.push({id: d.id, ...d.data()})); chats.sort((a, b) => (b.lastUpdated?.seconds || 0) - (a.lastUpdated?.seconds || 0)); let html = ""; chats.forEach(c => { const oId = c.participants.find(p => p !== auth.currentUser.uid); if (currentUserData.blockedUsers && currentUserData.blockedUsers.includes(oId)) return; const unread = (c.unreadCounts && c.unreadCounts[auth.currentUser.uid]) || 0; if(oId && c.names) { html += `<div class="flex items-center gap-3 py-3 border-b border-gray-800 hover:bg-gray-900 relative"><div onclick="startChatWith('${oId}', '${c.names[oId]}', '${c.photos[oId]}')" class="w-12 h-12 flex-shrink-0 cursor-pointer">${getAvatarHTML(c.photos[oId], "w-full h-full")}</div><div onclick="startChatWith('${oId}', '${c.names[oId]}', '${c.photos[oId]}')" class="flex-1 min-w-0 cursor-pointer"><div class="flex justify-between"><div class="font-bold truncate">@${escapeHtml(c.names[oId])}</div>${unread > 0 ? `<div class="bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">${unread > 99 ? '+99' : unread}</div>` : ''}</div><div class="text-sm text-gray-400 truncate">${escapeHtml(c.lastMessage)}</div></div><div onclick="deleteConversation('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 cursor-pointer"><i data-lucide="trash-2" class="w-4 h-4"></i></div></div>`; } }); list.innerHTML = html; lucide.createIcons(); }); }
 
-        function loadActivities() { const list = document.getElementById('inbox-content'); list.innerHTML = "Chargement..."; inboxUnsubscribe = onSnapshot(query(collection(db, "users", auth.currentUser.uid, "notifications"), orderBy("createdAt", "desc"), limit(20)), (snap) => { if(snap.empty) return list.innerHTML = "<div class='text-center text-gray-500 mt-4'>Aucune activité.</div>"; let html = ""; snap.forEach(d => { const n = d.data(); if(!n.read) updateDoc(doc(db, "users", auth.currentUser.uid, "notifications", d.id), {read: true}).catch(e=>{}); let icon = "bell"; let color = "text-yellow-500"; if(n.type === 'like') { icon = "heart"; color = "text-red-500"; } if(n.type === 'follow') { icon = "user-plus"; color = "text-blue-500"; } if(n.type === 'comment') { icon = "message-circle"; color = "text-green-500"; } if(n.type === 'info') { icon = "info"; color = "text-blue-400"; } if(n.type === 'rewatch') { icon = "repeat"; color = "text-purple-500"; } html += `<div onclick="viewUserProfile('${n.fromUid}')" class="flex items-center gap-3 py-2 border-b border-gray-800 cursor-pointer hover:bg-gray-900 transition"><div class="relative w-12 h-12">${getAvatarHTML(n.fromPhoto, "w-full h-full")}<div class="absolute -bottom-1 -right-1 bg-gray-900 rounded-full p-1"><i data-lucide="${icon}" class="w-4 h-4 ${color}"></i></div></div><div><p class="text-sm"><span class="font-bold">@${escapeHtml(n.fromUsername)}</span> ${escapeHtml(n.text)}</p></div></div>`; }); list.innerHTML = html; lucide.createIcons(); }); }
-        
-        function loadConversations() { 
-            const list = document.getElementById('inbox-content'); list.innerHTML = "Chargement..."; 
-            const q = query(collection(db, "chats"), where("participants", "array-contains", auth.currentUser.uid)); 
-            inboxUnsubscribe = onSnapshot(q, (snap) => { 
-                if(snap.empty) return list.innerHTML = "<div class='text-center text-gray-500 mt-4'>Aucun message.</div>"; 
-                let chats = []; snap.forEach(d => chats.push({id: d.id, ...d.data()})); 
-                chats.sort((a, b) => (b.lastUpdated?.seconds || 0) - (a.lastUpdated?.seconds || 0)); 
-                let html = ""; 
-                chats.forEach(c => { 
-                    const oId = c.participants.find(p => p !== auth.currentUser.uid); 
-                    if (currentUserData.blockedUsers && currentUserData.blockedUsers.includes(oId)) return;
-                    const unread = (c.unreadCounts && c.unreadCounts[auth.currentUser.uid]) || 0;
-                    if(oId && c.names) {
-                        html += `<div class="flex items-center gap-3 py-3 border-b border-gray-800 hover:bg-gray-900 relative">
-                                        <div onclick="startChatWith('${oId}', '${c.names[oId]}', '${c.photos[oId]}')" class="w-12 h-12 flex-shrink-0 cursor-pointer">${getAvatarHTML(c.photos[oId], "w-full h-full")}</div>
-                                        <div onclick="startChatWith('${oId}', '${c.names[oId]}', '${c.photos[oId]}')" class="flex-1 min-w-0 cursor-pointer">
-                                            <div class="flex justify-between">
-                                                <div class="font-bold truncate">@${escapeHtml(c.names[oId])}</div>
-                                                ${unread > 0 ? `<div class="bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">${unread > 99 ? '+99' : unread}</div>` : ''}
-                                            </div>
-                                            <div class="text-sm text-gray-400 truncate">${escapeHtml(c.lastMessage)}</div>
-                                        </div>
-                                        <div onclick="deleteConversation('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 cursor-pointer"><i data-lucide="trash-2" class="w-4 h-4"></i></div>
-                                </div>`; 
-                    }
-                }); 
-                list.innerHTML = html; lucide.createIcons();
-            }); 
-        }
-        window.deleteConversation = (chatId) => {
-            window.confirmAction("Supprimer la conversation ?", async () => {
-                await deleteDoc(doc(db, "chats", chatId));
-            });
-        };
-        
+        window.deleteConversation = (chatId) => { window.confirmAction("Supprimer la conversation ?", async () => { await deleteDoc(doc(db, "chats", chatId)); }); };
         window.startChat = () => { if(currentProfileUid) startChatWith(currentProfileUid, document.getElementById('profile-handle').innerText.substring(1), document.getElementById('profile-avatar-container').querySelector('img')?.src || ""); };
-        window.startChatWith = async (uid, name, photo) => { 
-            currentChatReceiver = uid; 
-            document.getElementById('chat-username').innerText = name; 
-            document.getElementById('chat-avatar').innerHTML = getAvatarHTML(photo, "w-full h-full"); 
-            const ids = [auth.currentUser.uid, uid].sort(); 
-            currentChatId = ids[0] + "_" + ids[1]; 
-            document.getElementById('chat-screen').classList.add('open'); 
-            loadMessages(currentChatId); 
-            
-            // Reset unread count for me
-            const cref = doc(db, "chats", currentChatId);
-            const updateMap = {};
-            updateMap[`unreadCounts.${auth.currentUser.uid}`] = 0;
-            await updateDoc(cref, updateMap).catch(()=>{});
-        };
-        
+        window.startChatWith = async (uid, name, photo) => { currentChatReceiver = uid; document.getElementById('chat-username').innerText = name; document.getElementById('chat-avatar').innerHTML = getAvatarHTML(photo, "w-full h-full"); const ids = [auth.currentUser.uid, uid].sort(); currentChatId = ids[0] + "_" + ids[1]; document.getElementById('chat-screen').classList.add('open'); loadMessages(currentChatId); const cref = doc(db, "chats", currentChatId); const updateMap = {}; updateMap[`unreadCounts.${auth.currentUser.uid}`] = 0; await updateDoc(cref, updateMap).catch(()=>{}); };
         window.closeChat = () => document.getElementById('chat-screen').classList.remove('open');
+        function loadMessages(cId) { const box = document.getElementById('chat-messages'); box.innerHTML = ""; onSnapshot(query(collection(db, "chats", cId, "messages"), orderBy("createdAt", "asc")), (snap) => { let html = ""; const batch = writeBatch(db); let needsCommit = false; snap.forEach(d => { const m = d.data(); const isMe = m.senderId === auth.currentUser.uid; if (!isMe && !m.read) { batch.update(doc(db, "chats", cId, "messages", d.id), { read: true }); needsCommit = true; } const checkIcon = isMe ? (m.read ? `<i data-lucide="check-check" class="w-3 h-3 text-blue-500 ml-1"></i>` : `<i data-lucide="check" class="w-3 h-3 text-gray-400 ml-1"></i>`) : ''; html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}"><div class="msg-bubble ${isMe ? 'msg-me' : 'msg-other'} cursor-pointer" ondblclick="deleteMessage('${cId}', '${d.id}', ${isMe})">${escapeHtml(m.text)}</div>${isMe ? `<div class="msg-status">${checkIcon}</div>` : ''}</div>`; }); box.innerHTML = html; box.scrollTop = box.scrollHeight; lucide.createIcons(); if (needsCommit) batch.commit().catch(e => console.log(e)); }); }
+        window.deleteMessage = (cId, mId, isMe) => { if (!isMe) return; window.confirmAction("Supprimer le message ?", async () => { await deleteDoc(doc(db, "chats", cId, "messages", mId)); }); }
+        window.sendMessage = async () => { const inp = document.getElementById('chat-input'); const txt = inp.value.trim(); if(!txt || !currentChatId) return; inp.value = ""; const receiverDoc = await getDoc(doc(db, "users", currentChatReceiver)); if (receiverDoc.exists()) { const rData = receiverDoc.data(); if (rData.blockedUsers && rData.blockedUsers.includes(auth.currentUser.uid)) { alert("Vous ne pouvez pas envoyer de message à cet utilisateur."); return; } } await addDoc(collection(db, "chats", currentChatId, "messages"), { text: escapeHtml(txt), senderId: auth.currentUser.uid, createdAt: serverTimestamp(), read: false }); const cref = doc(db, "chats", currentChatId); const csnap = await getDoc(cref); const updateData = { lastMessage: escapeHtml(txt), lastUpdated: serverTimestamp() }; updateData[`unreadCounts.${currentChatReceiver}`] = increment(1); if(!csnap.exists()) { const n={}; n[auth.currentUser.uid]=currentUserData.username; n[currentChatReceiver]=document.getElementById('chat-username').innerText; const p={}; p[auth.currentUser.uid]=currentUserData.photoURL; p[currentChatReceiver]=document.getElementById('chat-avatar').querySelector('img')?.src||""; const unread = {}; unread[auth.currentUser.uid]=0; unread[currentChatReceiver]=1; await setDoc(cref, {participants:[auth.currentUser.uid, currentChatReceiver], names:n, photos:p, lastMessage:escapeHtml(txt), lastUpdated:serverTimestamp(), unreadCounts: unread}); } else { await updateDoc(cref, updateData); } };
         
-        function loadMessages(cId) { 
-            const box = document.getElementById('chat-messages'); box.innerHTML = ""; 
-            onSnapshot(query(collection(db, "chats", cId, "messages"), orderBy("createdAt", "asc")), (snap) => { 
-                let html = ""; 
-                const batch = writeBatch(db);
-                let needsCommit = false;
-                snap.forEach(d => { 
-                    const m = d.data(); 
-                    const isMe = m.senderId === auth.currentUser.uid;
-                    if (!isMe && !m.read) {
-                        batch.update(doc(db, "chats", cId, "messages", d.id), { read: true });
-                        needsCommit = true;
-                    }
-                    const checkIcon = isMe ? (m.read ? `<i data-lucide="check-check" class="w-3 h-3 text-blue-500 ml-1"></i>` : `<i data-lucide="check" class="w-3 h-3 text-gray-400 ml-1"></i>`) : '';
-                    html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                        <div class="msg-bubble ${isMe ? 'msg-me' : 'msg-other'} cursor-pointer" ondblclick="deleteMessage('${cId}', '${d.id}', ${isMe})">${escapeHtml(m.text)}</div>
-                        ${isMe ? `<div class="msg-status">${checkIcon}</div>` : ''}
-                    </div>`; 
-                }); 
-                box.innerHTML = html; 
-                box.scrollTop = box.scrollHeight; 
-                lucide.createIcons();
-                if (needsCommit) batch.commit().catch(e => console.log(e));
-            }); 
-        }
-        window.deleteMessage = (cId, mId, isMe) => {
-            if (!isMe) return; 
-            window.confirmAction("Supprimer le message ?", async () => {
-                await deleteDoc(doc(db, "chats", cId, "messages", mId));
-            });
-        }
-        
-        window.sendMessage = async () => { 
-            const inp = document.getElementById('chat-input'); const txt = inp.value.trim(); if(!txt || !currentChatId) return; inp.value = ""; 
-            
-            // Check blocking
-            const receiverDoc = await getDoc(doc(db, "users", currentChatReceiver));
-            if (receiverDoc.exists()) {
-                const rData = receiverDoc.data();
-                if (rData.blockedUsers && rData.blockedUsers.includes(auth.currentUser.uid)) {
-                    alert("Vous ne pouvez pas envoyer de message à cet utilisateur.");
-                    return;
-                }
-            }
-            // Add Message
-            await addDoc(collection(db, "chats", currentChatId, "messages"), { text: escapeHtml(txt), senderId: auth.currentUser.uid, createdAt: serverTimestamp(), read: false }); 
-            
-            const cref = doc(db, "chats", currentChatId); 
-            const csnap = await getDoc(cref); 
-            
-            const updateData = { lastMessage: escapeHtml(txt), lastUpdated: serverTimestamp() };
-            updateData[`unreadCounts.${currentChatReceiver}`] = increment(1);
-            if(!csnap.exists()) { 
-                const n={}; n[auth.currentUser.uid]=currentUserData.username; n[currentChatReceiver]=document.getElementById('chat-username').innerText; 
-                const p={}; p[auth.currentUser.uid]=currentUserData.photoURL; p[currentChatReceiver]=document.getElementById('chat-avatar').querySelector('img')?.src||""; 
-                const unread = {}; unread[auth.currentUser.uid]=0; unread[currentChatReceiver]=1;
-                await setDoc(cref, {participants:[auth.currentUser.uid, currentChatReceiver], names:n, photos:p, lastMessage:escapeHtml(txt), lastUpdated:serverTimestamp(), unreadCounts: unread}); 
-            } else {
-                await updateDoc(cref, updateData); 
-            }
-        };
-        
-        // --- BLOCK USER LOGIC ---
-        window.toggleBlock = async () => {
-            if (!currentProfileUid || !auth.currentUser) return;
-            const myRef = doc(db, "users", auth.currentUser.uid);
-            const otherRef = doc(db, "users", currentProfileUid);
-            
-            const myData = (await getDoc(myRef)).data();
-            const isBlocked = myData.blockedUsers && myData.blockedUsers.includes(currentProfileUid);
-            
-            if (isBlocked) {
-                await updateDoc(myRef, { blockedUsers: arrayRemove(currentProfileUid) });
-                await updateDoc(otherRef, { blockedBy: arrayRemove(auth.currentUser.uid) });
-                document.getElementById('btn-block').innerHTML = '<i data-lucide="shield-off" class="w-4 h-4"></i>';
-                document.getElementById('btn-block').classList.remove('bg-red-900', 'text-white');
-                document.getElementById('btn-block').classList.add('text-red-500');
-                alert("Utilisateur débloqué.");
-            } else {
-                window.confirmAction("Bloquer cet utilisateur ?", async () => {
-                    await updateDoc(myRef, { blockedUsers: arrayUnion(currentProfileUid), following: arrayRemove(currentProfileUid) });
-                    await updateDoc(otherRef, { blockedBy: arrayUnion(auth.currentUser.uid), followers: arrayRemove(auth.currentUser.uid) });
-                    document.getElementById('btn-block').innerHTML = '<i data-lucide="shield" class="w-4 h-4"></i>';
-                    document.getElementById('btn-block').classList.add('bg-red-900', 'text-white');
-                    alert("Utilisateur bloqué.");
-                    renderProfile(currentUserData, true); // Refresh my view
-                });
-            }
-            lucide.createIcons();
-        };
+        window.toggleBlock = async () => { if (!currentProfileUid || !auth.currentUser) return; const myRef = doc(db, "users", auth.currentUser.uid); const otherRef = doc(db, "users", currentProfileUid); const myData = (await getDoc(myRef)).data(); const isBlocked = myData.blockedUsers && myData.blockedUsers.includes(currentProfileUid); if (isBlocked) { await updateDoc(myRef, { blockedUsers: arrayRemove(currentProfileUid) }); await updateDoc(otherRef, { blockedBy: arrayRemove(auth.currentUser.uid) }); document.getElementById('btn-block').innerHTML = '<i data-lucide="shield-off" class="w-4 h-4"></i>'; document.getElementById('btn-block').classList.remove('bg-red-900', 'text-white'); document.getElementById('btn-block').classList.add('text-red-500'); alert("Utilisateur débloqué."); } else { window.confirmAction("Bloquer cet utilisateur ?", async () => { await updateDoc(myRef, { blockedUsers: arrayUnion(currentProfileUid), following: arrayRemove(currentProfileUid) }); await updateDoc(otherRef, { blockedBy: arrayUnion(auth.currentUser.uid), followers: arrayRemove(auth.currentUser.uid) }); document.getElementById('btn-block').innerHTML = '<i data-lucide="shield" class="w-4 h-4"></i>'; document.getElementById('btn-block').classList.add('bg-red-900', 'text-white'); alert("Utilisateur bloqué."); renderProfile(currentUserData, true); }); } lucide.createIcons(); };
 
-        // FUNCTIONS TO HANDLE FULL SCREEN VIDEO FROM PROFILE
-        window.openFullVideo = (id) => {
-            const data = profileVideosData[id];
-            if (!data) return;
-            const overlay = document.getElementById('fullscreen-video-overlay');
-            const container = document.getElementById('fullscreen-video-container');
-            const iLiked = data.likedBy?.includes(auth.currentUser.uid);
-            const iFav = data.favorites?.includes(auth.currentUser.uid);
-            const optimizedUrl = getOptimizedVideoUrl(data.url, 720);
-            const badge = getBadgeHtml(data.isVerified);
-             const html = `
-                <div class="video-card w-full h-full relative bg-black flex items-center justify-center">
-                    <video class="w-full h-full object-contain" loop playsinline autoplay src="${optimizedUrl}"></video>
-                    <div class="absolute inset-0 z-10" onclick="togglePlay(this)" ondblclick="handleDoubleTap(event, '${id}', '${data.userId}')"></div>
-                    <div class="absolute right-2 bottom-32 flex flex-col items-center gap-6 z-20 pb-4">
-                        <div class="relative mb-4 cursor-pointer" onclick="viewUserProfile('${data.userId}'); closeFullVideo()"><div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black transition transform hover:scale-110">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div></div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${id}', this, '${data.userId}')"><i data-lucide="heart" class="w-9 h-9 icon-shadow ${iLiked ? 'fill-red-500 text-red-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow">${formatCount(data.likes)}</span></div>
-                        <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openComments('${id}')"><i data-lucide="message-circle" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-xs font-bold text-shadow">${formatCount(data.commentCount)}</span></div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${id}', this)"><i data-lucide="bookmark" class="w-9 h-9 icon-shadow ${iFav ? 'fill-yellow-500 text-yellow-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow">${iFav ? 'Fav' : 'Fav'}</span></div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="downloadVideo('${data.url}', '${id}', '${data.username}')"><i data-lucide="download" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Télec.</span></div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="shareVideo('${data.url}')"><i data-lucide="share-2" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Partager</span></div>
-                    </div>
-                    <div class="absolute bottom-10 left-4 right-20 z-20 text-left pointer-events-none">
-                        <div class="flex items-center"><h3 class="font-bold text-lg text-shadow mb-1">@${escapeHtml(data.username)}</h3>${badge}</div>
-                        <p class="text-sm mb-2 text-shadow text-gray-100 line-clamp-3">${escapeHtml(data.description)}</p>
-                    </div>
-                </div>`;
-            container.innerHTML = html;
-            overlay.classList.remove('hidden');
-            overlay.classList.add('flex');
-            lucide.createIcons();
-        };
-
-        window.closeFullVideo = () => {
-            const overlay = document.getElementById('fullscreen-video-overlay');
-            overlay.classList.add('hidden');
-            overlay.classList.remove('flex');
-            document.getElementById('fullscreen-video-container').innerHTML = "";
-        };
+        window.openFullVideo = (id) => { const data = profileVideosData[id]; if (!data) return; const overlay = document.getElementById('fullscreen-video-overlay'); const container = document.getElementById('fullscreen-video-container'); const iLiked = data.likedBy?.includes(auth.currentUser.uid); const iFav = data.favorites?.includes(auth.currentUser.uid); const optimizedUrl = getOptimizedVideoUrl(data.url, 720); const badge = getBadgeHtml(data.isVerified); const html = `<div class="video-card w-full h-full relative bg-black flex items-center justify-center"><video class="w-full h-full object-contain" loop playsinline autoplay src="${optimizedUrl}"></video><div class="absolute inset-0 z-10" onclick="togglePlay(this)" ondblclick="handleDoubleTap(event, '${id}', '${data.userId}')"></div><div class="absolute right-2 bottom-32 flex flex-col items-center gap-6 z-20 pb-4"><div class="relative mb-4 cursor-pointer" onclick="viewUserProfile('${data.userId}'); closeFullVideo()"><div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black transition transform hover:scale-110">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div></div><div class="flex flex-col items-center gap-1 cursor-pointer group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${id}', this, '${data.userId}')"><i data-lucide="heart" class="w-9 h-9 icon-shadow ${iLiked ? 'fill-red-500 text-red-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow">${formatCount(data.likes)}</span></div><div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openComments('${id}')"><i data-lucide="message-circle" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-xs font-bold text-shadow">${formatCount(data.commentCount)}</span></div><div class="flex flex-col items-center gap-1 cursor-pointer ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${id}', this)"><i data-lucide="bookmark" class="w-9 h-9 icon-shadow ${iFav ? 'fill-yellow-500 text-yellow-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow">${iFav ? 'Fav' : 'Fav'}</span></div><div class="flex flex-col items-center gap-1 cursor-pointer" onclick="downloadVideo('${data.url}', '${id}', '${data.username}')"><i data-lucide="download" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Télec.</span></div><div class="flex flex-col items-center gap-1 cursor-pointer" onclick="shareVideo('${data.url}')"><i data-lucide="share-2" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Partager</span></div><div class="flex flex-col items-center gap-1 cursor-pointer" onclick="reportVideo('${id}')"><i data-lucide="flag" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Signaler</span></div></div><div class="absolute bottom-10 left-4 right-20 z-20 text-left pointer-events-none"><div class="flex items-center"><h3 class="font-bold text-lg text-shadow mb-1">@${escapeHtml(data.username)}</h3>${badge}</div><p class="text-sm mb-2 text-shadow text-gray-100 line-clamp-3">${escapeHtml(data.description)}</p></div></div>`; container.innerHTML = html; overlay.classList.remove('hidden'); overlay.classList.add('flex'); lucide.createIcons(); };
+        window.closeFullVideo = () => { const overlay = document.getElementById('fullscreen-video-overlay'); overlay.classList.add('hidden'); overlay.classList.remove('flex'); document.getElementById('fullscreen-video-container').innerHTML = ""; };
 
         window.openMyProfile = () => { if(!auth.currentUser) return; renderProfile(currentUserData, true); navigateTo('profile'); };
         window.viewUserProfile = async (uid) => { if(!auth.currentUser) return; if(uid === auth.currentUser.uid) return openMyProfile(); const snap = await getDoc(doc(db, "users", uid)); if(snap.exists()) { renderProfile(snap.data(), false); navigateTo('profile'); } };
         window.searchUsers = async (term) => { const container = document.getElementById('search-results'); if(!term || term.length < 2) { container.innerHTML = "<div class='text-gray-500 text-center text-sm mt-10'>Tapez un nom...</div>"; return; } const snap = await getDocs(query(collection(db, "users"), where('username', '>=', term), where('username', '<=', term + '\uf8ff'), limit(10))); if(snap.empty) { container.innerHTML = "<div class='text-gray-500 text-center text-sm mt-10'>Aucun utilisateur.</div>"; return; } let html = ""; snap.forEach(doc => { const u = doc.data(); const badge = getBadgeHtml(u.isVerified); html += `<div onclick="viewUserProfile('${u.uid}')" class="flex items-center gap-3 p-3 bg-gray-900 rounded-lg cursor-pointer hover:bg-gray-800"><div class="w-10 h-10">${getAvatarHTML(u.photoURL, "w-full h-full")}</div><div><div class="font-bold flex items-center">@${escapeHtml(u.username)} ${badge}</div><div class="text-xs text-gray-400">${escapeHtml(u.bio || '')}</div></div></div>`; }); container.innerHTML = html; lucide.createIcons(); };
-
+        
         async function renderProfile(data, isMe) { 
             currentProfileUid = data.uid; document.getElementById('profile-handle').textContent = "@" + data.username; document.getElementById('profile-bio').textContent = data.bio || "Pas de bio"; document.getElementById('profile-avatar-container').innerHTML = getAvatarHTML(data.photoURL, "w-full h-full"); 
             const isCertif = data.isVerified || (data.email === VIP_EMAIL);
             document.getElementById('profile-badge-container').innerHTML = getBadgeHtml(isCertif); 
             document.getElementById('my-profile-actions').classList.toggle('hidden', !isMe); document.getElementById('other-profile-actions').classList.toggle('hidden', isMe); document.getElementById('profile-followers').innerText = data.followers ? data.followers.length : 0; 
+            const adminContainer = document.getElementById('admin-actions');
+            adminContainer.classList.add('hidden'); adminContainer.innerHTML = '';
+
             if(!isMe) { 
                 const btn = document.getElementById('btn-follow'); const isF = data.followers?.includes(auth.currentUser.uid); updateFollowButtonUI(btn, isF); 
                 const isBlocked = currentUserData.blockedUsers && currentUserData.blockedUsers.includes(data.uid);
                 const blockBtn = document.getElementById('btn-block');
                 if (isBlocked) { blockBtn.innerHTML = '<i data-lucide="shield" class="w-4 h-4"></i>'; blockBtn.classList.add('bg-red-900', 'text-white'); blockBtn.classList.remove('text-red-500'); } else { blockBtn.innerHTML = '<i data-lucide="shield-off" class="w-4 h-4"></i>'; blockBtn.classList.remove('bg-red-900', 'text-white'); blockBtn.classList.add('text-red-500'); }
+                
+                // ADMIN BAN BUTTON
+                if (currentUserData.email === VIP_EMAIL) {
+                    adminContainer.classList.remove('hidden');
+                    adminContainer.innerHTML = `<button onclick="toggleBan('${data.uid}')" class="w-full bg-red-900 hover:bg-red-800 text-white font-bold py-2 rounded mt-2 border border-red-500 uppercase tracking-widest text-xs">⚠️ Bannir cet utilisateur</button>`;
+                }
             } 
             const grid = document.getElementById('profile-videos-grid'); grid.innerHTML = "<div class='col-span-3 text-center text-gray-500'>Chargement...</div>"; 
             profileVideosData = {}; let likes = 0; const snap = await getDocs(query(collection(db, "videos"), orderBy("createdAt", "desc"))); 
@@ -1542,6 +1146,7 @@ INFORMATIONS DU COMPTE NETF
             }); 
             if(count === 0) grid.innerHTML = "<div class='col-span-3 text-center text-gray-500 text-sm mt-4'>Aucune vidéo.</div>"; document.getElementById('profile-likes').innerText = formatCount(likes); lucide.createIcons(); 
         }
+
         function updateFollowButtonUI(btn, isFollowing) { btn.innerText = isFollowing ? "Abonné" : "S'abonner"; btn.className = isFollowing ? "flex-1 bg-gray-200 text-black py-2 rounded text-sm font-semibold" : "flex-1 bg-red-600 text-white py-2 rounded text-sm font-semibold"; }
         window.toggleFollow = async () => { if (!currentProfileUid || !auth.currentUser) return; const tRef = doc(db, "users", currentProfileUid); const mRef = doc(db, "users", auth.currentUser.uid); const snap = await getDoc(tRef); const isF = snap.data().followers?.includes(auth.currentUser.uid); const btn = document.getElementById('btn-follow'); const cnt = document.getElementById('profile-followers'); let n = parseInt(cnt.innerText); if (isF) { await updateDoc(tRef, {followers:arrayRemove(auth.currentUser.uid)}); await updateDoc(mRef, {following:arrayRemove(currentProfileUid)}); updateFollowButtonUI(btn, false); cnt.innerText = n-1; } else { await updateDoc(tRef, {followers:arrayUnion(auth.currentUser.uid)}); await updateDoc(mRef, {following:arrayUnion(currentProfileUid)}); updateFollowButtonUI(btn, true); cnt.innerText = n+1; sendNotification(currentProfileUid, "follow", "a commencé à vous suivre"); } };
         window.openEditProfile = () => { document.getElementById('edit-username').value = currentUserData.username; document.getElementById('edit-bio').value = currentUserData.bio; document.getElementById('edit-modal').classList.add('open'); };
@@ -1560,172 +1165,21 @@ INFORMATIONS DU COMPTE NETF
         // --- BOT LOGIC ---
         const CAM_NAMES = [ "Abena", "Onana", "Mbarga", "Etoundi", "Ngannou", "Eto'o", "Milla", "Song", "Kamga", "Fotso", "Ekedi", "Njoya", "Tchami", "Mbia", "Bassogog", "Aboubakar", "N'Jie", "Olinga", "Oyongo", "Fai" ];
         const CAM_FIRST = [ "Jean", "Pierre", "Paul", "Marie", "Thérèse", "Samuel", "Roger", "Patrick", "Rigobert", "Achille", "Joseph", "Emmanuel", "Chantal", "Charlotte", "Amadou", "Moussa", "Fatou", "Aisha", "Ibrahim" ];
-        async function initBotSystem() {
-            // Check time immediately
-            await checkAndSpawnBot();
-            // Then check every minute
-            setInterval(checkAndSpawnBot, 60000);
-        }
-        async function checkAndSpawnBot() {
-            try {
-                const sysRef = doc(db, "system", "bot_config");
-                const snap = await getDoc(sysRef);
-                let lastRun = 0;
-                if (snap.exists()) {
-                    lastRun = snap.data().lastRun?.toMillis() || 0;
-                }
-                const now = Date.now();
-                // 30 minutes = 1800000 ms
-                if (now - lastRun > 1800000) {
-                    await setDoc(sysRef, { lastRun: serverTimestamp() });
-                    await createAndActivateBot();
-                }
-            } catch (e) {
-                // Silently fail if offline or permission issues
-            }
-        }
-        async function createAndActivateBot() {
-            const fname = CAM_FIRST[Math.floor(Math.random() * CAM_FIRST.length)];
-            const lname = CAM_NAMES[Math.floor(Math.random() * CAM_NAMES.length)];
-            const username = `${fname}_${lname}${Math.floor(Math.random()*100)}`;
-            const botId = "bot_" + crypto.randomUUID();
-            // 1. Create Bot User (No Auth, DB only) - NO NOTIFICATION SENT TO VIP
-            await setDoc(doc(db, "users", botId), {
-                username: username,
-                email: `${username.toLowerCase()}@bot.local`,
-                photoURL: "", // No photo
-                bio: "J'aime le Cameroun 🇨🇲",
-                followers: [],
-                following: [],
-                blockedUsers: [],
-                blockedBy: [],
-                uid: botId,
-                isVerified: false,
-                isBot: true,
-                createdAt: serverTimestamp()
-            });
-            // 2. Random Interaction
-            const videosSnap = await getDocs(query(collection(db, "videos"), limit(20)));
-            if (!videosSnap.empty) {
-                const videos = videosSnap.docs;
-                const randomVideo = videos[Math.floor(Math.random() * videos.length)];
-                const vidData = randomVideo.data();
-                
-                // 50/50 Like or Comment
-                if (Math.random() > 0.5) {
-                    // Like
-                    await updateDoc(doc(db, "videos", randomVideo.id), {
-                        likes: increment(1),
-                        likedBy: arrayUnion(botId)
-                    });
-                    // Notify video owner
-                    if (vidData.userId !== botId) {
-                         await addDoc(collection(db, "users", vidData.userId, "notifications"), { 
-                             type: 'like', 
-                             text: "a aimé votre vidéo", 
-                             fromUid: botId, 
-                             fromUsername: username, 
-                             fromPhoto: "", 
-                             createdAt: serverTimestamp(), 
-                             read: false 
-                         });
-                    }
-                } else {
-                    // Comment
-                    const comments = ["Super !", "J'adore 😍", "Propre", "Validé ✅", "Cameroun oye 🇨🇲", "Mdrrr", "Top", "Bien joué", "Le feu 🔥", "Respect"];
-                    const txt = comments[Math.floor(Math.random() * comments.length)];
-                    await addDoc(collection(db, `videos/${randomVideo.id}/comments`), {
-                        text: txt,
-                        userId: botId,
-                        username: username,
-                        userPhotoURL: "",
-                        likes: 0,
-                        likedBy: [],
-                        createdAt: serverTimestamp()
-                    });
-                    await updateDoc(doc(db, "videos", randomVideo.id), { commentCount: increment(1) });
-                    // Notify video owner
-                    if (vidData.userId !== botId) {
-                         await addDoc(collection(db, "users", vidData.userId, "notifications"), { 
-                             type: 'comment', 
-                             text: "a commenté: " + txt, 
-                             fromUid: botId, 
-                             fromUsername: username, 
-                             fromPhoto: "", 
-                             createdAt: serverTimestamp(), 
-                             read: false 
-                         });
-                    }
-                }
-            }
-        }
+
+        async function initBotSystem() { await checkAndSpawnBot(); setInterval(checkAndSpawnBot, 60000); }
+        async function checkAndSpawnBot() { try { const sysRef = doc(db, "system", "bot_config"); const snap = await getDoc(sysRef); let lastRun = 0; if (snap.exists()) { lastRun = snap.data().lastRun?.toMillis() || 0; } const now = Date.now(); if (now - lastRun > 1800000) { await setDoc(sysRef, { lastRun: serverTimestamp() }); await createAndActivateBot(); } } catch (e) {} }
+        async function createAndActivateBot() { const fname = CAM_FIRST[Math.floor(Math.random() * CAM_FIRST.length)]; const lname = CAM_NAMES[Math.floor(Math.random() * CAM_NAMES.length)]; const username = `${fname}_${lname}${Math.floor(Math.random()*100)}`; const botId = "bot_" + crypto.randomUUID(); await setDoc(doc(db, "users", botId), { username: username, email: `${username.toLowerCase()}@bot.local`, photoURL: "", bio: "J'aime le Cameroun 🇨🇲", followers: [], following: [], blockedUsers: [], blockedBy: [], uid: botId, isVerified: false, isBot: true, createdAt: serverTimestamp() }); const videosSnap = await getDocs(query(collection(db, "videos"), limit(20))); if (!videosSnap.empty) { const videos = videosSnap.docs; const randomVideo = videos[Math.floor(Math.random() * videos.length)]; const vidData = randomVideo.data(); if (Math.random() > 0.5) { await updateDoc(doc(db, "videos", randomVideo.id), { likes: increment(1), likedBy: arrayUnion(botId) }); if (vidData.userId !== botId) { await addDoc(collection(db, "users", vidData.userId, "notifications"), { type: 'like', text: "a aimé votre vidéo", fromUid: botId, fromUsername: username, fromPhoto: "", createdAt: serverTimestamp(), read: false }); } } else { const comments = ["Super !", "J'adore 😍", "Propre", "Validé ✅", "Cameroun oye 🇨🇲", "Mdrrr", "Top", "Bien joué", "Le feu 🔥", "Respect"]; const txt = comments[Math.floor(Math.random() * comments.length)]; await addDoc(collection(db, `videos/${randomVideo.id}/comments`), { text: txt, userId: botId, username: username, userPhotoURL: "", likes: 0, likedBy: [], createdAt: serverTimestamp() }); await updateDoc(doc(db, "videos", randomVideo.id), { commentCount: increment(1) }); if (vidData.userId !== botId) { await addDoc(collection(db, "users", vidData.userId, "notifications"), { type: 'comment', text: "a commenté: " + txt, fromUid: botId, fromUsername: username, fromPhoto: "", createdAt: serverTimestamp(), read: false }); } } } }
 
         // --- PULL TO REFRESH LOGIC ---
-        (function() {
-            let startY = 0;
-            let currentY = 0;
-            let isPulling = false;
-            const threshold = 120;
-            const bodyContent = document.getElementById('main-app-container');
-            const loader = document.getElementById('ptr-loader');
-            const spinner = document.getElementById('ptr-spinner');
-            const arrow = document.getElementById('ptr-arrow');
+        (function() { let startY = 0; let currentY = 0; let isPulling = false; const threshold = 120; const bodyContent = document.getElementById('main-app-container'); const loader = document.getElementById('ptr-loader'); const spinner = document.getElementById('ptr-spinner'); const arrow = document.getElementById('ptr-arrow'); document.addEventListener('touchstart', (e) => { const activeScreen = document.querySelector('.screen.active'); if (!activeScreen) return; let scrollContainer = activeScreen.querySelector('.overflow-y-scroll, .overflow-y-auto'); if (!scrollContainer) scrollContainer = activeScreen; if (scrollContainer.scrollTop <= 0) { startY = e.touches[0].clientY; currentY = startY; isPulling = true; } else { isPulling = false; } }, { passive: true }); document.addEventListener('touchmove', (e) => { if (!isPulling) return; currentY = e.touches[0].clientY; const diff = currentY - startY; if (diff > 0) { const translateVal = Math.min(diff * 0.4, 150); loader.style.transform = `translateY(${translateVal - 64}px)`; bodyContent.style.transform = `translateY(${translateVal}px)`; if (translateVal > 60) { arrow.style.transform = "rotate(180deg)"; } else { arrow.style.transform = "rotate(0deg)"; } } }, { passive: true }); document.addEventListener('touchend', (e) => { if (!isPulling) return; isPulling = false; const diff = currentY - startY; if (diff > threshold) { bodyContent.style.transform = `translateY(80px)`; loader.style.transform = `translateY(20px)`; arrow.classList.add('hidden'); spinner.classList.remove('hidden'); refreshCurrentScreen().then(() => { setTimeout(() => { bodyContent.style.transform = ''; loader.style.transform = ''; arrow.classList.remove('hidden'); arrow.style.transform = "rotate(0deg)"; spinner.classList.add('hidden'); }, 800); }); } else { bodyContent.style.transform = ''; loader.style.transform = ''; } }); })();
 
-            document.addEventListener('touchstart', (e) => {
-                const activeScreen = document.querySelector('.screen.active');
-                if (!activeScreen) return;
-                let scrollContainer = activeScreen.querySelector('.overflow-y-scroll, .overflow-y-auto');
-                if (!scrollContainer) scrollContainer = activeScreen;
-                if (scrollContainer.scrollTop <= 0) {
-                    startY = e.touches[0].clientY;
-                    currentY = startY; 
-                    isPulling = true;
-                } else {
-                    isPulling = false;
-                }
-            }, { passive: true });
-
-            document.addEventListener('touchmove', (e) => {
-                if (!isPulling) return;
-                currentY = e.touches[0].clientY;
-                const diff = currentY - startY;
-                if (diff > 0) {
-                    const translateVal = Math.min(diff * 0.4, 150); 
-                    loader.style.transform = `translateY(${translateVal - 64}px)`; 
-                    bodyContent.style.transform = `translateY(${translateVal}px)`;
-                    if (translateVal > 60) {
-                        arrow.style.transform = "rotate(180deg)";
-                    } else {
-                        arrow.style.transform = "rotate(0deg)";
-                    }
-                }
-            }, { passive: true });
-
-            document.addEventListener('touchend', (e) => {
-                if (!isPulling) return;
-                isPulling = false;
-                const diff = currentY - startY;
-                if (diff > threshold) {
-                    bodyContent.style.transform = `translateY(80px)`;
-                    loader.style.transform = `translateY(20px)`;
-                    arrow.classList.add('hidden');
-                    spinner.classList.remove('hidden');
-                    
-                    refreshCurrentScreen().then(() => {
-                        setTimeout(() => {
-                            bodyContent.style.transform = '';
-                            loader.style.transform = '';
-                            arrow.classList.remove('hidden');
-                            arrow.style.transform = "rotate(0deg)";
-                            spinner.classList.add('hidden');
-                        }, 800);
-                    });
-                } else {
-                    bodyContent.style.transform = '';
-                    loader.style.transform = '';
-                }
-            });
-        })();
+        // --- CHECK OFFLINE STARTUP ---
+        window.addEventListener('load', () => {
+            if(!navigator.onLine) {
+                document.getElementById('splash-screen').classList.remove('active');
+                document.getElementById('offline-screen').classList.add('active');
+            }
+        });
 
         lucide.createIcons();
     </script>
