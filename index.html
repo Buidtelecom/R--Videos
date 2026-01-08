@@ -34,7 +34,7 @@
       });
     </script>
     <style>
-        /* THEME COULEUR : MIDNIGHT BLUE (#0f172a) au lieu de BLACK */
+        /* THEME COULEUR : MIDNIGHT BLUE (#0f172a) */
         body, html { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overscroll-behavior-y: contain; }
         .snap-y-mandatory { scroll-snap-type: y mandatory; }
         .snap-start { scroll-snap-align: start; }
@@ -45,14 +45,12 @@
         @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
         .like-animation { animation: pop 0.3s ease-in-out; }
         
-        /* Background screen updated */
         .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; z-index: 10; background: #0f172a; }
         .screen.active { display: flex; }
         
         .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); z-index: 50; display: none; align-items: center; justify-content: center; }
         .modal-overlay.open { display: flex; }
         
-        /* Bottom sheet lighter blue */
         .bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100%; height: auto; max-height: 75%; background: #1e293b; border-t-left-radius: 16px; border-t-right-radius: 16px; z-index: 60; transform: translateY(100%); transition: transform 0.3s ease-out; display: flex; flex-direction: column; }
         .bottom-sheet.open { transform: translateY(0); }
         
@@ -74,9 +72,6 @@
         .verified-badge { fill: #3b82f6; color: white; display: inline-block; vertical-align: middle; margin-left: 4px; }
         .custom-checkbox { accent-color: #ef4444; width: 16px; height: 16px; cursor: pointer; }
         
-        /* Watermark Removed from CSS display, strictly handled in JS for removal or specific cases */
-        /* .app-watermark { ... } -> Removed to comply with request */
-        
         #ptr-loader { transition: transform 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28); z-index: 9999; }
         .ptr-icon { transition: transform 0.2s; }
         .body-content { transition: transform 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28); height: 100%; width: 100%; }
@@ -90,31 +85,37 @@
             100% { transform: translate(-50%, -50%) scale(0) rotate(0deg); opacity: 0; }
         }
         .trim-input { @apply bg-gray-800 text-white border border-gray-600 rounded px-2 py-1 text-xs w-20 text-center; }
+        
+        /* Custom Range Slider */
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ef4444; cursor: pointer; margin-top: -6px; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #334155; border-radius: 2px; }
+
+        /* Custom Toggle Switch */
+        .toggle-checkbox:checked { right: 0; border-color: #ef4444; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #ef4444; }
     </style>
 </head>
 <body class="relative overflow-hidden bg-[#0f172a]">
 
-    <!-- LOADER ACTUALISATION -->
     <div id="ptr-loader" class="fixed top-0 left-0 w-full flex justify-center pt-4 -translate-y-16 pointer-events-none">
         <div class="bg-white rounded-full p-2 shadow-xl border border-gray-200">
             <svg id="ptr-spinner" class="w-6 h-6 text-red-600 animate-spin hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
             <i id="ptr-arrow" data-lucide="arrow-down" class="w-6 h-6 text-black"></i>
         </div>
     </div>
-    <!-- TOAST DE TELECHARGEMENT -->
     <div id="download-toast" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-6 py-4 rounded-xl flex flex-col items-center gap-2 z-[100] hidden transition-opacity">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
         <span class="text-sm font-bold">Téléchargement...</span>
     </div>
+    
     <div id="main-app-container" class="body-content relative">
-        <!-- CONFIGURATION -->
         <script>
             const CLOUDINARY_CLOUD_NAME = "dh68eblab"; 
             const CLOUDINARY_UPLOAD_PRESET = "uxyhxrib"; 
             const VIP_EMAIL = "virgulemili@gmail.com"; 
         </script>
 
-        <!-- SPLASH SCREEN (CHARGEMENT) -->
         <div id="splash-screen" class="screen active justify-center items-center bg-[#0f172a] z-[100]">
             <div class="text-center animate-pulse">
                 <h1 class="text-5xl font-black text-red-600 tracking-tighter mb-4">R-VIDEOS</h1>
@@ -122,7 +123,6 @@
             </div>
         </div>
 
-        <!-- ECRAN HORS LIGNE -->
         <div id="offline-screen" class="screen justify-center items-center bg-[#0f172a] z-[99]">
             <div class="text-center p-8">
                 <i data-lucide="wifi-off" class="w-16 h-16 text-gray-500 mx-auto mb-4"></i>
@@ -132,40 +132,36 @@
             </div>
         </div>
 
-        <!-- AUTH -->
         <div id="auth-screen" class="screen justify-center items-center p-8 bg-gradient-to-br from-[#0f172a] to-[#1e293b] relative">
             <div class="absolute top-12 w-full text-center">
-                <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-medium">
-                    Application créée par <br>
-                    <span class="text-gray-400 font-bold">"Le Studio Ralph Nyamè"</span>. 2025
-                </p>
+                <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-medium">Application créée par <br><span class="text-gray-400 font-bold">"Le Studio Ralph Nyamè"</span>. 2025</p>
             </div>
             <div class="w-full max-w-sm text-center mt-10">
                 <h1 class="text-4xl font-black mb-2 text-red-500 tracking-tighter">R-VIDEOS</h1>
                 <p class="text-gray-400 mb-8 text-sm">Réseau Social Vidéo</p>
                 <div id="auth-success" class="hidden mb-4 p-3 bg-green-900/50 border border-green-500 text-green-200 rounded-lg text-sm">Compte créé ! Connectez-vous.</div>
                 
+                <!-- LOGIN FORM -->
                 <div id="login-form" class="space-y-4">
                     <input type="email" id="login-email" placeholder="Email" class="auth-input">
                     <div class="relative">
                         <input type="password" id="login-pass" placeholder="Mot de passe" class="auth-input pr-10">
-                        <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer" onclick="togglePassword('login-pass', this)">
-                            <i data-lucide="eye" class="w-5 h-5 eye"></i>
-                            <i data-lucide="eye-off" class="w-5 h-5 eye-off hidden"></i>
-                        </div>
+                        <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer" onclick="togglePassword('login-pass', this)"><i data-lucide="eye" class="w-5 h-5 eye"></i><i data-lucide="eye-off" class="w-5 h-5 eye-off hidden"></i></div>
+                    </div>
+                    <div class="text-right">
+                        <span onclick="toggleForgotPasswordMode()" class="text-xs text-gray-400 cursor-pointer hover:text-white">Mot de passe oublié ?</span>
                     </div>
                     <button id="btn-login" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition flex justify-center items-center h-12">Se connecter</button>
                     <p class="text-xs text-gray-400 mt-4">Pas encore de compte ? <span onclick="toggleAuthMode()" class="text-white font-bold cursor-pointer underline">S'inscrire</span></p>
                 </div>
+
+                <!-- REGISTER FORM -->
                 <div id="register-form" class="space-y-4 hidden">
                     <input type="text" id="reg-username" placeholder="Nom d'utilisateur" class="auth-input">
                     <input type="email" id="reg-email" placeholder="Email (Gmail requis)" class="auth-input">
                     <div class="relative">
                         <input type="password" id="reg-pass" placeholder="Mot de passe" class="auth-input pr-10">
-                        <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer" onclick="togglePassword('reg-pass', this)">
-                            <i data-lucide="eye" class="w-5 h-5 eye"></i>
-                            <i data-lucide="eye-off" class="w-5 h-5 eye-off hidden"></i>
-                        </div>
+                        <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer" onclick="togglePassword('reg-pass', this)"><i data-lucide="eye" class="w-5 h-5 eye"></i><i data-lucide="eye-off" class="w-5 h-5 eye-off hidden"></i></div>
                     </div>
                     <div class="flex items-start gap-2 text-left mt-2">
                         <input type="checkbox" id="reg-privacy" class="custom-checkbox mt-1">
@@ -174,11 +170,20 @@
                     <button id="btn-register" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 rounded-lg transition mt-2 flex justify-center items-center h-12">Créer mon compte</button>
                     <p class="text-xs text-gray-400 mt-4">Déjà un compte ? <span onclick="toggleAuthMode()" class="text-white font-bold cursor-pointer underline">Se connecter</span></p>
                 </div>
+
+                <!-- FORGOT PASSWORD FORM -->
+                <div id="forgot-password-form" class="space-y-4 hidden">
+                    <h3 class="text-white font-bold text-lg mb-2">Réinitialisation</h3>
+                    <p class="text-gray-400 text-xs mb-4">Entrez votre email pour recevoir un lien de réinitialisation.</p>
+                    <input type="email" id="reset-email" placeholder="Email" class="auth-input">
+                    <button id="btn-reset-pass" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition flex justify-center items-center h-12">Envoyer</button>
+                    <p class="text-xs text-gray-400 mt-4"><span onclick="toggleForgotPasswordMode()" class="text-white font-bold cursor-pointer underline">Retour à la connexion</span></p>
+                </div>
                 
                 <p id="auth-error" class="text-red-500 text-sm mt-4 hidden bg-red-900/30 p-2 rounded border border-red-800"></p>
             </div>
         </div>
-        <!-- FEED -->
+
         <div id="feed-screen" class="screen relative">
             <div class="absolute top-0 left-0 w-full z-20 pt-4 pb-2 bg-gradient-to-b from-[#0f172a]/90 to-transparent pointer-events-none">
                 <div class="flex justify-center items-center gap-4 text-base font-semibold pointer-events-auto">
@@ -191,14 +196,13 @@
             </div>
         </div>
         
-        <!-- FULL SCREEN VIDEO OVERLAY -->
         <div id="fullscreen-video-overlay" class="fixed inset-0 z-50 bg-[#0f172a] hidden flex-col">
             <div class="absolute top-0 left-0 w-full z-20 p-4">
                 <i data-lucide="chevron-left" class="w-8 h-8 text-white cursor-pointer drop-shadow-md" onclick="closeFullVideo()"></i>
             </div>
             <div id="fullscreen-video-container" class="w-full h-full relative"></div>
         </div>
-        <!-- DECOUVRIR -->
+
         <div id="discover-screen" class="screen bg-[#0f172a] pt-4 px-4 pb-20">
             <h2 class="font-bold text-xl mb-4">Découvrir</h2>
             <div class="relative mb-6">
@@ -209,7 +213,7 @@
                 <div class="text-gray-500 text-center text-sm mt-10">Tapez un nom pour chercher...</div>
             </div>
         </div>
-        <!-- BOITE (INBOX) -->
+
         <div id="inbox-screen" class="screen bg-[#0f172a] pt-4 px-0 pb-20">
             <h2 class="font-bold text-xl mb-4 px-4">Boîte de réception</h2>
             <div class="flex border-b border-[#334155] px-4 mb-4">
@@ -218,7 +222,7 @@
             </div>
             <div id="inbox-content" class="px-4 space-y-4 overflow-y-auto h-full pb-20"></div>
         </div>
-        <!-- PROFIL -->
+
         <div id="profile-screen" class="screen bg-[#0f172a] pt-10 px-4 overflow-y-auto pb-20">
             <div class="flex justify-between items-center mb-6">
                 <i data-lucide="chevron-left" class="w-6 h-6 text-white cursor-pointer" onclick="navigateTo('feed')"></i>
@@ -236,33 +240,23 @@
                     <div><div class="font-bold text-lg" id="profile-followers">0</div><div class="text-xs text-gray-400">Abonnés</div></div>
                     <div><div class="font-bold text-lg" id="profile-likes">0</div><div class="text-xs text-gray-400">J'aime</div></div>
                 </div>
-                
                 <div id="my-profile-actions" class="flex gap-2 mt-6 w-full px-8 hidden">
                     <button onclick="openEditProfile()" class="flex-1 bg-[#1e293b] py-2 rounded text-sm font-semibold border border-gray-600">Modifier le profil</button>
                 </div>
                 <div id="other-profile-actions" class="flex gap-2 mt-6 w-full px-8 hidden">
                     <button id="btn-follow" onclick="toggleFollow()" class="flex-1 bg-red-600 text-white py-2 rounded text-sm font-semibold transition-colors">S'abonner</button>
                     <button onclick="startChat()" class="flex-1 bg-[#1e293b] text-white py-2 rounded text-sm font-semibold border border-gray-600">Message</button>
-                    <!-- BOUTON BLOQUER -->
                     <button id="btn-block" onclick="toggleBlock()" class="bg-[#1e293b] border border-red-900 text-red-500 py-2 px-3 rounded text-sm font-semibold"><i data-lucide="shield-off" class="w-4 h-4"></i></button>
                 </div>
-                
-                <!-- CONTAINER ADMIN (BANNISSEMENT) -->
                 <div id="admin-actions" class="mt-4 w-full px-8 hidden"></div>
             </div>
-            
-            <!-- TABS PROFIL -->
             <div class="flex border-b border-[#334155] mb-1">
-                <div id="tab-profile-videos" class="flex-1 py-3 text-center border-b-2 border-white cursor-pointer transition-colors" onclick="switchProfileTab('videos')">
-                    <i data-lucide="grid-3x3" class="mx-auto w-5 h-5"></i>
-                </div>
-                <div id="tab-profile-favs" class="flex-1 py-3 text-center border-b-2 border-transparent text-gray-500 cursor-pointer transition-colors" onclick="switchProfileTab('favs')">
-                    <i data-lucide="bookmark" class="mx-auto w-5 h-5"></i>
-                </div>
+                <div id="tab-profile-videos" class="flex-1 py-3 text-center border-b-2 border-white cursor-pointer transition-colors" onclick="switchProfileTab('videos')"><i data-lucide="grid-3x3" class="mx-auto w-5 h-5"></i></div>
+                <div id="tab-profile-favs" class="flex-1 py-3 text-center border-b-2 border-transparent text-gray-500 cursor-pointer transition-colors" onclick="switchProfileTab('favs')"><i data-lucide="bookmark" class="mx-auto w-5 h-5"></i></div>
             </div>
             <div id="profile-videos-grid" class="grid grid-cols-3 gap-0.5 mt-1"></div>
         </div>
-        <!-- CHAT SCREEN -->
+
         <div id="chat-screen" class="full-screen-modal">
             <div class="flex items-center p-4 border-b border-[#334155] bg-[#1e293b]">
                 <i data-lucide="chevron-left" class="w-6 h-6 cursor-pointer mr-4" onclick="closeChat()"></i>
@@ -280,7 +274,7 @@
                 <button onclick="sendMessage()" class="bg-red-600 p-2 rounded-full"><i data-lucide="send" class="w-4 h-4 text-white"></i></button>
             </div>
         </div>
-        <!-- MODALS -->
+
         <div id="privacy-modal" class="modal-overlay">
             <div class="bg-[#1e293b] w-11/12 max-w-lg p-6 rounded-xl border border-gray-700 max-h-[80vh] flex flex-col">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
@@ -291,23 +285,20 @@
                     <p class="font-bold text-white">Dernière mise à jour : 2025</p>
                     <p>Bienvenue sur R-Videos. Votre confidentialité est notre priorité.</p>
                     <h4 class="font-bold text-white">1. Informations Collectées</h4>
-                    <ul class="list-disc pl-5"><li>Informations de profil (Nom, Email, Photo, Bio).</li><li>Contenu utilisateur (Vidéos, Commentaires, Messages).</li></ul>
+                    <ul class="list-disc pl-5"><li>Informations de profil.</li><li>Contenu utilisateur.</li></ul>
                     <h4 class="font-bold text-white">2. Utilisation des Données</h4>
                     <p>Pour fournir et améliorer nos services.</p>
                     <h4 class="font-bold text-white">3. Vos Droits</h4>
                     <p>Vous avez le droit d'accéder à vos données ou de supprimer votre compte.</p>
-                    
-                    <!-- NOUVEAU TEXTE TOLERANCE ZERO -->
-                    <h4 class="font-bold text-red-500 mt-6">4. Tolérance Zéro & Modération</h4>
+                    <h4 class="font-bold text-red-500 mt-6">4. Tolérance Zéro</h4>
                     <div class="bg-red-900/20 border border-red-800 p-3 rounded">
                         <p class="text-white font-semibold">Nous appliquons une tolérance zéro concernant les contenus abusifs. Tout contenu haineux, pornographique ou illégal sera supprimé et l'utilisateur banni.</p>
-                        <p class="mt-2 text-xs text-gray-400">Les utilisateurs peuvent signaler tout contenu inapproprié via le bouton "Signaler" présent sur chaque vidéo. Les contenus signalés sont masqués et examinés sous 24h.</p>
                     </div>
-
                 </div>
                 <button onclick="closeModal('privacy-modal')" class="mt-4 w-full bg-[#334155] py-2 rounded text-white font-bold">Fermer</button>
             </div>
         </div>
+
         <div id="edit-modal" class="modal-overlay">
             <div class="bg-[#1e293b] w-11/12 max-w-md p-6 rounded-xl border border-gray-700">
                 <h3 class="text-lg font-bold mb-4">Modifier le profil</h3>
@@ -324,7 +315,7 @@
                 </div>
             </div>
         </div>
-        <!-- MODAL CONFIRMATION SUPPRESSION -->
+
         <div id="delete-confirm-modal" class="modal-overlay">
             <div class="bg-[#1e293b] w-10/12 max-w-sm p-6 rounded-xl border border-gray-700 text-center">
                 <h3 class="text-lg font-bold mb-2 text-white text-red-500" id="delete-modal-title">Supprimer ?</h3>
@@ -335,6 +326,7 @@
                 </div>
             </div>
         </div>
+
         <div id="logout-modal" class="modal-overlay">
             <div class="bg-[#1e293b] w-10/12 max-w-sm p-6 rounded-xl border border-gray-700 text-center">
                 <h3 class="text-lg font-bold mb-2 text-white">Déconnexion</h3>
@@ -344,8 +336,9 @@
                 </div>
             </div>
         </div>
+
         <div id="upload-modal" class="modal-overlay">
-            <div class="bg-[#1e293b] w-full h-full md:h-auto md:w-11/12 max-w-md p-6 md:rounded-xl flex flex-col">
+            <div class="bg-[#1e293b] w-full h-full md:h-auto md:w-11/12 max-w-md p-6 md:rounded-xl flex flex-col overflow-y-auto">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-lg font-bold">Nouvelle Publication</h3>
                     <i data-lucide="x" class="cursor-pointer" onclick="closeModal('upload-modal')"></i>
@@ -356,23 +349,13 @@
                         <p class="text-gray-500 text-sm">Sélectionner une vidéo</p>
                         <input type="file" id="video-file-input" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="previewVideoUpload(this)">
                         <video id="video-preview" class="absolute inset-0 w-full h-full object-cover hidden" loop playsinline></video>
-                        
-                        <!-- CONTROLES MODIFICATION -->
                         <div id="video-controls-overlay" class="absolute bottom-2 left-0 w-full px-4 hidden flex-col gap-2 z-20">
                             <div class="flex justify-between items-center mb-1">
-                                <button onclick="changeVideoFile()" class="bg-gray-800/80 hover:bg-gray-700 text-white text-xs px-3 py-1.5 rounded flex items-center gap-1 border border-gray-600">
-                                    <i data-lucide="refresh-cw" class="w-3 h-3"></i> Changer
-                                </button>
-                                <button onclick="deleteVideoFile()" class="bg-red-900/80 hover:bg-red-800 text-red-200 text-xs px-3 py-1.5 rounded flex items-center gap-1 border border-red-800">
-                                    <i data-lucide="trash-2" class="w-3 h-3"></i> Supprimer
-                                </button>
+                                <button onclick="changeVideoFile()" class="bg-gray-800/80 hover:bg-gray-700 text-white text-xs px-3 py-1.5 rounded flex items-center gap-1 border border-gray-600"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Changer</button>
+                                <button onclick="deleteVideoFile()" class="bg-red-900/80 hover:bg-red-800 text-red-200 text-xs px-3 py-1.5 rounded flex items-center gap-1 border border-red-800"><i data-lucide="trash-2" class="w-3 h-3"></i> Supprimer</button>
                             </div>
-                            <!-- TRIM CONTROLS -->
                             <div class="bg-black/70 p-2 rounded-lg border border-gray-700 backdrop-blur-sm">
-                                <div class="text-[10px] text-gray-400 mb-1 flex justify-between">
-                                    <span>Couper (< 120s)</span>
-                                    <span id="trim-duration-display">0s</span>
-                                </div>
+                                <div class="text-[10px] text-gray-400 mb-1 flex justify-between"><span>Couper (< 120s)</span><span id="trim-duration-display">0s</span></div>
                                 <div class="flex items-center gap-2">
                                     <input type="number" id="trim-start" class="bg-gray-800 text-white border border-gray-600 rounded px-2 py-1 text-xs w-20 text-center outline-none" placeholder="Début (s)" min="0" onchange="updateTrimPreview()">
                                     <span class="text-gray-500 text-xs">-</span>
@@ -381,9 +364,51 @@
                             </div>
                         </div>
                     </div>
-                    <textarea id="video-desc" placeholder="Décris ta vidéo..." class="auth-input h-24 resize-none"></textarea>
+                    
+                    <textarea id="video-desc" placeholder="Décris ta vidéo... #Hashtags" class="auth-input h-20 resize-none"></textarea>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs text-gray-400 mb-1 block">Couverture (Miniature)</label>
+                            <input type="range" id="cover-slider" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" min="0" value="0" step="0.1">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="relative">
+                                <i data-lucide="map-pin" class="absolute left-2 top-2.5 w-4 h-4 text-gray-400"></i>
+                                <input type="text" id="video-location" placeholder="Ajouter un lieu" class="auth-input pl-8 text-sm py-2">
+                            </div>
+                            <div class="relative">
+                                <i data-lucide="users" class="absolute left-2 top-2.5 w-4 h-4 text-gray-400"></i>
+                                <input type="text" id="video-tags" placeholder="Identifier des amis (@...)" class="auth-input pl-8 text-sm py-2">
+                            </div>
+                        </div>
+
+                        <div>
+                            <select id="video-visibility" class="auth-input bg-[#334155] text-sm py-2">
+                                <option value="public">Public (Tout le monde)</option>
+                                <option value="followers">Abonnés (Mes followers)</option>
+                                <option value="private">Privé (Moi seul)</option>
+                            </select>
+                        </div>
+
+                        <div class="bg-[#334155]/50 p-3 rounded-lg space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-300">Autoriser les commentaires</span>
+                                <input type="checkbox" id="opt-comments" class="custom-checkbox" checked>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-300">Autoriser le téléchargement</span>
+                                <input type="checkbox" id="opt-downloads" class="custom-checkbox" checked>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-300">Autoriser les Duos/Collages</span>
+                                <input type="checkbox" id="opt-duet" class="custom-checkbox" checked>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div id="upload-status" class="text-xs text-center text-gray-400 h-4"></div>
+                <div id="upload-status" class="text-xs text-center text-gray-400 h-4 mt-2"></div>
                 <button onclick="uploadVideo()" id="btn-publish" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg mt-2 flex justify-center items-center">Publier</button>
             </div>
         </div>
@@ -394,19 +419,19 @@
                 <i data-lucide="x" class="w-5 h-5 cursor-pointer absolute right-4" onclick="closeComments()"></i>
             </div>
             <div id="comments-list" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
-            <div class="p-3 border-t border-[#334155] bg-[#0f172a] flex items-center gap-2">
+            <div class="p-3 border-t border-[#334155] bg-[#0f172a] flex items-center gap-2" id="comment-input-area">
                 <input type="text" id="comment-input" placeholder="Ajouter un commentaire..." class="flex-1 bg-[#1e293b] border-none rounded-full px-4 py-2 text-sm text-white outline-none">
                 <button onclick="sendComment()" class="text-cyan-500 font-bold text-sm px-2">Publier</button>
             </div>
+            <div id="comments-disabled-msg" class="p-4 text-center text-gray-500 text-sm hidden bg-[#0f172a] border-t border-[#334155]">Les commentaires sont désactivés.</div>
         </div>
 
-        <!-- NEW OPTIONS SHEET -->
         <div id="options-modal" class="bottom-sheet z-50">
             <div class="p-4 border-b border-[#334155] flex justify-between items-center bg-[#1e293b] rounded-t-xl">
                 <div class="text-sm font-bold mx-auto">Options</div>
                 <i data-lucide="x" class="w-5 h-5 cursor-pointer absolute right-4" onclick="closeOptions()"></i>
             </div>
-            <div class="p-4 flex flex-col gap-4 bg-[#0f172a] h-full">
+            <div class="p-4 flex flex-col gap-4 bg-[#0f172a] h-full" id="options-content">
                 <button id="opt-share" class="flex items-center gap-3 p-3 bg-[#1e293b] rounded-lg text-white font-semibold">
                     <i data-lucide="share-2"></i> Partager
                 </button>
@@ -419,7 +444,6 @@
             </div>
         </div>
 
-        <!-- NAVBAR PERSONNALISÉE -->
         <div id="bottom-nav" class="fixed bottom-0 left-0 w-full bg-[#0f172a] border-t border-[#334155] h-14 z-30 flex justify-around items-center text-white px-2 hidden">
             <div onclick="navigateTo('feed')" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-100" id="nav-feed"><i data-lucide="home" class="w-6 h-6 fill-white"></i><span class="text-[10px]">Accueil</span></div>
             <div onclick="navigateTo('discover')" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50" id="nav-discover"><i data-lucide="search" class="w-6 h-6"></i><span class="text-[10px]">Découvrir</span></div>
@@ -430,7 +454,7 @@
     </div>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, deleteUser } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, deleteUser, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs, onSnapshot, query, orderBy, serverTimestamp, updateDoc, limit, arrayUnion, arrayRemove, increment, where, deleteDoc, writeBatch, startAfter } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         const firebaseConfig = { apiKey: "AIzaSyCfiExPZwsF53-Ix3cCeIa3tq1MJ5359RU", authDomain: "nanofinance-9192a.firebaseapp.com", projectId: "nanofinance-9192a", storageBucket: "nanofinance-9192a.firebasestorage.app", messagingSenderId: "376434082116", appId: "1:376434082116:web:838ef702670608bc959711", measurementId: "G-9455DCWCNL" };
@@ -454,27 +478,36 @@
         let profileVideosData = {};
         let currentProfileTab = 'videos'; 
         let currentFeedMode = 'foryou';
-        
         let totalUnreadNotifications = 0;
         let totalUnreadChats = 0;
-        
-        // --- INFINITE SCROLL VARIABLES ---
         let feedUnsubscribes = [];
         let lastVisibleDoc = null;
         let isFetchingMore = false;
         let isFirstLoad = true;
         const BATCH_SIZE = 40; 
 
-        // --- XSS HELPER ---
         function escapeHtml(text) {
             if (!text) return "";
-            return text
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
+        
+        function formatDescription(text) {
+            if (!text) return "";
+            let formatted = text.replace(/#(\w+)/g, '<span class="text-blue-400 font-bold">#$1</span>');
+            formatted = formatted.replace(/@([\w\.\-]+)/g, '<span class="text-blue-400 font-bold cursor-pointer" onclick="findUserByHandle(\'$1\', event)">@$1</span>');
+            return formatted;
+        }
+
+        window.findUserByHandle = async (handle, e) => {
+            if(e) e.stopPropagation();
+            const q = query(collection(db, "users"), where("username", "==", handle), limit(1));
+            const snap = await getDocs(q);
+            if(!snap.empty) {
+                viewUserProfile(snap.docs[0].id);
+            } else {
+                alert("Utilisateur introuvable");
+            }
+        };
 
         window.togglePassword = (inputId, iconContainer) => {
             const input = document.getElementById(inputId);
@@ -484,28 +517,36 @@
             else { input.type = "password"; eye.classList.remove('hidden'); eyeOff.classList.add('hidden'); }
         };
 
-        function requestNotificationPermission() {
-            if ("Notification" in window && Notification.permission !== "granted") {
-                Notification.requestPermission();
+        window.toggleForgotPasswordMode = () => {
+            document.getElementById('login-form').classList.toggle('hidden');
+            document.getElementById('forgot-password-form').classList.toggle('hidden');
+            document.getElementById('register-form').classList.add('hidden');
+            document.getElementById('auth-error').classList.add('hidden');
+        };
+
+        document.getElementById('btn-reset-pass').addEventListener('click', async () => {
+            const email = document.getElementById('reset-email').value;
+            if(!email) { showAuthError("Veuillez entrer votre email."); return; }
+            try {
+                await sendPasswordResetEmail(auth, email);
+                alert("Email de réinitialisation envoyé ! Vérifiez votre boîte mail.");
+                window.toggleForgotPasswordMode();
+            } catch(e) {
+                showAuthError("Erreur: " + e.message);
             }
+        });
+
+        function requestNotificationPermission() {
+            if ("Notification" in window && Notification.permission !== "granted") Notification.requestPermission();
             if (window.OneSignalDeferred && window.location.hostname === 'buidtelecom.github.io') {
-                window.OneSignalDeferred.push(function(OneSignal) {
-                    try {
-                        OneSignal.Slidedown.promptPush();
-                    } catch(e) { console.log("OneSignal prompt skipped"); }
-                });
+                window.OneSignalDeferred.push(function(OneSignal) { try { OneSignal.Slidedown.promptPush(); } catch(e) {} });
             }
         }
         
         function updateGlobalBadge() {
             const total = totalUnreadNotifications + totalUnreadChats;
             const badge = document.getElementById('inbox-badge');
-            if (total > 0) {
-                badge.classList.remove('hidden');
-                badge.innerText = total > 99 ? "+99" : total;
-            } else {
-                badge.classList.add('hidden');
-            }
+            if (total > 0) { badge.classList.remove('hidden'); badge.innerText = total > 99 ? "+99" : total; } else { badge.classList.add('hidden'); }
         }
 
         function getBadgeHtml(isVerified) {
@@ -569,10 +610,11 @@
             }
         }
 
-        function getVideoThumbnail(url) {
+        function getVideoThumbnail(url, offset) {
             if (!url) return "";
             if (url.includes("cloudinary.com")) {
-                let newUrl = url.replace('/upload/', '/upload/w_300,q_auto,f_jpg,so_0/');
+                const so = offset !== undefined ? offset : 0;
+                let newUrl = url.replace('/upload/', `/upload/w_300,q_auto,f_jpg,so_${so}/`);
                 return newUrl.replace(/\.[^/.]+$/, ".jpg"); 
             }
             return url;
@@ -855,9 +897,17 @@
         };
         
         // --- OPEN OPTIONS (NEW) ---
-        window.openOptions = (id, url, username) => {
+        window.openOptions = (id, url, username, allowDL) => {
             document.getElementById('opt-share').onclick = () => { window.shareVideo(url); window.closeOptions(); };
-            document.getElementById('opt-download').onclick = () => { window.downloadVideo(url, id, username); window.closeOptions(); };
+            
+            const btnDL = document.getElementById('opt-download');
+            if(allowDL) {
+                btnDL.classList.remove('hidden');
+                btnDL.onclick = () => { window.downloadVideo(url, id, username); window.closeOptions(); };
+            } else {
+                btnDL.classList.add('hidden');
+            }
+            
             document.getElementById('opt-report').onclick = () => { window.reportVideo(id); window.closeOptions(); };
             document.getElementById('options-modal').classList.add('open');
         };
@@ -957,6 +1007,15 @@
                     const data = docSnap.data();
                     const docId = docSnap.id;
                     
+                    // --- PRIVACY & VISIBILITY FILTER ---
+                    const visibility = data.visibility || 'public';
+                    if (visibility === 'private' && data.userId !== auth.currentUser.uid) return;
+                    if (visibility === 'followers' && data.userId !== auth.currentUser.uid) {
+                        if (!currentUserData.following || !currentUserData.following.includes(data.userId)) {
+                            return;
+                        }
+                    }
+
                     if (currentFeedMode === 'following') {
                         if (!currentUserData || !currentUserData.following || !currentUserData.following.includes(data.userId)) {
                             const ex = container.querySelector(`[data-id="${docId}"]`);
@@ -974,15 +1033,17 @@
                         const trimEnd = data.trimEnd || 0;
                         const optimizedUrl = getOptimizedVideoUrl(data.url, 720, trimStart, trimEnd);
                         const badge = getBadgeHtml(data.isVerified);
-                        const safeDesc = escapeHtml(data.description);
+                        
+                        // Formatting Description (Hashtags + Mentions)
+                        const safeDesc = formatDescription(escapeHtml(data.description));
                         const safeUsername = escapeHtml(data.username);
+                        const allowDL = (data.allowDownloads !== false); // Default true
+                        
                         const div = document.createElement('div');
                         div.className = "video-card w-full h-full relative snap-start bg-[#0f172a] border-b border-gray-800";
                         div.setAttribute('data-id', docId);
                         
-                        // NEW LAYOUT: Buttons centered low right + Options
                         div.innerHTML = `
-                            <!-- R-VIDEOS Watermark Removed from here -->
                             <video class="w-full h-full object-cover pointer-events-none" playsinline preload="none" src="${optimizedUrl}"></video>
                             <div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 opacity-0"><div class="bg-black/40 rounded-full p-4 backdrop-blur-sm"><i data-lucide="play" class="w-12 h-12 text-white fill-white"></i></div></div>
                             <div class="absolute inset-0 z-10" onclick="togglePlay(this)" ondblclick="handleDoubleTap(event, '${docId}', '${data.userId}')"></div>
@@ -991,10 +1052,10 @@
                             <div class="absolute right-2 bottom-20 flex flex-col items-center gap-5 z-20 pb-20">
                                 <div class="relative mb-2 cursor-pointer" onclick="viewUserProfile('${data.userId}')"><div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black transition transform hover:scale-110">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div></div>
                                 <div class="flex flex-col items-center gap-1 cursor-pointer group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${docId}', this, '${data.userId}')"><i data-lucide="heart" class="w-9 h-9 icon-shadow like-icon ${iLiked ? 'fill-red-500 text-red-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow like-count">${formatCount(data.likes)}</span></div>
-                                <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openComments('${docId}')"><i data-lucide="message-circle" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-xs font-bold text-shadow comment-count">${formatCount(data.commentCount)}</span></div>
+                                <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openComments('${docId}', ${data.allowComments})"><i data-lucide="message-circle" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-xs font-bold text-shadow comment-count">${formatCount(data.commentCount)}</span></div>
                                 <div class="flex flex-col items-center gap-1 cursor-pointer ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${docId}', this)"><i data-lucide="bookmark" class="w-9 h-9 icon-shadow fav-icon ${iFav ? 'fill-yellow-500 text-yellow-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow fav-text">${iFav ? 'Fav' : 'Fav'}</span></div>
                                 
-                                <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openOptions('${docId}', '${data.url}', '${safeUsername}')">
+                                <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openOptions('${docId}', '${data.url}', '${safeUsername}', ${allowDL})">
                                     <i data-lucide="more-horizontal" class="w-9 h-9 icon-shadow text-white fill-white"></i>
                                 </div>
 
@@ -1002,6 +1063,7 @@
                             </div>
                             <div class="absolute bottom-20 left-4 right-20 z-20 text-left pointer-events-none">
                                 <div class="flex items-center"><h3 class="font-bold text-lg text-shadow mb-1">@${safeUsername}</h3>${badge}</div>
+                                ${data.location ? `<div class="text-xs text-gray-300 flex items-center gap-1 mb-1"><i data-lucide="map-pin" class="w-3 h-3"></i> ${escapeHtml(data.location)}</div>` : ''}
                                 <p class="text-sm mb-2 text-shadow text-gray-100 line-clamp-3">${safeDesc}</p>
                             </div>`;
                         
@@ -1051,7 +1113,22 @@
         window.previewVideoUpload = (i) => { 
             if(i.files[0]) { 
                 const v = document.getElementById('video-preview'); const fileURL = URL.createObjectURL(i.files[0]); v.src = fileURL; v.classList.remove('hidden'); 
-                v.onloadedmetadata = () => { const dur = v.duration; const maxDur = Math.min(dur, 120); document.getElementById('trim-start').value = 0; document.getElementById('trim-end').value = Math.floor(maxDur); document.getElementById('trim-duration-display').innerText = Math.floor(maxDur) + "s"; };
+                
+                v.onloadedmetadata = () => { 
+                    const dur = v.duration; 
+                    const maxDur = Math.min(dur, 120); 
+                    document.getElementById('trim-start').value = 0; 
+                    document.getElementById('trim-end').value = Math.floor(maxDur); 
+                    
+                    // Init Cover Slider
+                    const coverSlider = document.getElementById('cover-slider');
+                    coverSlider.max = dur;
+                    coverSlider.value = 0;
+                    coverSlider.oninput = () => {
+                        v.currentTime = coverSlider.value;
+                    };
+                };
+                
                 v.play(); 
                 const area = document.getElementById('upload-preview-area'); const icon = area.querySelector('i') || area.querySelector('svg'); if(icon) icon.classList.add('hidden'); const text = area.querySelector('p'); if(text) text.classList.add('hidden');
                 const controls = document.getElementById('video-controls-overlay'); controls.classList.remove('hidden'); controls.classList.add('flex');
@@ -1072,18 +1149,63 @@
             if (start < 0) start = 0; if (end > v.duration) end = v.duration;
             if (end - start > 120) { end = start + 120; if (end > v.duration) { end = v.duration; start = Math.max(0, end - 120); } }
             if (end <= start + 5) { end = Math.min(v.duration, start + 5); if (end - start < 5 && start > 5) { start = end - 5; } }
-            document.getElementById('trim-start').value = start.toFixed(1); document.getElementById('trim-end').value = end.toFixed(1); document.getElementById('trim-duration-display').innerText = Math.floor(end - start) + "s";
+            document.getElementById('trim-start').value = start.toFixed(1); document.getElementById('trim-end').value = end.toFixed(1);
             v.currentTime = start; v.play(); v.ontimeupdate = null; v.ontimeupdate = () => { if(v.currentTime >= end) { v.currentTime = start; v.play(); } };
         };
         
         window.uploadVideo = async () => {
             const f = document.getElementById('video-file-input').files[0]; if(!f) { alert("Veuillez sélectionner une vidéo avant de publier."); return; }
             const btn = document.getElementById('btn-publish'); const originalText = btn.innerText; btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`; btn.disabled = true;
-            const trimStart = parseFloat(document.getElementById('trim-start').value) || 0; const trimEnd = parseFloat(document.getElementById('trim-end').value) || 0;
+            
+            const trimStart = parseFloat(document.getElementById('trim-start').value) || 0; 
+            const trimEnd = parseFloat(document.getElementById('trim-end').value) || 0;
+            const visibility = document.getElementById('video-visibility').value;
+            const thumbnailOffset = parseFloat(document.getElementById('cover-slider').value) || 0;
+            const location = document.getElementById('video-location').value;
+            const allowComments = document.getElementById('opt-comments').checked;
+            const allowDownloads = document.getElementById('opt-downloads').checked;
+            const allowDuet = document.getElementById('opt-duet').checked;
+            
+            // Handle Mentions (Append to Description for this MVP)
+            let desc = document.getElementById('video-desc').value;
+            const tags = document.getElementById('video-tags').value;
+            if(tags && tags.length > 0) {
+               // Simple logic: if user typed names, append them as @name
+               const names = tags.split(',').map(t => t.trim());
+               names.forEach(n => {
+                   if(n.length > 0) {
+                       const handle = n.startsWith('@') ? n : '@'+n;
+                       if(!desc.includes(handle)) desc += ' ' + handle;
+                   }
+               });
+            }
+
             try {
                 const url = await uploadToCloudinary(f);
-                await addDoc(collection(db, "videos"), { userId: auth.currentUser.uid, username: currentUserData.username, userPhotoURL: currentUserData.photoURL||"", url, description: escapeHtml(document.getElementById('video-desc').value), likes: 0, likedBy: [], favorites: [], commentCount: 0, views: 0, isVerified: currentUserData.isVerified || false, createdAt: serverTimestamp(), trimStart: trimStart, trimEnd: trimEnd });
-                window.deleteVideoFile(); document.getElementById('video-desc').value = ""; window.closeModal('upload-modal'); navigateTo('feed');
+                await addDoc(collection(db, "videos"), { 
+                    userId: auth.currentUser.uid, 
+                    username: currentUserData.username, 
+                    userPhotoURL: currentUserData.photoURL||"", 
+                    url, 
+                    description: escapeHtml(desc), 
+                    likes: 0, 
+                    likedBy: [], 
+                    favorites: [], 
+                    commentCount: 0, 
+                    views: 0, 
+                    isVerified: currentUserData.isVerified || false, 
+                    createdAt: serverTimestamp(), 
+                    trimStart: trimStart, 
+                    trimEnd: trimEnd,
+                    visibility: visibility,
+                    thumbnailOffset: thumbnailOffset,
+                    location: escapeHtml(location),
+                    allowComments: allowComments,
+                    allowDownloads: allowDownloads,
+                    allowDuet: allowDuet
+                });
+                window.deleteVideoFile(); document.getElementById('video-desc').value = ""; document.getElementById('video-location').value = ""; document.getElementById('video-tags').value = "";
+                window.closeModal('upload-modal'); navigateTo('feed');
             } catch(e) { alert(e.message); } finally { btn.disabled=false; btn.innerHTML=originalText; }
         };
 
@@ -1103,7 +1225,33 @@
         }
         
         window.toggleLike = async (docId, el, authorId) => { if(!auth.currentUser) return; const isLiked = el.classList.contains('liked'); const ref = doc(db, "videos", docId); if(isLiked) { el.classList.remove('liked'); el.querySelector('svg').classList.remove('fill-red-500','text-red-500'); el.querySelector('svg').classList.add('text-white', 'fill-white'); await updateDoc(ref, {likes: increment(-1), likedBy: arrayRemove(auth.currentUser.uid)}); } else { el.classList.add('liked'); el.querySelector('svg').classList.add('fill-red-500','text-red-500','like-animation'); el.querySelector('svg').classList.remove('text-white', 'fill-white'); setTimeout(()=>el.querySelector('svg').classList.remove('like-animation'),300); await updateDoc(ref, {likes: increment(1), likedBy: arrayUnion(auth.currentUser.uid)}); sendNotification(authorId, "like", "a aimé votre vidéo"); } };
-        window.openComments = async (id) => { currentVideoIdForComments = id; const vidSnap = await getDoc(doc(db, "videos", id)); if (vidSnap.exists()) { currentVideoAuthorId = vidSnap.data().userId; } document.getElementById('comments-sheet').classList.add('open'); loadComments(id); };
+        
+        // --- UPDATED COMMENTS LOGIC FOR PERMISSIONS ---
+        window.openComments = async (id, allowed = true) => { 
+            currentVideoIdForComments = id; 
+            
+            // Check UI State based on permission
+            const inputArea = document.getElementById('comment-input-area');
+            const disabledMsg = document.getElementById('comments-disabled-msg');
+            
+            // Note: If 'allowed' is undefined (old videos), treat as true
+            const isAllowed = (allowed !== false);
+
+            if(isAllowed) {
+                inputArea.classList.remove('hidden');
+                inputArea.classList.add('flex');
+                disabledMsg.classList.add('hidden');
+            } else {
+                inputArea.classList.add('hidden');
+                inputArea.classList.remove('flex');
+                disabledMsg.classList.remove('hidden');
+            }
+
+            const vidSnap = await getDoc(doc(db, "videos", id)); 
+            if (vidSnap.exists()) { currentVideoAuthorId = vidSnap.data().userId; } 
+            document.getElementById('comments-sheet').classList.add('open'); 
+            loadComments(id); 
+        };
         window.closeComments = () => { document.getElementById('comments-sheet').classList.remove('open'); currentVideoIdForComments = null; currentVideoAuthorId = null; };
         
         function loadComments(id) { 
