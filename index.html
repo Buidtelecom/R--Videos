@@ -21,9 +21,9 @@
                 slidedown: {
                   enabled: true,
                   autoPrompt: true,
-                  actionMessage: "Active les notifications / Enable notifications 🔔",
-                  acceptButtonText: "OK",
-                  cancelButtonText: "Non/No"
+                  actionMessage: "Active les notifications pour recevoir les likes et commentaires 🔔",
+                  acceptButtonText: "Autoriser",
+                  cancelButtonText: "Plus tard"
                 }
               }
             });
@@ -93,8 +93,22 @@
         .toggle-checkbox:checked { right: 0; border-color: #ef4444; }
         .toggle-checkbox:checked + .toggle-label { background-color: #ef4444; }
         
-        /* Language Button Style */
-        .lang-btn { @apply w-full bg-[#1e293b] hover:bg-[#334155] text-white font-bold py-4 px-6 rounded-xl flex items-center gap-4 transition transform active:scale-95 border border-gray-700; }
+        /* Lang Selector Style */
+        .lang-select {
+            appearance: none;
+            background-color: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 4px 24px 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+        }
     </style>
 </head>
 <body class="relative overflow-hidden bg-[#0f172a]">
@@ -106,7 +120,7 @@
     </div>
     <div id="download-toast" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-6 py-4 rounded-xl flex flex-col items-center gap-2 z-[100] hidden transition-opacity">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
-        <span class="text-sm font-bold" data-i18n="downloading">Téléchargement...</span>
+        <span class="text-sm font-bold">Téléchargement...</span>
     </div>
     
     <div id="main-app-container" class="body-content relative">
@@ -123,43 +137,40 @@
             </div>
         </div>
 
-        <!-- NEW LANGUAGE SELECTION SCREEN -->
-        <div id="language-screen" class="screen justify-center items-center p-8 bg-[#0f172a] z-[98]">
-            <div class="w-full max-w-sm text-center">
-                <h1 class="text-3xl font-black mb-8 text-white">Select Language</h1>
-                <div class="space-y-4">
-                    <button onclick="setLanguage('fr')" class="lang-btn">
-                        <span class="text-2xl">🇫🇷</span> <span class="text-lg">Français</span>
-                    </button>
-                    <button onclick="setLanguage('en')" class="lang-btn">
-                        <span class="text-2xl">🇺🇸</span> <span class="text-lg">English</span>
-                    </button>
-                    <button onclick="setLanguage('de')" class="lang-btn">
-                        <span class="text-2xl">🇩🇪</span> <span class="text-lg">Deutsch</span>
-                    </button>
-                    <button onclick="setLanguage('zh')" class="lang-btn">
-                        <span class="text-2xl">🇨🇳</span> <span class="text-lg">中文 (Chinese)</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <div id="offline-screen" class="screen justify-center items-center bg-[#0f172a] z-[99]">
             <div class="text-center p-8">
                 <i data-lucide="wifi-off" class="w-16 h-16 text-gray-500 mx-auto mb-4"></i>
                 <h2 class="text-xl font-bold mb-2" data-i18n="offline_title">Pas de connexion internet</h2>
                 <p class="text-gray-400 text-sm mb-6" data-i18n="offline_desc">Vérifiez votre connexion et réessayez.</p>
-                <button onclick="window.location.reload()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full transition" data-i18n="retry">Réessayer</button>
+                <button onclick="window.location.reload()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full transition" data-i18n="retry_btn">Réessayer</button>
             </div>
         </div>
 
         <div id="auth-screen" class="screen justify-center items-center p-8 bg-gradient-to-br from-[#0f172a] to-[#1e293b] relative">
+            <!-- LANGUAGE SELECTOR -->
+            <div class="absolute top-4 right-4 z-20">
+                <select id="lang-selector" class="lang-select" onchange="changeLanguage(this.value)">
+                    <option value="fr">🇫🇷 Français</option>
+                    <option value="en">🇺🇸 English</option>
+                    <option value="es">🇪🇸 Español</option>
+                    <option value="pt">🇵🇹 Português</option>
+                    <option value="de">🇩🇪 Deutsch</option>
+                    <option value="tr">🇹🇷 Türkçe</option>
+                    <option value="id">🇮🇩 Indonesia</option>
+                    <option value="vi">🇻🇳 Tiếng Việt</option>
+                    <option value="hi">🇮🇳 हिन्दी</option>
+                    <option value="zh">🇨🇳 中文</option>
+                    <option value="ja">🇯🇵 日本語</option>
+                    <option value="ko">🇰🇷 한국어</option>
+                </select>
+            </div>
+
             <div class="absolute top-12 w-full text-center">
-                <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-medium"><span data-i18n="app_by">Application créée par</span> <br><span class="text-gray-400 font-bold">"Le Studio Ralph Nyamè"</span>. 2025</p>
+                <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-medium"><span data-i18n="app_created_by">Application créée par</span> <br><span class="text-gray-400 font-bold" data-i18n="studio_name">"Le Studio Ralph Nyamè". 2025</span></p>
             </div>
             <div class="w-full max-w-sm text-center mt-10">
                 <h1 class="text-4xl font-black mb-2 text-red-500 tracking-tighter">R-VIDEOS</h1>
-                <p class="text-gray-400 mb-8 text-sm" data-i18n="app_slogan">Réseau Social Vidéo</p>
+                <p class="text-gray-400 mb-8 text-sm" data-i18n="subtitle">Réseau Social Vidéo</p>
                 <div id="auth-success" class="hidden mb-4 p-3 bg-green-900/50 border border-green-500 text-green-200 rounded-lg text-sm" data-i18n="auth_success">Compte créé ! Connectez-vous.</div>
                 
                 <div id="login-form" class="space-y-4">
@@ -172,7 +183,7 @@
                         <span onclick="toggleForgotPasswordMode()" class="text-xs text-gray-400 cursor-pointer hover:text-white" data-i18n="forgot_pass">Mot de passe oublié ?</span>
                     </div>
                     <button id="btn-login" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition flex justify-center items-center h-12" data-i18n="login_btn">Se connecter</button>
-                    <p class="text-xs text-gray-400 mt-4"><span data-i18n="no_account">Pas encore de compte ?</span> <span onclick="toggleAuthMode()" class="text-white font-bold cursor-pointer underline" data-i18n="register_link">S'inscrire</span></p>
+                    <p class="text-xs text-gray-400 mt-4"><span data-i18n="no_account">Pas encore de compte ?</span> <span onclick="toggleAuthMode()" class="text-white font-bold cursor-pointer underline" data-i18n="signup_link">S'inscrire</span></p>
                 </div>
 
                 <div id="register-form" class="space-y-4 hidden">
@@ -184,7 +195,7 @@
                     </div>
                     <div class="flex items-start gap-2 text-left mt-2">
                         <input type="checkbox" id="reg-privacy" class="custom-checkbox mt-1">
-                        <label for="reg-privacy" class="text-xs text-gray-400 leading-tight"><span data-i18n="privacy_agree">En cochant cette case, j'accepte la</span> <span onclick="openPrivacyPolicy()" class="text-blue-500 underline cursor-pointer" data-i18n="privacy_link">Politique de Confidentialité</span>.</label>
+                        <label for="reg-privacy" class="text-xs text-gray-400 leading-tight"><span data-i18n="privacy_text">En cochant cette case, j'accepte la</span> <span onclick="openPrivacyPolicy()" class="text-blue-500 underline cursor-pointer" data-i18n="privacy_link">Politique de Confidentialité</span>.</label>
                     </div>
                     <button id="btn-register" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 rounded-lg transition mt-2 flex justify-center items-center h-12" data-i18n="register_btn">Créer mon compte</button>
                     <p class="text-xs text-gray-400 mt-4"><span data-i18n="has_account">Déjà un compte ?</span> <span onclick="toggleAuthMode()" class="text-white font-bold cursor-pointer underline" data-i18n="login_link">Se connecter</span></p>
@@ -198,7 +209,7 @@
                     <!-- FEEDBACK BOX -->
                     <div id="reset-feedback" class="hidden p-3 bg-blue-900/50 border border-blue-500 text-blue-200 rounded-lg text-sm mb-2 text-left"></div>
                     
-                    <button id="btn-reset-pass" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition flex justify-center items-center h-12" data-i18n="send_btn">Envoyer le lien</button>
+                    <button id="btn-reset-pass" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition flex justify-center items-center h-12" data-i18n="send_link_btn">Envoyer le lien</button>
                     <p class="text-xs text-gray-400 mt-4"><span onclick="toggleForgotPasswordMode()" class="text-white font-bold cursor-pointer underline" data-i18n="back_login">Retour à la connexion</span></p>
                 </div>
                 
@@ -226,7 +237,7 @@
         </div>
 
         <div id="discover-screen" class="screen bg-[#0f172a] pt-4 px-4 pb-20 overflow-y-auto">
-            <h2 class="font-bold text-xl mb-4" data-i18n="discover_title">Découvrir</h2>
+            <h2 class="font-bold text-xl mb-4" data-i18n="nav_discover">Découvrir</h2>
             <div class="relative mb-6">
                 <i data-lucide="search" class="absolute left-3 top-3 text-gray-400 w-5 h-5"></i>
                 <input type="text" id="search-input" placeholder="Rechercher des utilisateurs..." class="w-full bg-[#1e293b] rounded-lg py-3 pl-10 pr-4 text-white outline-none focus:ring-1 focus:ring-gray-700" oninput="searchUsers(this.value)" data-i18n-placeholder="search_placeholder">
@@ -241,7 +252,7 @@
             </div>
 
             <div id="search-results" class="space-y-4 hidden pb-20">
-                <div class="text-gray-500 text-center text-sm mt-10" data-i18n="type_search">Tapez un nom pour chercher...</div>
+                <div class="text-gray-500 text-center text-sm mt-10">...</div>
             </div>
         </div>
 
@@ -276,7 +287,7 @@
                 </div>
                 <div id="other-profile-actions" class="flex gap-2 mt-6 w-full px-8 hidden">
                     <button id="btn-follow" onclick="toggleFollow()" class="flex-1 bg-red-600 text-white py-2 rounded text-sm font-semibold transition-colors" data-i18n="follow_btn">S'abonner</button>
-                    <button onclick="startChat()" class="flex-1 bg-[#1e293b] text-white py-2 rounded text-sm font-semibold border border-gray-600" data-i18n="msg_btn">Message</button>
+                    <button onclick="startChat()" class="flex-1 bg-[#1e293b] text-white py-2 rounded text-sm font-semibold border border-gray-600" data-i18n="message_btn">Message</button>
                     <button id="btn-block" onclick="toggleBlock()" class="bg-[#1e293b] border border-red-900 text-red-500 py-2 px-3 rounded text-sm font-semibold"><i data-lucide="shield-off" class="w-4 h-4"></i></button>
                 </div>
                 <div id="admin-actions" class="mt-4 w-full px-8 hidden"></div>
@@ -301,7 +312,7 @@
             </div>
             <div id="chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col bg-[#0f172a]"></div>
             <div class="p-3 bg-[#1e293b] flex items-center gap-2">
-                <input type="text" id="chat-input" placeholder="Envoyer..." class="flex-1 bg-[#334155] border-none rounded-full px-4 py-2 text-sm text-white outline-none" data-i18n-placeholder="chat_placeholder">
+                <input type="text" id="chat-input" placeholder="Envoyer..." class="flex-1 bg-[#334155] border-none rounded-full px-4 py-2 text-sm text-white outline-none">
                 <button onclick="sendMessage()" class="bg-red-600 p-2 rounded-full"><i data-lucide="send" class="w-4 h-4 text-white"></i></button>
             </div>
         </div>
@@ -309,21 +320,21 @@
         <div id="privacy-modal" class="modal-overlay">
             <div class="bg-[#1e293b] w-11/12 max-w-lg p-6 rounded-xl border border-gray-700 max-h-[80vh] flex flex-col">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
-                    <h3 class="text-lg font-bold" data-i18n="privacy_title">Politique de Confidentialité</h3>
+                    <h3 class="text-lg font-bold" data-i18n="privacy_modal_title">Politique de Confidentialité</h3>
                     <i data-lucide="x" class="cursor-pointer" onclick="closeModal('privacy-modal')"></i>
                 </div>
                 <div class="overflow-y-auto text-sm text-gray-300 space-y-4 pr-2">
-                    <p class="font-bold text-white">2025</p>
-                    <p data-i18n="privacy_text_1">Bienvenue sur R-Videos. Votre confidentialité est notre priorité.</p>
-                    <h4 class="font-bold text-white" data-i18n="privacy_text_2">1. Informations Collectées</h4>
+                    <p class="font-bold text-white">Dernière mise à jour : 2025</p>
+                    <p>Bienvenue sur R-Videos. Votre confidentialité est notre priorité.</p>
+                    <h4 class="font-bold text-white">1. Informations Collectées</h4>
                     <ul class="list-disc pl-5"><li>Informations de profil.</li><li>Contenu utilisateur.</li></ul>
-                    <h4 class="font-bold text-white" data-i18n="privacy_text_3">2. Utilisation des Données</h4>
-                    <p data-i18n="privacy_text_4">Pour fournir et améliorer nos services.</p>
-                    <h4 class="font-bold text-white" data-i18n="privacy_text_5">3. Vos Droits</h4>
-                    <p data-i18n="privacy_text_6">Vous avez le droit d'accéder à vos données ou de supprimer votre compte.</p>
-                    <h4 class="font-bold text-red-500 mt-6" data-i18n="privacy_text_7">4. Tolérance Zéro</h4>
+                    <h4 class="font-bold text-white">2. Utilisation des Données</h4>
+                    <p>Pour fournir et améliorer nos services.</p>
+                    <h4 class="font-bold text-white">3. Vos Droits</h4>
+                    <p>Vous avez le droit d'accéder à vos données ou de supprimer votre compte.</p>
+                    <h4 class="font-bold text-red-500 mt-6">4. Tolérance Zéro</h4>
                     <div class="bg-red-900/20 border border-red-800 p-3 rounded">
-                        <p class="text-white font-semibold" data-i18n="privacy_text_8">Nous appliquons une tolérance zéro concernant les contenus abusifs. Tout contenu haineux, pornographique ou illégal sera supprimé et l'utilisateur banni.</p>
+                        <p class="text-white font-semibold">Nous appliquons une tolérance zéro concernant les contenus abusifs. Tout contenu haineux, pornographique ou illégal sera supprimé et l'utilisateur banni.</p>
                     </div>
                 </div>
                 <button onclick="closeModal('privacy-modal')" class="mt-4 w-full bg-[#334155] py-2 rounded text-white font-bold" data-i18n="close_btn">Fermer</button>
@@ -332,17 +343,17 @@
 
         <div id="edit-modal" class="modal-overlay">
             <div class="bg-[#1e293b] w-11/12 max-w-md p-6 rounded-xl border border-gray-700">
-                <h3 class="text-lg font-bold mb-4" data-i18n="edit_profile_title">Modifier le profil</h3>
-                <label class="block text-xs text-gray-400 mb-1" data-i18n="profile_pic">Photo de profil</label>
+                <h3 class="text-lg font-bold mb-4" data-i18n="edit_profile">Modifier le profil</h3>
+                <label class="block text-xs text-gray-400 mb-1">Photo de profil</label>
                 <input type="file" id="edit-file-input" accept="image/*" class="block w-full text-sm text-gray-400 file:bg-[#334155] file:text-white mb-4"/>
                 <input type="text" id="edit-username" placeholder="Nom d'utilisateur" class="auth-input mb-3" data-i18n-placeholder="username_placeholder">
                 <textarea id="edit-bio" placeholder="Bio" class="auth-input mb-4" rows="3"></textarea>
                 <div class="flex gap-2 mb-4">
-                    <button onclick="closeModal('edit-modal')" class="flex-1 py-2 bg-[#334155] rounded" data-i18n="cancel_btn">Annuler</button>
-                    <button id="btn-save-profile" onclick="saveProfileChanges()" class="flex-1 py-2 bg-white text-black font-bold rounded flex justify-center items-center" data-i18n="save_btn">Enregistrer</button>
+                    <button onclick="closeModal('edit-modal')" class="flex-1 py-2 bg-[#334155] rounded">Annuler</button>
+                    <button id="btn-save-profile" onclick="saveProfileChanges()" class="flex-1 py-2 bg-white text-black font-bold rounded flex justify-center items-center">Enregistrer</button>
                 </div>
                 <div class="border-t border-gray-800 pt-4">
-                    <button onclick="confirmDeleteAccount()" class="w-full text-red-500 font-bold text-sm py-2 hover:bg-red-900/20 rounded" data-i18n="delete_account">Supprimer mon compte</button>
+                    <button onclick="confirmDeleteAccount()" class="w-full text-red-500 font-bold text-sm py-2 hover:bg-red-900/20 rounded">Supprimer mon compte</button>
                 </div>
             </div>
         </div>
@@ -350,20 +361,20 @@
         <div id="delete-confirm-modal" class="modal-overlay">
             <div class="bg-[#1e293b] w-10/12 max-w-sm p-6 rounded-xl border border-gray-700 text-center">
                 <h3 class="text-lg font-bold mb-2 text-white text-red-500" id="delete-modal-title">Supprimer ?</h3>
-                <p class="text-gray-400 text-sm mb-6" data-i18n="irreversible">Cette action est irréversible.</p>
+                <p class="text-gray-400 text-sm mb-6">Cette action est irréversible.</p>
                 <div class="flex gap-3">
-                    <button onclick="closeModal('delete-confirm-modal')" class="flex-1 py-2 bg-[#334155] text-white rounded font-semibold text-sm" data-i18n="cancel_btn">Annuler</button>
-                    <button id="btn-confirm-delete" class="flex-1 py-2 bg-red-600 text-white rounded font-semibold text-sm" data-i18n="delete_btn">Supprimer</button>
+                    <button onclick="closeModal('delete-confirm-modal')" class="flex-1 py-2 bg-[#334155] text-white rounded font-semibold text-sm">Annuler</button>
+                    <button id="btn-confirm-delete" class="flex-1 py-2 bg-red-600 text-white rounded font-semibold text-sm">Supprimer</button>
                 </div>
             </div>
         </div>
 
         <div id="logout-modal" class="modal-overlay">
             <div class="bg-[#1e293b] w-10/12 max-w-sm p-6 rounded-xl border border-gray-700 text-center">
-                <h3 class="text-lg font-bold mb-2 text-white" data-i18n="logout_title">Déconnexion</h3>
+                <h3 class="text-lg font-bold mb-2 text-white">Déconnexion</h3>
                 <div class="flex gap-3">
-                    <button onclick="closeModal('logout-modal')" class="flex-1 py-2 bg-[#334155] text-white rounded font-semibold text-sm" data-i18n="no">Non</button>
-                    <button onclick="logout()" class="flex-1 py-2 bg-red-600 text-white rounded font-semibold text-sm" data-i18n="yes">Oui</button>
+                    <button onclick="closeModal('logout-modal')" class="flex-1 py-2 bg-[#334155] text-white rounded font-semibold text-sm">Non</button>
+                    <button onclick="logout()" class="flex-1 py-2 bg-red-600 text-white rounded font-semibold text-sm">Oui</button>
                 </div>
             </div>
         </div>
@@ -371,7 +382,7 @@
         <div id="upload-modal" class="modal-overlay">
             <div class="bg-[#1e293b] w-full h-full md:h-auto md:w-11/12 max-w-md p-6 md:rounded-xl flex flex-col overflow-y-auto">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-lg font-bold" data-i18n="new_post">Nouvelle Publication</h3>
+                    <h3 class="text-lg font-bold" data-i18n="upload_title">Nouvelle Publication</h3>
                     <i data-lucide="x" class="cursor-pointer" onclick="closeModal('upload-modal')"></i>
                 </div>
                 <div class="flex-1 flex flex-col gap-4">
@@ -400,40 +411,40 @@
                     
                     <div class="space-y-3">
                         <div>
-                            <label class="text-xs text-gray-400 mb-1 block" data-i18n="cover_label">Couverture (Miniature)</label>
+                            <label class="text-xs text-gray-400 mb-1 block">Couverture (Miniature)</label>
                             <input type="range" id="cover-slider" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" min="0" value="0" step="0.1">
                         </div>
 
                         <div class="grid grid-cols-2 gap-2">
                             <div class="relative">
                                 <i data-lucide="map-pin" class="absolute left-2 top-2.5 w-4 h-4 text-gray-400"></i>
-                                <input type="text" id="video-location" placeholder="Ajouter un lieu" class="auth-input pl-8 text-sm py-2" data-i18n-placeholder="loc_placeholder">
+                                <input type="text" id="video-location" placeholder="Ajouter un lieu" class="auth-input pl-8 text-sm py-2">
                             </div>
                             <div class="relative">
                                 <i data-lucide="users" class="absolute left-2 top-2.5 w-4 h-4 text-gray-400"></i>
-                                <input type="text" id="video-tags" placeholder="Identifier des amis (@...)" class="auth-input pl-8 text-sm py-2" data-i18n-placeholder="tag_placeholder">
+                                <input type="text" id="video-tags" placeholder="Identifier des amis (@...)" class="auth-input pl-8 text-sm py-2">
                             </div>
                         </div>
 
                         <div>
                             <select id="video-visibility" class="auth-input bg-[#334155] text-sm py-2">
-                                <option value="public" data-i18n="vis_public">Public (Tout le monde)</option>
-                                <option value="followers" data-i18n="vis_followers">Abonnés (Mes followers)</option>
-                                <option value="private" data-i18n="vis_private">Privé (Moi seul)</option>
+                                <option value="public">Public (Tout le monde)</option>
+                                <option value="followers">Abonnés (Mes followers)</option>
+                                <option value="private">Privé (Moi seul)</option>
                             </select>
                         </div>
 
                         <div class="bg-[#334155]/50 p-3 rounded-lg space-y-2">
                             <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-300" data-i18n="opt_comments">Autoriser les commentaires</span>
+                                <span class="text-sm text-gray-300">Autoriser les commentaires</span>
                                 <input type="checkbox" id="opt-comments" class="custom-checkbox" checked>
                             </div>
                             <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-300" data-i18n="opt_downloads">Autoriser le téléchargement</span>
+                                <span class="text-sm text-gray-300">Autoriser le téléchargement</span>
                                 <input type="checkbox" id="opt-downloads" class="custom-checkbox" checked>
                             </div>
                             <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-300" data-i18n="opt_duet">Autoriser les Duos/Collages</span>
+                                <span class="text-sm text-gray-300">Autoriser les Duos/Collages</span>
                                 <input type="checkbox" id="opt-duet" class="custom-checkbox" checked>
                             </div>
                         </div>
@@ -451,26 +462,26 @@
             </div>
             <div id="comments-list" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
             <div class="p-3 border-t border-[#334155] bg-[#0f172a] flex items-center gap-2" id="comment-input-area">
-                <input type="text" id="comment-input" placeholder="Ajouter un commentaire..." class="flex-1 bg-[#1e293b] border-none rounded-full px-4 py-2 text-sm text-white outline-none" data-i18n-placeholder="add_comment">
-                <button onclick="sendComment()" class="text-cyan-500 font-bold text-sm px-2" data-i18n="post_btn">Publier</button>
+                <input type="text" id="comment-input" placeholder="Ajouter un commentaire..." class="flex-1 bg-[#1e293b] border-none rounded-full px-4 py-2 text-sm text-white outline-none" data-i18n-placeholder="comment_placeholder">
+                <button onclick="sendComment()" class="text-cyan-500 font-bold text-sm px-2" data-i18n="publish_btn">Publier</button>
             </div>
-            <div id="comments-disabled-msg" class="p-4 text-center text-gray-500 text-sm hidden bg-[#0f172a] border-t border-[#334155]" data-i18n="comments_disabled">Les commentaires sont désactivés.</div>
+            <div id="comments-disabled-msg" class="p-4 text-center text-gray-500 text-sm hidden bg-[#0f172a] border-t border-[#334155]">Les commentaires sont désactivés.</div>
         </div>
 
         <div id="options-modal" class="bottom-sheet z-50">
             <div class="p-4 border-b border-[#334155] flex justify-between items-center bg-[#1e293b] rounded-t-xl">
-                <div class="text-sm font-bold mx-auto" data-i18n="options_title">Options</div>
+                <div class="text-sm font-bold mx-auto">Options</div>
                 <i data-lucide="x" class="w-5 h-5 cursor-pointer absolute right-4" onclick="closeOptions()"></i>
             </div>
             <div class="p-4 flex flex-col gap-4 bg-[#0f172a] h-full" id="options-content">
                 <button id="opt-share" class="flex items-center gap-3 p-3 bg-[#1e293b] rounded-lg text-white font-semibold">
-                    <i data-lucide="share-2"></i> <span data-i18n="share">Partager</span>
+                    <i data-lucide="share-2"></i> <span data-i18n="options_share">Partager</span>
                 </button>
                 <button id="opt-download" class="flex items-center gap-3 p-3 bg-[#1e293b] rounded-lg text-white font-semibold">
-                    <i data-lucide="download"></i> <span data-i18n="download">Télécharger</span>
+                    <i data-lucide="download"></i> <span data-i18n="options_download">Télécharger</span>
                 </button>
                 <button id="opt-report" class="flex items-center gap-3 p-3 bg-[#1e293b] rounded-lg text-red-500 font-semibold border border-red-900">
-                    <i data-lucide="flag"></i> <span data-i18n="report">Signaler</span>
+                    <i data-lucide="flag"></i> <span data-i18n="options_report">Signaler</span>
                 </button>
             </div>
         </div>
@@ -495,390 +506,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- TRANSLATION DATA ---
-        const I18N = {
-            fr: {
-                app_by: "Application créée par",
-                app_slogan: "Réseau Social Vidéo",
-                auth_success: "Compte créé ! Connectez-vous.",
-                email_placeholder: "Email",
-                pass_placeholder: "Mot de passe",
-                username_placeholder: "Nom d'utilisateur",
-                forgot_pass: "Mot de passe oublié ?",
-                login_btn: "Se connecter",
-                no_account: "Pas encore de compte ?",
-                register_link: "S'inscrire",
-                privacy_agree: "En cochant cette case, j'accepte la",
-                privacy_link: "Politique de Confidentialité",
-                register_btn: "Créer mon compte",
-                has_account: "Déjà un compte ?",
-                login_link: "Se connecter",
-                reset_title: "Réinitialisation",
-                reset_desc: "Entrez votre email pour recevoir un lien de réinitialisation.",
-                send_btn: "Envoyer le lien",
-                back_login: "Retour à la connexion",
-                tab_following: "Abonnements",
-                tab_foryou: "Pour toi",
-                discover_title: "Découvrir",
-                search_placeholder: "Rechercher des utilisateurs...",
-                trending_title: "Top Vidéos",
-                type_search: "Tapez un nom pour chercher...",
-                inbox_title: "Boîte de réception",
-                tab_activities: "Activités",
-                tab_messages: "Messages",
-                profile_title: "Profil",
-                followers: "Abonnés",
-                likes: "J'aime",
-                edit_profile: "Modifier le profil",
-                follow_btn: "S'abonner",
-                followed_btn: "Abonné",
-                msg_btn: "Message",
-                nav_home: "Accueil",
-                nav_discover: "Découvrir",
-                nav_inbox: "Boîte",
-                nav_profile: "Profil",
-                downloading: "Téléchargement...",
-                offline_title: "Pas de connexion internet",
-                offline_desc: "Vérifiez votre connexion et réessayez.",
-                retry: "Réessayer",
-                privacy_title: "Politique de Confidentialité",
-                privacy_text_1: "Bienvenue sur R-Videos. Votre confidentialité est notre priorité.",
-                privacy_text_2: "1. Informations Collectées",
-                privacy_text_3: "2. Utilisation des Données",
-                privacy_text_4: "Pour fournir et améliorer nos services.",
-                privacy_text_5: "3. Vos Droits",
-                privacy_text_6: "Vous avez le droit d'accéder à vos données ou de supprimer votre compte.",
-                privacy_text_7: "4. Tolérance Zéro",
-                privacy_text_8: "Nous appliquons une tolérance zéro concernant les contenus abusifs. Tout contenu haineux, pornographique ou illégal sera supprimé et l'utilisateur banni.",
-                close_btn: "Fermer",
-                edit_profile_title: "Modifier le profil",
-                profile_pic: "Photo de profil",
-                cancel_btn: "Annuler",
-                save_btn: "Enregistrer",
-                delete_account: "Supprimer mon compte",
-                irreversible: "Cette action est irréversible.",
-                delete_btn: "Supprimer",
-                logout_title: "Déconnexion",
-                no: "Non",
-                yes: "Oui",
-                new_post: "Nouvelle Publication",
-                select_video: "Sélectionner une vidéo",
-                desc_placeholder: "Décris ta vidéo... #Hashtags",
-                cover_label: "Couverture (Miniature)",
-                loc_placeholder: "Ajouter un lieu",
-                tag_placeholder: "Identifier des amis (@...)",
-                vis_public: "Public (Tout le monde)",
-                vis_followers: "Abonnés (Mes followers)",
-                vis_private: "Privé (Moi seul)",
-                opt_comments: "Autoriser les commentaires",
-                opt_downloads: "Autoriser le téléchargement",
-                opt_duet: "Autoriser les Duos/Collages",
-                publish_btn: "Publier",
-                comments_title: "Commentaires",
-                add_comment: "Ajouter un commentaire...",
-                post_btn: "Publier",
-                comments_disabled: "Les commentaires sont désactivés.",
-                options_title: "Options",
-                share: "Partager",
-                download: "Télécharger",
-                report: "Signaler",
-                chat_placeholder: "Envoyer..."
-            },
-            en: {
-                app_by: "App created by",
-                app_slogan: "Video Social Network",
-                auth_success: "Account created! Log in.",
-                email_placeholder: "Email",
-                pass_placeholder: "Password",
-                username_placeholder: "Username",
-                forgot_pass: "Forgot password?",
-                login_btn: "Log in",
-                no_account: "No account yet?",
-                register_link: "Sign up",
-                privacy_agree: "By checking this, I agree to the",
-                privacy_link: "Privacy Policy",
-                register_btn: "Create account",
-                has_account: "Already have an account?",
-                login_link: "Log in",
-                reset_title: "Reset Password",
-                reset_desc: "Enter your email to receive a reset link.",
-                send_btn: "Send link",
-                back_login: "Back to login",
-                tab_following: "Following",
-                tab_foryou: "For You",
-                discover_title: "Discover",
-                search_placeholder: "Search users...",
-                trending_title: "Top Videos",
-                type_search: "Type a name to search...",
-                inbox_title: "Inbox",
-                tab_activities: "Activities",
-                tab_messages: "Messages",
-                profile_title: "Profile",
-                followers: "Followers",
-                likes: "Likes",
-                edit_profile: "Edit Profile",
-                follow_btn: "Follow",
-                followed_btn: "Following",
-                msg_btn: "Message",
-                nav_home: "Home",
-                nav_discover: "Discover",
-                nav_inbox: "Inbox",
-                nav_profile: "Profile",
-                downloading: "Downloading...",
-                offline_title: "No internet connection",
-                offline_desc: "Check your connection and try again.",
-                retry: "Retry",
-                privacy_title: "Privacy Policy",
-                privacy_text_1: "Welcome to R-Videos. Your privacy is our priority.",
-                privacy_text_2: "1. Collected Information",
-                privacy_text_3: "2. Data Usage",
-                privacy_text_4: "To provide and improve our services.",
-                privacy_text_5: "3. Your Rights",
-                privacy_text_6: "You have the right to access your data or delete your account.",
-                privacy_text_7: "4. Zero Tolerance",
-                privacy_text_8: "We enforce zero tolerance for abusive content. Hate speech, pornography, or illegal content will be removed and users banned.",
-                close_btn: "Close",
-                edit_profile_title: "Edit Profile",
-                profile_pic: "Profile Picture",
-                cancel_btn: "Cancel",
-                save_btn: "Save",
-                delete_account: "Delete my account",
-                irreversible: "This action is irreversible.",
-                delete_btn: "Delete",
-                logout_title: "Log out",
-                no: "No",
-                yes: "Yes",
-                new_post: "New Post",
-                select_video: "Select a video",
-                desc_placeholder: "Describe your video... #Hashtags",
-                cover_label: "Cover (Thumbnail)",
-                loc_placeholder: "Add location",
-                tag_placeholder: "Tag friends (@...)",
-                vis_public: "Public (Everyone)",
-                vis_followers: "Followers",
-                vis_private: "Private (Me only)",
-                opt_comments: "Allow comments",
-                opt_downloads: "Allow downloads",
-                opt_duet: "Allow Duet/Stitch",
-                publish_btn: "Publish",
-                comments_title: "Comments",
-                add_comment: "Add a comment...",
-                post_btn: "Post",
-                comments_disabled: "Comments are disabled.",
-                options_title: "Options",
-                share: "Share",
-                download: "Download",
-                report: "Report",
-                chat_placeholder: "Send..."
-            },
-            de: {
-                app_by: "App erstellt von",
-                app_slogan: "Video Soziales Netzwerk",
-                auth_success: "Konto erstellt! Einloggen.",
-                email_placeholder: "E-Mail",
-                pass_placeholder: "Passwort",
-                username_placeholder: "Benutzername",
-                forgot_pass: "Passwort vergessen?",
-                login_btn: "Einloggen",
-                no_account: "Noch kein Konto?",
-                register_link: "Registrieren",
-                privacy_agree: "Ich akzeptiere die",
-                privacy_link: "Datenschutzrichtlinie",
-                register_btn: "Konto erstellen",
-                has_account: "Bereits ein Konto?",
-                login_link: "Einloggen",
-                reset_title: "Passwort zurücksetzen",
-                reset_desc: "Geben Sie Ihre E-Mail ein.",
-                send_btn: "Link senden",
-                back_login: "Zurück zum Login",
-                tab_following: "Abonniert",
-                tab_foryou: "Für Dich",
-                discover_title: "Entdecken",
-                search_placeholder: "Benutzer suchen...",
-                trending_title: "Top Videos",
-                type_search: "Name eingeben...",
-                inbox_title: "Posteingang",
-                tab_activities: "Aktivitäten",
-                tab_messages: "Nachrichten",
-                profile_title: "Profil",
-                followers: "Follower",
-                likes: "Gefällt mir",
-                edit_profile: "Profil bearbeiten",
-                follow_btn: "Folgen",
-                followed_btn: "Gefolgt",
-                msg_btn: "Nachricht",
-                nav_home: "Start",
-                nav_discover: "Entdecken",
-                nav_inbox: "Post",
-                nav_profile: "Profil",
-                downloading: "Herunterladen...",
-                offline_title: "Keine Internetverbindung",
-                offline_desc: "Verbindung prüfen und erneut versuchen.",
-                retry: "Erneut versuchen",
-                privacy_title: "Datenschutzrichtlinie",
-                privacy_text_1: "Willkommen bei R-Videos.",
-                privacy_text_2: "1. Gesammelte Informationen",
-                privacy_text_3: "2. Datennutzung",
-                privacy_text_4: "Zur Verbesserung unserer Dienste.",
-                privacy_text_5: "3. Ihre Rechte",
-                privacy_text_6: "Zugriff oder Löschung Ihrer Daten.",
-                privacy_text_7: "4. Null Toleranz",
-                privacy_text_8: "Wir tolerieren keine missbräuchlichen Inhalte. Hassrede oder illegale Inhalte führen zum Bann.",
-                close_btn: "Schließen",
-                edit_profile_title: "Profil bearbeiten",
-                profile_pic: "Profilbild",
-                cancel_btn: "Abbrechen",
-                save_btn: "Speichern",
-                delete_account: "Konto löschen",
-                irreversible: "Diese Aktion ist irreversibel.",
-                delete_btn: "Löschen",
-                logout_title: "Ausloggen",
-                no: "Nein",
-                yes: "Ja",
-                new_post: "Neuer Beitrag",
-                select_video: "Video auswählen",
-                desc_placeholder: "Beschreibung... #Hashtags",
-                cover_label: "Titelbild",
-                loc_placeholder: "Ort hinzufügen",
-                tag_placeholder: "Freunde markieren (@...)",
-                vis_public: "Öffentlich",
-                vis_followers: "Abonnenten",
-                vis_private: "Privat",
-                opt_comments: "Kommentare erlauben",
-                opt_downloads: "Downloads erlauben",
-                opt_duet: "Duet erlauben",
-                publish_btn: "Veröffentlichen",
-                comments_title: "Kommentare",
-                add_comment: "Kommentar hinzufügen...",
-                post_btn: "Senden",
-                comments_disabled: "Kommentare deaktiviert.",
-                options_title: "Optionen",
-                share: "Teilen",
-                download: "Herunterladen",
-                report: "Melden",
-                chat_placeholder: "Senden..."
-            },
-            zh: {
-                app_by: "应用创建者",
-                app_slogan: "视频社交网络",
-                auth_success: "账户已创建！请登录。",
-                email_placeholder: "电子邮件",
-                pass_placeholder: "密码",
-                username_placeholder: "用户名",
-                forgot_pass: "忘记密码？",
-                login_btn: "登录",
-                no_account: "还没有账户？",
-                register_link: "注册",
-                privacy_agree: "勾选此项即表示我同意",
-                privacy_link: "隐私政策",
-                register_btn: "创建账户",
-                has_account: "已有账户？",
-                login_link: "登录",
-                reset_title: "重置密码",
-                reset_desc: "输入您的电子邮件以接收重置链接。",
-                send_btn: "发送链接",
-                back_login: "返回登录",
-                tab_following: "关注",
-                tab_foryou: "推荐",
-                discover_title: "发现",
-                search_placeholder: "搜索用户...",
-                trending_title: "热门视频",
-                type_search: "输入名字搜索...",
-                inbox_title: "收件箱",
-                tab_activities: "动态",
-                tab_messages: "消息",
-                profile_title: "个人资料",
-                followers: "粉丝",
-                likes: "获赞",
-                edit_profile: "编辑资料",
-                follow_btn: "关注",
-                followed_btn: "已关注",
-                msg_btn: "发消息",
-                nav_home: "首页",
-                nav_discover: "发现",
-                nav_inbox: "消息",
-                nav_profile: "我",
-                downloading: "下载中...",
-                offline_title: "无网络连接",
-                offline_desc: "请检查您的网络连接并重试。",
-                retry: "重试",
-                privacy_title: "隐私政策",
-                privacy_text_1: "欢迎来到 R-Videos。",
-                privacy_text_2: "1. 收集的信息",
-                privacy_text_3: "2. 数据使用",
-                privacy_text_4: "用于提供和改进我们的服务。",
-                privacy_text_5: "3. 您的权利",
-                privacy_text_6: "您有权访问您的数据或删除您的账户。",
-                privacy_text_7: "4. 零容忍",
-                privacy_text_8: "我们对滥用内容零容忍。仇恨言论、色情或非法内容将被删除，用户将被封禁。",
-                close_btn: "关闭",
-                edit_profile_title: "编辑资料",
-                profile_pic: "头像",
-                cancel_btn: "取消",
-                save_btn: "保存",
-                delete_account: "删除账户",
-                irreversible: "此操作不可逆。",
-                delete_btn: "删除",
-                logout_title: "登出",
-                no: "否",
-                yes: "是",
-                new_post: "新发布",
-                select_video: "选择视频",
-                desc_placeholder: "描述您的视频... #标签",
-                cover_label: "封面",
-                loc_placeholder: "添加地点",
-                tag_placeholder: "标记好友 (@...)",
-                vis_public: "公开",
-                vis_followers: "粉丝",
-                vis_private: "私密",
-                opt_comments: "允许评论",
-                opt_downloads: "允许下载",
-                opt_duet: "允许合拍",
-                publish_btn: "发布",
-                comments_title: "评论",
-                add_comment: "添加评论...",
-                post_btn: "发布",
-                comments_disabled: "评论已禁用。",
-                options_title: "选项",
-                share: "分享",
-                download: "下载",
-                report: "举报",
-                chat_placeholder: "发送..."
-            }
-        };
-
-        let currentLang = 'fr';
-
-        window.setLanguage = (lang) => {
-            currentLang = lang;
-            localStorage.setItem('r_videos_lang', lang);
-            applyTranslations();
-            document.getElementById('language-screen').classList.remove('active');
-            
-            // Check auth state to know where to go next
-            const user = auth.currentUser;
-            if(user) {
-                // Already logged in logic handles redirection in onAuthStateChanged
-            } else {
-                document.getElementById('auth-screen').classList.add('active');
-            }
-        };
-
-        function applyTranslations() {
-            const t = I18N[currentLang];
-            if (!t) return;
-
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (t[key]) el.innerText = t[key];
-            });
-
-            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-                const key = el.getAttribute('data-i18n-placeholder');
-                if (t[key]) el.placeholder = t[key];
-            });
-        }
-
         let currentUserData = null;
         let videoObserver = null;
         let unreadObserver = null;
@@ -901,6 +528,673 @@
         let isFetchingMore = false;
         let isFirstLoad = true;
         const BATCH_SIZE = 5; 
+
+        // --- I18N CONFIGURATION ---
+        const translations = {
+            fr: {
+                app_created_by: "Application créée par",
+                studio_name: "\"Le Studio Ralph Nyamè\". 2025",
+                subtitle: "Réseau Social Vidéo",
+                login_btn: "Se connecter",
+                register_btn: "Créer mon compte",
+                email_placeholder: "Email",
+                pass_placeholder: "Mot de passe",
+                username_placeholder: "Nom d'utilisateur",
+                forgot_pass: "Mot de passe oublié ?",
+                no_account: "Pas encore de compte ?",
+                signup_link: "S'inscrire",
+                has_account: "Déjà un compte ?",
+                login_link: "Se connecter",
+                privacy_text: "En cochant cette case, j'accepte la",
+                privacy_link: "Politique de Confidentialité",
+                reset_title: "Réinitialisation",
+                reset_desc: "Entrez votre email pour recevoir un lien de réinitialisation.",
+                send_link_btn: "Envoyer le lien",
+                back_login: "Retour à la connexion",
+                nav_home: "Accueil",
+                nav_discover: "Découvrir",
+                nav_inbox: "Boîte",
+                nav_profile: "Profil",
+                tab_following: "Abonnements",
+                tab_foryou: "Pour toi",
+                search_placeholder: "Rechercher des utilisateurs...",
+                trending_title: "Top Vidéos",
+                inbox_title: "Boîte de réception",
+                tab_activities: "Activités",
+                tab_messages: "Messages",
+                profile_title: "Profil",
+                followers: "Abonnés",
+                likes: "J'aime",
+                edit_profile: "Modifier le profil",
+                follow_btn: "S'abonner",
+                following_btn: "Abonné",
+                message_btn: "Message",
+                upload_title: "Nouvelle Publication",
+                select_video: "Sélectionner une vidéo",
+                desc_placeholder: "Décris ta vidéo... #Hashtags",
+                publish_btn: "Publier",
+                comments_title: "Commentaires",
+                comment_placeholder: "Ajouter un commentaire...",
+                options_share: "Partager",
+                options_download: "Télécharger",
+                options_report: "Signaler",
+                privacy_modal_title: "Politique de Confidentialité",
+                close_btn: "Fermer",
+                auth_success: "Compte créé ! Connectez-vous.",
+                offline_title: "Pas de connexion internet",
+                offline_desc: "Vérifiez votre connexion et réessayez.",
+                retry_btn: "Réessayer"
+            },
+            en: {
+                app_created_by: "App created by",
+                studio_name: "\"Ralph Nyamè Studio\". 2025",
+                subtitle: "Video Social Network",
+                login_btn: "Log In",
+                register_btn: "Sign Up",
+                email_placeholder: "Email",
+                pass_placeholder: "Password",
+                username_placeholder: "Username",
+                forgot_pass: "Forgot password?",
+                no_account: "No account yet?",
+                signup_link: "Sign up",
+                has_account: "Already have an account?",
+                login_link: "Log In",
+                privacy_text: "By checking this box, I accept the",
+                privacy_link: "Privacy Policy",
+                reset_title: "Reset Password",
+                reset_desc: "Enter your email to receive a reset link.",
+                send_link_btn: "Send Link",
+                back_login: "Back to Login",
+                nav_home: "Home",
+                nav_discover: "Discover",
+                nav_inbox: "Inbox",
+                nav_profile: "Profile",
+                tab_following: "Following",
+                tab_foryou: "For You",
+                search_placeholder: "Search users...",
+                trending_title: "Trending Videos",
+                inbox_title: "Inbox",
+                tab_activities: "Activities",
+                tab_messages: "Messages",
+                profile_title: "Profile",
+                followers: "Followers",
+                likes: "Likes",
+                edit_profile: "Edit Profile",
+                follow_btn: "Follow",
+                following_btn: "Following",
+                message_btn: "Message",
+                upload_title: "New Post",
+                select_video: "Select a video",
+                desc_placeholder: "Describe your video... #Hashtags",
+                publish_btn: "Post",
+                comments_title: "Comments",
+                comment_placeholder: "Add a comment...",
+                options_share: "Share",
+                options_download: "Download",
+                options_report: "Report",
+                privacy_modal_title: "Privacy Policy",
+                close_btn: "Close",
+                auth_success: "Account created! Please log in.",
+                offline_title: "No internet connection",
+                offline_desc: "Check your connection and try again.",
+                retry_btn: "Try Again"
+            },
+            de: {
+                app_created_by: "App erstellt von",
+                studio_name: "\"Ralph Nyamè Studio\". 2025",
+                subtitle: "Video Soziales Netzwerk",
+                login_btn: "Anmelden",
+                register_btn: "Registrieren",
+                email_placeholder: "E-Mail",
+                pass_placeholder: "Passwort",
+                username_placeholder: "Benutzername",
+                forgot_pass: "Passwort vergessen?",
+                no_account: "Noch kein Konto?",
+                signup_link: "Registrieren",
+                has_account: "Bereits ein Konto?",
+                login_link: "Anmelden",
+                privacy_text: "Durch Ankreuzen akzeptiere ich die",
+                privacy_link: "Datenschutzrichtlinie",
+                reset_title: "Zurücksetzen",
+                reset_desc: "Geben Sie Ihre E-Mail ein, um einen Link zu erhalten.",
+                send_link_btn: "Link senden",
+                back_login: "Zurück zur Anmeldung",
+                nav_home: "Start",
+                nav_discover: "Entdecken",
+                nav_inbox: "Post",
+                nav_profile: "Profil",
+                tab_following: "Folge ich",
+                tab_foryou: "Für dich",
+                search_placeholder: "Benutzer suchen...",
+                trending_title: "Top Videos",
+                inbox_title: "Posteingang",
+                tab_activities: "Aktivitäten",
+                tab_messages: "Nachrichten",
+                profile_title: "Profil",
+                followers: "Follower",
+                likes: "Gefällt mir",
+                edit_profile: "Profil bearbeiten",
+                follow_btn: "Folgen",
+                following_btn: "Gefolgt",
+                message_btn: "Nachricht",
+                upload_title: "Neuer Beitrag",
+                select_video: "Video auswählen",
+                desc_placeholder: "Beschreibe dein Video... #Hashtags",
+                publish_btn: "Veröffentlichen",
+                comments_title: "Kommentare",
+                comment_placeholder: "Kommentar hinzufügen...",
+                options_share: "Teilen",
+                options_download: "Herunterladen",
+                options_report: "Melden",
+                privacy_modal_title: "Datenschutzrichtlinie",
+                close_btn: "Schließen",
+                auth_success: "Konto erstellt! Bitte anmelden.",
+                offline_title: "Keine Internetverbindung",
+                offline_desc: "Verbindung prüfen und erneut versuchen.",
+                retry_btn: "Erneut versuchen"
+            },
+            zh: {
+                app_created_by: "应用创建者",
+                studio_name: "\"Ralph Nyamè Studio\". 2025",
+                subtitle: "视频社交网络",
+                login_btn: "登录",
+                register_btn: "注册",
+                email_placeholder: "电子邮件",
+                pass_placeholder: "密码",
+                username_placeholder: "用户名",
+                forgot_pass: "忘记密码？",
+                no_account: "还没有账号？",
+                signup_link: "注册",
+                has_account: "已有账号？",
+                login_link: "登录",
+                privacy_text: "勾选此框即表示我接受",
+                privacy_link: "隐私政策",
+                reset_title: "重置密码",
+                reset_desc: "输入您的电子邮件以接收重置链接。",
+                send_link_btn: "发送链接",
+                back_login: "返回登录",
+                nav_home: "首页",
+                nav_discover: "发现",
+                nav_inbox: "收件箱",
+                nav_profile: "我",
+                tab_following: "关注",
+                tab_foryou: "推荐",
+                search_placeholder: "搜索用户...",
+                trending_title: "热门视频",
+                inbox_title: "收件箱",
+                tab_activities: "活动",
+                tab_messages: "消息",
+                profile_title: "个人资料",
+                followers: "粉丝",
+                likes: "获赞",
+                edit_profile: "编辑资料",
+                follow_btn: "关注",
+                following_btn: "已关注",
+                message_btn: "私信",
+                upload_title: "发布视频",
+                select_video: "选择视频",
+                desc_placeholder: "描述您的视频... #标签",
+                publish_btn: "发布",
+                comments_title: "评论",
+                comment_placeholder: "添加评论...",
+                options_share: "分享",
+                options_download: "下载",
+                options_report: "举报",
+                privacy_modal_title: "隐私政策",
+                close_btn: "关闭",
+                auth_success: "账户已创建！请登录。",
+                offline_title: "无网络连接",
+                offline_desc: "请检查您的连接并重试。",
+                retry_btn: "重试"
+            },
+            es: {
+                app_created_by: "Aplicación creada por",
+                studio_name: "\"Le Studio Ralph Nyamè\". 2025",
+                subtitle: "Red Social de Video",
+                login_btn: "Iniciar sesión",
+                register_btn: "Crear cuenta",
+                email_placeholder: "Correo electrónico",
+                pass_placeholder: "Contraseña",
+                username_placeholder: "Nombre de usuario",
+                forgot_pass: "¿Olvidaste tu contraseña?",
+                no_account: "¿No tienes cuenta?",
+                signup_link: "Regístrate",
+                has_account: "¿Ya tienes cuenta?",
+                login_link: "Inicia sesión",
+                privacy_text: "Al marcar esta casilla, acepto la",
+                privacy_link: "Política de Privacidad",
+                reset_title: "Restablecer",
+                reset_desc: "Ingresa tu correo para recibir un enlace.",
+                send_link_btn: "Enviar enlace",
+                back_login: "Volver al inicio",
+                nav_home: "Inicio",
+                nav_discover: "Descubrir",
+                nav_inbox: "Bandeja",
+                nav_profile: "Perfil",
+                tab_following: "Siguiendo",
+                tab_foryou: "Para ti",
+                search_placeholder: "Buscar usuarios...",
+                trending_title: "Videos en Tendencia",
+                inbox_title: "Bandeja de entrada",
+                tab_activities: "Actividad",
+                tab_messages: "Mensajes",
+                profile_title: "Perfil",
+                followers: "Seguidores",
+                likes: "Me gusta",
+                edit_profile: "Editar perfil",
+                follow_btn: "Seguir",
+                following_btn: "Siguiendo",
+                message_btn: "Mensaje",
+                upload_title: "Nueva Publicación",
+                select_video: "Seleccionar video",
+                desc_placeholder: "Describe tu video... #Hashtags",
+                publish_btn: "Publicar",
+                comments_title: "Comentarios",
+                comment_placeholder: "Añadir comentario...",
+                options_share: "Compartir",
+                options_download: "Descargar",
+                options_report: "Reportar",
+                privacy_modal_title: "Política de Privacidad",
+                close_btn: "Cerrar",
+                auth_success: "¡Cuenta creada! Inicia sesión.",
+                offline_title: "Sin conexión",
+                offline_desc: "Verifica tu conexión e intenta de nuevo.",
+                retry_btn: "Reintentar"
+            },
+            pt: {
+                app_created_by: "App criado por",
+                studio_name: "\"Le Studio Ralph Nyamè\". 2025",
+                subtitle: "Rede Social de Vídeo",
+                login_btn: "Entrar",
+                register_btn: "Criar conta",
+                email_placeholder: "Email",
+                pass_placeholder: "Senha",
+                username_placeholder: "Nome de usuário",
+                forgot_pass: "Esqueceu a senha?",
+                no_account: "Não tem conta?",
+                signup_link: "Cadastrar",
+                has_account: "Já tem conta?",
+                login_link: "Entrar",
+                privacy_text: "Ao marcar, aceito a",
+                privacy_link: "Política de Privacidade",
+                reset_title: "Redefinir",
+                reset_desc: "Digite seu email para receber o link.",
+                send_link_btn: "Enviar link",
+                back_login: "Voltar",
+                nav_home: "Início",
+                nav_discover: "Descobrir",
+                nav_inbox: "Caixa",
+                nav_profile: "Perfil",
+                tab_following: "Seguindo",
+                tab_foryou: "Para Você",
+                search_placeholder: "Buscar usuários...",
+                trending_title: "Vídeos em Alta",
+                inbox_title: "Caixa de Entrada",
+                tab_activities: "Atividades",
+                tab_messages: "Mensagens",
+                profile_title: "Perfil",
+                followers: "Seguidores",
+                likes: "Curtidas",
+                edit_profile: "Editar Perfil",
+                follow_btn: "Seguir",
+                following_btn: "Seguindo",
+                message_btn: "Mensagem",
+                upload_title: "Nova Publicação",
+                select_video: "Selecionar vídeo",
+                desc_placeholder: "Descreva seu vídeo... #Hashtags",
+                publish_btn: "Publicar",
+                comments_title: "Comentários",
+                comment_placeholder: "Adicionar comentário...",
+                options_share: "Compartilhar",
+                options_download: "Baixar",
+                options_report: "Denunciar",
+                privacy_modal_title: "Política de Privacidade",
+                close_btn: "Fechar",
+                auth_success: "Conta criada! Faça login.",
+                offline_title: "Sem internet",
+                offline_desc: "Verifique sua conexão.",
+                retry_btn: "Tentar novamente"
+            },
+            hi: {
+                app_created_by: "द्वारा बनाया गया ऐप",
+                studio_name: "\"Le Studio Ralph Nyamè\". 2025",
+                subtitle: "वीडियो सोशल नेटवर्क",
+                login_btn: "लॉग इन करें",
+                register_btn: "खाता बनाएं",
+                email_placeholder: "ईमेल",
+                pass_placeholder: "पासवर्ड",
+                username_placeholder: "उपयोगकर्ता नाम",
+                forgot_pass: "पासवर्ड भूल गए?",
+                no_account: "खाता नहीं है?",
+                signup_link: "साइन अप करें",
+                has_account: "क्या आपके पास खाता है?",
+                login_link: "लॉग इन करें",
+                privacy_text: "इस बॉक्स को चेक करके, मैं स्वीकार करता हूं",
+                privacy_link: "गोपनीयता नीति",
+                reset_title: "रीसेट करें",
+                reset_desc: "लिंक प्राप्त करने के लिए अपना ईमेल दर्ज करें।",
+                send_link_btn: "लिंक भेजें",
+                back_login: "वापस लॉग इन करें",
+                nav_home: "होम",
+                nav_discover: "खोजें",
+                nav_inbox: "इनबॉक्स",
+                nav_profile: "प्रोफ़ाइल",
+                tab_following: "फॉलो कर रहे हैं",
+                tab_foryou: "आपके लिए",
+                search_placeholder: "उपयोगकर्ताओं को खोजें...",
+                trending_title: "ट्रेंडिंग वीडियो",
+                inbox_title: "इनबॉक्स",
+                tab_activities: "गतिविधियां",
+                tab_messages: "संदेश",
+                profile_title: "प्रोफ़ाइल",
+                followers: "फॉलोअर्स",
+                likes: "लाइक्स",
+                edit_profile: "प्रोफ़ाइल संपादित करें",
+                follow_btn: "फॉलो करें",
+                following_btn: "फॉलो कर रहे हैं",
+                message_btn: "संदेश",
+                upload_title: "नई पोस्ट",
+                select_video: "वीडियो चुनें",
+                desc_placeholder: "अपने वीडियो का वर्णन करें... #Hashtags",
+                publish_btn: "प्रकाशित करें",
+                comments_title: "टिप्पणियाँ",
+                comment_placeholder: "टिप्पणी जोड़ें...",
+                options_share: "साझा करें",
+                options_download: "डाउनलोड करें",
+                options_report: "रिपोर्ट करें",
+                privacy_modal_title: "गोपनीयता नीति",
+                close_btn: "बंद करें",
+                auth_success: "खाता बनाया गया! कृपया लॉग इन करें।",
+                offline_title: "कोई इंटरनेट नहीं",
+                offline_desc: "अपना कनेक्शन जांचें।",
+                retry_btn: "पुनः प्रयास करें"
+            },
+            id: {
+                app_created_by: "Aplikasi dibuat oleh",
+                studio_name: "\"Le Studio Ralph Nyamè\". 2025",
+                subtitle: "Jejaring Sosial Video",
+                login_btn: "Masuk",
+                register_btn: "Buat Akun",
+                email_placeholder: "Email",
+                pass_placeholder: "Kata Sandi",
+                username_placeholder: "Nama Pengguna",
+                forgot_pass: "Lupa kata sandi?",
+                no_account: "Belum punya akun?",
+                signup_link: "Daftar",
+                has_account: "Sudah punya akun?",
+                login_link: "Masuk",
+                privacy_text: "Dengan mencentang, saya setuju",
+                privacy_link: "Kebijakan Privasi",
+                reset_title: "Atur Ulang",
+                reset_desc: "Masukkan email untuk menerima tautan.",
+                send_link_btn: "Kirim Tautan",
+                back_login: "Kembali",
+                nav_home: "Beranda",
+                nav_discover: "Jelajahi",
+                nav_inbox: "Kotak Masuk",
+                nav_profile: "Profil",
+                tab_following: "Mengikuti",
+                tab_foryou: "Untuk Anda",
+                search_placeholder: "Cari pengguna...",
+                trending_title: "Video Trending",
+                inbox_title: "Kotak Masuk",
+                tab_activities: "Aktivitas",
+                tab_messages: "Pesan",
+                profile_title: "Profil",
+                followers: "Pengikut",
+                likes: "Suka",
+                edit_profile: "Edit Profil",
+                follow_btn: "Ikuti",
+                following_btn: "Mengikuti",
+                message_btn: "Pesan",
+                upload_title: "Postingan Baru",
+                select_video: "Pilih Video",
+                desc_placeholder: "Deskripsikan video... #Tagar",
+                publish_btn: "Posting",
+                comments_title: "Komentar",
+                comment_placeholder: "Tambahkan komentar...",
+                options_share: "Bagikan",
+                options_download: "Unduh",
+                options_report: "Laporkan",
+                privacy_modal_title: "Kebijakan Privasi",
+                close_btn: "Tutup",
+                auth_success: "Akun dibuat! Silakan masuk.",
+                offline_title: "Tidak ada internet",
+                offline_desc: "Periksa koneksi Anda.",
+                retry_btn: "Coba Lagi"
+            },
+            vi: {
+                app_created_by: "Ứng dụng được tạo bởi",
+                studio_name: "\"Le Studio Ralph Nyamè\". 2025",
+                subtitle: "Mạng xã hội video",
+                login_btn: "Đăng nhập",
+                register_btn: "Tạo tài khoản",
+                email_placeholder: "Email",
+                pass_placeholder: "Mật khẩu",
+                username_placeholder: "Tên người dùng",
+                forgot_pass: "Quên mật khẩu?",
+                no_account: "Chưa có tài khoản?",
+                signup_link: "Đăng ký",
+                has_account: "Đã có tài khoản?",
+                login_link: "Đăng nhập",
+                privacy_text: "Bằng cách chọn, tôi đồng ý với",
+                privacy_link: "Chính sách quyền riêng tư",
+                reset_title: "Đặt lại",
+                reset_desc: "Nhập email để nhận liên kết.",
+                send_link_btn: "Gửi liên kết",
+                back_login: "Quay lại",
+                nav_home: "Trang chủ",
+                nav_discover: "Khám phá",
+                nav_inbox: "Hộp thư",
+                nav_profile: "Hồ sơ",
+                tab_following: "Đang theo dõi",
+                tab_foryou: "Dành cho bạn",
+                search_placeholder: "Tìm người dùng...",
+                trending_title: "Video thịnh hành",
+                inbox_title: "Hộp thư đến",
+                tab_activities: "Hoạt động",
+                tab_messages: "Tin nhắn",
+                profile_title: "Hồ sơ",
+                followers: "Người theo dõi",
+                likes: "Thích",
+                edit_profile: "Sửa hồ sơ",
+                follow_btn: "Theo dõi",
+                following_btn: "Đang theo dõi",
+                message_btn: "Tin nhắn",
+                upload_title: "Bài đăng mới",
+                select_video: "Chọn video",
+                desc_placeholder: "Mô tả video... #Hashtags",
+                publish_btn: "Đăng",
+                comments_title: "Bình luận",
+                comment_placeholder: "Thêm bình luận...",
+                options_share: "Chia sẻ",
+                options_download: "Tải xuống",
+                options_report: "Báo cáo",
+                privacy_modal_title: "Chính sách quyền riêng tư",
+                close_btn: "Đóng",
+                auth_success: "Đã tạo tài khoản! Vui lòng đăng nhập.",
+                offline_title: "Không có mạng",
+                offline_desc: "Kiểm tra kết nối của bạn.",
+                retry_btn: "Thử lại"
+            },
+            tr: {
+                app_created_by: "Uygulamayı oluşturan",
+                studio_name: "\"Le Studio Ralph Nyamè\". 2025",
+                subtitle: "Video Sosyal Ağı",
+                login_btn: "Giriş Yap",
+                register_btn: "Hesap Oluştur",
+                email_placeholder: "E-posta",
+                pass_placeholder: "Şifre",
+                username_placeholder: "Kullanıcı Adı",
+                forgot_pass: "Şifreni mi unuttun?",
+                no_account: "Hesabın yok mu?",
+                signup_link: "Kaydol",
+                has_account: "Zaten hesabın var mı?",
+                login_link: "Giriş Yap",
+                privacy_text: "İşaretleyerek kabul ediyorum",
+                privacy_link: "Gizlilik Politikası",
+                reset_title: "Sıfırla",
+                reset_desc: "Bağlantı almak için e-postanızı girin.",
+                send_link_btn: "Bağlantı Gönder",
+                back_login: "Geri Dön",
+                nav_home: "Ana Sayfa",
+                nav_discover: "Keşfet",
+                nav_inbox: "Gelen Kutusu",
+                nav_profile: "Profil",
+                tab_following: "Takip Edilen",
+                tab_foryou: "Sizin İçin",
+                search_placeholder: "Kullanıcı ara...",
+                trending_title: "Trend Videolar",
+                inbox_title: "Gelen Kutusu",
+                tab_activities: "Aktiviteler",
+                tab_messages: "Mesajlar",
+                profile_title: "Profil",
+                followers: "Takipçiler",
+                likes: "Beğeniler",
+                edit_profile: "Profili Düzenle",
+                follow_btn: "Takip Et",
+                following_btn: "Takip Ediliyor",
+                message_btn: "Mesaj",
+                upload_title: "Yeni Gönderi",
+                select_video: "Video Seç",
+                desc_placeholder: "Videonu açıkla... #Etiketler",
+                publish_btn: "Paylaş",
+                comments_title: "Yorumlar",
+                comment_placeholder: "Yorum ekle...",
+                options_share: "Paylaş",
+                options_download: "İndir",
+                options_report: "Bildir",
+                privacy_modal_title: "Gizlilik Politikası",
+                close_btn: "Kapat",
+                auth_success: "Hesap oluşturuldu! Lütfen giriş yapın.",
+                offline_title: "İnternet yok",
+                offline_desc: "Bağlantınızı kontrol edin.",
+                retry_btn: "Tekrar Dene"
+            },
+            ja: {
+                app_created_by: "アプリ作成者",
+                studio_name: "\"Le Studio Ralph Nyamè\". 2025",
+                subtitle: "動画ソーシャルネットワーク",
+                login_btn: "ログイン",
+                register_btn: "アカウント作成",
+                email_placeholder: "メールアドレス",
+                pass_placeholder: "パスワード",
+                username_placeholder: "ユーザー名",
+                forgot_pass: "パスワードをお忘れですか？",
+                no_account: "アカウントをお持ちでないですか？",
+                signup_link: "登録",
+                has_account: "すでにアカウントをお持ちですか？",
+                login_link: "ログイン",
+                privacy_text: "チェックを入れて同意します",
+                privacy_link: "プライバシーポリシー",
+                reset_title: "リセット",
+                reset_desc: "リンクを受け取るにはメールを入力してください。",
+                send_link_btn: "リンクを送信",
+                back_login: "戻る",
+                nav_home: "ホーム",
+                nav_discover: "発見",
+                nav_inbox: "受信箱",
+                nav_profile: "プロフィール",
+                tab_following: "フォロー中",
+                tab_foryou: "おすすめ",
+                search_placeholder: "ユーザーを検索...",
+                trending_title: "トレンド動画",
+                inbox_title: "受信トレイ",
+                tab_activities: "アクティビティ",
+                tab_messages: "メッセージ",
+                profile_title: "プロフィール",
+                followers: "フォロワー",
+                likes: "いいね",
+                edit_profile: "プロフィール編集",
+                follow_btn: "フォローする",
+                following_btn: "フォロー中",
+                message_btn: "メッセージ",
+                upload_title: "新規投稿",
+                select_video: "動画を選択",
+                desc_placeholder: "動画の説明... #ハッシュタグ",
+                publish_btn: "投稿",
+                comments_title: "コメント",
+                comment_placeholder: "コメントを追加...",
+                options_share: "共有",
+                options_download: "ダウンロード",
+                options_report: "報告",
+                privacy_modal_title: "プライバシーポリシー",
+                close_btn: "閉じる",
+                auth_success: "アカウント作成完了！ログインしてください。",
+                offline_title: "インターネット接続なし",
+                offline_desc: "接続を確認してください。",
+                retry_btn: "再試行"
+            },
+            ko: {
+                app_created_by: "앱 제작",
+                studio_name: "\"Le Studio Ralph Nyamè\". 2025",
+                subtitle: "비디오 소셜 네트워크",
+                login_btn: "로그인",
+                register_btn: "계정 만들기",
+                email_placeholder: "이메일",
+                pass_placeholder: "비밀번호",
+                username_placeholder: "사용자 이름",
+                forgot_pass: "비밀번호를 잊으셨나요?",
+                no_account: "계정이 없으신가요?",
+                signup_link: "가입하기",
+                has_account: "이미 계정이 있으신가요?",
+                login_link: "로그인",
+                privacy_text: "체크하여 동의합니다",
+                privacy_link: "개인정보 처리방침",
+                reset_title: "재설정",
+                reset_desc: "링크를 받으려면 이메일을 입력하세요.",
+                send_link_btn: "링크 보내기",
+                back_login: "돌아가기",
+                nav_home: "홈",
+                nav_discover: "발견",
+                nav_inbox: "수신함",
+                nav_profile: "프로필",
+                tab_following: "팔로잉",
+                tab_foryou: "추천",
+                search_placeholder: "사용자 검색...",
+                trending_title: "인기 동영상",
+                inbox_title: "수신함",
+                tab_activities: "활동",
+                tab_messages: "메시지",
+                profile_title: "프로필",
+                followers: "팔로워",
+                likes: "좋아요",
+                edit_profile: "프로필 편집",
+                follow_btn: "팔로우",
+                following_btn: "팔로잉",
+                message_btn: "메시지",
+                upload_title: "새 게시물",
+                select_video: "동영상 선택",
+                desc_placeholder: "동영상 설명... #해시태그",
+                publish_btn: "게시",
+                comments_title: "댓글",
+                comment_placeholder: "댓글 추가...",
+                options_share: "공유",
+                options_download: "다운로드",
+                options_report: "신고",
+                privacy_modal_title: "개인정보 처리방침",
+                close_btn: "닫기",
+                auth_success: "계정 생성됨! 로그인하세요.",
+                offline_title: "인터넷 없음",
+                offline_desc: "연결을 확인하세요.",
+                retry_btn: "재시도"
+            }
+        };
+
+        window.changeLanguage = (lang) => {
+            localStorage.setItem('rv_lang', lang);
+            const t = translations[lang];
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if(t[key]) el.innerText = t[key];
+            });
+            
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if(t[key]) el.placeholder = t[key];
+            });
+        };
 
         // --- FONCTION UTILITAIRE POUR INCREMENTER LES CHIFFRES ---
         function updateCountUI(element, change) {
@@ -1332,46 +1626,35 @@
             
             document.getElementById('splash-screen').classList.remove('active');
 
-            // LANGUAGE CHECK LOGIC
-            const storedLang = localStorage.getItem('r_videos_lang');
-            if (!storedLang) {
-                // First time launch -> Show Language Screen
-                document.getElementById('language-screen').classList.add('active');
-                document.getElementById('auth-screen').classList.remove('active');
-            } else {
-                currentLang = storedLang;
-                applyTranslations();
-                
-                if (user) {
-                    const userDoc = await getDoc(doc(db, "users", user.uid));
-                    if(userDoc.exists()) {
-                        currentUserData = userDoc.data();
-                        if (currentUserData.isBanned) {
-                            alert("Votre compte a été banni pour non-respect des règles.");
-                            await signOut(auth);
-                            return;
-                        }
-                        if(currentUserData && currentUserData.email === VIP_EMAIL) currentUserData.isVerified = true;
+            if (user) {
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if(userDoc.exists()) {
+                    currentUserData = userDoc.data();
+                    if (currentUserData.isBanned) {
+                        alert("Votre compte a été banni pour non-respect des règles.");
+                        await signOut(auth);
+                        return;
                     }
-
-                    requestNotificationPermission();
-                    if (window.OneSignalDeferred && window.location.hostname === 'buidtelecom.github.io') {
-                        window.OneSignalDeferred.push(function(OneSignal) { try { OneSignal.login(user.uid); } catch(e) {} });
-                    }
-
-                    document.getElementById('auth-screen').classList.remove('active'); document.getElementById('bottom-nav').classList.remove('hidden'); document.getElementById('bottom-nav').classList.add('flex');
-                    
-                    initBotSystem();
-                    subscribeToUnreadCount();
-                    const currentActive = document.querySelector('.screen.active');
-                    if(!currentActive || currentActive.id === 'auth-screen' || currentActive.id === 'splash-screen' || currentActive.id === 'language-screen') { window.navigateTo('feed'); loadFeed(); }
-                } else {
-                    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
-                    document.getElementById('auth-screen').classList.add('active'); 
-                    document.getElementById('bottom-nav').classList.add('hidden'); 
-                    document.getElementById('bottom-nav').classList.remove('flex'); 
-                    currentUserData = null; isInitialLoad = true;
+                    if(currentUserData && currentUserData.email === VIP_EMAIL) currentUserData.isVerified = true;
                 }
+
+                requestNotificationPermission();
+                if (window.OneSignalDeferred && window.location.hostname === 'buidtelecom.github.io') {
+                    window.OneSignalDeferred.push(function(OneSignal) { try { OneSignal.login(user.uid); } catch(e) {} });
+                }
+
+                document.getElementById('auth-screen').classList.remove('active'); document.getElementById('bottom-nav').classList.remove('hidden'); document.getElementById('bottom-nav').classList.add('flex');
+                
+                initBotSystem();
+                subscribeToUnreadCount();
+                const currentActive = document.querySelector('.screen.active');
+                if(!currentActive || currentActive.id === 'auth-screen' || currentActive.id === 'splash-screen') { window.navigateTo('feed'); loadFeed(); }
+            } else {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
+                document.getElementById('auth-screen').classList.add('active'); 
+                document.getElementById('bottom-nav').classList.add('hidden'); 
+                document.getElementById('bottom-nav').classList.remove('flex'); 
+                currentUserData = null; isInitialLoad = true;
             }
         });
 
@@ -1596,7 +1879,7 @@
                             <div class="flex items-center gap-2 mb-1">
                                 <h3 class="font-bold text-lg text-shadow cursor-pointer pointer-events-auto" onclick="viewUserProfile('${data.userId}')">@${safeUsername}</h3>
                                 ${badge}
-                                ${!isMe && !isFollowing ? `<button onclick="toggleFollowFromFeed('${data.userId}', this)" class="pointer-events-auto bg-red-600 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg transform transition active:scale-95" data-i18n="follow_btn">S'abonner</button>` : ''}
+                                ${!isMe && !isFollowing ? `<button onclick="toggleFollowFromFeed('${data.userId}', this)" class="pointer-events-auto bg-red-600 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg transform transition active:scale-95">S'abonner</button>` : ''}
                             </div>
                             ${data.location ? `<div class="text-xs text-gray-300 flex items-center gap-1 mb-1"><i data-lucide="map-pin" class="w-3 h-3"></i> ${escapeHtml(data.location)}</div>` : ''}
                             <p class="text-sm mb-2 text-shadow text-gray-100 line-clamp-3 pointer-events-auto">${safeDesc}</p>
@@ -1625,9 +1908,6 @@
                 });
                 
                 isFetchingMore = false; 
-                
-                // Re-apply translations for dynamically added content
-                applyTranslations();
                 lucide.createIcons();
                 if (!videoObserver) handleVideoPlayback();
 
@@ -2013,13 +2293,7 @@
             if(count === 0) grid.innerHTML = "<div class='col-span-3 text-center text-gray-500 text-sm mt-4'>Aucune vidéo.</div>"; document.getElementById('profile-likes').innerText = formatCount(likes); lucide.createIcons(); 
         }
 
-        function updateFollowButtonUI(btn, isFollowing) { btn.innerText = isFollowing ? "Abonné" : "S'abonner"; btn.className = isFollowing ? "flex-1 bg-gray-200 text-black py-2 rounded text-sm font-semibold" : "flex-1 bg-red-600 text-white py-2 rounded text-sm font-semibold";
-            // Re-apply translation check because this function overwrites text
-            const key = isFollowing ? "followed_btn" : "follow_btn";
-            const t = I18N[currentLang];
-            if(t && t[key]) btn.innerText = t[key];
-        }
-        
+        function updateFollowButtonUI(btn, isFollowing) { btn.innerText = isFollowing ? "Abonné" : "S'abonner"; btn.className = isFollowing ? "flex-1 bg-gray-200 text-black py-2 rounded text-sm font-semibold" : "flex-1 bg-red-600 text-white py-2 rounded text-sm font-semibold"; }
         window.toggleFollow = async () => { if (!currentProfileUid || !auth.currentUser) return; const tRef = doc(db, "users", currentProfileUid); const mRef = doc(db, "users", auth.currentUser.uid); const snap = await getDoc(tRef); const isF = snap.data().followers?.includes(auth.currentUser.uid); const btn = document.getElementById('btn-follow'); const cnt = document.getElementById('profile-followers'); let n = parseInt(cnt.innerText); if (isF) { await updateDoc(tRef, {followers:arrayRemove(auth.currentUser.uid)}); await updateDoc(mRef, {following:arrayRemove(currentProfileUid)}); updateFollowButtonUI(btn, false); cnt.innerText = n-1; } else { await updateDoc(tRef, {followers:arrayUnion(auth.currentUser.uid)}); await updateDoc(mRef, {following:arrayUnion(currentProfileUid)}); updateFollowButtonUI(btn, true); cnt.innerText = n+1; sendNotification(currentProfileUid, "follow", "a commencé à vous suivre"); } };
         window.openEditProfile = () => { document.getElementById('edit-username').value = currentUserData.username; document.getElementById('edit-bio').value = currentUserData.bio; document.getElementById('edit-modal').classList.add('open'); };
         window.saveProfileChanges = async () => { const btn = document.getElementById('btn-save-profile'); const originalText = btn.innerText; btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-black border-t-transparent rounded-full mx-auto"></div>`; btn.disabled = true; try { const file = document.getElementById('edit-file-input').files[0]; let url = currentUserData.photoURL; if(file) url = await uploadToCloudinary(file); await updateDoc(doc(db, "users", auth.currentUser.uid), { username: escapeHtml(document.getElementById('edit-username').value), bio: escapeHtml(document.getElementById('edit-bio').value), photoURL: url }); currentUserData = (await getDoc(doc(db, "users", auth.currentUser.uid))).data(); if(file) { const vidSnap = await getDocs(query(collection(db, "videos"), where("userId", "==", auth.currentUser.uid))); vidSnap.forEach(async (v) => { await updateDoc(doc(db, "videos", v.id), { userPhotoURL: url }); }); } window.closeModal('edit-modal'); renderProfile(currentUserData, true); } catch(e) { alert("Erreur: " + e.message); } finally { btn.innerHTML = originalText; btn.disabled = false; } };
@@ -2043,6 +2317,11 @@
         (function() { let startY = 0; let currentY = 0; let isPulling = false; const threshold = 120; const bodyContent = document.getElementById('main-app-container'); const loader = document.getElementById('ptr-loader'); const spinner = document.getElementById('ptr-spinner'); const arrow = document.getElementById('ptr-arrow'); document.addEventListener('touchstart', (e) => { const activeScreen = document.querySelector('.screen.active'); if (!activeScreen) return; let scrollContainer = activeScreen.querySelector('.overflow-y-scroll, .overflow-y-auto'); if (!scrollContainer) scrollContainer = activeScreen; if (scrollContainer.scrollTop <= 0) { startY = e.touches[0].clientY; currentY = startY; isPulling = true; } else { isPulling = false; } }, { passive: true }); document.addEventListener('touchmove', (e) => { if (!isPulling) return; currentY = e.touches[0].clientY; const diff = currentY - startY; if (diff > 0) { const translateVal = Math.min(diff * 0.4, 150); loader.style.transform = `translateY(${translateVal - 64}px)`; bodyContent.style.transform = `translateY(${translateVal}px)`; if (translateVal > 60) { arrow.style.transform = "rotate(180deg)"; } else { arrow.style.transform = "rotate(0deg)"; } } }, { passive: true }); document.addEventListener('touchend', (e) => { if (!isPulling) return; isPulling = false; const diff = currentY - startY; if (diff > threshold) { bodyContent.style.transform = `translateY(80px)`; loader.style.transform = `translateY(20px)`; arrow.classList.add('hidden'); spinner.classList.remove('hidden'); refreshCurrentScreen().then(() => { setTimeout(() => { bodyContent.style.transform = ''; loader.style.transform = ''; arrow.classList.remove('hidden'); arrow.style.transform = "rotate(0deg)"; spinner.classList.add('hidden'); }, 800); }); } else { bodyContent.style.transform = ''; loader.style.transform = ''; } }); })();
 
         window.addEventListener('load', () => {
+            // LOAD SAVED LANG
+            const savedLang = localStorage.getItem('rv_lang') || 'fr';
+            document.getElementById('lang-selector').value = savedLang;
+            window.changeLanguage(savedLang);
+
             if(!navigator.onLine) {
                 document.getElementById('splash-screen').classList.remove('active');
                 document.getElementById('offline-screen').classList.add('active');
