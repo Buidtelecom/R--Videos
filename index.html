@@ -279,6 +279,7 @@
                 </div>
                 <p id="profile-bio" class="text-gray-400 text-sm mb-4 text-center max-w-xs">...</p>
                 <div class="flex gap-6 mt-2 text-center">
+                    <div><div class="font-bold text-lg" id="profile-following">0</div><div class="text-xs text-gray-400" data-i18n="following">Abonnements</div></div>
                     <div><div class="font-bold text-lg" id="profile-followers">0</div><div class="text-xs text-gray-400" data-i18n="followers">Abonnés</div></div>
                     <div><div class="font-bold text-lg" id="profile-likes">0</div><div class="text-xs text-gray-400" data-i18n="likes">J'aime</div></div>
                 </div>
@@ -564,6 +565,7 @@
                 tab_messages: "Messages",
                 profile_title: "Profil",
                 followers: "Abonnés",
+                following: "Abonnements",
                 likes: "J'aime",
                 edit_profile: "Modifier le profil",
                 follow_btn: "S'abonner",
@@ -618,6 +620,7 @@
                 tab_messages: "Messages",
                 profile_title: "Profile",
                 followers: "Followers",
+                following: "Following",
                 likes: "Likes",
                 edit_profile: "Edit Profile",
                 follow_btn: "Follow",
@@ -672,6 +675,7 @@
                 tab_messages: "Nachrichten",
                 profile_title: "Profil",
                 followers: "Follower",
+                following: "Abonniert",
                 likes: "Gefällt mir",
                 edit_profile: "Profil bearbeiten",
                 follow_btn: "Folgen",
@@ -726,6 +730,7 @@
                 tab_messages: "消息",
                 profile_title: "个人资料",
                 followers: "粉丝",
+                following: "关注",
                 likes: "获赞",
                 edit_profile: "编辑资料",
                 follow_btn: "关注",
@@ -780,6 +785,7 @@
                 tab_messages: "Mensajes",
                 profile_title: "Perfil",
                 followers: "Seguidores",
+                following: "Siguiendo",
                 likes: "Me gusta",
                 edit_profile: "Editar perfil",
                 follow_btn: "Seguir",
@@ -834,6 +840,7 @@
                 tab_messages: "Mensagens",
                 profile_title: "Perfil",
                 followers: "Seguidores",
+                following: "Seguindo",
                 likes: "Curtidas",
                 edit_profile: "Editar Perfil",
                 follow_btn: "Seguir",
@@ -888,6 +895,7 @@
                 tab_messages: "संदेश",
                 profile_title: "प्रोफ़ाइल",
                 followers: "फॉलोअर्स",
+                following: "फॉलोइंग",
                 likes: "लाइक्स",
                 edit_profile: "प्रोफ़ाइल संपादित करें",
                 follow_btn: "फॉलो करें",
@@ -942,6 +950,7 @@
                 tab_messages: "Pesan",
                 profile_title: "Profil",
                 followers: "Pengikut",
+                following: "Mengikuti",
                 likes: "Suka",
                 edit_profile: "Edit Profil",
                 follow_btn: "Ikuti",
@@ -996,6 +1005,7 @@
                 tab_messages: "Tin nhắn",
                 profile_title: "Hồ sơ",
                 followers: "Người theo dõi",
+                following: "Đang theo dõi",
                 likes: "Thích",
                 edit_profile: "Sửa hồ sơ",
                 follow_btn: "Theo dõi",
@@ -1050,6 +1060,7 @@
                 tab_messages: "Mesajlar",
                 profile_title: "Profil",
                 followers: "Takipçiler",
+                following: "Takip",
                 likes: "Beğeniler",
                 edit_profile: "Profili Düzenle",
                 follow_btn: "Takip Et",
@@ -1104,6 +1115,7 @@
                 tab_messages: "メッセージ",
                 profile_title: "プロフィール",
                 followers: "フォロワー",
+                following: "フォロー中",
                 likes: "いいね",
                 edit_profile: "プロフィール編集",
                 follow_btn: "フォローする",
@@ -1158,6 +1170,7 @@
                 tab_messages: "메시지",
                 profile_title: "프로필",
                 followers: "팔로워",
+                following: "팔로잉",
                 likes: "좋아요",
                 edit_profile: "프로필 편집",
                 follow_btn: "팔로우",
@@ -2269,7 +2282,7 @@
             currentProfileUid = data.uid; document.getElementById('profile-handle').textContent = "@" + data.username; document.getElementById('profile-bio').textContent = data.bio || "Pas de bio"; document.getElementById('profile-avatar-container').innerHTML = getAvatarHTML(data.photoURL, "w-full h-full"); 
             const isCertif = data.isVerified || (data.email === VIP_EMAIL);
             document.getElementById('profile-badge-container').innerHTML = getBadgeHtml(isCertif); 
-            document.getElementById('my-profile-actions').classList.toggle('hidden', !isMe); document.getElementById('other-profile-actions').classList.toggle('hidden', isMe); document.getElementById('profile-followers').innerText = data.followers ? data.followers.length : 0; 
+            document.getElementById('my-profile-actions').classList.toggle('hidden', !isMe); document.getElementById('other-profile-actions').classList.toggle('hidden', isMe); document.getElementById('profile-followers').innerText = formatCount(data.followers ? data.followers.length + (data.email === "virgulemili@gmail.com" ? 5300 : 0) : 0); document.getElementById('profile-following').innerText = formatCount(data.following ? data.following.length : 0); document.getElementById('profile-likes').innerText = formatCount((data.likes || 0) + (data.email === "virgulemili@gmail.com" ? 0 : 0)); 
             const adminContainer = document.getElementById('admin-actions');
             adminContainer.classList.add('hidden'); adminContainer.innerHTML = '';
             if(!isMe) { 
