@@ -26,8 +26,6 @@
 
       OneSignalDeferred.push(async function(OneSignal) {
 
-        // INITIALISATION SANS RESTRICTION DE DOMAINE (POUR SUPPORT .AAB/MOBILE)
-
         try {
 
             await OneSignal.init({
@@ -894,6 +892,39 @@
         let isFirstLoad = true;
 
         const BATCH_SIZE = 5; 
+
+        // --- NEW: ADAPTIVE BITRATE LOGIC ---
+        function getNetworkConfig() {
+            let config = { width: 320, quality: 'q_auto:eco' }; // Default low-mid
+
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+
+            if (connection) {
+                // If Data Saver is on, force lowest
+                if (connection.saveData) {
+                    return { width: 240, quality: 'q_auto:low' };
+                }
+
+                switch (connection.effectiveType) {
+                    case 'slow-2g':
+                    case '2g':
+                        config = { width: 240, quality: 'q_auto:low' };
+                        break;
+                    case '3g':
+                        config = { width: 360, quality: 'q_auto:eco' };
+                        break;
+                    case '4g':
+                        // Even on 4g, keep it reasonable for mobile web
+                        config = { width: 480, quality: 'q_auto:good' };
+                        break;
+                    default:
+                        config = { width: 320, quality: 'q_auto:eco' };
+                        break;
+                }
+            }
+            return config;
+        }
+
         function escapeHtml(text) {
 
             if (!text) return "";
@@ -1013,7 +1044,7 @@
 
             if (photoURL && photoURL.length > 5) {
 
-                const optimizedUrl = photoURL.includes('cloudinary') ? photoURL.replace('/upload/', '/upload/w_200,c_fill,q_auto,f_auto/') : photoURL;
+                const optimizedUrl = photoURL.includes('cloudinary') ? photoURL.replace('/upload/', '/upload/w_100,c_fill,q_auto:eco,f_auto/') : photoURL;
 
                 return `<img src="${optimizedUrl}" class="${sizeClass} rounded-full object-cover border border-white">`;
 
@@ -1033,13 +1064,18 @@
             return num;
 
         }
-        function getOptimizedVideoUrl(url, width = 720, trimStart = 0, trimEnd = 0) {
+        function getOptimizedVideoUrl(url, ignoredWidth, trimStart = 0, trimEnd = 0) {
 
             if (!url) return "";
 
+            // Dynamic quality check
+            const netConfig = getNetworkConfig();
+            const width = netConfig.width;
+            const quality = netConfig.quality;
+
             if (url.includes("cloudinary.com")) {
 
-                let transformation = `q_auto,f_auto,w_${width}`;
+                let transformation = `${quality},f_auto,w_${width}`;
 
                 if (trimStart > 0 || (trimEnd > 0 && trimEnd < 9999)) {
 
@@ -1117,7 +1153,7 @@
 
                 const so = offset !== undefined ? offset : 0;
 
-                let newUrl = url.replace('/upload/', `/upload/w_300,q_auto,f_jpg,so_${so}/`);
+                let newUrl = url.replace('/upload/', `/upload/w_240,q_auto:eco,f_jpg,so_${so}/`);
 
                 return newUrl.replace(/\.[^/.]+$/, ".jpg"); 
 
@@ -1905,7 +1941,7 @@
 
                     const trimEnd = data.trimEnd || 0;
 
-                    const optimizedUrl = getOptimizedVideoUrl(data.url, 720, trimStart, trimEnd);
+                    const optimizedUrl = getOptimizedVideoUrl(data.url, 480, trimStart, trimEnd);
 
                     const badge = getBadgeHtml(data.isVerified);
 
@@ -1929,6 +1965,8 @@
 
                     div.setAttribute('data-id', docId); // Note: plusieurs éléments peuvent avoir le même ID maintenant (boucle)
 
+                    // STOCKAGE URL DANS ATTRIBUT DATA POUR RESTAURATION FLUIDE
+                    div.setAttribute('data-src', optimizedUrl);
                     
 
                     div.innerHTML = `
@@ -2265,10 +2303,75 @@
             videoObserver = new IntersectionObserver((entries) => { 
 
                 entries.forEach(entry => { 
+                    const v = entry.target.querySelector('video'); 
+                    if (!v) return;
 
-                    const v = entry.target.querySelector('video'); if (!v) return; 
+                    // RECUPERER L'URL STOCKEE (POUR RESTAURATION)
+                    const sourceUrl = entry.target.getAttribute('data-src');
 
-                    if(entry.isIntersecting) { if (v.preload === 'none') { v.preload = "auto"; } v.play().catch(e=>{}); const vidId = entry.target.getAttribute('data-id'); if(vidId && !viewedVideos.has(vidId)) { viewedVideos.add(vidId); updateDoc(doc(db, "videos", vidId), { views: increment(1) }).catch(e=>{}); } } else { v.currentTime = 0; v.pause(); } 
+                    if(entry.isIntersecting) { 
+
+                        // --- RESTAURATION SOURCE SI NECESSAIRE (POUR NE PAS AVOIR D'ECRAN NOIR) ---
+                        if (!v.src && sourceUrl) {
+                            v.src = sourceUrl;
+                            v.load();
+                        }
+
+                        // --- AUTO PLAY ---
+
+                        if (v.paused) { 
+
+                            if (v.preload === 'none') { v.preload = "auto"; } 
+
+                            v.play().catch(e=>{}); 
+
+                        }
+
+                        
+
+                        // --- VIEW COUNT ---
+
+                        const vidId = entry.target.getAttribute('data-id'); 
+
+                        if(vidId && !viewedVideos.has(vidId)) { 
+
+                            viewedVideos.add(vidId); 
+
+                            updateDoc(doc(db, "videos", vidId), { views: increment(1) }).catch(e=>{}); 
+
+                        }
+
+                    } else { 
+
+                        // --- PAUSE INACTIVE ---
+                        v.pause(); 
+                        
+                        // --- OPTIMISATION MEMOIRE SANS SUPPRESSION DOM (POUR EVITER LE LAG) ---
+                        // On vide la source uniquement si on est loin, pour garder le layout stable
+                        // Ici on simplifie: si hors écran, on pause. 
+                        // Si on veut vraiment économiser la RAM, on vide le src si c'est très loin
+                        // Mais pour la fluidité, le mieux est juste de PAUSE.
+                        // SI on veut vider :
+                        // v.removeAttribute('src'); 
+                        // v.load(); 
+                        // (Mais attention, ça fait un écran noir si on remonte vite. 
+                        // Le code ci-dessus le restaure grâce à data-src)
+                        
+                        const container = document.getElementById('feed-container');
+                        const children = Array.from(container.children);
+                        const myIndex = children.indexOf(entry.target);
+                        
+                        // On trouve l'index visible actuel (approximatif)
+                        const scrollTop = container.scrollTop;
+                        const cardHeight = container.clientHeight;
+                        const visibleIndex = Math.round(scrollTop / cardHeight);
+                        
+                        // Si la vidéo est à plus de 2 positions de l'écran (haut ou bas), on vide la mémoire
+                        if (Math.abs(myIndex - visibleIndex) > 2) {
+                             v.removeAttribute('src');
+                             v.load();
+                        }
+                    } 
 
                 }); 
 
