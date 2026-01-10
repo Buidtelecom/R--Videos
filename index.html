@@ -1262,6 +1262,59 @@
             return formatted;
         }
 
+        // --- TASTE ALGORITHM HELPERS ---
+        function extractTags(text) {
+            if (!text) return [];
+            const matches = text.match(/#(\w+)/g);
+            return matches ? matches.map(t => t.substring(1).toLowerCase()) : [];
+        }
+
+        async function updateUserPreferences(tags) {
+            if (!auth.currentUser || !tags || tags.length === 0) return;
+            const userRef = doc(db, "users", auth.currentUser.uid);
+            
+            // Optimistic update locally
+            if (!currentUserData.preferences) currentUserData.preferences = {};
+            tags.forEach(tag => {
+                currentUserData.preferences[tag] = (currentUserData.preferences[tag] || 0) + 1;
+            });
+
+            // Update in Firestore
+            // Note: Since we can't do complex nested field updates easily without knowing the key,
+            // we read-modify-write. We use the local currentUserData which is kept up to date.
+            await updateDoc(userRef, { preferences: currentUserData.preferences }).catch(e => console.log(e));
+        }
+
+        function calculateViralScore(video) {
+            let score = 0;
+            // Engagement Weighting
+            score += (video.likes || 0) * 1;
+            score += (video.commentCount || 0) * 2;
+            score += (video.views || 0) * 0.1;
+            
+            // Verified Boost (Massive)
+            if (video.isVerified) score += 5000;
+            
+            // --- PERSONALIZED TASTE BOOST ---
+            if (currentUserData && currentUserData.preferences) {
+                const videoTags = extractTags(video.description);
+                let interestScore = 0;
+                videoTags.forEach(tag => {
+                    if (currentUserData.preferences[tag]) {
+                        interestScore += currentUserData.preferences[tag];
+                    }
+                });
+                // Heavily weight personal interest
+                score += interestScore * 50;
+            }
+
+            // Randomness for discovery
+            score += Math.random() * 50; 
+            
+            return score;
+        }
+
+
         window.findUserByHandle = async (handle, e) => {
             if(e) e.stopPropagation();
             const q = query(collection(db, "users"), where("username", "==", handle), limit(1));
@@ -1529,12 +1582,18 @@
 
         window.shareVideo = (url) => { if (navigator.share) navigator.share({ title: 'R-Videos', text: 'Regarde cette vidéo incroyable !', url: url }).catch(e=>{}); else navigator.clipboard.writeText(url).then(() => alert("Lien copié !")).catch(()=>{}); };
         
-        // --- MODIFIED TOGGLE FAVORITE ---
+        // --- MODIFIED TOGGLE FAVORITE WITH COUNTER ---
         window.toggleFavorite = async (docId, el) => { 
             if(!auth.currentUser) return; 
             const countSpan = el.querySelector('.fav-text');
             const isFav = el.classList.contains('favorited'); 
             const ref = doc(db, "videos", docId); 
+            
+            // Extract tags for algorithm
+            const card = el.closest('.video-card');
+            const desc = card ? card.querySelector('.line-clamp-3')?.innerText : "";
+            const tags = extractTags(desc);
+
             if(isFav) { 
                 el.classList.remove('favorited'); 
                 el.querySelector('svg').classList.remove('fill-yellow-500', 'text-yellow-500'); 
@@ -1545,6 +1604,8 @@
                 el.querySelector('svg').classList.add('fill-yellow-500', 'text-yellow-500'); 
                 updateCountUI(countSpan, 1);
                 await updateDoc(ref, { favorites: arrayUnion(auth.currentUser.uid) }); 
+                // UPDATE PREFERENCES
+                await updateUserPreferences(tags);
             } 
         };
 
@@ -1816,9 +1877,21 @@
             isFetchingMore = true;
             const container = document.getElementById('feed-container');
             
-            let q = query(collection(db, "videos"), orderBy("createdAt", "desc"), limit(BATCH_SIZE));
-            if (startAfterDoc) {
-                q = query(collection(db, "videos"), orderBy("createdAt", "desc"), startAfter(startAfterDoc), limit(BATCH_SIZE));
+            let q;
+            // VIRALITY LOGIC FOR "POUR TOI"
+            if (currentFeedMode === 'foryou') {
+                // We fetch a larger batch to sort them client-side by virality score
+                const fetchSize = 12; 
+                q = query(collection(db, "videos"), orderBy("createdAt", "desc"), limit(fetchSize));
+                if (startAfterDoc) {
+                    q = query(collection(db, "videos"), orderBy("createdAt", "desc"), startAfter(startAfterDoc), limit(fetchSize));
+                }
+            } else {
+                // Normal chronological order for Following
+                q = query(collection(db, "videos"), orderBy("createdAt", "desc"), limit(BATCH_SIZE));
+                if (startAfterDoc) {
+                    q = query(collection(db, "videos"), orderBy("createdAt", "desc"), startAfter(startAfterDoc), limit(BATCH_SIZE));
+                }
             }
 
             try {
@@ -1830,8 +1903,8 @@
                 if(snapshot.empty) {
                     isFetchingMore = false; 
                     if (container.children.length > 0) { 
-                        lastVisibleDoc = null;
-                        subscribeToFeed(null); 
+                        // If end reached, loop for infinite feeling (optional, maybe just stop)
+                        // lastVisibleDoc = null; subscribeToFeed(null); 
                     } else {
                         container.innerHTML = '<div class="h-full flex items-center justify-center text-gray-500">Aucune vidéo.</div>'; 
                     }
@@ -1840,20 +1913,35 @@
 
                 if (!snapshot.empty) lastVisibleDoc = snapshot.docs[snapshot.docs.length - 1];
 
-                snapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    const docId = docSnap.id;
-                    
+                // --- DATA PROCESSING & SORTING ---
+                let videos = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    videos.push({ id: doc.id, ...data });
+                });
+
+                // Apply filtering first
+                videos = videos.filter(data => {
                     const visibility = data.visibility || 'public';
-                    if (visibility === 'private' && data.userId !== auth.currentUser.uid) return;
+                    if (visibility === 'private' && data.userId !== auth.currentUser.uid) return false;
                     if (visibility === 'followers' && data.userId !== auth.currentUser.uid) {
-                        if (!currentUserData.following || !currentUserData.following.includes(data.userId)) return;
+                        if (!currentUserData.following || !currentUserData.following.includes(data.userId)) return false;
                     }
                     if (currentFeedMode === 'following') {
-                        if (!currentUserData || !currentUserData.following || !currentUserData.following.includes(data.userId)) return;
+                        if (!currentUserData || !currentUserData.following || !currentUserData.following.includes(data.userId)) return false;
                     }
-                    if (currentUserData.blockedUsers && currentUserData.blockedUsers.includes(data.userId)) return;
+                    if (currentUserData.blockedUsers && currentUserData.blockedUsers.includes(data.userId)) return false;
+                    return true;
+                });
 
+                // Apply Virality Sorting ONLY for "Pour toi"
+                if (currentFeedMode === 'foryou') {
+                    videos.sort((a, b) => calculateViralScore(b) - calculateViralScore(a));
+                }
+
+                // Render
+                videos.forEach((data) => {
+                    const docId = data.id;
                     const iLiked = data.likedBy?.includes(auth.currentUser.uid);
                     const iFav = data.favorites?.includes(auth.currentUser.uid);
                     const trimStart = data.trimStart || 0;
@@ -1882,7 +1970,7 @@
                             <div class="relative mb-2 cursor-pointer" onclick="viewUserProfile('${data.userId}')"><div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black transition transform hover:scale-110">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div></div>
                             <div class="flex flex-col items-center gap-1 cursor-pointer group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${docId}', this, '${data.userId}')"><i data-lucide="heart" class="w-9 h-9 icon-shadow like-icon ${iLiked ? 'fill-red-500 text-red-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow like-count">${formatCount(data.likes)}</span></div>
                             <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openComments('${docId}', ${data.allowComments})"><i data-lucide="message-circle" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-xs font-bold text-shadow comment-count">${formatCount(data.commentCount)}</span></div>
-                            <div class="flex flex-col items-center gap-1 cursor-pointer ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${docId}', this)"><i data-lucide="bookmark" class="w-9 h-9 icon-shadow fav-icon ${iFav ? 'fill-yellow-500 text-yellow-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow fav-text">${iFav ? 'Fav' : 'Fav'}</span></div>
+                            <div class="flex flex-col items-center gap-1 cursor-pointer ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${docId}', this)"><i data-lucide="bookmark" class="w-9 h-9 icon-shadow fav-icon ${iFav ? 'fill-yellow-500 text-yellow-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow fav-text">${formatCount(data.favorites ? data.favorites.length : 0)}</span></div>
                             <div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openOptions('${docId}', '${data.url}', '${safeUsername}', ${allowDL})">
                                 <i data-lucide="more-horizontal" class="w-9 h-9 icon-shadow text-white fill-white"></i>
                             </div>
@@ -2084,6 +2172,12 @@
             const countSpan = el.querySelector('.like-count');
             const isLiked = el.classList.contains('liked'); 
             const ref = doc(db, "videos", docId); 
+            
+            // Extract tags and update preferences on Like as well
+            const card = el.closest('.video-card');
+            const desc = card ? card.querySelector('.line-clamp-3')?.innerText : "";
+            const tags = extractTags(desc);
+
             if(isLiked) { 
                 el.classList.remove('liked'); 
                 el.querySelector('svg').classList.remove('fill-red-500','text-red-500'); 
@@ -2098,6 +2192,8 @@
                 updateCountUI(countSpan, 1);
                 await updateDoc(ref, {likes: increment(1), likedBy: arrayUnion(auth.currentUser.uid)}); 
                 sendNotification(authorId, "like", "a aimé votre vidéo"); 
+                // UPDATE PREFERENCES
+                await updateUserPreferences(tags);
             } 
         };
 
@@ -2195,7 +2291,7 @@
             const iFav = data.favorites?.includes(auth.currentUser.uid); 
             const optimizedUrl = getOptimizedVideoUrl(data.url, 720); 
             const badge = getBadgeHtml(data.isVerified); 
-            const html = `<div class="video-card w-full h-full relative bg-black flex items-center justify-center"><video class="w-full h-full object-contain" loop playsinline autoplay src="${optimizedUrl}"></video><div class="absolute inset-0 z-10" onclick="togglePlay(this)" ondblclick="handleDoubleTap(event, '${id}', '${data.userId}')"></div><div class="absolute right-2 bottom-32 flex flex-col items-center gap-6 z-20 pb-4"><div class="relative mb-4 cursor-pointer" onclick="viewUserProfile('${data.userId}'); closeFullVideo()"><div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black transition transform hover:scale-110">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div></div><div class="flex flex-col items-center gap-1 cursor-pointer group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${id}', this, '${data.userId}')"><i data-lucide="heart" class="w-9 h-9 icon-shadow ${iLiked ? 'fill-red-500 text-red-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow">${formatCount(data.likes)}</span></div><div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openComments('${id}')"><i data-lucide="message-circle" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-xs font-bold text-shadow">${formatCount(data.commentCount)}</span></div><div class="flex flex-col items-center gap-1 cursor-pointer ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${id}', this)"><i data-lucide="bookmark" class="w-9 h-9 icon-shadow ${iFav ? 'fill-yellow-500 text-yellow-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow">${iFav ? 'Fav' : 'Fav'}</span></div><div class="flex flex-col items-center gap-1 cursor-pointer" onclick="downloadVideo('${data.url}', '${id}', '${data.username}')"><i data-lucide="download" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Télec.</span></div><div class="flex flex-col items-center gap-1 cursor-pointer" onclick="shareVideo('${data.url}')"><i data-lucide="share-2" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Partager</span></div><div class="flex flex-col items-center gap-1 cursor-pointer" onclick="reportVideo('${id}')"><i data-lucide="flag" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Signaler</span></div></div><div class="absolute bottom-10 left-4 right-20 z-20 text-left pointer-events-none"><div class="flex items-center"><h3 class="font-bold text-lg text-shadow mb-1">@${escapeHtml(data.username)}</h3>${badge}</div><p class="text-sm mb-2 text-shadow text-gray-100 line-clamp-3">${escapeHtml(data.description)}</p></div></div>`; 
+            const html = `<div class="video-card w-full h-full relative bg-black flex items-center justify-center"><video class="w-full h-full object-contain" loop playsinline autoplay src="${optimizedUrl}"></video><div class="absolute inset-0 z-10" onclick="togglePlay(this)" ondblclick="handleDoubleTap(event, '${id}', '${data.userId}')"></div><div class="absolute right-2 bottom-32 flex flex-col items-center gap-6 z-20 pb-4"><div class="relative mb-4 cursor-pointer" onclick="viewUserProfile('${data.userId}'); closeFullVideo()"><div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black transition transform hover:scale-110">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div></div><div class="flex flex-col items-center gap-1 cursor-pointer group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${id}', this, '${data.userId}')"><i data-lucide="heart" class="w-9 h-9 icon-shadow ${iLiked ? 'fill-red-500 text-red-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow">${formatCount(data.likes)}</span></div><div class="flex flex-col items-center gap-1 cursor-pointer" onclick="openComments('${id}')"><i data-lucide="message-circle" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-xs font-bold text-shadow">${formatCount(data.commentCount)}</span></div><div class="flex flex-col items-center gap-1 cursor-pointer ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${id}', this)"><i data-lucide="bookmark" class="w-9 h-9 icon-shadow ${iFav ? 'fill-yellow-500 text-yellow-500' : 'text-white fill-white'} transition-all"></i><span class="text-xs font-bold text-shadow">${formatCount(data.favorites ? data.favorites.length : 0)}</span></div><div class="flex flex-col items-center gap-1 cursor-pointer" onclick="downloadVideo('${data.url}', '${id}', '${data.username}')"><i data-lucide="download" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Télec.</span></div><div class="flex flex-col items-center gap-1 cursor-pointer" onclick="shareVideo('${data.url}')"><i data-lucide="share-2" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Partager</span></div><div class="flex flex-col items-center gap-1 cursor-pointer" onclick="reportVideo('${id}')"><i data-lucide="flag" class="w-9 h-9 icon-shadow text-white fill-white"></i><span class="text-[10px] font-bold text-shadow">Signaler</span></div></div><div class="absolute bottom-10 left-4 right-20 z-20 text-left pointer-events-none"><div class="flex items-center"><h3 class="font-bold text-lg text-shadow mb-1">@${escapeHtml(data.username)}</h3>${badge}</div><p class="text-sm mb-2 text-shadow text-gray-100 line-clamp-3">${escapeHtml(data.description)}</p></div></div>`; 
             container.innerHTML = html; 
             overlay.classList.remove('hidden'); 
             overlay.classList.add('flex'); 
