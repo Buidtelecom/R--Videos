@@ -582,6 +582,7 @@
     <div id="main-app-container" class="body-content app-shell-wrapper">
         <!-- TOAST NOTIFICATIONS -->
         <div id="toast-container"></div>
+        <audio id="rv-master-audio" preload="auto" playsinline></audio>
 
         <!-- PULL TO REFRESH LOADER -->
         <div id="ptr-loader" class="absolute top-0 left-0 w-full flex justify-center pt-4 -translate-y-16 pointer-events-none">
@@ -1680,7 +1681,7 @@
         // ============================================================================
         // SMART LRU VIDEO CACHE ENGINE (IndexedDB + Memory Blob URLs + Auto-Eviction)
         // ============================================================================
-        const VIDEO_CACHE_DB = "RVideosSmartCacheDB";
+        const VIDEO_CACHE_DB = "RVideosSmartCacheDB_v2";
         const VIDEO_CACHE_STORE = "videos";
         const memoryBlobUrls = new Map();
 
@@ -1750,12 +1751,12 @@
                     if (triggered) return;
                     triggered = true;
                     activeVideoEl.removeEventListener('canplaythrough', onReady);
-                    pendingCacheTimer = setTimeout(startSequence, 1800);
+                    pendingCacheTimer = setTimeout(startSequence, 6500);
                 };
                 activeVideoEl.addEventListener('canplaythrough', onReady, { once: true });
-                pendingCacheTimer = setTimeout( onReady, 4500 );
+                pendingCacheTimer = setTimeout( onReady, 8500 );
             } else {
-                pendingCacheTimer = setTimeout(startSequence, 2000);
+                pendingCacheTimer = setTimeout(startSequence, 6500);
             }
         }
 
@@ -1855,6 +1856,13 @@
         // Prevents audio from starting before video frames or ending out of sync!
         // ============================================================================
         let activePlayingVideo = null;
+        const rvMasterAudio = document.getElementById('rv-master-audio');
+        if (rvMasterAudio) {
+            rvMasterAudio.preservesPitch = true;
+            rvMasterAudio.mozPreservesPitch = true;
+            rvMasterAudio.webkitPreservesPitch = true;
+            rvMasterAudio.volume = 0.88;
+        }
 
         // Pre-warm memoryBlobUrls from IndexedDB at startup so video src resolution is 100% synchronous (0ms delay)
         async function hydrateVideoCacheIntoMemory() {
@@ -1876,56 +1884,203 @@
         }
         hydrateVideoCacheIntoMemory();
 
+        // ============================================================================
+        // TIKTOK-STYLE DECOUPLED DUAL-PIPELINE ENGINE (VIDEO GPU + MASTER AUDIO TRACK)
+        // Keeping <video muted="true"> permanently decouples the video frame renderer
+        // from the phone's loudspeaker DSP clock jitter, guaranteeing 60fps video while
+        // #rv-master-audio plays the sound in lockstep!
+        // ============================================================================
+        function getLightweightAudioUrl(v, cardEl) {
+            const rawSrc = (cardEl && cardEl.getAttribute('data-src')) || v.currentSrc || v.src || v.getAttribute('src') || '';
+            if (!rawSrc) return { primary: '', fallback: '' };
+            if (memoryBlobUrls.has(rawSrc)) {
+                const b = memoryBlobUrls.get(rawSrc);
+                return { primary: b, fallback: b };
+            }
+            if (rawSrc.startsWith('blob:')) {
+                return { primary: rawSrc, fallback: rawSrc };
+            }
+            const fallbackUrl = rawSrc + (rawSrc.includes('?') ? '&_rva=1' : '?_rva=1');
+            if (rawSrc.includes('cloudinary.com') && rawSrc.includes('/upload/')) {
+                // Request lightweight MP3 audio stream (~100KB instead of ~2.5MB video) so audio buffers in <60ms and never chops!
+                let mp3Url = rawSrc.replace(/q_auto:[^,/]+,f_auto,w_\d+/, 'f_mp3,q_auto:good');
+                if (mp3Url === rawSrc) {
+                    mp3Url = rawSrc.replace('/upload/', '/upload/f_mp3,q_auto:good/');
+                }
+                return { primary: mp3Url, fallback: fallbackUrl };
+            }
+            return { primary: fallbackUrl, fallback: fallbackUrl };
+        }
+
+        function stopMasterAudio() {
+            if (!rvMasterAudio) return;
+            if (!rvMasterAudio.paused) rvMasterAudio.pause();
+        }
+
+        if (rvMasterAudio) {
+            rvMasterAudio.addEventListener('error', () => {
+                const fb = rvMasterAudio.getAttribute('data-fallback-src');
+                if (fb && rvMasterAudio.src !== fb && rvMasterAudio.getAttribute('data-tried-fallback') !== 'true') {
+                    rvMasterAudio.setAttribute('data-tried-fallback', 'true');
+                    rvMasterAudio.src = fb;
+                    rvMasterAudio.loop = !appSettings.autoScroll;
+                    rvMasterAudio.playbackRate = currentPlaybackRate;
+                    if (!isGlobalMuted && activePlayingVideo && !activePlayingVideo.paused) {
+                        try { rvMasterAudio.currentTime = activePlayingVideo.currentTime || 0; } catch (e) {}
+                        rvMasterAudio.play().catch(() => {});
+                    }
+                }
+            });
+
+            rvMasterAudio.addEventListener('playing', () => {
+                // Align the MUTED video to the master audio ONCE when audio starts playing.
+                // NEVER seek rvMasterAudio during playback so speaker sound is 100% continuous and never choppy!
+                if (activePlayingVideo && !activePlayingVideo.paused && activePlayingVideo.readyState >= 2) {
+                    const drift = Math.abs(activePlayingVideo.currentTime - rvMasterAudio.currentTime);
+                    if (drift > 0.20) {
+                        try { activePlayingVideo.currentTime = rvMasterAudio.currentTime; } catch (e) {}
+                    }
+                }
+            });
+        }
+
+        function syncMasterAudioToVideo(v, forceSeek = false) {
+            if (!rvMasterAudio || !v || v !== activePlayingVideo) return;
+            if (isGlobalMuted || v.paused) {
+                stopMasterAudio();
+                return;
+            }
+            const cardEl = v.closest('.video-card');
+            const trackKey = (cardEl && cardEl.getAttribute('data-id')) || (cardEl && cardEl.getAttribute('data-src')) || v.getAttribute('src') || '';
+            const { primary, fallback } = getLightweightAudioUrl(v, cardEl);
+            if (!primary) return;
+
+            rvMasterAudio.loop = !appSettings.autoScroll;
+            if (rvMasterAudio.playbackRate !== currentPlaybackRate) {
+                rvMasterAudio.playbackRate = currentPlaybackRate;
+            }
+
+            if (rvMasterAudio.getAttribute('data-bound-key') !== trackKey || !rvMasterAudio.getAttribute('src')) {
+                rvMasterAudio.setAttribute('data-bound-key', trackKey);
+                rvMasterAudio.setAttribute('data-fallback-src', fallback);
+                rvMasterAudio.setAttribute('data-tried-fallback', 'false');
+                rvMasterAudio.src = primary;
+                rvMasterAudio.loop = !appSettings.autoScroll;
+                rvMasterAudio.playbackRate = currentPlaybackRate;
+                rvMasterAudio.volume = 0.88;
+                try { rvMasterAudio.currentTime = forceSeek ? 0 : (v.currentTime || 0); } catch (e) {}
+                rvMasterAudio.play().catch(() => {});
+                return;
+            }
+
+            if (forceSeek) {
+                try { rvMasterAudio.currentTime = v.currentTime || 0; } catch (e) {}
+            }
+
+            if (rvMasterAudio.paused) {
+                rvMasterAudio.play().catch(() => {});
+            }
+        }
+
+        // Gently glides the MUTED video's GPU frame rate to stay in sync with #rv-master-audio
+        // without EVER seeking or changing playbackRate on #rv-master-audio!
+        function alignMutedVideoToMasterAudio(v) {
+            if (!v || v !== activePlayingVideo || v.paused || isGlobalMuted || !rvMasterAudio || rvMasterAudio.paused) {
+                if (v && v.playbackRate !== currentPlaybackRate) v.playbackRate = currentPlaybackRate;
+                return;
+            }
+            if (v.readyState < 2 || rvMasterAudio.readyState < 2) return;
+            const audioTime = rvMasterAudio.currentTime;
+            const videoTime = v.currentTime;
+            const dur = v.duration || rvMasterAudio.duration || 0;
+            const drift = videoTime - audioTime;
+
+            // Ignore loop boundary wrap-around
+            if (dur > 1.5 && Math.abs(drift) > dur * 0.45) {
+                if (v.playbackRate !== currentPlaybackRate) v.playbackRate = currentPlaybackRate;
+                return;
+            }
+            const now = performance.now();
+            if (Math.abs(drift) > 0.75 && (now - (v.lastSilentAlign || 0) > 3000)) {
+                v.lastSilentAlign = now;
+                try { v.currentTime = audioTime; } catch (e) {}
+                if (v.playbackRate !== currentPlaybackRate) v.playbackRate = currentPlaybackRate;
+            } else if (drift > 0.10) {
+                const slowRate = currentPlaybackRate * 0.95;
+                if (Math.abs(v.playbackRate - slowRate) > 0.01) v.playbackRate = slowRate;
+            } else if (drift < -0.10) {
+                const fastRate = currentPlaybackRate * 1.05;
+                if (Math.abs(v.playbackRate - fastRate) > 0.01) v.playbackRate = fastRate;
+            } else if (v.playbackRate !== currentPlaybackRate) {
+                v.playbackRate = currentPlaybackRate;
+            }
+        }
+
+        function bindDecoupledAudioEvents(v, cardEl) {
+            if (!v || v.dataset.dualBound === "true") return;
+            v.dataset.dualBound = "true";
+            v.muted = true; // ALWAYS muted on <video> so GPU video renderer NEVER stutters on speaker DSP!
+
+            v.addEventListener('playing', () => {
+                v.muted = true;
+                if (v === activePlayingVideo && (!cardEl || cardEl.dataset.inView === "true")) {
+                    syncMasterAudioToVideo(v, false);
+                }
+            });
+        }
+
         function restartOrAdvanceVideo(v, cardEl) {
-            if (!v) return;
+            if (!v || v.isRestartingLoop) return;
+            v.isRestartingLoop = true;
             if (v.eofTimer) {
                 clearTimeout(v.eofTimer);
                 v.eofTimer = null;
             }
             if (appSettings.autoScroll && cardEl && cardEl.nextElementSibling) {
+                v.isRestartingLoop = false;
+                stopMasterAudio();
                 cardEl.nextElementSibling.scrollIntoView({ behavior: 'smooth' });
                 return;
             }
             const pf = cardEl ? cardEl.querySelector('.video-progress-fill') : null;
             if (pf) pf.style.width = '0%';
-            try {
-                v.currentTime = 0;
-            } catch (e) {}
-            const p = v.play();
-            if (p !== undefined) {
-                p.catch(() => {
-                    // If mobile decoder refuses to seek a streamed MP4 with audio at EOF, reload from cache/src and play
-                    const cachedUrl = cardEl ? (memoryBlobUrls.get(cardEl.getAttribute('data-src')) || cardEl.getAttribute('data-src')) : v.src;
-                    if (cachedUrl) v.src = cachedUrl;
-                    v.load();
-                    v.muted = isGlobalMuted;
-                    v.play().catch(() => {});
-                });
+
+            v.muted = true;
+            v.playbackRate = currentPlaybackRate;
+            try { v.currentTime = 0; } catch (e) {}
+            if (rvMasterAudio && v === activePlayingVideo && (rvMasterAudio.ended || rvMasterAudio.paused)) {
+                try { rvMasterAudio.currentTime = 0; } catch (e) {}
+                if (!isGlobalMuted) rvMasterAudio.play().catch(() => {});
             }
+
+            v.play().catch(() => {});
+
+            setTimeout(() => {
+                v.isRestartingLoop = false;
+            }, 120);
         }
 
-        // Direct, native playback without artificial seeks or async delays that disturb the hardware audio clock
         function playVideoSynchronized(v, cardEl = null, restartFromZero = false) {
             if (!v) return;
             try {
-                // Pause and mute all other videos so only 1 audio track plays
+                bindDecoupledAudioEvents(v, cardEl);
+
                 document.querySelectorAll('video').forEach(other => {
-                    if (other !== v) {
-                        other.muted = true;
-                        if (!other.paused) other.pause();
-                    }
+                    other.muted = true;
+                    if (other !== v && !other.paused) other.pause();
                 });
 
                 if (cardEl && cardEl.dataset.inView !== "true") {
                     v.muted = true;
                     v.pause();
+                    if (v === activePlayingVideo) stopMasterAudio();
                     return;
                 }
 
-                // Keep v.loop = false so the browser ALWAYS fires 'ended' instead of freezing in native loop with unmuted AAC audio
-                v.loop = false;
+                // Native loop works 100% reliably when <video> is muted and <audio> has loop!
+                v.loop = !appSettings.autoScroll;
                 v.playbackRate = currentPlaybackRate;
-                v.muted = isGlobalMuted;
+                v.muted = true; // Keep <video> strictly muted so speaker DSP never blocks video frames!
                 if (cardEl) cardEl.dataset.userPaused = "false";
 
                 if (restartFromZero && v.readyState >= 1 && v.currentTime > 0.05) {
@@ -1937,14 +2092,8 @@
                     v.preload = 'auto';
                 }
 
-                const p = v.play();
-                if (p !== undefined) {
-                    p.catch(() => {
-                        // Fallback if browser blocks unmuted autoplay before first tap
-                        v.muted = true;
-                        v.play().catch(() => {});
-                    });
-                }
+                syncMasterAudioToVideo(v, restartFromZero);
+                v.play().catch(() => {});
             } catch (err) {}
         }
 
@@ -2541,14 +2690,15 @@
             return url;
         }
 
-        // Mute / Unmute & Playback Speed Controls
+        // Mute / Unmute & Playback Speed Controls (Video stays muted=true; Master Audio plays sound!)
         window.toggleGlobalMute = () => {
             isGlobalMuted = !isGlobalMuted;
-            document.querySelectorAll('video').forEach(v => {
-                const parentCard = v.closest('.video-card');
-                const isActive = (v === activePlayingVideo) || (parentCard && parentCard.dataset.inView === "true");
-                v.muted = isActive ? isGlobalMuted : true;
-            });
+            document.querySelectorAll('video').forEach(v => { v.muted = true; });
+            if (isGlobalMuted) {
+                stopMasterAudio();
+            } else if (activePlayingVideo && !activePlayingVideo.paused) {
+                syncMasterAudioToVideo(activePlayingVideo, true);
+            }
             const icon = document.getElementById('feed-mute-icon');
             if (icon) {
                 icon.setAttribute('data-lucide', isGlobalMuted ? 'volume-x' : 'volume-2');
@@ -2565,6 +2715,10 @@
                 v.preservesPitch = true;
                 v.playbackRate = currentPlaybackRate;
             });
+            if (rvMasterAudio) {
+                rvMasterAudio.preservesPitch = true;
+                rvMasterAudio.playbackRate = currentPlaybackRate;
+            }
             const label = document.getElementById('current-speed-label');
             if (label) label.innerText = currentPlaybackRate + 'x';
             showToast(`Vitesse de lecture : ${currentPlaybackRate}x`, "info");
@@ -3040,7 +3194,7 @@
             }
 
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
-            document.querySelectorAll('video').forEach(v => v.pause());
+            stopMasterAudio(); document.querySelectorAll('video').forEach(v => v.pause());
             
             document.getElementById(screen + '-screen').classList.add('active');
             
@@ -3344,7 +3498,7 @@
                     
                     const initialVideoSrc = memoryBlobUrls.get(optimizedUrl) || optimizedUrl;
                     div.innerHTML = `
-                        <video class="w-full h-full ${fitClass} ${vfxClass} pointer-events-none bg-black" playsinline webkit-playsinline preload="none" src="${initialVideoSrc}"></video>
+                        <video class="w-full h-full ${fitClass} ${vfxClass} pointer-events-none bg-black" muted loop playsinline webkit-playsinline preload="none" src="${initialVideoSrc}"></video>
                         <div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 opacity-0">
                             <div class="bg-black/45 rounded-full p-4 backdrop-blur-md border border-white/15 shadow-2xl">
                                 <i data-lucide="play" class="w-10 h-10 text-white fill-white ml-0.5"></i>
@@ -3454,29 +3608,28 @@
                     const overlay = div.querySelector('.play-overlay');
                     const progressFill = div.querySelector('.video-progress-fill');
                     
-                    v.loop = false;
-                    v.muted = isGlobalMuted;
+                    v.muted = true; // Permanently muted on <video> so video frames never lag!
+                    v.loop = !appSettings.autoScroll;
                     v.playbackRate = currentPlaybackRate;
+                    bindDecoupledAudioEvents(v, div);
 
                     const triggerBump = () => { if (!v.dataset.bumped) { v.dataset.bumped = "true"; handleBump(docId, data.userId); } };
 
                     let lastProgressUpdate = 0;
+                    let lastRecordedTime = 0;
                     v.addEventListener('timeupdate', () => {
                         if (v.currentTime > 10) triggerBump();
-                        // Watchdog for videos where audio track finishes slightly before video track
-                        if (v.duration > 0 && v.currentTime >= v.duration - 0.35) {
-                            if (v.eofTimer) clearTimeout(v.eofTimer);
-                            const remainingMs = Math.max(80, (v.duration - v.currentTime) * 1000 + 80);
-                            v.eofTimer = setTimeout(() => {
-                                if (div.dataset.inView === "true" && div.dataset.userPaused !== "true" && v.duration > 0 && (v.ended || v.paused || v.currentTime >= v.duration - 0.35)) {
-                                    triggerBump();
-                                    restartOrAdvanceVideo(v, div);
-                                }
-                            }, remainingMs);
+                        if (v.currentTime < lastRecordedTime - 0.5) {
+                            triggerBump();
                         }
+                        lastRecordedTime = v.currentTime;
+
                         const now = performance.now();
-                        if (now - lastProgressUpdate < 200) return;
+                        if (now - lastProgressUpdate < 320) return;
                         lastProgressUpdate = now;
+                        if (v === activePlayingVideo && div.dataset.inView === "true" && !v.paused) {
+                            alignMutedVideoToMasterAudio(v);
+                        }
                         if (v.duration && progressFill) {
                             const pct = (v.currentTime / v.duration) * 100;
                             progressFill.style.width = `${pct}%`;
@@ -3494,11 +3647,7 @@
                         overlay.classList.remove('opacity-100');
                     });
                     v.addEventListener('pause', () => {
-                        if (div.dataset.inView === "true" && div.dataset.userPaused !== "true" && v.duration > 0 && (v.ended || v.currentTime >= v.duration - 0.35)) {
-                            triggerBump();
-                            restartOrAdvanceVideo(v, div);
-                            return;
-                        }
+                        if (v === activePlayingVideo) stopMasterAudio();
                         v.playOverlayTimeout = setTimeout(() => {
                             if (v.paused && div.dataset.inView === "true") {
                                 overlay.classList.remove('opacity-0');
@@ -3526,7 +3675,11 @@
             if (!v || !v.duration) return;
             const rect = barEl.getBoundingClientRect();
             const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-            v.currentTime = ratio * v.duration;
+            const targetTime = ratio * v.duration;
+            v.currentTime = targetTime;
+            if (v === activePlayingVideo && rvMasterAudio && !isGlobalMuted) {
+                try { rvMasterAudio.currentTime = targetTime; } catch (err) {}
+            }
         };
 
         window.openUploadWithTag = (tag) => {
@@ -3700,6 +3853,7 @@
                 playVideoSynchronized(v, card, false);
             } else {
                 card.dataset.userPaused = "true";
+                stopMasterAudio();
                 v.pause();
                 if (overlay) {
                     overlay.classList.remove('opacity-0');
@@ -4141,7 +4295,7 @@
             const data = profileVideosData[id]; 
             if (!data) return; 
             // Pause any background feed video first so audio never overlaps
-            document.querySelectorAll('video').forEach(v => v.pause());
+            stopMasterAudio(); document.querySelectorAll('video').forEach(v => v.pause());
 
             const overlay = document.getElementById('fullscreen-video-overlay'); 
             const container = document.getElementById('fullscreen-video-container'); 
@@ -4157,8 +4311,8 @@
             const soundLabel = escapeHtml(data.soundTitle || `Son original - ${data.username}`);
 
             const html = `
-            <div class="video-card w-full h-full relative bg-black flex items-center justify-center" data-id="${id}" data-in-view="true">
-                <video id="fullscreen-active-video" class="w-full h-full ${fitClass}" loop playsinline preload="auto" src="${cachedUrl}"></video>
+            <div class="video-card w-full h-full relative bg-black flex items-center justify-center" data-id="${id}" data-src="${rawUrl}" data-in-view="true">
+                <video id="fullscreen-active-video" class="w-full h-full ${fitClass}" muted loop playsinline webkit-playsinline preload="auto" src="${cachedUrl}"></video>
                 <div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 opacity-0">
                     <div class="bg-black/45 rounded-full p-4 backdrop-blur-md border border-white/15 shadow-2xl">
                         <i data-lucide="play" class="w-10 h-10 text-white fill-white ml-0.5"></i>
@@ -4215,22 +4369,14 @@
                 const fullCard = fullVid.parentElement;
                 fullVid.addEventListener('ended', () => restartOrAdvanceVideo(fullVid, fullCard));
                 fullVid.addEventListener('timeupdate', () => {
-                    if (fullVid.duration > 0 && fullVid.currentTime >= fullVid.duration - 0.35) {
-                        if (fullVid.eofTimer) clearTimeout(fullVid.eofTimer);
-                        const rem = Math.max(80, (fullVid.duration - fullVid.currentTime) * 1000 + 80);
-                        fullVid.eofTimer = setTimeout(() => {
-                            if (fullCard.dataset.userPaused !== "true" && (fullVid.ended || fullVid.paused || fullVid.currentTime >= fullVid.duration - 0.35)) {
-                                restartOrAdvanceVideo(fullVid, fullCard);
-                            }
-                        }, rem);
-                    }
+                    alignMutedVideoToMasterAudio(fullVid);
                 });
                 playVideoSynchronized(fullVid, fullCard, true);
             }
         };
         window.closeFullVideo = () => {
             const overlay = document.getElementById('fullscreen-video-overlay');
-            overlay.querySelectorAll('video').forEach(v => v.pause());
+            stopMasterAudio(); overlay.querySelectorAll('video').forEach(v => v.pause());
             overlay.classList.add('hidden');
             overlay.classList.remove('flex');
             document.getElementById('fullscreen-video-container').innerHTML = "";
