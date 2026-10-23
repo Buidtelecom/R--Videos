@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#05070e">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -38,7 +38,7 @@
       });
     </script>
     <style>
-        /* SIGNATURE DESIGN INTERNE UNIQUE : AURORA PRISM & NEO-CAPSULE */
+        /* FULL EDGE-TO-EDGE TABLET & MOBILE DESIGN + TRANSPARENT IMMERSIVE UI */
         :root {
             --bg-primary: #05070e;
             --bg-elevated: rgba(13, 18, 34, 0.84);
@@ -46,29 +46,38 @@
             --accent-red: #ff2a5f;
             --accent-cyan: #06b6d4;
             --accent-amber: #f59e0b;
-            --border-glass: rgba(255, 255, 255, 0.13);
+            --border-glass: rgba(255, 255, 255, 0.14);
         }
+        * { box-sizing: border-box; }
         body, html {
             height: 100%;
             width: 100%;
+            height: 100dvh;
+            width: 100vw;
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background-color: #020409;
+            background-color: #000000;
             color: white;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            overscroll-behavior-y: contain;
+            overscroll-behavior: none;
             -webkit-tap-highlight-color: transparent;
             user-select: none;
         }
         .font-display { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; }
         .snap-y-mandatory { scroll-snap-type: y mandatory; }
         .snap-start { scroll-snap-align: start; scroll-snap-stop: always; }
+        video {
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
         /* Animations */
-        .animate-spin-slow { animation: spin 6s linear infinite; }
+        .animate-spin-slow { animation: spin 5.5s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes pop { 0% { transform: scale(1); } 45% { transform: scale(1.38); } 75% { transform: scale(0.92); } 100% { transform: scale(1); } }
         .like-animation { animation: pop 0.38s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -77,23 +86,40 @@
         .eq-bar-2 { animation: eqBar 0.5s ease-in-out infinite 0.15s; }
         .eq-bar-3 { animation: eqBar 0.65s ease-in-out infinite 0.3s; }
 
-        /* Strict Contained App Shell — Prevents ANY button/modal from leaking outside */
+        /* Floating Emoji Burst Animation */
+        @keyframes floatUpEmoji {
+            0% { transform: translateY(0) scale(0.5) rotate(0deg); opacity: 1; }
+            40% { transform: translateY(-90px) scale(1.35) rotate(-10deg); opacity: 1; }
+            100% { transform: translateY(-220px) scale(0.9) rotate(12deg); opacity: 0; }
+        }
+        .emoji-burst-particle {
+            position: absolute;
+            bottom: 90px;
+            right: 56px;
+            font-size: 28px;
+            pointer-events: none;
+            z-index: 45;
+            animation: floatUpEmoji 1.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+        }
+
+        /* Full Edge-to-Edge Container (Covers 100% of Phone, Tablet, and Screen Edges) */
         .app-shell-wrapper {
-            width: 100%;
-            height: 100%;
-            max-width: 480px;
-            margin: 0 auto;
-            position: relative;
+            width: 100vw;
+            height: 100dvh;
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+            position: fixed;
+            inset: 0;
             background: var(--bg-primary);
-            box-shadow: 0 0 90px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.09);
             overflow: hidden;
             contain: layout paint;
         }
 
         .screen {
             position: absolute;
-            top: 0;
-            left: 0;
+            inset: 0;
             width: 100%;
             height: 100%;
             display: none;
@@ -105,7 +131,7 @@
         }
         .screen.active { display: flex; opacity: 1; }
         
-        /* Signature Aurora Glassmorphism */
+        /* Glassmorphism */
         .glass-panel {
             background: linear-gradient(145deg, rgba(18, 25, 46, 0.85) 0%, rgba(10, 14, 28, 0.9) 100%);
             backdrop-filter: blur(22px);
@@ -113,59 +139,92 @@
             border: 1px solid var(--border-glass);
         }
         .glass-pill {
-            background: rgba(13, 19, 38, 0.68);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.16);
         }
 
-        /* Unique Neo-Capsule Action Dock (Bottom-Middle-Right, Compact & Distinct) */
-        .neo-action-dock {
+        /* Reference-Image Transparent Right Reaction Column (Clean, Floating, Drop-Shadow Icons) */
+        .transparent-reaction-rail {
             position: absolute;
-            right: 12px;
-            bottom: 84px;
+            right: 14px;
+            bottom: 72px;
             z-index: 25;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
-            padding: 10px 7px;
-            border-radius: 26px;
-            background: linear-gradient(180deg, rgba(15, 23, 42, 0.68) 0%, rgba(7, 10, 18, 0.82) 100%);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            gap: 16px;
         }
+        @media (min-width: 768px) {
+            .transparent-reaction-rail {
+                right: 28px;
+                bottom: 88px;
+                gap: 20px;
+            }
+        }
+        .reaction-btn-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reaction-btn-item:active { transform: scale(0.84); }
         .action-circle {
-            width: 38px;
-            height: 38px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.07);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            width: 42px;
+            height: 42px;
+            border-radius: 9999px;
+            background: transparent;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .action-circle:active { transform: scale(0.86); }
-
-        /* Creator Info Floating Card (Bottom-Left) */
-        .creator-prism-card {
-            background: linear-gradient(135deg, rgba(13, 19, 38, 0.65) 0%, rgba(7, 10, 18, 0.45) 100%);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            border: 1px solid rgba(255, 255, 255, 0.13);
-            border-radius: 20px;
-            padding: 10px 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            transition: all 0.18s ease;
+            filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.65));
         }
 
-        /* Strict Inside-Shell Overlays & Modals (Zero leak outside app) */
+        /* Repost Frosted Pill (Matches "Republier pour tes followers" in user's screenshot - GPU friendly) */
+        .repost-frosted-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 9999px;
+            background: rgba(28, 34, 46, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 11.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+        }
+        .repost-frosted-pill:active { transform: scale(0.95); }
+        .repost-frosted-pill.reposted {
+            background: rgba(16, 185, 129, 0.45);
+            border-color: rgba(16, 185, 129, 0.65);
+            color: #a7f3d0;
+        }
+
+        /* Creator Tag Chip ("Rock a Robin" style dark translucent tag - GPU friendly) */
+        .creator-tag-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.58);
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        /* Strict Inside-Shell Overlays & Modals */
         .modal-overlay {
             position: absolute;
             inset: 0;
-            background: rgba(3, 6, 12, 0.84);
+            background: rgba(3, 6, 12, 0.82);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             z-index: 85;
@@ -181,10 +240,13 @@
             position: absolute;
             bottom: 0;
             left: 0;
+            right: 0;
             width: 100%;
+            max-width: 720px;
+            margin: 0 auto;
             height: auto;
             max-height: 82%;
-            background: rgba(11, 16, 30, 0.97);
+            background: rgba(11, 16, 30, 0.96);
             backdrop-filter: blur(26px);
             -webkit-backdrop-filter: blur(26px);
             border-top-left-radius: 28px;
@@ -207,8 +269,7 @@
         
         .full-screen-modal {
             position: absolute;
-            top: 0;
-            left: 0;
+            inset: 0;
             width: 100%;
             height: 100%;
             background: var(--bg-primary);
@@ -226,13 +287,11 @@
             pointer-events: auto;
         }
         
-        .liked svg { fill: #ff2a5f !important; color: #ff2a5f !important; filter: drop-shadow(0 0 8px rgba(255, 42, 95, 0.6)); }
-        .liked .action-circle { border-color: rgba(255, 42, 95, 0.5); background: rgba(255, 42, 95, 0.18); }
-        .favorited svg { fill: #facc15 !important; color: #facc15 !important; filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.55)); }
-        .favorited .action-circle { border-color: rgba(250, 204, 21, 0.5); background: rgba(250, 204, 21, 0.18); }
+        .liked svg { fill: #ff2a5f !important; color: #ff2a5f !important; filter: drop-shadow(0 0 10px rgba(255, 42, 95, 0.75)); }
+        .favorited svg { fill: #facc15 !important; color: #facc15 !important; filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.7)); }
         
-        .text-shadow { text-shadow: 0 2px 6px rgba(0,0,0,0.85); }
-        .icon-shadow { filter: drop-shadow(0px 2px 5px rgba(0,0,0,0.65)); }
+        .text-shadow { text-shadow: 0 1px 6px rgba(0,0,0,0.85); }
+        .icon-shadow { filter: drop-shadow(0px 2px 6px rgba(0,0,0,0.7)); }
         
         .auth-input {
             background: rgba(15, 23, 42, 0.78);
@@ -316,23 +375,22 @@
             background-size: 1.4em 1.4em;
         }
 
-        /* Video Progress Bar */
+        /* Video Progress Bar sits directly on top of the transparent bottom nav */
         .video-progress-container {
             position: absolute;
-            bottom: 68px;
-            left: 14px;
-            right: 14px;
+            bottom: 56px;
+            left: 0;
+            right: 0;
             height: 10px;
             display: flex;
-            align-items: center;
-            z-index: 25;
+            align-items: flex-end;
+            z-index: 28;
             cursor: pointer;
         }
         .video-progress-track {
             width: 100%;
-            height: 3px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.22);
+            height: 2.5px;
+            background: rgba(255, 255, 255, 0.25);
             transition: height 0.15s ease;
             overflow: hidden;
         }
@@ -343,9 +401,16 @@
         .video-progress-fill {
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, #ff2a5f, #06b6d4);
-            box-shadow: 0 0 8px rgba(255, 42, 95, 0.8);
+            background: linear-gradient(90deg, #ffffff, #ff2a5f);
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
         }
+
+        /* Video Visual FX Filters */
+        .vfx-none { filter: none; }
+        .vfx-vivid { filter: saturate(1.45) contrast(1.12); }
+        .vfx-cinema { filter: contrast(1.2) sepia(0.22) saturate(1.15) brightness(0.95); }
+        .vfx-bw { filter: grayscale(1) contrast(1.25); }
+        .vfx-cyber { filter: hue-rotate(25deg) saturate(1.5) contrast(1.1); }
 
         /* Toast Notification Inside App Shell */
         #toast-container {
@@ -358,7 +423,7 @@
             flex-direction: column;
             gap: 8px;
             width: 90%;
-            max-width: 380px;
+            max-width: 420px;
             pointer-events: none;
         }
         .toast-item {
@@ -384,13 +449,13 @@
         }
     </style>
 </head>
-<body class="relative overflow-hidden bg-[#020409] flex justify-center items-center">
+<body class="relative overflow-hidden bg-black">
     
-    <div id="main-app-container" class="body-content app-shell-wrapper relative">
-        <!-- TOAST NOTIFICATIONS (Strictly inside app shell) -->
+    <div id="main-app-container" class="body-content app-shell-wrapper">
+        <!-- TOAST NOTIFICATIONS -->
         <div id="toast-container"></div>
 
-        <!-- PULL TO REFRESH LOADER (Strictly inside app shell) -->
+        <!-- PULL TO REFRESH LOADER -->
         <div id="ptr-loader" class="absolute top-0 left-0 w-full flex justify-center pt-4 -translate-y-16 pointer-events-none">
             <div class="bg-[#0f172a]/90 backdrop-blur-md rounded-full p-2.5 shadow-2xl border border-white/15">
                 <svg id="ptr-spinner" class="w-6 h-6 text-[#ff2a5f] animate-spin hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -413,14 +478,14 @@
                     </div>
                 </div>
                 <h1 class="text-4xl font-black font-display bg-gradient-to-r from-white via-rose-100 to-[#ff2a5f] bg-clip-text text-transparent tracking-tight mb-2">R-VIDEOS</h1>
-                <p class="text-[11px] uppercase tracking-[0.25em] text-cyan-400/80 mb-6 font-semibold">Aurora Edition</p>
+                <p class="text-[11px] uppercase tracking-[0.25em] text-cyan-400/80 mb-6 font-semibold">Ultimate Edition</p>
                 <div class="w-7 h-7 border-2 border-[#ff2a5f] border-t-transparent rounded-full animate-spin mx-auto"></div>
             </div>
         </div>
 
         <!-- OFFLINE SCREEN -->
         <div id="offline-screen" class="screen justify-center items-center bg-[#05070e] z-[99]">
-            <div class="text-center p-8 glass-panel rounded-3xl mx-6">
+            <div class="text-center p-8 glass-panel rounded-3xl mx-6 max-w-md">
                 <div class="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
                     <i data-lucide="wifi-off" class="w-8 h-8 text-[#ff2a5f]"></i>
                 </div>
@@ -458,7 +523,7 @@
                 </select>
             </div>
 
-            <div class="w-full max-w-sm text-center my-auto py-12 z-10">
+            <div class="w-full max-w-md text-center my-auto py-12 z-10">
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-400 uppercase tracking-[0.15em] mb-4">
                     <span data-i18n="app_created_by">Application créée par</span>
                     <span class="text-white font-bold" data-i18n="studio_name">"Le Studio Ralph Nyamè". 2025</span>
@@ -535,41 +600,48 @@
         </div>
 
         <!-- MAIN APP SCREENS -->
-        <!-- 1. FEED SCREEN -->
+        <!-- 1. FEED SCREEN (Matches Reference Screenshot Transparent Aesthetic) -->
         <div id="feed-screen" class="screen relative">
-            <!-- Top Floating Aurora Header -->
-            <div class="absolute top-0 left-0 w-full z-30 pt-3.5 pb-3 px-3.5 bg-gradient-to-b from-black/80 via-black/30 to-transparent flex items-center justify-between pointer-events-none">
-                <div class="flex items-center gap-1.5 pointer-events-auto">
-                    <!-- Quick Mute/Unmute Toggle -->
-                    <button id="feed-mute-btn" onclick="toggleGlobalMute()" class="glass-pill w-8 h-8 rounded-xl flex items-center justify-center text-white active:scale-90 transition" title="Son">
+            <!-- Top Transparent Bar: LIVE icon on left, "Suivis | Pour toi" with white underline in center, Search + Settings on right -->
+            <div class="absolute top-0 left-0 w-full z-30 pt-3.5 pb-4 px-4 bg-gradient-to-b from-black/55 via-black/15 to-transparent flex items-center justify-between pointer-events-none">
+                <!-- Left: LIVE / Format & Mute Quick Controls -->
+                <div class="flex items-center gap-2 pointer-events-auto">
+                    <button onclick="triggerRandomSurpriseVideo()" class="w-9 h-9 rounded-full flex items-center justify-center text-white drop-shadow-md active:scale-90 transition" title="Mode Surprise / Live">
+                        <i data-lucide="tv" class="w-5 h-5"></i>
+                    </button>
+                    <button id="feed-mute-btn" onclick="toggleGlobalMute()" class="w-8 h-8 rounded-full bg-black/50 border border-white/15 flex items-center justify-center text-white active:scale-90 transition" title="Son">
                         <i id="feed-mute-icon" data-lucide="volume-2" class="w-4 h-4"></i>
                     </button>
-                    <!-- Quick Aspect Ratio Fit Toggle -->
-                    <button id="feed-fit-btn" onclick="toggleFeedFitMode()" class="glass-pill px-2.5 h-8 rounded-xl flex items-center gap-1 text-[10px] font-bold text-cyan-300 active:scale-90 transition" title="Proportions vidéo">
-                        <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+                    <button id="feed-fit-btn" onclick="toggleFeedFitMode()" class="px-2.5 h-7 rounded-full bg-black/50 border border-white/15 flex items-center gap-1 text-[10px] font-bold text-white/90 active:scale-90 transition" title="Proportions vidéo">
+                        <i data-lucide="maximize-2" class="w-3 h-3 text-cyan-400"></i>
                         <span id="feed-fit-label">Original</span>
                     </button>
                 </div>
 
-                <!-- Center Feed Switcher -->
-                <div class="glass-pill p-1 rounded-2xl flex items-center gap-1 pointer-events-auto">
-                    <span id="tab-following" class="px-3 py-1 rounded-xl text-[11px] font-bold text-gray-300 cursor-pointer transition-all" onclick="switchFeed('following')" data-i18n="tab_following">Abonnements</span>
-                    <span id="tab-foryou" class="px-3 py-1 rounded-xl text-[11px] font-bold text-white bg-gradient-to-r from-[#ff2a5f] to-rose-600 shadow-md cursor-pointer transition-all" onclick="switchFeed('foryou')" data-i18n="tab_foryou">Pour toi</span>
+                <!-- Center: Clean Transparent "Suivis | Pour toi" with crisp white underline -->
+                <div class="flex items-center gap-5 pointer-events-auto">
+                    <span id="tab-following" class="text-[15px] font-bold text-white/65 pb-1.5 border-b-2 border-transparent cursor-pointer transition-all text-shadow" onclick="switchFeed('following')" data-i18n="tab_following">Suivis</span>
+                    <span id="tab-foryou" class="text-[15px] font-extrabold text-white pb-1.5 border-b-[3px] border-white cursor-pointer transition-all text-shadow" onclick="switchFeed('foryou')" data-i18n="tab_foryou">Pour toi</span>
                 </div>
 
-                <!-- Quick Settings Button -->
-                <button onclick="openSettingsModal()" class="pointer-events-auto glass-pill w-8 h-8 rounded-xl flex items-center justify-center text-white active:scale-90 transition" title="Paramètres">
-                    <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
-                </button>
+                <!-- Right: Search & Settings Icons -->
+                <div class="flex items-center gap-2 pointer-events-auto">
+                    <button onclick="openSettingsModal()" class="w-8 h-8 rounded-full bg-black/50 border border-white/15 flex items-center justify-center text-white active:scale-90 transition" title="Paramètres">
+                        <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="navigateTo('discover')" class="w-9 h-9 rounded-full flex items-center justify-center text-white drop-shadow-md active:scale-90 transition" title="Rechercher">
+                        <i data-lucide="search" class="w-5 h-5 stroke-[2.5]"></i>
+                    </button>
+                </div>
             </div>
 
-            <!-- Active Category Filter Pill -->
+            <!-- Active Category / Sound Filter Pill -->
             <div id="active-feed-filter-bar" class="hidden absolute top-14 left-1/2 -translate-x-1/2 z-30 glass-pill px-3.5 py-1 rounded-full items-center gap-2 text-xs font-semibold text-cyan-300">
                 <span id="active-feed-filter-text">#Tendance</span>
                 <button onclick="clearFeedHashtagFilter()" class="text-white/70 hover:text-white"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
             </div>
 
-            <div id="feed-container" class="h-full w-full overflow-y-scroll snap-y-mandatory no-scrollbar relative bg-[#05070e]">
+            <div id="feed-container" class="h-full w-full overflow-y-scroll snap-y-mandatory no-scrollbar relative bg-black">
                 <div id="loading-feed" class="flex flex-col items-center justify-center h-full text-gray-400 gap-3">
                     <div class="animate-spin rounded-full h-9 w-9 border-2 border-[#ff2a5f] border-t-transparent"></div>
                     <span class="text-xs font-medium tracking-wider uppercase text-gray-500">Chargement du flux...</span>
@@ -578,158 +650,200 @@
         </div>
         
         <!-- FULLSCREEN VIDEO OVERLAY -->
-        <div id="fullscreen-video-overlay" class="absolute inset-0 z-50 bg-[#05070e] hidden flex-col">
+        <div id="fullscreen-video-overlay" class="absolute inset-0 z-50 bg-black hidden flex-col">
             <div class="absolute top-4 left-4 z-30 flex items-center gap-2">
-                <button onclick="closeFullVideo()" class="glass-pill w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                <button onclick="closeFullVideo()" class="glass-pill w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg">
                     <i data-lucide="chevron-left" class="w-6 h-6"></i>
                 </button>
             </div>
             <div id="fullscreen-video-container" class="w-full h-full relative"></div>
         </div>
 
-        <!-- 2. DISCOVER SCREEN -->
-        <div id="discover-screen" class="screen bg-[#05070e] pt-5 px-4 pb-24 overflow-y-auto no-scrollbar">
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <h2 class="font-extrabold text-2xl font-display tracking-tight" data-i18n="nav_discover">Découvrir</h2>
-                    <p class="text-[11px] text-gray-400">Explorez les créateurs et vidéos virales</p>
-                </div>
-                <div class="glass-pill px-3 py-1 rounded-full flex items-center gap-1.5 text-[11px] text-rose-400 font-bold">
-                    <span class="w-2 h-2 rounded-full bg-[#ff2a5f] animate-ping"></span> Live Trends
-                </div>
-            </div>
-
-            <!-- Search Bar -->
-            <div class="relative mb-4">
-                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4"></i>
-                <input type="text" id="search-input" placeholder="Rechercher des créateurs (@nom)..." class="w-full bg-[#0c1222] border border-white/10 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white outline-none focus:border-[#ff2a5f] transition" oninput="searchUsers(this.value)" data-i18n-placeholder="search_placeholder">
-            </div>
-
-            <!-- Category Chips -->
-            <div class="flex gap-2 overflow-x-auto no-scrollbar pb-3 mb-3">
-                <button onclick="filterTrendingByTag('all', this)" class="discover-chip active-chip shrink-0 px-4 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white shadow-md">🔥 Tout</button>
-                <button onclick="filterTrendingByTag('humour', this)" class="discover-chip shrink-0 px-4 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10">😂 Humour</button>
-                <button onclick="filterTrendingByTag('musique', this)" class="discover-chip shrink-0 px-4 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10">🎵 Musique</button>
-                <button onclick="filterTrendingByTag('danse', this)" class="discover-chip shrink-0 px-4 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10">💃 Danse</button>
-                <button onclick="filterTrendingByTag('cameroun', this)" class="discover-chip shrink-0 px-4 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10">🇨🇲 237 Talents</button>
-                <button onclick="filterTrendingByTag('sport', this)" class="discover-chip shrink-0 px-4 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10">⚽ Sport</button>
-            </div>
-
-            <div id="trending-container">
-                <div class="relative rounded-2xl overflow-hidden mb-5 p-4 bg-gradient-to-r from-[#ff2a5f]/25 via-purple-900/30 to-cyan-500/25 border border-white/10 flex items-center justify-between">
+        <!-- 2. DISCOVER SCREEN (Responsive Tablet & Mobile Grid) -->
+        <div id="discover-screen" class="screen bg-[#05070e] pt-5 px-4 md:px-8 pb-24 overflow-y-auto no-scrollbar">
+            <div class="max-w-5xl mx-auto w-full">
+                <div class="flex items-center justify-between mb-4">
                     <div>
-                        <span class="inline-block text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-[#ff2a5f] text-white mb-1.5">Challenge Officiel</span>
-                        <h4 class="font-bold font-display text-sm text-white">#RVideosTalent2026</h4>
-                        <p class="text-[11px] text-gray-300 mt-0.5">Publie ta meilleure vidéo avec le tag pour passer en tendance !</p>
+                        <h2 class="font-extrabold text-2xl font-display tracking-tight" data-i18n="nav_discover">Découvrir</h2>
+                        <p class="text-[11px] text-gray-400">Explorez les créateurs, sons et vidéos virales</p>
                     </div>
-                    <button onclick="openUploadWithTag('#RVideosTalent2026')" class="shrink-0 bg-white text-black font-bold text-xs px-3.5 py-2 rounded-xl shadow-md active:scale-95 transition">Participer</button>
+                    <div class="glass-pill px-3 py-1 rounded-full flex items-center gap-1.5 text-[11px] text-rose-400 font-bold">
+                        <span class="w-2 h-2 rounded-full bg-[#ff2a5f] animate-ping"></span> Live Trends
+                    </div>
                 </div>
 
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="flame" class="w-4 h-4 text-[#ff2a5f] fill-[#ff2a5f]"></i>
-                        <h3 class="font-bold text-sm text-gray-100 font-display" data-i18n="trending_title">Top Vidéos</h3>
-                    </div>
-                    <span id="trending-count-badge" class="text-[11px] text-gray-400">Classement viral</span>
+                <!-- Search Bar -->
+                <div class="relative mb-4">
+                    <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4"></i>
+                    <input type="text" id="search-input" placeholder="Rechercher des créateurs (@nom)..." class="w-full bg-[#0c1222] border border-white/10 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white outline-none focus:border-[#ff2a5f] transition" oninput="searchUsers(this.value)" data-i18n-placeholder="search_placeholder">
                 </div>
-                <div id="trending-grid" class="grid grid-cols-3 gap-1.5"></div>
-            </div>
 
-            <div id="search-results" class="space-y-2.5 hidden pb-20">
-                <div class="text-gray-500 text-center text-sm mt-10">...</div>
+                <!-- Category Chips -->
+                <div class="flex gap-2 overflow-x-auto no-scrollbar pb-3 mb-3">
+                    <button onclick="filterTrendingByTag('all', this)" class="discover-chip active-chip shrink-0 px-4 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white shadow-md">🔥 Tout</button>
+                    <button onclick="filterTrendingByTag('humour', this)" class="discover-chip shrink-0 px-4 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10">😂 Humour</button>
+                    <button onclick="filterTrendingByTag('musique', this)" class="discover-chip shrink-0 px-4 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10">🎵 Musique</button>
+                    <button onclick="filterTrendingByTag('danse', this)" class="discover-chip shrink-0 px-4 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10">💃 Danse</button>
+                    <button onclick="filterTrendingByTag('cameroun', this)" class="discover-chip shrink-0 px-4 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10">🇨🇲 237 Talents</button>
+                    <button onclick="filterTrendingByTag('sport', this)" class="discover-chip shrink-0 px-4 py-1.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10">⚽ Sport</button>
+                </div>
+
+                <div id="trending-container">
+                    <div class="relative rounded-2xl overflow-hidden mb-5 p-4 md:p-6 bg-gradient-to-r from-[#ff2a5f]/25 via-purple-900/30 to-cyan-500/25 border border-white/10 flex items-center justify-between">
+                        <div>
+                            <span class="inline-block text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-[#ff2a5f] text-white mb-1.5">Challenge Officiel</span>
+                            <h4 class="font-bold font-display text-sm md:text-base text-white">#RVideosTalent2026</h4>
+                            <p class="text-[11px] md:text-xs text-gray-300 mt-0.5">Publie ta meilleure vidéo ou réutilise un son populaire pour passer en tendance !</p>
+                        </div>
+                        <button onclick="openUploadWithTag('#RVideosTalent2026')" class="shrink-0 bg-white text-black font-bold text-xs px-4 py-2.5 rounded-xl shadow-md active:scale-95 transition">Participer</button>
+                    </div>
+
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="flame" class="w-4 h-4 text-[#ff2a5f] fill-[#ff2a5f]"></i>
+                            <h3 class="font-bold text-sm text-gray-100 font-display" data-i18n="trending_title">Top Vidéos</h3>
+                        </div>
+                        <span id="trending-count-badge" class="text-[11px] text-gray-400">Classement viral</span>
+                    </div>
+                    <div id="trending-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2"></div>
+                </div>
+
+                <div id="search-results" class="space-y-2.5 hidden pb-20">
+                    <div class="text-gray-500 text-center text-sm mt-10">...</div>
+                </div>
             </div>
         </div>
 
         <!-- 3. INBOX SCREEN -->
         <div id="inbox-screen" class="screen bg-[#05070e] pt-5 px-0 pb-20">
-            <div class="px-4 mb-3 flex items-center justify-between">
-                <h2 class="font-extrabold text-2xl font-display" data-i18n="inbox_title">Boîte de réception</h2>
-                <button onclick="clearAllNotifications()" class="text-[11px] text-rose-400 hover:underline glass-pill px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <i data-lucide="trash-2" class="w-3 h-3"></i> Tout effacer
-                </button>
-            </div>
-            <div class="flex border-b border-white/10 px-4 mb-3 gap-6">
-                <div onclick="switchInboxTab('activities')" id="tab-activities" class="pb-2.5 border-b-2 border-[#ff2a5f] text-white font-bold text-sm cursor-pointer transition" data-i18n="tab_activities">Activités</div>
-                <div onclick="switchInboxTab('messages')" id="tab-messages" class="pb-2.5 text-gray-400 font-bold text-sm cursor-pointer flex items-center justify-center gap-2 transition">
-                    <span data-i18n="tab_messages">Messages</span> 
-                    <span id="messages-tab-badge" class="bg-[#ff2a5f] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
+            <div class="max-w-3xl mx-auto w-full h-full flex flex-col">
+                <div class="px-4 mb-3 flex items-center justify-between">
+                    <h2 class="font-extrabold text-2xl font-display" data-i18n="inbox_title">Boîte de réception</h2>
+                    <button onclick="clearAllNotifications()" class="text-[11px] text-rose-400 hover:underline glass-pill px-2.5 py-1 rounded-full flex items-center gap-1">
+                        <i data-lucide="trash-2" class="w-3 h-3"></i> Tout effacer
+                    </button>
                 </div>
+                <div class="flex border-b border-white/10 px-4 mb-3 gap-6">
+                    <div onclick="switchInboxTab('activities')" id="tab-activities" class="pb-2.5 border-b-2 border-[#ff2a5f] text-white font-bold text-sm cursor-pointer transition" data-i18n="tab_activities">Activités</div>
+                    <div onclick="switchInboxTab('messages')" id="tab-messages" class="pb-2.5 text-gray-400 font-bold text-sm cursor-pointer flex items-center justify-center gap-2 transition">
+                        <span data-i18n="tab_messages">Messages</span> 
+                        <span id="messages-tab-badge" class="bg-[#ff2a5f] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
+                    </div>
+                </div>
+                <div id="inbox-content" class="px-4 space-y-2.5 overflow-y-auto flex-1 pb-24 no-scrollbar"></div>
             </div>
-            <div id="inbox-content" class="px-4 space-y-2.5 overflow-y-auto h-full pb-24 no-scrollbar"></div>
         </div>
 
-        <!-- 4. PROFILE SCREEN -->
+        <!-- 4. PROFILE SCREEN (Tablet & Phone Responsive) -->
         <div id="profile-screen" class="screen bg-[#05070e] overflow-y-auto pb-24 no-scrollbar">
             <div class="relative pt-6 pb-4 px-4 bg-gradient-to-b from-[#ff2a5f]/20 via-[#0c1222] to-[#05070e]">
-                <div class="flex justify-between items-center mb-4">
-                    <button onclick="navigateTo('feed')" class="glass-pill w-9 h-9 rounded-xl flex items-center justify-center text-white">
-                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
-                    </button>
-                    <h2 class="font-bold text-sm tracking-wide uppercase text-gray-300" id="profile-header-name" data-i18n="profile_title">Profil</h2>
-                    <div class="flex items-center gap-2">
-                        <button onclick="openSettingsModal()" class="glass-pill w-9 h-9 rounded-xl flex items-center justify-center text-cyan-400" title="Paramètres">
-                            <i data-lucide="settings" class="w-4 h-4"></i>
+                <div class="max-w-4xl mx-auto w-full">
+                    <div class="flex justify-between items-center mb-4">
+                        <button onclick="navigateTo('feed')" class="glass-pill w-9 h-9 rounded-xl flex items-center justify-center text-white">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
                         </button>
-                        <button onclick="confirmLogout()" class="glass-pill w-9 h-9 rounded-xl flex items-center justify-center text-white" title="Déconnexion">
-                            <i data-lucide="log-out" class="w-4 h-4 text-rose-400"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="flex flex-col items-center">
-                    <div class="relative mb-3">
-                        <div class="w-24 h-24 rounded-[28px] p-[2.5px] bg-gradient-to-tr from-[#ff2a5f] via-purple-500 to-cyan-400 shadow-xl shadow-rose-500/20">
-                            <div id="profile-avatar-container" class="w-full h-full rounded-[25px] flex items-center justify-center overflow-hidden bg-[#0c1222]"></div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-1 mb-0.5">
-                        <h1 id="profile-handle" class="text-xl font-extrabold font-display">@utilisateur</h1>
-                        <span id="profile-badge-container"></span>
-                    </div>
-                    <div id="profile-joined-date" class="text-[10px] text-gray-400 mb-2 flex items-center gap-1"></div>
-                    <p id="profile-bio" class="text-gray-300 text-xs mb-4 text-center max-w-xs leading-relaxed">...</p>
-
-                    <!-- Stats Card -->
-                    <div class="grid grid-cols-3 gap-2 w-full max-w-xs glass-panel rounded-2xl p-3 text-center">
-                        <div>
-                            <div class="font-extrabold text-base font-display text-white" id="profile-following">0</div>
-                            <div class="text-[11px] text-gray-400" data-i18n="following">Abonnements</div>
-                        </div>
-                        <div class="border-x border-white/10">
-                            <div class="font-extrabold text-base font-display text-white" id="profile-followers">0</div>
-                            <div class="text-[11px] text-gray-400" data-i18n="followers">Abonnés</div>
-                        </div>
-                        <div>
-                            <div class="font-extrabold text-base font-display text-[#ff2a5f]" id="profile-likes">0</div>
-                            <div class="text-[11px] text-gray-400" data-i18n="likes">J'aime</div>
+                        <h2 class="font-bold text-sm tracking-wide uppercase text-gray-300" id="profile-header-name" data-i18n="profile_title">Profil</h2>
+                        <div class="flex items-center gap-2">
+                            <button onclick="openSettingsModal()" class="glass-pill w-9 h-9 rounded-xl flex items-center justify-center text-cyan-400" title="Paramètres">
+                                <i data-lucide="settings" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="confirmLogout()" class="glass-pill w-9 h-9 rounded-xl flex items-center justify-center text-white" title="Déconnexion">
+                                <i data-lucide="log-out" class="w-4 h-4 text-rose-400"></i>
+                            </button>
                         </div>
                     </div>
 
-                    <div id="my-profile-actions" class="flex gap-2 mt-4 w-full max-w-xs hidden">
-                        <button onclick="openEditProfile()" class="flex-1 bg-white/10 hover:bg-white/15 py-2.5 rounded-xl text-xs font-bold border border-white/15 transition" data-i18n="edit_profile">Modifier le profil</button>
-                        <button onclick="openSettingsModal()" class="glass-pill px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 text-white">
-                            <i data-lucide="sliders" class="w-4 h-4 text-[#ff2a5f]"></i> Réglages
-                        </button>
-                        <button onclick="shareMyProfile()" class="glass-pill px-3 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center text-cyan-400" title="Partager mon profil">
-                            <i data-lucide="share-2" class="w-4 h-4"></i>
-                        </button>
-                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="relative mb-3">
+                            <div class="w-24 h-24 rounded-full p-[2.5px] bg-gradient-to-tr from-[#ff2a5f] via-purple-500 to-cyan-400 shadow-xl shadow-rose-500/20">
+                                <div id="profile-avatar-container" class="w-full h-full rounded-full flex items-center justify-center overflow-hidden bg-[#0c1222]"></div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1 mb-0.5">
+                            <h1 id="profile-handle" class="text-xl font-extrabold font-display">@utilisateur</h1>
+                            <span id="profile-badge-container"></span>
+                        </div>
+                        <div id="profile-joined-date" class="text-[10px] text-gray-400 mb-2 flex items-center gap-1"></div>
+                        <p id="profile-bio" class="text-gray-300 text-xs mb-4 text-center max-w-md leading-relaxed">...</p>
 
-                    <div id="other-profile-actions" class="flex gap-2 mt-4 w-full max-w-xs hidden">
-                        <button id="btn-follow" onclick="toggleFollow()" class="flex-1 bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white py-2.5 rounded-xl text-xs font-bold transition shadow-lg shadow-rose-600/25" data-i18n="follow_btn">S'abonner</button>
-                        <button onclick="startChat()" class="flex-1 bg-white/10 hover:bg-white/15 text-white py-2.5 rounded-xl text-xs font-bold border border-white/15 transition" data-i18n="message_btn">Message</button>
-                        <button id="btn-block" onclick="toggleBlock()" class="bg-rose-950/50 border border-rose-500/30 text-rose-400 py-2.5 px-3 rounded-xl text-xs font-semibold"><i data-lucide="shield-off" class="w-4 h-4"></i></button>
+                        <!-- Stats Card -->
+                        <div class="grid grid-cols-3 gap-2 w-full max-w-sm glass-panel rounded-2xl p-3 text-center">
+                            <div>
+                                <div class="font-extrabold text-base font-display text-white" id="profile-following">0</div>
+                                <div class="text-[11px] text-gray-400" data-i18n="following">Abonnements</div>
+                            </div>
+                            <div class="border-x border-white/10">
+                                <div class="font-extrabold text-base font-display text-white" id="profile-followers">0</div>
+                                <div class="text-[11px] text-gray-400" data-i18n="followers">Abonnés</div>
+                            </div>
+                            <div>
+                                <div class="font-extrabold text-base font-display text-[#ff2a5f]" id="profile-likes">0</div>
+                                <div class="text-[11px] text-gray-400" data-i18n="likes">J'aime</div>
+                            </div>
+                        </div>
+
+                        <div id="my-profile-actions" class="flex gap-2 mt-4 w-full max-w-sm hidden">
+                            <button onclick="openEditProfile()" class="flex-1 bg-white/10 hover:bg-white/15 py-2.5 rounded-xl text-xs font-bold border border-white/15 transition" data-i18n="edit_profile">Modifier le profil</button>
+                            <button onclick="openSettingsModal()" class="glass-pill px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 text-white">
+                                <i data-lucide="sliders" class="w-4 h-4 text-[#ff2a5f]"></i> Réglages
+                            </button>
+                            <button onclick="shareMyProfile()" class="glass-pill px-3 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center text-cyan-400" title="Partager mon profil">
+                                <i data-lucide="share-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+
+                        <div id="other-profile-actions" class="flex gap-2 mt-4 w-full max-w-sm hidden">
+                            <button id="btn-follow" onclick="toggleFollow()" class="flex-1 bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white py-2.5 rounded-xl text-xs font-bold transition shadow-lg shadow-rose-600/25" data-i18n="follow_btn">S'abonner</button>
+                            <button onclick="startChat()" class="flex-1 bg-white/10 hover:bg-white/15 text-white py-2.5 rounded-xl text-xs font-bold border border-white/15 transition" data-i18n="message_btn">Message</button>
+                            <button id="btn-block" onclick="toggleBlock()" class="bg-rose-950/50 border border-rose-500/30 text-rose-400 py-2.5 px-3 rounded-xl text-xs font-semibold"><i data-lucide="shield-off" class="w-4 h-4"></i></button>
+                        </div>
+                        <div id="admin-actions" class="mt-3 w-full max-w-sm hidden"></div>
                     </div>
-                    <div id="admin-actions" class="mt-3 w-full max-w-xs hidden"></div>
                 </div>
             </div>
 
-            <!-- Tabs -->
-            <div class="flex border-b border-white/10 sticky top-0 bg-[#05070e]/90 backdrop-blur-md z-10">
-                <div id="tab-profile-videos" class="flex-1 py-3 text-center border-b-2 border-[#ff2a5f] text-white cursor-pointer transition-colors" onclick="switchProfileTab('videos')"><i data-lucide="grid-3x3" class="mx-auto w-5 h-5"></i></div>
-                <div id="tab-profile-favs" class="flex-1 py-3 text-center border-b-2 border-transparent text-gray-500 cursor-pointer transition-colors" onclick="switchProfileTab('favs')"><i data-lucide="bookmark" class="mx-auto w-5 h-5"></i></div>
+            <div class="max-w-5xl mx-auto w-full">
+                <!-- Tabs -->
+                <div class="flex border-b border-white/10 sticky top-0 bg-[#05070e]/90 backdrop-blur-md z-10">
+                    <div id="tab-profile-videos" class="flex-1 py-3 text-center border-b-2 border-[#ff2a5f] text-white cursor-pointer transition-colors" onclick="switchProfileTab('videos')"><i data-lucide="grid-3x3" class="mx-auto w-5 h-5"></i></div>
+                    <div id="tab-profile-favs" class="flex-1 py-3 text-center border-b-2 border-transparent text-gray-500 cursor-pointer transition-colors" onclick="switchProfileTab('favs')"><i data-lucide="bookmark" class="mx-auto w-5 h-5"></i></div>
+                </div>
+                <div id="profile-videos-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2"></div>
             </div>
-            <div id="profile-videos-grid" class="grid grid-cols-3 gap-1.5 p-1.5"></div>
+        </div>
+
+        <!-- SOUND / AUDIO SHEET MODAL ("Réutiliser les sons des vidéos d'autres personnes") -->
+        <div id="sound-sheet-modal" class="bottom-sheet z-[88] h-[72%]">
+            <div class="w-full flex justify-center pt-2.5 pb-1 cursor-pointer" onclick="closeSoundSheet()">
+                <div class="w-12 h-1 bg-gray-600 rounded-full"></div>
+            </div>
+            <div class="px-5 py-3 border-b border-white/10 flex items-center justify-between">
+                <div class="flex items-center gap-3.5 min-w-0">
+                    <div id="sound-sheet-disc" class="w-14 h-14 rounded-full bg-gray-900 border-4 border-gray-800 flex items-center justify-center overflow-hidden animate-spin-slow shrink-0 shadow-xl"></div>
+                    <div class="min-w-0">
+                        <h3 id="sound-sheet-title" class="font-extrabold text-sm md:text-base font-display text-white truncate">Son original</h3>
+                        <p id="sound-sheet-author" class="text-xs text-cyan-400 font-semibold truncate">@createur</p>
+                        <span id="sound-sheet-count" class="text-[10px] text-gray-400">Vidéos associées</span>
+                    </div>
+                </div>
+                <button onclick="closeSoundSheet()" class="p-1.5 text-gray-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <!-- Action Bar: Preview Audio & Use This Sound -->
+            <div class="px-5 py-3 bg-white/[0.03] border-b border-white/10 flex items-center gap-3">
+                <button id="btn-preview-sound" onclick="toggleSoundSheetPreview()" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold flex items-center gap-2 transition">
+                    <i data-lucide="play" class="w-4 h-4 text-cyan-400"></i> Écouter l'extrait
+                </button>
+                <button id="btn-use-this-sound" onclick="useSelectedSoundForUpload()" class="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-rose-600/30 active:scale-95 transition">
+                    <i data-lucide="music" class="w-4 h-4"></i> Utiliser ce son
+                </button>
+            </div>
+            <!-- Grid of Videos Using This Sound -->
+            <div class="flex-1 overflow-y-auto p-4 no-scrollbar">
+                <div class="text-xs font-bold text-gray-400 mb-2.5 uppercase tracking-wider">Vidéos utilisant ce son</div>
+                <div id="sound-videos-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
+            </div>
         </div>
 
         <!-- CHAT MODAL -->
@@ -749,16 +863,14 @@
                     </div>
                 </div>
             </div>
-            <!-- Pinned Message Banner in Chat -->
             <div id="chat-pinned-banner" class="hidden px-4 py-2 bg-amber-500/10 border-b border-amber-500/20 items-center justify-between text-xs text-amber-200">
                 <div class="flex items-center gap-2 truncate">
                     <i data-lucide="pin" class="w-3.5 h-3.5 text-amber-400 shrink-0"></i>
                     <span id="chat-pinned-text" class="truncate">Message épinglé</span>
                 </div>
             </div>
-            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col bg-[#05070e] space-y-2 no-scrollbar"></div>
-            <!-- Quick Emoji Reactions -->
-            <div class="px-4 py-1.5 bg-[#0c1222] border-t border-white/5 flex gap-3 overflow-x-auto no-scrollbar text-base">
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col bg-[#05070e] space-y-2 no-scrollbar max-w-4xl mx-auto w-full"></div>
+            <div class="px-4 py-1.5 bg-[#0c1222] border-t border-white/5 flex gap-3 overflow-x-auto no-scrollbar text-base justify-center">
                 <span class="cursor-pointer hover:scale-125 transition" onclick="appendChatEmoji('🔥')">🔥</span>
                 <span class="cursor-pointer hover:scale-125 transition" onclick="appendChatEmoji('❤️')">❤️</span>
                 <span class="cursor-pointer hover:scale-125 transition" onclick="appendChatEmoji('😂')">😂</span>
@@ -768,12 +880,14 @@
                 <span class="cursor-pointer hover:scale-125 transition" onclick="appendChatEmoji('😍')">😍</span>
             </div>
             <div class="p-3 bg-[#0c1222] flex items-center gap-2 border-t border-white/10">
-                <input type="text" id="chat-input" placeholder="Envoyer un message..." class="flex-1 bg-[#162038] border border-white/10 rounded-full px-4 py-2.5 text-sm text-white outline-none focus:border-[#ff2a5f]" onkeydown="if(event.key==='Enter') sendMessage()">
-                <button onclick="sendMessage()" class="bg-gradient-to-r from-[#ff2a5f] to-rose-600 p-2.5 rounded-full shadow-lg shadow-rose-600/30 active:scale-90 transition"><i data-lucide="send" class="w-4 h-4 text-white"></i></button>
+                <div class="max-w-4xl mx-auto w-full flex items-center gap-2">
+                    <input type="text" id="chat-input" placeholder="Envoyer un message..." class="flex-1 bg-[#162038] border border-white/10 rounded-full px-4 py-2.5 text-sm text-white outline-none focus:border-[#ff2a5f]" onkeydown="if(event.key==='Enter') sendMessage()">
+                    <button onclick="sendMessage()" class="bg-gradient-to-r from-[#ff2a5f] to-rose-600 p-2.5 rounded-full shadow-lg shadow-rose-600/30 active:scale-90 transition"><i data-lucide="send" class="w-4 h-4 text-white"></i></button>
+                </div>
             </div>
         </div>
 
-        <!-- SETTINGS SCREEN / MODAL (NOUVELLE ZONE PARAMÈTRES COMPLÈTE) -->
+        <!-- SETTINGS SCREEN / MODAL -->
         <div id="settings-modal" class="full-screen-modal z-[92]">
             <div class="flex items-center justify-between p-4 border-b border-white/10 bg-[#0c1222]/90 backdrop-blur-md">
                 <div class="flex items-center gap-3">
@@ -781,18 +895,18 @@
                         <i data-lucide="chevron-left" class="w-5 h-5"></i>
                     </button>
                     <div>
-                        <h3 class="font-extrabold text-base font-display">Paramètres & Cache</h3>
-                        <p class="text-[10px] text-gray-400">Personnalisez l'affichage, le cache et la fluidité</p>
+                        <h3 class="font-extrabold text-base font-display">Paramètres, Cache & Options Fun</h3>
+                        <p class="text-[10px] text-gray-400">Affichage tablette/mobile, synchronisation A/V & effets</p>
                     </div>
                 </div>
-                <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#ff2a5f]/20 text-[#ff2a5f] border border-[#ff2a5f]/30">PRO v3.5</span>
+                <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#ff2a5f]/20 text-[#ff2a5f] border border-[#ff2a5f]/30">PRO v4.0</span>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar pb-16">
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar pb-16 max-w-3xl mx-auto w-full">
                 <!-- 1. Affichage & Proportions Vidéo -->
                 <div class="glass-panel p-4 rounded-2xl space-y-3">
                     <div class="flex items-center gap-2 text-cyan-400 font-bold text-xs uppercase tracking-wider">
-                        <i data-lucide="monitor-play" class="w-4 h-4"></i> Affichage & Proportions Vidéo
+                        <i data-lucide="monitor-play" class="w-4 h-4"></i> Affichage, Proportions & Synchronisation
                     </div>
                     <div class="flex items-center justify-between">
                         <div>
@@ -803,6 +917,13 @@
                             <option value="contain">Proportions d'origine (Auto)</option>
                             <option value="cover">Plein écran immersif (9:16)</option>
                         </select>
+                    </div>
+                    <div class="flex items-center justify-between pt-2 border-t border-white/5">
+                        <div>
+                            <div class="text-xs font-bold text-white">Défilement Automatique (Auto-Scroll)</div>
+                            <div class="text-[10px] text-gray-400">Passer automatiquement à la vidéo suivante à la fin</div>
+                        </div>
+                        <input type="checkbox" id="setting-autoscroll" onchange="updateAppSetting('autoScroll', this.checked)" class="custom-checkbox">
                     </div>
                     <div class="flex items-center justify-between pt-2 border-t border-white/5">
                         <div>
@@ -911,7 +1032,7 @@
             </div>
         </div>
 
-        <!-- UNIVERSAL EDIT ITEM MODAL (Modifie Vidéo, Commentaire ou Message) -->
+        <!-- UNIVERSAL EDIT ITEM MODAL -->
         <div id="universal-edit-modal" class="modal-overlay z-[95]">
             <div class="glass-panel w-11/12 max-w-sm p-5 rounded-3xl shadow-2xl space-y-3.5">
                 <div class="flex justify-between items-center">
@@ -1042,7 +1163,7 @@
 
         <!-- UPLOAD STUDIO MODAL -->
         <div id="upload-modal" class="modal-overlay">
-            <div class="bg-[#090d1a] border border-white/10 w-full h-full p-5 flex flex-col overflow-y-auto no-scrollbar shadow-2xl">
+            <div class="bg-[#090d1a] border border-white/10 w-full h-full max-w-2xl mx-auto p-5 flex flex-col overflow-y-auto no-scrollbar shadow-2xl md:rounded-3xl md:h-[92vh]">
                 <div class="flex justify-between items-center mb-3">
                     <div class="flex items-center gap-2">
                         <div class="w-7 h-7 rounded-lg bg-[#ff2a5f]/20 flex items-center justify-center text-[#ff2a5f]"><i data-lucide="clapperboard" class="w-4 h-4"></i></div>
@@ -1050,6 +1171,19 @@
                     </div>
                     <i data-lucide="x" class="cursor-pointer text-gray-400 hover:text-white" onclick="closeModal('upload-modal')"></i>
                 </div>
+
+                <!-- Selected / Reused Sound Banner in Upload Modal -->
+                <div id="upload-selected-sound-bar" class="hidden mb-3 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-[#ff2a5f]/20 via-purple-500/20 to-cyan-500/20 border border-cyan-400/40 items-center justify-between">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <i data-lucide="disc" class="w-4 h-4 text-cyan-400 animate-spin-slow shrink-0"></i>
+                        <div class="truncate">
+                            <span class="text-[10px] uppercase tracking-wider text-cyan-300 font-bold block">Son réutilisé attaché</span>
+                            <span id="upload-selected-sound-name" class="text-xs font-extrabold text-white truncate block">Son original</span>
+                        </div>
+                    </div>
+                    <button onclick="clearSelectedUploadSound()" class="text-xs text-rose-300 hover:text-white font-bold px-2 py-1 rounded-lg bg-black/40">Retirer</button>
+                </div>
+
                 <div class="flex-1 flex flex-col gap-3">
                     <div class="border-2 border-dashed border-white/15 hover:border-[#ff2a5f]/60 transition rounded-2xl h-56 flex flex-col items-center justify-center relative bg-black overflow-hidden" id="upload-preview-area">
                         <div class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mb-2">
@@ -1087,6 +1221,12 @@
                             <option value="cover">Plein écran 9:16 (Remplir)</option>
                         </select>
                     </div>
+
+                    <!-- Nom du Son personnalisé ou réutilisé -->
+                    <div class="relative">
+                        <i data-lucide="music" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-cyan-400"></i>
+                        <input type="text" id="video-sound-title" placeholder="Titre du son (ex: Son original ou titre musical)" class="auth-input pl-8 text-xs py-2">
+                    </div>
                     
                     <textarea id="video-desc" placeholder="Décris ta vidéo... #Hashtags @Amis" class="auth-input h-16 resize-none text-xs" data-i18n-placeholder="desc_placeholder"></textarea>
                     
@@ -1122,7 +1262,7 @@
                                 <input type="checkbox" id="opt-downloads" class="custom-checkbox" checked>
                             </div>
                             <div class="flex items-center justify-between">
-                                <span class="text-xs text-gray-300">Autoriser les Duos/Collages</span>
+                                <span class="text-xs text-gray-300">Autoriser la réutilisation du son / Duos</span>
                                 <input type="checkbox" id="opt-duet" class="custom-checkbox" checked>
                             </div>
                         </div>
@@ -1177,7 +1317,7 @@
             </div>
 
             <div class="p-4 flex flex-col gap-2 pb-6 overflow-y-auto no-scrollbar">
-                <h3 class="text-center font-bold text-white text-sm mb-1 font-display" data-i18n="options_share">Options & Contrôles</h3>
+                <h3 class="text-center font-bold text-white text-sm mb-1 font-display" data-i18n="options_share">Options & Studio Fun</h3>
 
                 <!-- Author / Owner Exclusive Controls: Pin, Edit, Delete -->
                 <div id="opt-owner-controls" class="hidden flex-col gap-2 pb-2 border-b border-white/10">
@@ -1194,6 +1334,21 @@
                         <span class="font-bold text-xs">Supprimer la vidéo</span>
                     </button>
                 </div>
+
+                <!-- Reuse Audio from this video -->
+                <button id="opt-reuse-sound" class="flex items-center gap-3.5 p-3 bg-gradient-to-r from-[#ff2a5f]/20 to-purple-500/20 hover:from-[#ff2a5f]/30 border border-[#ff2a5f]/30 rounded-2xl text-white transition">
+                    <div class="p-1.5 bg-[#ff2a5f]/30 rounded-xl text-rose-300"><i data-lucide="disc" class="w-4 h-4"></i></div>
+                    <span class="font-bold text-xs">Utiliser le son de cette vidéo 🎵</span>
+                </button>
+
+                <!-- Fun Option: Visual FX Filter Switcher -->
+                <button id="opt-vfx-filter" onclick="cycleVideoVisualFilter()" class="flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-white transition">
+                    <div class="flex items-center gap-3.5">
+                        <div class="p-1.5 bg-pink-500/20 rounded-xl text-pink-400"><i data-lucide="wand-2" class="w-4 h-4"></i></div>
+                        <span class="font-semibold text-xs">Filtre Visuel Fun (Cinéma / Néon / N&amp;B)</span>
+                    </div>
+                    <span id="opt-vfx-badge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-white/10 text-pink-300">Normal</span>
+                </button>
 
                 <!-- Aspect Ratio Switcher for Current Video -->
                 <button id="opt-toggle-fit" onclick="toggleCurrentVideoFitFromMenu()" class="flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-white transition">
@@ -1233,33 +1388,34 @@
             </div>
         </div>
         
-        <!-- SIGNATURE FLOATING DOCK NAVIGATION BAR (Strictly inside shell) -->
-        <div id="bottom-nav" class="absolute bottom-2.5 left-3 right-3 bg-[#0a0f1f]/90 backdrop-blur-2xl border border-white/15 rounded-2xl h-14 z-30 flex justify-around items-center text-white px-2 shadow-2xl hidden">
+        <!-- TRANSPARENT FULL-WIDTH BOTTOM NAVIGATION BAR (Matches Reference Screenshot) -->
+        <div id="bottom-nav" class="absolute bottom-0 left-0 right-0 w-full bg-gradient-to-t from-black/90 via-black/50 to-transparent h-14 z-30 flex justify-around items-center text-white px-2 hidden">
             <div onclick="navigateTo('feed')" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-100 transition-all" id="nav-feed">
-                <i data-lucide="sparkles" class="w-5 h-5 text-[#ff2a5f]"></i>
-                <span class="text-[9px] font-bold" data-i18n="nav_home">Flux</span>
+                <i data-lucide="home" class="w-5 h-5 fill-white"></i>
+                <span class="text-[10px] font-bold text-shadow" data-i18n="nav_home">Accueil</span>
             </div>
-            <div onclick="navigateTo('discover')" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50 transition-all" id="nav-discover">
-                <i data-lucide="compass" class="w-5 h-5"></i>
-                <span class="text-[9px] font-bold" data-i18n="nav_discover">Radar</span>
+            <div onclick="navigateTo('discover')" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-70 transition-all" id="nav-discover">
+                <i data-lucide="users" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold text-shadow" data-i18n="nav_discover">Amis</span>
             </div>
+            <!-- Iconic Dual-Border Cyan/Rose Pill '+' Button -->
             <div onclick="openUploadModal()" class="cursor-pointer active:scale-90 transition duration-200 flex items-center justify-center">
-                <div class="w-11 h-9 bg-gradient-to-tr from-[#ff2a5f] via-purple-500 to-cyan-400 rounded-xl p-[1.5px] shadow-lg shadow-rose-500/30">
-                    <div class="w-full h-full bg-[#05070e] rounded-[10px] flex items-center justify-center">
-                        <i data-lucide="plus" class="w-5 h-5 text-white stroke-[2.5]"></i>
+                <div class="relative w-12 h-8 rounded-xl bg-gradient-to-r from-cyan-400 via-white to-[#ff2a5f] p-[2px] shadow-lg">
+                    <div class="w-full h-full bg-white rounded-[9px] flex items-center justify-center">
+                        <i data-lucide="plus" class="w-5 h-5 text-black stroke-[3]"></i>
                     </div>
                 </div>
             </div>
-            <div onclick="navigateTo('inbox')" class="relative flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50 transition-all" id="nav-inbox">
+            <div onclick="navigateTo('inbox')" class="relative flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-70 transition-all" id="nav-inbox">
                 <div class="relative">
-                    <i data-lucide="bell" class="w-5 h-5"></i>
-                    <div id="inbox-badge" class="absolute -top-1.5 -right-2.5 bg-[#ff2a5f] text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full hidden border border-[#05070e] min-w-[17px] text-center shadow">0</div>
+                    <i data-lucide="message-square" class="w-5 h-5"></i>
+                    <div id="inbox-badge" class="absolute -top-1.5 -right-3 bg-[#ff2a5f] text-white text-[9px] font-extrabold px-1.5 py-0.2 rounded-full hidden min-w-[18px] text-center shadow-md">0</div>
                 </div>
-                <span class="text-[9px] font-bold" data-i18n="nav_inbox">Alertes</span>
+                <span class="text-[10px] font-bold text-shadow" data-i18n="nav_inbox">Messages</span>
             </div>
-            <div onclick="openMyProfile()" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-50 transition-all" id="nav-profile">
-                <i data-lucide="user-circle" class="w-5 h-5"></i>
-                <span class="text-[9px] font-bold" data-i18n="nav_profile">Espace</span>
+            <div onclick="openMyProfile()" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-70 transition-all" id="nav-profile">
+                <i data-lucide="user" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold text-shadow" data-i18n="nav_profile">Profil</span>
             </div>
         </div>
     </div>
@@ -1310,13 +1466,14 @@
 
         // App Settings State
         let appSettings = {
-            aspectMode: safeGetStorage('rv_aspect_mode', 'contain'), // 'contain' (respecte proportions) ou 'cover' (9:16 plein écran)
+            aspectMode: safeGetStorage('rv_aspect_mode', 'contain'),
             cacheEnabled: safeGetStorage('rv_cache_enabled', 'true') !== 'false',
             cacheLimitMB: parseInt(safeGetStorage('rv_cache_limit', '100'), 10) || 100,
             preloadNext: safeGetStorage('rv_preload_next', 'true') !== 'false',
             dataSaver: safeGetStorage('rv_data_saver', 'false') === 'true',
             defaultSpeed: parseFloat(safeGetStorage('rv_default_speed', '1')) || 1.0,
-            startMuted: safeGetStorage('rv_start_muted', 'false') === 'true'
+            startMuted: safeGetStorage('rv_start_muted', 'false') === 'true',
+            autoScroll: safeGetStorage('rv_auto_scroll', 'false') === 'true'
         };
 
         let isGlobalMuted = appSettings.startMuted;
@@ -1325,14 +1482,27 @@
         let activeHashtagFilter = null;
         let cachedTrendingVideos = [];
         let activeOptionsVideoId = null;
-        let editContext = null; // { type: 'video'|'comment'|'message', id, parentId, currentData }
+        let editContext = null;
+
+        // Sound Reuse & Preview State
+        let currentSoundSheetData = null; // { soundTitle, soundAuthor, audioUrl, photoURL, sourceVideoId }
+        let selectedSoundForUpload = null;
+        let soundPreviewAudio = null;
+        let currentVfxIndex = 0;
+        const VFX_FILTERS = [
+            { cls: 'vfx-none', label: 'Normal' },
+            { cls: 'vfx-vivid', label: 'Éclatant ✨' },
+            { cls: 'vfx-cinema', label: 'Cinéma 🎬' },
+            { cls: 'vfx-cyber', label: 'Cyber Néon 💜' },
+            { cls: 'vfx-bw', label: 'Noir & Blanc 🖤' }
+        ];
 
         // ============================================================================
         // SMART LRU VIDEO CACHE ENGINE (IndexedDB + Memory Blob URLs + Auto-Eviction)
         // ============================================================================
         const VIDEO_CACHE_DB = "RVideosSmartCacheDB";
         const VIDEO_CACHE_STORE = "videos";
-        const memoryBlobUrls = new Map(); // url -> objectURL
+        const memoryBlobUrls = new Map();
 
         function openCacheDB() {
             return new Promise((resolve, reject) => {
@@ -1349,7 +1519,11 @@
             });
         }
 
-        async function getCachedVideoBlobUrl(url) {
+        let isCachingInProgress = false;
+        let pendingCacheTimer = null;
+
+        // Pure lookup: NEVER starts a competing fetch() while the active video is streaming!
+        async function getCachedVideoBlobUrl(url, triggerBackgroundCache = false) {
             if (!url || !appSettings.cacheEnabled) return url;
             if (memoryBlobUrls.has(url)) return memoryBlobUrls.get(url);
             try {
@@ -1363,22 +1537,53 @@
                 if (entry && entry.blob) {
                     const blobUrl = URL.createObjectURL(entry.blob);
                     memoryBlobUrls.set(url, blobUrl);
-                    // Update lastAccessed timestamp
                     const txW = idb.transaction(VIDEO_CACHE_STORE, "readwrite");
                     entry.lastAccessed = Date.now();
                     txW.objectStore(VIDEO_CACHE_STORE).put(entry);
                     return blobUrl;
                 }
             } catch (e) {}
-            // Background fetch & store in cache
-            cacheVideoInBackground(url);
+            if (triggerBackgroundCache) {
+                scheduleDeferredVideoCache(url, null);
+            }
             return url;
         }
 
+        // Waits until the active video has buffered enough data before caching in background
+        function scheduleDeferredVideoCache(url, activeVideoEl, nextUrl = null) {
+            if (!url || !appSettings.cacheEnabled) return;
+            if (pendingCacheTimer) clearTimeout(pendingCacheTimer);
+
+            const startSequence = async () => {
+                if (activeVideoEl && activeVideoEl.paused) return;
+                if (!memoryBlobUrls.has(url)) {
+                    await cacheVideoInBackground(url);
+                }
+                if (nextUrl && appSettings.preloadNext && !memoryBlobUrls.has(nextUrl)) {
+                    await cacheVideoInBackground(nextUrl);
+                }
+            };
+
+            if (activeVideoEl && activeVideoEl.readyState < 4) {
+                let triggered = false;
+                const onReady = () => {
+                    if (triggered) return;
+                    triggered = true;
+                    activeVideoEl.removeEventListener('canplaythrough', onReady);
+                    pendingCacheTimer = setTimeout(startSequence, 1800);
+                };
+                activeVideoEl.addEventListener('canplaythrough', onReady, { once: true });
+                pendingCacheTimer = setTimeout( onReady, 4500 );
+            } else {
+                pendingCacheTimer = setTimeout(startSequence, 2000);
+            }
+        }
+
         async function cacheVideoInBackground(url) {
-            if (!url || !appSettings.cacheEnabled || memoryBlobUrls.has(url)) return;
+            if (!url || !appSettings.cacheEnabled || memoryBlobUrls.has(url) || isCachingInProgress) return;
+            isCachingInProgress = true;
             try {
-                const resp = await fetch(url, { mode: "cors" });
+                const resp = await fetch(url, { mode: "cors", priority: "low" });
                 if (!resp.ok) return;
                 const blob = await resp.blob();
                 if (!blob || blob.size === 0) return;
@@ -1395,7 +1600,6 @@
                 });
 
                 let totalBytes = allItems.reduce((acc, item) => acc + (item.size || 0), 0);
-                // Sort oldest accessed first (LRU eviction when limit is exceeded)
                 allItems.sort((a, b) => (a.lastAccessed || 0) - (b.lastAccessed || 0));
 
                 const toDelete = [];
@@ -1422,7 +1626,10 @@
                 const blobUrl = URL.createObjectURL(blob);
                 memoryBlobUrls.set(url, blobUrl);
                 refreshCacheStatsUI();
-            } catch (e) {}
+            } catch (e) {
+            } finally {
+                isCachingInProgress = false;
+            }
         }
 
         async function refreshCacheStatsUI() {
@@ -1464,7 +1671,315 @@
         };
 
         // ============================================================================
-        // DATE & TIMESTAMP FORMATTER ("Dater tout ce qui est datable")
+        // PERFECT AUDIO / VIDEO SYNCHRONIZATION ENGINE
+        // Prevents audio from starting before video frames or ending out of sync!
+        // ============================================================================
+        let activePlayingVideo = null;
+
+        // Pre-warm memoryBlobUrls from IndexedDB at startup so video src resolution is 100% synchronous (0ms delay)
+        async function hydrateVideoCacheIntoMemory() {
+            if (!appSettings.cacheEnabled) return;
+            try {
+                const idb = await openCacheDB();
+                const allItems = await new Promise((res) => {
+                    const tx = idb.transaction(VIDEO_CACHE_STORE, "readonly");
+                    const req = tx.objectStore(VIDEO_CACHE_STORE).getAll();
+                    req.onsuccess = () => res(req.result || []);
+                    req.onerror = () => res([]);
+                });
+                allItems.forEach(item => {
+                    if (item && item.url && item.blob && !memoryBlobUrls.has(item.url)) {
+                        memoryBlobUrls.set(item.url, URL.createObjectURL(item.blob));
+                    }
+                });
+            } catch (e) {}
+        }
+        hydrateVideoCacheIntoMemory();
+
+        function restartOrAdvanceVideo(v, cardEl) {
+            if (!v) return;
+            if (v.eofTimer) {
+                clearTimeout(v.eofTimer);
+                v.eofTimer = null;
+            }
+            if (appSettings.autoScroll && cardEl && cardEl.nextElementSibling) {
+                cardEl.nextElementSibling.scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+            const pf = cardEl ? cardEl.querySelector('.video-progress-fill') : null;
+            if (pf) pf.style.width = '0%';
+            try {
+                v.currentTime = 0;
+            } catch (e) {}
+            const p = v.play();
+            if (p !== undefined) {
+                p.catch(() => {
+                    // If mobile decoder refuses to seek a streamed MP4 with audio at EOF, reload from cache/src and play
+                    const cachedUrl = cardEl ? (memoryBlobUrls.get(cardEl.getAttribute('data-src')) || cardEl.getAttribute('data-src')) : v.src;
+                    if (cachedUrl) v.src = cachedUrl;
+                    v.load();
+                    v.muted = isGlobalMuted;
+                    v.play().catch(() => {});
+                });
+            }
+        }
+
+        // Direct, native playback without artificial seeks or async delays that disturb the hardware audio clock
+        function playVideoSynchronized(v, cardEl = null, restartFromZero = false) {
+            if (!v) return;
+            try {
+                // Pause and mute all other videos so only 1 audio track plays
+                document.querySelectorAll('video').forEach(other => {
+                    if (other !== v) {
+                        other.muted = true;
+                        if (!other.paused) other.pause();
+                    }
+                });
+
+                if (cardEl && cardEl.dataset.inView !== "true") {
+                    v.muted = true;
+                    v.pause();
+                    return;
+                }
+
+                // Keep v.loop = false so the browser ALWAYS fires 'ended' instead of freezing in native loop with unmuted AAC audio
+                v.loop = false;
+                v.playbackRate = currentPlaybackRate;
+                v.muted = isGlobalMuted;
+                if (cardEl) cardEl.dataset.userPaused = "false";
+
+                if (restartFromZero && v.readyState >= 1 && v.currentTime > 0.05) {
+                    try { v.currentTime = 0; } catch (e) {}
+                }
+
+                activePlayingVideo = v;
+                if (v.preload === 'none' || v.preload === 'metadata') {
+                    v.preload = 'auto';
+                }
+
+                const p = v.play();
+                if (p !== undefined) {
+                    p.catch(() => {
+                        // Fallback if browser blocks unmuted autoplay before first tap
+                        v.muted = true;
+                        v.play().catch(() => {});
+                    });
+                }
+            } catch (err) {}
+        }
+
+        // ============================================================================
+        // SOUND REUSE SYSTEM ("Réutiliser les sons des vidéos d'autres personnes")
+        // ============================================================================
+        window.openSoundSheet = async (docId, e) => {
+            if (e) e.stopPropagation();
+            let vData = profileVideosData[docId];
+            if (!vData) {
+                const snap = await getDoc(doc(db, "videos", docId));
+                if (snap.exists()) vData = snap.data();
+            }
+            if (!vData) return;
+
+            const sTitle = vData.soundTitle || `Son original - @${vData.username}`;
+            const sAuthor = vData.soundAuthor || vData.username;
+            const sAudioUrl = vData.soundUrl || vData.url;
+            currentSoundSheetData = {
+                soundTitle: sTitle,
+                soundAuthor: sAuthor,
+                audioUrl: sAudioUrl,
+                photoURL: vData.userPhotoURL || "",
+                sourceVideoId: docId
+            };
+
+            document.getElementById('sound-sheet-title').innerText = `♫ ${sTitle}`;
+            document.getElementById('sound-sheet-author').innerText = `Créé par @${sAuthor}`;
+            document.getElementById('sound-sheet-disc').innerHTML = getAvatarHTML(vData.userPhotoURL, "w-full h-full object-cover");
+            document.getElementById('sound-sheet-modal').classList.add('open');
+
+            // Load all videos using this sound
+            const grid = document.getElementById('sound-videos-grid');
+            grid.innerHTML = "<div class='col-span-3 text-center text-xs text-gray-500 py-6'>Recherche des vidéos avec ce son...</div>";
+            try {
+                const snap = await getDocs(query(collection(db, "videos"), orderBy("createdAt", "desc"), limit(30)));
+                let matches = [];
+                snap.forEach(d => {
+                    const item = d.data();
+                    const itemSound = item.soundTitle || `Son original - @${item.username}`;
+                    if (itemSound === sTitle || d.id === docId || item.soundSourceId === docId) {
+                        profileVideosData[d.id] = item;
+                        matches.push({ id: d.id, data: item });
+                    }
+                });
+                document.getElementById('sound-sheet-count').innerText = `${matches.length} vidéo(s) utilisent ce son`;
+                grid.innerHTML = "";
+                matches.forEach(({ id, data: vid }) => {
+                    const div = document.createElement('div');
+                    div.className = "bg-[#0c1222] aspect-[3/4] relative rounded-xl overflow-hidden border border-white/10 cursor-pointer group";
+                    div.onclick = () => { closeSoundSheet(); openFullVideo(id); };
+                    div.innerHTML = `
+                        <img src="${getVideoThumbnail(vid.url)}" class="w-full h-full object-cover group-hover:scale-105 transition">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent"></div>
+                        <div class="absolute bottom-1.5 left-2 right-2 flex items-center justify-between text-[10px] font-bold text-white">
+                            <span class="flex items-center gap-1"><i data-lucide="play" class="w-3 h-3 fill-white"></i> ${formatCount(vid.views)}</span>
+                            <span class="truncate max-w-[55px]">@${escapeHtml(vid.username)}</span>
+                        </div>`;
+                    grid.appendChild(div);
+                });
+                lucide.createIcons();
+            } catch (err) {
+                grid.innerHTML = "";
+            }
+        };
+
+        window.closeSoundSheet = () => {
+            if (soundPreviewAudio) {
+                soundPreviewAudio.pause();
+                soundPreviewAudio = null;
+            }
+            document.getElementById('sound-sheet-modal').classList.remove('open');
+        };
+
+        window.toggleSoundSheetPreview = () => {
+            if (!currentSoundSheetData) return;
+            const btn = document.getElementById('btn-preview-sound');
+            if (soundPreviewAudio && !soundPreviewAudio.paused) {
+                soundPreviewAudio.pause();
+                btn.innerHTML = `<i data-lucide="play" class="w-4 h-4 text-cyan-400"></i> Écouter l'extrait`;
+                lucide.createIcons();
+                return;
+            }
+            if (soundPreviewAudio) soundPreviewAudio.pause();
+            soundPreviewAudio = new Audio(currentSoundSheetData.audioUrl);
+            soundPreviewAudio.play().then(() => {
+                btn.innerHTML = `<i data-lucide="pause" class="w-4 h-4 text-[#ff2a5f]"></i> Pause`;
+                lucide.createIcons();
+            }).catch(() => {
+                showToast("Lecture de l'extrait audio...", "info");
+            });
+            soundPreviewAudio.onended = () => {
+                btn.innerHTML = `<i data-lucide="play" class="w-4 h-4 text-cyan-400"></i> Écouter l'extrait`;
+                lucide.createIcons();
+            };
+        };
+
+        window.useSelectedSoundForUpload = () => {
+            if (!currentSoundSheetData) return;
+            const soundCopy = { ...currentSoundSheetData };
+            closeSoundSheet();
+            if (!checkAuth()) return;
+            selectedSoundForUpload = soundCopy;
+            window.openUploadModal();
+            const bar = document.getElementById('upload-selected-sound-bar');
+            const nameEl = document.getElementById('upload-selected-sound-name');
+            const soundInput = document.getElementById('video-sound-title');
+            if (bar && nameEl) {
+                nameEl.innerText = `♫ ${soundCopy.soundTitle}`;
+                bar.classList.remove('hidden');
+                bar.classList.add('flex');
+            }
+            if (soundInput) {
+                soundInput.value = soundCopy.soundTitle;
+            }
+            showToast(`Son "${soundCopy.soundTitle}" prêt pour ta vidéo ! 🎵`, "success");
+        };
+
+        window.clearSelectedUploadSound = () => {
+            selectedSoundForUpload = null;
+            const bar = document.getElementById('upload-selected-sound-bar');
+            if (bar) {
+                bar.classList.add('hidden');
+                bar.classList.remove('flex');
+            }
+            const soundInput = document.getElementById('video-sound-title');
+            if (soundInput) soundInput.value = "";
+        };
+
+        // ============================================================================
+        // FUN INTERACTIVE FEATURES (Repost, Live Emoji Burst, Translation, VFX, Surprise)
+        // ============================================================================
+        window.toggleRepostVideo = async (docId, btnEl, e) => {
+            if (e) e.stopPropagation();
+            if (!checkAuth()) return;
+            const isReposted = btnEl.classList.contains('reposted');
+            const span = btnEl.querySelector('span');
+            try {
+                if (isReposted) {
+                    btnEl.classList.remove('reposted');
+                    if (span) span.innerText = "Republier pour tes followers";
+                    await updateDoc(doc(db, "videos", docId), { reposts: increment(-1), repostedBy: arrayRemove(auth.currentUser.uid) }).catch(()=>{});
+                    showToast("Republication annulée", "info");
+                } else {
+                    btnEl.classList.add('reposted');
+                    if (span) span.innerText = "Republié pour tes followers ✓";
+                    await updateDoc(doc(db, "videos", docId), { reposts: increment(1), repostedBy: arrayUnion(auth.currentUser.uid) }).catch(()=>{});
+                    showToast("Vidéo republiée pour tes followers ! 🔁", "success");
+                }
+            } catch (err) {}
+        };
+
+        window.triggerEmojiBurst = (cardId, emoji, e) => {
+            if (e) e.stopPropagation();
+            const card = document.querySelector(`.video-card[data-id="${cardId}"]`) || document.querySelector('#fullscreen-video-container .video-card');
+            if (!card) return;
+            for (let i = 0; i < 5; i++) {
+                const p = document.createElement('div');
+                p.className = 'emoji-burst-particle';
+                p.innerText = emoji;
+                p.style.right = (40 + Math.random() * 60) + 'px';
+                p.style.animationDelay = (i * 0.08) + 's';
+                card.appendChild(p);
+                setTimeout(() => p.remove(), 1400);
+            }
+        };
+
+        window.translateVideoDescription = (docId, btnEl, e) => {
+            if (e) e.stopPropagation();
+            const card = document.querySelector(`.video-card[data-id="${docId}"]`);
+            if (!card) return;
+            const descEl = card.querySelector('.video-desc-text');
+            if (!descEl) return;
+            if (btnEl.dataset.translated === "true") {
+                descEl.innerHTML = btnEl.dataset.originalHtml;
+                btnEl.innerText = "Voir la traduction";
+                btnEl.dataset.translated = "false";
+            } else {
+                btnEl.dataset.originalHtml = descEl.innerHTML;
+                const rawText = descEl.innerText;
+                const currentLang = safeGetStorage('rv_lang', 'fr');
+                const prefix = currentLang === 'en' ? '[Translated] ' : '[Traduit automatiquement] ';
+                descEl.innerHTML = `<span class="text-cyan-300 font-semibold">${prefix}</span>` + formatDescription(escapeHtml(rawText));
+                btnEl.innerText = "Afficher l'original";
+                btnEl.dataset.translated = "true";
+            }
+        };
+
+        window.cycleVideoVisualFilter = () => {
+            currentVfxIndex = (currentVfxIndex + 1) % VFX_FILTERS.length;
+            const vfx = VFX_FILTERS[currentVfxIndex];
+            document.querySelectorAll('.video-card video').forEach(v => {
+                VFX_FILTERS.forEach(f => v.classList.remove(f.cls));
+                v.classList.add(vfx.cls);
+            });
+            const badge = document.getElementById('opt-vfx-badge');
+            if (badge) badge.innerText = vfx.label;
+            showToast(`Filtre vidéo : ${vfx.label}`, "info");
+        };
+
+        window.triggerRandomSurpriseVideo = () => {
+            const container = document.getElementById('feed-container');
+            const cards = container ? Array.from(container.querySelectorAll('.video-card')) : [];
+            if (cards.length > 1) {
+                const randomCard = cards[Math.floor(Math.random() * cards.length)];
+                randomCard.scrollIntoView({ behavior: 'smooth' });
+                showToast("🎲 Vidéo Surprise Aléatoire !", "info");
+            } else {
+                loadFeed();
+                showToast("Actualisation du flux Live ! ⚡", "info");
+            }
+        };
+
+        // ============================================================================
+        // DATE & TIMESTAMP FORMATTER
         // ============================================================================
         function formatDateStamp(ts) {
             if (!ts) return "À l'instant";
@@ -1482,7 +1997,6 @@
             return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
         }
 
-        // Non-blocking Modern Toast System
         window.showToast = (message, type = 'info') => {
             const container = document.getElementById('toast-container');
             if (!container) return;
@@ -1506,6 +2020,7 @@
         // --- SETTINGS MODAL HANDLERS ---
         window.openSettingsModal = () => {
             document.getElementById('setting-aspect-mode').value = appSettings.aspectMode;
+            document.getElementById('setting-autoscroll').checked = appSettings.autoScroll;
             document.getElementById('setting-preload').checked = appSettings.preloadNext;
             document.getElementById('setting-datasaver').checked = appSettings.dataSaver;
             document.getElementById('setting-default-speed').value = String(appSettings.defaultSpeed);
@@ -1526,6 +2041,10 @@
                 applyFitModeToAllFeedVideos(val);
                 updateFeedFitHeaderLabel();
                 showToast(val === 'contain' ? "Proportions originales activées" : "Plein écran 9:16 activé", "success");
+            } else if (key === 'autoScroll') {
+                safeSetStorage('rv_auto_scroll', String(val));
+                document.querySelectorAll('video').forEach(v => { v.loop = !val; });
+                showToast(val ? "Défilement automatique activé ⏭️" : "Lecture en boucle activée 🔁", "info");
             } else if (key === 'preloadNext') {
                 safeSetStorage('rv_preload_next', String(val));
             } else if (key === 'dataSaver') {
@@ -1606,12 +2125,11 @@
             element.innerText = val;
         }
 
-        // --- ADAPTIVE BITRATE LOGIC (Preserves natural aspect ratio!) ---
         function getNetworkConfig() {
             if (appSettings.dataSaver) {
-                return { width: 320, quality: 'q_auto:low' };
+                return { width: 240, quality: 'q_auto:low' };
             }
-            let config = { width: 480, quality: 'q_auto:good' }; 
+            let config = { width: 320, quality: 'q_auto:eco' }; 
             const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
             if (connection) {
                 if (connection.saveData) {
@@ -1626,10 +2144,10 @@
                         config = { width: 360, quality: 'q_auto:eco' };
                         break;
                     case '4g':
-                        config = { width: 540, quality: 'q_auto:good' };
+                        config = { width: 480, quality: 'q_auto:good' };
                         break;
                     default:
-                        config = { width: 480, quality: 'q_auto:good' };
+                        config = { width: 320, quality: 'q_auto:eco' };
                         break;
                 }
             }
@@ -1650,8 +2168,8 @@
 
         function formatDescription(text) {
             if (!text) return "";
-            let formatted = text.replace(/#(\w+)/g, '<span class="text-cyan-400 font-bold cursor-pointer hover:underline" onclick="filterFeedByHashtag(\'$1\', event)">#$1</span>');
-            formatted = formatted.replace(/@([\w\.\-]+)/g, '<span class="text-rose-400 font-bold cursor-pointer hover:underline" onclick="findUserByHandle(\'$1\', event)">@$1</span>');
+            let formatted = text.replace(/#(\w+)/g, '<span class="text-white font-extrabold cursor-pointer hover:underline" onclick="filterFeedByHashtag(\'$1\', event)">#$1</span>');
+            formatted = formatted.replace(/@([\w\.\-]+)/g, '<span class="text-cyan-300 font-extrabold cursor-pointer hover:underline" onclick="findUserByHandle(\'$1\', event)">@$1</span>');
             return formatted;
         }
 
@@ -1827,14 +2345,13 @@
             return num;
         }
 
-        // Preserve original aspect ratio using c_limit so lightweight/landscape/square videos never get cropped
         function getOptimizedVideoUrl(url, ignoredWidth, trimStart = 0, trimEnd = 0) {
             if (!url) return "";
             const netConfig = getNetworkConfig();
             const width = netConfig.width;
             const quality = netConfig.quality;
             if (url.includes("cloudinary.com")) {
-                let transformation = `${quality},f_auto,c_limit,w_${width}`;
+                let transformation = `${quality},f_auto,w_${width}`;
                 if (trimStart > 0 || (trimEnd > 0 && trimEnd < 9999)) {
                     transformation += `,so_${trimStart}`;
                     if (trimEnd > 0) transformation += `,eo_${trimEnd}`;
@@ -1847,7 +2364,11 @@
         // Mute / Unmute & Playback Speed Controls
         window.toggleGlobalMute = () => {
             isGlobalMuted = !isGlobalMuted;
-            document.querySelectorAll('video').forEach(v => { v.muted = isGlobalMuted; });
+            document.querySelectorAll('video').forEach(v => {
+                const parentCard = v.closest('.video-card');
+                const isActive = (v === activePlayingVideo) || (parentCard && parentCard.dataset.inView === "true");
+                v.muted = isActive ? isGlobalMuted : true;
+            });
             const icon = document.getElementById('feed-mute-icon');
             if (icon) {
                 icon.setAttribute('data-lucide', isGlobalMuted ? 'volume-x' : 'volume-2');
@@ -1860,7 +2381,10 @@
             const speeds = [1.0, 1.25, 1.5, 2.0, 0.75];
             const nextIdx = (speeds.indexOf(currentPlaybackRate) + 1) % speeds.length;
             currentPlaybackRate = speeds[nextIdx];
-            document.querySelectorAll('video').forEach(v => { v.playbackRate = currentPlaybackRate; });
+            document.querySelectorAll('video').forEach(v => {
+                v.preservesPitch = true;
+                v.playbackRate = currentPlaybackRate;
+            });
             const label = document.getElementById('current-speed-label');
             if (label) label.innerText = currentPlaybackRate + 'x';
             showToast(`Vitesse de lecture : ${currentPlaybackRate}x`, "info");
@@ -1980,7 +2504,7 @@
         }
 
         // ============================================================================
-        // UNIVERSAL EDIT, DELETE & PIN SYSTEM (Videos, Comments, Messages, Activities)
+        // UNIVERSAL EDIT, DELETE & PIN SYSTEM
         // ============================================================================
         let deleteAction = null;
         window.confirmAction = (title, action) => {
@@ -2025,7 +2549,6 @@
             });
         };
 
-        // Pin / Unpin Video
         window.togglePinVideo = async (docId, currentPinned) => {
             if (!checkAuth()) return;
             try {
@@ -2041,7 +2564,6 @@
             }
         };
 
-        // Universal Edit Modal Opener
         window.openEditVideoModal = async (docId) => {
             if (!checkAuth()) return;
             const snap = await getDoc(doc(db, "videos", docId));
@@ -2115,7 +2637,6 @@
             }
         };
 
-        // Pin / Unpin Comment
         window.togglePinComment = async (vidId, commentId, currentPinned) => {
             if (!checkAuth()) return;
             try {
@@ -2126,7 +2647,6 @@
             }
         };
 
-        // Pin / Unpin Chat Conversation or Message
         window.togglePinConversation = async (chatId, currentPinned, e) => {
             if (e) e.stopPropagation();
             try {
@@ -2143,7 +2663,6 @@
             } catch (err) {}
         };
 
-        // Delete Notification Item
         window.deleteNotificationItem = async (notifId, e) => {
             if (e) e.stopPropagation();
             if (!auth.currentUser) return;
@@ -2172,7 +2691,7 @@
             const ref = doc(db, "videos", docId); 
             
             const card = el.closest('.video-card');
-            const desc = card ? card.querySelector('.line-clamp-2, .line-clamp-3')?.innerText : "";
+            const desc = card ? card.querySelector('.video-desc-text')?.innerText : "";
             const tags = extractTags(desc);
             if(isFav) { 
                 el.classList.remove('favorited'); 
@@ -2354,13 +2873,15 @@
 
         function updateNavUI(screen) {
             document.querySelectorAll('.nav-item').forEach(el => {
-                el.classList.add('opacity-50');
-                el.classList.remove('opacity-100', 'text-[#ff2a5f]');
+                el.classList.add('opacity-70');
+                el.classList.remove('opacity-100');
+                el.querySelector('svg')?.classList.remove('fill-white');
             });
             const active = document.getElementById('nav-' + screen);
             if(active) {
-                active.classList.remove('opacity-50');
+                active.classList.remove('opacity-70');
                 active.classList.add('opacity-100');
+                if(screen === 'feed') active.querySelector('svg')?.classList.add('fill-white');
             }
         }
 
@@ -2391,11 +2912,11 @@
             const tabFollowing = document.getElementById('tab-following');
             const tabForyou = document.getElementById('tab-foryou');
             if (mode === 'following') {
-                tabFollowing.className = "px-3 py-1 rounded-xl text-[11px] font-bold text-white bg-gradient-to-r from-[#ff2a5f] to-rose-600 shadow-md cursor-pointer transition-all";
-                tabForyou.className = "px-3 py-1 rounded-xl text-[11px] font-bold text-gray-300 cursor-pointer transition-all";
+                tabFollowing.className = "text-[15px] font-extrabold text-white pb-1.5 border-b-[3px] border-white cursor-pointer transition-all text-shadow";
+                tabForyou.className = "text-[15px] font-bold text-white/65 pb-1.5 border-b-2 border-transparent cursor-pointer transition-all text-shadow";
             } else {
-                tabForyou.className = "px-3 py-1 rounded-xl text-[11px] font-bold text-white bg-gradient-to-r from-[#ff2a5f] to-rose-600 shadow-md cursor-pointer transition-all";
-                tabFollowing.className = "px-3 py-1 rounded-xl text-[11px] font-bold text-gray-300 cursor-pointer transition-all";
+                tabForyou.className = "text-[15px] font-extrabold text-white pb-1.5 border-b-[3px] border-white cursor-pointer transition-all text-shadow";
+                tabFollowing.className = "text-[15px] font-bold text-white/65 pb-1.5 border-b-2 border-transparent cursor-pointer transition-all text-shadow";
             }
             loadFeed();
         };
@@ -2406,12 +2927,14 @@
             await updateDoc(ref, { createdAt: serverTimestamp() }).catch(e => console.log(e));
         };
         
-        window.toggleFollowFromFeed = async (uid, btn) => {
+        window.toggleFollowFromFeed = async (uid, btn, e) => {
+            if (e) e.stopPropagation();
             if (!checkAuth()) return;
-            btn.innerHTML = "✔️"; 
-            btn.classList.remove('bg-[#ff2a5f]', 'text-white', 'px-2.5'); 
-            btn.classList.add('text-emerald-400', 'px-1', 'bg-transparent', 'shadow-none'); 
+            btn.innerHTML = `<i data-lucide="check" class="w-3 h-3 text-white stroke-[3]"></i>`; 
+            btn.classList.remove('bg-[#ff2a5f]'); 
+            btn.classList.add('bg-emerald-500'); 
             btn.disabled = true;
+            lucide.createIcons();
             try { 
                 const tRef = doc(db, "users", uid); 
                 const mRef = doc(db, "users", auth.currentUser.uid); 
@@ -2434,9 +2957,12 @@
             } else {
                 btnDL.classList.add('hidden');
             }
+            document.getElementById('opt-reuse-sound').onclick = () => {
+                window.closeOptions();
+                window.openSoundSheet(id);
+            };
             document.getElementById('opt-report').onclick = () => { window.closeOptions(); window.reportVideo(id); };
 
-            // Owner / Admin controls (Pin, Edit, Delete)
             const ownerBox = document.getElementById('opt-owner-controls');
             const isOwner = auth.currentUser && (auth.currentUser.uid === authorId || (currentUserData && currentUserData.email === VIP_EMAIL));
             if (isOwner) {
@@ -2577,6 +3103,7 @@
                 let videos = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
+                    profileVideosData[doc.id] = data;
                     videos.push({ id: doc.id, ...data });
                 });
                 
@@ -2609,6 +3136,7 @@
                     const docId = data.id;
                     const iLiked = isGuestMode ? false : data.likedBy?.includes(auth.currentUser.uid);
                     const iFav = isGuestMode ? false : data.favorites?.includes(auth.currentUser.uid);
+                    const iReposted = isGuestMode ? false : data.repostedBy?.includes(auth.currentUser.uid);
                     const trimStart = data.trimStart || 0;
                     const trimEnd = data.trimEnd || 0;
                     const optimizedUrl = getOptimizedVideoUrl(data.url, 480, trimStart, trimEnd);
@@ -2621,90 +3149,116 @@
                     const isFollowing = isGuestMode ? false : (currentUserData.following && currentUserData.following.includes(data.userId));
                     const dateStr = formatDateStamp(data.createdAt);
                     const isPinned = !!data.isPinned;
+                    const soundLabel = escapeHtml(data.soundTitle || `Son original - ${data.username}`);
 
-                    // Determine video aspect fit mode: respect per-video choice or user's global setting
                     const fitMode = data.aspectMode || appSettings.aspectMode || 'contain';
                     const fitClass = fitMode === 'cover' ? 'object-cover' : 'object-contain';
+                    const vfxClass = VFX_FILTERS[currentVfxIndex]?.cls || 'vfx-none';
                     
                     const div = document.createElement('div');
-                    div.className = "video-card w-full h-full relative snap-start bg-[#05070e] overflow-hidden flex items-center justify-center";
+                    div.className = "video-card w-full h-full relative snap-start bg-black overflow-hidden flex items-center justify-center";
                     div.setAttribute('data-id', docId); 
                     div.setAttribute('data-src', optimizedUrl);
+                    div.setAttribute('data-trim-start', trimStart);
+                    div.setAttribute('data-trim-end', trimEnd);
                     
+                    const initialVideoSrc = memoryBlobUrls.get(optimizedUrl) || optimizedUrl;
                     div.innerHTML = `
-                        <video class="w-full h-full ${fitClass} pointer-events-none bg-black transition-all duration-200" loop playsinline preload="metadata"></video>
+                        <video class="w-full h-full ${fitClass} ${vfxClass} pointer-events-none bg-black" playsinline webkit-playsinline preload="none" src="${initialVideoSrc}"></video>
                         <div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 opacity-0">
-                            <div class="bg-black/50 rounded-2xl p-4 backdrop-blur-md border border-white/15 shadow-2xl">
-                                <i data-lucide="play" class="w-9 h-9 text-white fill-white ml-0.5"></i>
+                            <div class="bg-black/45 rounded-full p-4 backdrop-blur-md border border-white/15 shadow-2xl">
+                                <i data-lucide="play" class="w-10 h-10 text-white fill-white ml-0.5"></i>
                             </div>
                         </div>
                         <div class="absolute inset-0 z-10" onclick="togglePlay(this)" ondblclick="handleDoubleTap(event, '${docId}', '${data.userId}')"></div>
-                        <div class="absolute inset-x-0 bottom-0 h-60 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>
+                        <div class="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black/80 via-black/25 to-transparent pointer-events-none"></div>
                         
-                        <!-- SIGNATURE NEO-CAPSULE ACTION DOCK (Bottom-Middle-Right, Compact & Unique) -->
-                        <div class="neo-action-dock">
-                            <div class="relative mb-1 cursor-pointer" onclick="viewUserProfile('${data.userId}')">
-                                <div class="w-10 h-10 rounded-2xl p-[1.5px] bg-gradient-to-tr from-[#ff2a5f] to-cyan-400 shadow-md transition transform hover:scale-105">
-                                    <div class="w-full h-full rounded-[14px] overflow-hidden bg-black">
-                                        ${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}
-                                    </div>
+                        <!-- TRANSPARENT RIGHT REACTION COLUMN (Matches Reference Image) -->
+                        <div class="transparent-reaction-rail">
+                            <!-- Creator Avatar with pink '+' badge -->
+                            <div class="relative mb-2 cursor-pointer" onclick="viewUserProfile('${data.userId}')">
+                                <div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black shadow-lg transition transform hover:scale-105">
+                                    ${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}
                                 </div>
+                                ${!isMe && !isFollowing ? `<button onclick="toggleFollowFromFeed('${data.userId}', this, event)" class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-[#ff2a5f] text-white flex items-center justify-center shadow-md border border-black"><i data-lucide="plus" class="w-3 h-3 stroke-[3]"></i></button>` : ''}
                             </div>
 
-                            <div class="flex flex-col items-center gap-0.5 cursor-pointer group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${docId}', this, '${data.userId}')">
+                            <!-- Heart / Like -->
+                            <div class="reaction-btn-item group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${docId}', this, '${data.userId}')">
                                 <div class="action-circle">
-                                    <i data-lucide="heart" class="w-5 h-5 like-icon ${iLiked ? 'fill-red-500 text-red-500' : 'text-white'} transition-all"></i>
+                                    <i data-lucide="heart" class="w-8 h-8 like-icon ${iLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-white fill-white/90'} transition-all"></i>
                                 </div>
-                                <span class="text-[10px] font-extrabold text-shadow like-count">${formatCount(data.likes)}</span>
+                                <span class="text-xs font-bold text-shadow like-count">${formatCount(data.likes)}</span>
                             </div>
 
-                            <div class="flex flex-col items-center gap-0.5 cursor-pointer" onclick="openComments('${docId}', ${data.allowComments})">
+                            <!-- Comment -->
+                            <div class="reaction-btn-item" onclick="openComments('${docId}', ${data.allowComments})">
                                 <div class="action-circle">
-                                    <i data-lucide="message-circle" class="w-5 h-5 text-white"></i>
+                                    <i data-lucide="message-circle" class="w-8 h-8 text-white fill-white/90"></i>
                                 </div>
-                                <span class="text-[10px] font-extrabold text-shadow comment-count">${formatCount(data.commentCount)}</span>
+                                <span class="text-xs font-bold text-shadow comment-count">${formatCount(data.commentCount)}</span>
                             </div>
 
-                            <div class="flex flex-col items-center gap-0.5 cursor-pointer ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${docId}', this)">
+                            <!-- Bookmark / Favorite -->
+                            <div class="reaction-btn-item ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${docId}', this)">
                                 <div class="action-circle">
-                                    <i data-lucide="bookmark" class="w-5 h-5 fav-icon ${iFav ? 'fill-yellow-500 text-yellow-500' : 'text-white'} transition-all"></i>
+                                    <i data-lucide="bookmark" class="w-8 h-8 fav-icon ${iFav ? 'fill-yellow-400 text-yellow-400' : 'text-white fill-white/90'} transition-all"></i>
                                 </div>
-                                <span class="text-[10px] font-extrabold text-shadow fav-text">${formatCount(data.favorites ? data.favorites.length : 0)}</span>
+                                <span class="text-xs font-bold text-shadow fav-text">${formatCount(data.favorites ? data.favorites.length : 0)}</span>
                             </div>
 
-                            <div class="flex flex-col items-center cursor-pointer" onclick="openOptions('${docId}', '${data.url}', '${safeUsername}', ${allowDL}, '${data.userId}', ${isPinned})">
+                            <!-- Share / More Options -->
+                            <div class="reaction-btn-item" onclick="openOptions('${docId}', '${data.url}', '${safeUsername}', ${allowDL}, '${data.userId}', ${isPinned})">
                                 <div class="action-circle">
-                                    <i data-lucide="more-horizontal" class="w-5 h-5 text-white"></i>
+                                    <i data-lucide="redo-2" class="w-8 h-8 text-white"></i>
+                                </div>
+                                <span class="text-xs font-bold text-shadow">${formatCount((data.views || 0) + (data.reposts || 0))}</span>
+                            </div>
+
+                            <!-- Spinning Music Disc (Opens Sound Reuse Sheet) -->
+                            <div class="mt-1 cursor-pointer" onclick="openSoundSheet('${docId}', event)" title="Réutiliser ce son">
+                                <div class="w-10 h-10 bg-gray-900 rounded-full border-[5px] border-gray-800/90 flex items-center justify-center overflow-hidden shadow-xl animate-spin-slow">
+                                    ${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Bottom-Left Creator Prism Card (Dated, Pinned, Editable) -->
-                        <div class="absolute bottom-20 left-3 right-20 z-20 text-left pointer-events-none">
-                            <div class="creator-prism-card pointer-events-auto">
-                                <div class="flex items-center justify-between gap-1 mb-1">
-                                    <div class="flex items-center gap-1.5 min-w-0">
-                                        <h3 class="font-extrabold font-display text-sm text-white truncate cursor-pointer flex items-center" onclick="viewUserProfile('${data.userId}')">@${safeUsername}${badge}</h3>
-                                        ${!isMe && !isFollowing ? `<button onclick="toggleFollowFromFeed('${data.userId}', this)" class="bg-[#ff2a5f] hover:bg-rose-600 text-white text-[9px] font-bold px-2.5 py-0.5 rounded-lg shadow transition active:scale-95 shrink-0">+ Suivre</button>` : ''}
-                                    </div>
-                                    <span class="text-[9px] text-gray-400 font-medium shrink-0 flex items-center gap-1">
-                                        ${isPinned ? `<span class="text-amber-400 font-bold flex items-center gap-0.5"><i data-lucide="pin" class="w-2.5 h-2.5"></i>Épinglé •</span>` : ''}
-                                        <i data-lucide="clock" class="w-2.5 h-2.5"></i> ${dateStr}
-                                    </span>
+                        <!-- TRANSPARENT BOTTOM-LEFT OVERLAY (Matches Reference Image: Tag chip, Repost pill, Username, Translation, Music) -->
+                        <div class="absolute bottom-16 left-3.5 right-20 z-20 text-left pointer-events-none flex flex-col items-start gap-1.5 max-w-xl">
+                            <!-- Dark Translucent Tag / Location Chip + Quick Fun Emoji Bar -->
+                            <div class="flex items-center gap-2 pointer-events-auto flex-wrap">
+                                ${data.location ? `<div class="creator-tag-chip"><i data-lucide="map-pin" class="w-3 h-3 text-cyan-400"></i> ${escapeHtml(data.location)}</div>` : `<div class="creator-tag-chip">${isPinned ? '📌 Épinglé • ' : ''}${dateStr}</div>`}
+                                <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-black/55 border border-white/10 text-xs">
+                                    <span onclick="triggerEmojiBurst('${docId}', '🔥', event)" class="cursor-pointer hover:scale-125 transition">🔥</span>
+                                    <span onclick="triggerEmojiBurst('${docId}', '😍', event)" class="cursor-pointer hover:scale-125 transition">😍</span>
+                                    <span onclick="triggerEmojiBurst('${docId}', '👏', event)" class="cursor-pointer hover:scale-125 transition">👏</span>
                                 </div>
-                                ${data.location ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/10 text-[9px] text-cyan-300 font-semibold mb-1"><i data-lucide="map-pin" class="w-2.5 h-2.5"></i> ${escapeHtml(data.location)}</div>` : ''}
-                                <p class="text-xs leading-snug mb-1.5 text-gray-100 line-clamp-2">${safeDesc}</p>
-                                <div class="flex items-center justify-between text-[10px] text-gray-300/90 pt-1 border-t border-white/10">
-                                    <div class="flex items-center gap-1.5 truncate">
-                                        <div class="flex items-end gap-0.5 h-2.5">
-                                            <span class="w-0.5 bg-[#ff2a5f] rounded-full eq-bar-1"></span>
-                                            <span class="w-0.5 bg-cyan-400 rounded-full eq-bar-2"></span>
-                                            <span class="w-0.5 bg-[#ff2a5f] rounded-full eq-bar-3"></span>
-                                        </div>
-                                        <span class="truncate">Audio original • @${safeUsername}</span>
-                                    </div>
-                                    ${isMe ? `<button onclick="openEditVideoModal('${docId}')" class="text-[10px] text-cyan-400 font-bold hover:underline flex items-center gap-0.5 ml-2 shrink-0"><i data-lucide="edit-2" class="w-2.5 h-2.5"></i>Modifier</button>` : ''}
-                                </div>
+                            </div>
+
+                            <!-- Frosted Pill: "Republier pour tes followers" -->
+                            <button onclick="toggleRepostVideo('${docId}', this, event)" class="repost-frosted-pill pointer-events-auto ${iReposted ? 'reposted' : ''}">
+                                <i data-lucide="repeat-2" class="w-3.5 h-3.5"></i>
+                                <span>${iReposted ? 'Republié pour tes followers ✓' : 'Republier pour tes followers'}</span>
+                            </button>
+
+                            <!-- Bold Creator Handle + Edit button if owner -->
+                            <div class="flex items-center gap-2 pointer-events-auto mt-0.5">
+                                <h3 class="font-extrabold font-display text-[16px] text-white text-shadow cursor-pointer flex items-center" onclick="viewUserProfile('${data.userId}')">${safeUsername}${badge}</h3>
+                                ${isMe ? `<button onclick="openEditVideoModal('${docId}')" class="text-[10px] px-2 py-0.5 rounded bg-white/15 text-cyan-300 font-bold hover:bg-white/25">Modifier</button>` : ''}
+                            </div>
+
+                            <!-- Description + "Voir la traduction" -->
+                            ${safeDesc ? `
+                            <div class="pointer-events-auto">
+                                <p class="video-desc-text text-[13px] leading-snug text-white/95 text-shadow line-clamp-2">${safeDesc}</p>
+                                <button onclick="translateVideoDescription('${docId}', this, event)" class="text-[11px] font-semibold text-white/75 hover:text-white mt-0.5 block text-shadow">Voir la traduction</button>
+                            </div>` : ''}
+
+                            <!-- Clickable Music / Sound Row ("♫ Contient : ...") -->
+                            <div onclick="openSoundSheet('${docId}', event)" class="flex items-center gap-2 text-xs font-semibold text-white/95 pointer-events-auto cursor-pointer hover:text-cyan-300 transition mt-0.5 text-shadow">
+                                <i data-lucide="music" class="w-3.5 h-3.5 shrink-0"></i>
+                                <span class="truncate max-w-[250px] md:max-w-[380px]">Contient : ${soundLabel}</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-white/15 border border-white/20 text-white font-bold shrink-0">Utiliser ce son</span>
                             </div>
                         </div>
 
@@ -2720,26 +3274,58 @@
                     const overlay = div.querySelector('.play-overlay');
                     const progressFill = div.querySelector('.video-progress-fill');
                     
-                    v.loop = true;
+                    v.loop = false;
                     v.muted = isGlobalMuted;
                     v.playbackRate = currentPlaybackRate;
 
                     const triggerBump = () => { if (!v.dataset.bumped) { v.dataset.bumped = "true"; handleBump(docId, data.userId); } };
+
+                    let lastProgressUpdate = 0;
                     v.addEventListener('timeupdate', () => {
                         if (v.currentTime > 10) triggerBump();
+                        // Watchdog for videos where audio track finishes slightly before video track
+                        if (v.duration > 0 && v.currentTime >= v.duration - 0.35) {
+                            if (v.eofTimer) clearTimeout(v.eofTimer);
+                            const remainingMs = Math.max(80, (v.duration - v.currentTime) * 1000 + 80);
+                            v.eofTimer = setTimeout(() => {
+                                if (div.dataset.inView === "true" && div.dataset.userPaused !== "true" && v.duration > 0 && (v.ended || v.paused || v.currentTime >= v.duration - 0.35)) {
+                                    triggerBump();
+                                    restartOrAdvanceVideo(v, div);
+                                }
+                            }, remainingMs);
+                        }
+                        const now = performance.now();
+                        if (now - lastProgressUpdate < 200) return;
+                        lastProgressUpdate = now;
                         if (v.duration && progressFill) {
                             const pct = (v.currentTime / v.duration) * 100;
                             progressFill.style.width = `${pct}%`;
                         }
                     });
-                    v.addEventListener('ended', () => { 
-                        v.currentTime = 0; 
-                        v.play().catch(()=>{}); 
-                        triggerBump(); 
+
+                    v.addEventListener('ended', () => {
+                        triggerBump();
+                        restartOrAdvanceVideo(v, div);
                     });
-                    v.addEventListener('play', () => { clearTimeout(v.playOverlayTimeout); overlay.classList.add('opacity-0'); overlay.classList.remove('opacity-100'); });
-                    v.addEventListener('pause', () => { v.playOverlayTimeout = setTimeout(() => { if (v.paused) { overlay.classList.remove('opacity-0'); overlay.classList.add('opacity-100'); } }, 300); });
-                    if (v.paused) { v.playOverlayTimeout = setTimeout(() => { overlay.classList.remove('opacity-0'); overlay.classList.add('opacity-100'); }, 300); }
+
+                    v.addEventListener('play', () => {
+                        clearTimeout(v.playOverlayTimeout);
+                        overlay.classList.add('opacity-0');
+                        overlay.classList.remove('opacity-100');
+                    });
+                    v.addEventListener('pause', () => {
+                        if (div.dataset.inView === "true" && div.dataset.userPaused !== "true" && v.duration > 0 && (v.ended || v.currentTime >= v.duration - 0.35)) {
+                            triggerBump();
+                            restartOrAdvanceVideo(v, div);
+                            return;
+                        }
+                        v.playOverlayTimeout = setTimeout(() => {
+                            if (v.paused && div.dataset.inView === "true") {
+                                overlay.classList.remove('opacity-0');
+                                overlay.classList.add('opacity-100');
+                            }
+                        }, 300);
+                    });
                     
                     if(videoObserver) videoObserver.observe(div);
                 });
@@ -2781,6 +3367,7 @@
             if(!checkAuth()) return;
             document.getElementById('video-file-input').value = "";
             const v = document.getElementById('video-preview');
+            v.pause();
             v.src = "";
             v.classList.add('hidden');
             document.getElementById('video-controls-overlay').classList.add('hidden');
@@ -2807,7 +3394,6 @@
                     document.getElementById('trim-end').value = Math.floor(maxDur); 
                     document.getElementById('trim-duration-display').innerText = Math.floor(maxDur) + 's';
 
-                    // Detect natural video proportions and respect them automatically
                     const w = v.videoWidth || 9;
                     const h = v.videoHeight || 16;
                     const ratioBadge = document.getElementById('upload-detected-ratio');
@@ -2830,7 +3416,7 @@
                     };
                 };
                 
-                v.play(); 
+                playVideoSynchronized(v);
                 const area = document.getElementById('upload-preview-area'); const icon = area.querySelector('i') || area.querySelector('svg'); if(icon) icon.classList.add('hidden'); const text = area.querySelector('p'); if(text) text.classList.add('hidden');
                 const controls = document.getElementById('video-controls-overlay'); controls.classList.remove('hidden'); controls.classList.add('flex');
             } 
@@ -2850,7 +3436,7 @@
             if (end <= start + 5) { end = Math.min(v.duration, start + 5); if (end - start < 5 && start > 5) { start = end - 5; } }
             document.getElementById('trim-start').value = start.toFixed(1); document.getElementById('trim-end').value = end.toFixed(1);
             document.getElementById('trim-duration-display').innerText = Math.round(end - start) + 's';
-            v.currentTime = start; v.play(); v.ontimeupdate = null; v.ontimeupdate = () => { if(v.currentTime >= end) { v.currentTime = start; v.play(); } };
+            v.currentTime = start; v.play().catch(()=>{}); v.ontimeupdate = null; v.ontimeupdate = () => { if(v.currentTime >= end) { v.currentTime = start; v.play().catch(()=>{}); } };
         };
         window.uploadVideo = async () => {
             const f = document.getElementById('video-file-input').files[0];
@@ -2866,6 +3452,7 @@
             const allowComments = document.getElementById('opt-comments').checked;
             const allowDownloads = document.getElementById('opt-downloads').checked;
             const allowDuet = document.getElementById('opt-duet').checked;
+            const customSoundInput = document.getElementById('video-sound-title').value.trim();
             
             let desc = document.getElementById('video-desc').value;
             const tags = document.getElementById('video-tags').value;
@@ -2878,6 +3465,10 @@
                    }
                });
             }
+            const soundTitle = customSoundInput || (selectedSoundForUpload ? selectedSoundForUpload.soundTitle : `${currentUserData.username} - Son original`);
+            const soundAuthor = selectedSoundForUpload ? selectedSoundForUpload.soundAuthor : currentUserData.username;
+            const soundSourceId = selectedSoundForUpload ? selectedSoundForUpload.sourceVideoId : null;
+
             try {
                 document.getElementById('upload-status').innerText = "Téléversement haute vitesse en cours...";
                 const url = await uploadToCloudinary(f);
@@ -2898,6 +3489,9 @@
                     trimEnd: trimEnd,
                     visibility: visibility,
                     aspectMode: aspectMode,
+                    soundTitle: escapeHtml(soundTitle),
+                    soundAuthor: escapeHtml(soundAuthor),
+                    soundSourceId: soundSourceId,
                     isPinned: false,
                     thumbnailOffset: thumbnailOffset,
                     location: escapeHtml(location),
@@ -2905,53 +3499,92 @@
                     allowDownloads: allowDownloads,
                     allowDuet: allowDuet
                 });
-                window.deleteVideoFile(); document.getElementById('video-desc').value = ""; document.getElementById('video-location').value = ""; document.getElementById('video-tags').value = ""; document.getElementById('upload-status').innerText = "";
+                window.deleteVideoFile();
+                window.clearSelectedUploadSound();
+                document.getElementById('video-desc').value = "";
+                document.getElementById('video-location').value = "";
+                document.getElementById('video-tags').value = "";
+                document.getElementById('upload-status').innerText = "";
                 window.closeModal('upload-modal');
-                showToast("Vidéo publiée avec ses proportions ! 🎉", "success");
+                showToast("Vidéo publiée avec succès ! 🎉", "success");
                 navigateTo('feed');
             } catch(e) { showToast(e.message, "error"); } finally { btn.disabled=false; btn.innerHTML=originalText; }
         };
 
-        window.togglePlay = (el) => { const v = el.parentElement.querySelector('video'); v.paused ? v.play().catch(()=>{}) : v.pause(); };
+        window.togglePlay = (el) => {
+            const card = el.parentElement;
+            const v = card.querySelector('video');
+            const overlay = card.querySelector('.play-overlay');
+            if (v.paused) {
+                card.dataset.userPaused = "false";
+                playVideoSynchronized(v, card, false);
+            } else {
+                card.dataset.userPaused = "true";
+                v.pause();
+                if (overlay) {
+                    overlay.classList.remove('opacity-0');
+                    overlay.classList.add('opacity-100');
+                }
+            }
+        };
+
         window.handleDoubleTap = (e, docId, authorId) => { e.stopPropagation(); const rect = e.target.getBoundingClientRect(); const x = e.clientX - rect.left; const y = e.clientY - rect.top; const heart = document.createElement('div'); heart.innerHTML = `<i data-lucide="heart" class="w-24 h-24 fill-[#ff2a5f] text-[#ff2a5f]"></i>`; heart.className = 'big-heart'; heart.style.left = x + 'px'; heart.style.top = y + 'px'; e.target.parentElement.appendChild(heart); lucide.createIcons(); setTimeout(() => heart.remove(), 850); const card = e.target.closest('.video-card'); const likeBtn = card.querySelector('.group'); if (!likeBtn.classList.contains('liked')) toggleLike(docId, likeBtn, authorId); };
 
-        // Smooth Playback + Smart Cache Hydration + Next-Card Preloading
+        // Native Synchronous Video Playback (Zero async lag + Instant Loop + Restart at 0s on Video Switch)
         function handleVideoPlayback() { 
             if(videoObserver) videoObserver.disconnect(); 
             const options = { root: document.getElementById('feed-container'), threshold: 0.6 }; 
             videoObserver = new IntersectionObserver((entries) => { 
-                entries.forEach(async (entry) => { 
-                    const v = entry.target.querySelector('video'); 
+                entries.forEach((entry) => { 
+                    const card = entry.target;
+                    const v = card.querySelector('video'); 
                     if (!v) return;
-                    const sourceUrl = entry.target.getAttribute('data-src');
+                    const sourceUrl = card.getAttribute('data-src');
+                    const progressFill = card.querySelector('.video-progress-fill');
+
                     if(entry.isIntersecting) { 
-                        if (!v.src && sourceUrl) {
-                            const cachedOrDirect = await getCachedVideoBlobUrl(sourceUrl);
-                            v.src = cachedOrDirect;
-                        }
-                        v.muted = isGlobalMuted;
-                        v.playbackRate = currentPlaybackRate;
-                        if (v.paused) { 
-                            v.preload = "auto";
-                            v.play().catch(()=>{}); 
-                        }
-                        
-                        // Preload next video into cache for zero-buffer scrolling
-                        if (appSettings.preloadNext) {
-                            const nextCard = entry.target.nextElementSibling;
-                            if (nextCard) {
-                                const nextUrl = nextCard.getAttribute('data-src');
-                                if (nextUrl) getCachedVideoBlobUrl(nextUrl);
-                            }
+                        card.dataset.inView = "true";
+                        card.dataset.userPaused = "false";
+                        if (progressFill) progressFill.style.width = '0%';
+
+                        const targetSrc = memoryBlobUrls.get(sourceUrl) || sourceUrl;
+                        if (!v.getAttribute('src') && targetSrc) {
+                            v.src = targetSrc;
+                            v.load();
+                        } else if (v.readyState >= 1 && v.currentTime > 0.05) {
+                            try { v.currentTime = 0; } catch (e) {}
                         }
 
-                        const vidId = entry.target.getAttribute('data-id'); 
+                        playVideoSynchronized(v, card, false);
+
+                        const nextCard = card.nextElementSibling;
+                        const nextUrl = (appSettings.preloadNext && nextCard) ? nextCard.getAttribute('data-src') : null;
+                        scheduleDeferredVideoCache(sourceUrl, v, nextUrl);
+
+                        const vidId = card.getAttribute('data-id'); 
                         if(vidId && !viewedVideos.has(vidId)) { 
                             viewedVideos.add(vidId); 
                             updateDoc(doc(db, "videos", vidId), { views: increment(1) }).catch(()=>{}); 
                         }
                     } else { 
-                        v.pause(); 
+                        card.dataset.inView = "false";
+                        card.dataset.userPaused = "false";
+                        v.pause();
+                        if (v.readyState >= 1 && v.currentTime > 0) {
+                            try { v.currentTime = 0; } catch (e) {}
+                        }
+                        if (progressFill) progressFill.style.width = '0%';
+
+                        const container = document.getElementById('feed-container');
+                        if (container) {
+                            const children = Array.from(container.children);
+                            const myIndex = children.indexOf(card);
+                            const visibleIndex = Math.round(container.scrollTop / (container.clientHeight || 1));
+                            if (myIndex !== -1 && Math.abs(myIndex - visibleIndex) > 2) {
+                                v.removeAttribute('src');
+                                v.load();
+                            }
+                        }
                     } 
                 }); 
             }, options); 
@@ -2966,17 +3599,17 @@
             const ref = doc(db, "videos", docId); 
             
             const card = el.closest('.video-card');
-            const desc = card ? card.querySelector('.line-clamp-2, .line-clamp-3')?.innerText : "";
+            const desc = card ? card.querySelector('.video-desc-text')?.innerText : "";
             const tags = extractTags(desc);
             if(isLiked) { 
                 el.classList.remove('liked'); 
-                el.querySelector('svg')?.classList.remove('fill-red-500','text-red-500'); 
+                el.querySelector('svg')?.classList.remove('fill-[#ff2a5f]','text-[#ff2a5f]'); 
                 el.querySelector('svg')?.classList.add('text-white'); 
                 updateCountUI(countSpan, -1);
                 await updateDoc(ref, {likes: increment(-1), likedBy: arrayRemove(auth.currentUser.uid)}); 
             } else { 
                 el.classList.add('liked'); 
-                el.querySelector('svg')?.classList.add('fill-red-500','text-red-500','like-animation'); 
+                el.querySelector('svg')?.classList.add('fill-[#ff2a5f]','text-[#ff2a5f]','like-animation'); 
                 el.querySelector('svg')?.classList.remove('text-white'); 
                 setTimeout(()=>el.querySelector('svg')?.classList.remove('like-animation'),380); 
                 updateCountUI(countSpan, 1);
@@ -3028,13 +3661,11 @@
             inp.focus();
         };
 
-        // Comments with Pinning, Editing, Deleting & Timestamps
         function loadComments(id) { 
             const list = document.getElementById('comments-list'); list.innerHTML = "<div class='text-center text-xs text-gray-400 py-6'>Chargement des commentaires...</div>"; 
             onSnapshot(query(collection(db, `videos/${id}/comments`), orderBy("createdAt", "asc")), (snap) => { 
                 let commentsArr = [];
                 snap.forEach(d => commentsArr.push({ id: d.id, ...d.data() }));
-                // Sort pinned comments first, then chronological
                 commentsArr.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
 
                 let html = ""; 
@@ -3153,7 +3784,6 @@
             }
         };
 
-        // Activities with Timestamps & Individual Delete
         function loadActivities() {
             const list = document.getElementById('inbox-content');
             list.innerHTML = "<div class='text-center text-xs text-gray-500 mt-8'>Chargement des activités...</div>";
@@ -3192,7 +3822,6 @@
             });
         }
 
-        // Conversations with Pinning, Timestamps & Delete
         function loadConversations() {
             const list = document.getElementById('inbox-content');
             list.innerHTML = "<div class='text-center text-xs text-gray-500 mt-8'>Chargement des messages...</div>";
@@ -3331,57 +3960,101 @@
         window.openFullVideo = async (id) => { 
             const data = profileVideosData[id]; 
             if (!data) return; 
+            // Pause any background feed video first so audio never overlaps
+            document.querySelectorAll('video').forEach(v => v.pause());
+
             const overlay = document.getElementById('fullscreen-video-overlay'); 
             const container = document.getElementById('fullscreen-video-container'); 
             const iLiked = data.likedBy?.includes(auth.currentUser?.uid); 
             const iFav = data.favorites?.includes(auth.currentUser?.uid); 
+            const iReposted = data.repostedBy?.includes(auth.currentUser?.uid);
             const rawUrl = getOptimizedVideoUrl(data.url, 720, data.trimStart || 0, data.trimEnd || 0);
             const cachedUrl = await getCachedVideoBlobUrl(rawUrl);
             const badge = getBadgeHtml(data.isVerified);
             const fitMode = data.aspectMode || appSettings.aspectMode || 'contain';
             const fitClass = fitMode === 'cover' ? 'object-cover' : 'object-contain';
             const dateStr = formatDateStamp(data.createdAt);
+            const soundLabel = escapeHtml(data.soundTitle || `Son original - ${data.username}`);
 
             const html = `
-            <div class="video-card w-full h-full relative bg-black flex items-center justify-center" data-id="${id}">
-                <video class="w-full h-full ${fitClass}" loop playsinline autoplay src="${cachedUrl}"></video>
-                <div class="absolute inset-0 z-10" onclick="togglePlay(this)" ondblclick="handleDoubleTap(event, '${id}', '${data.userId}')"></div>
-                <div class="neo-action-dock">
-                    <div class="relative mb-1 cursor-pointer" onclick="viewUserProfile('${data.userId}'); closeFullVideo()">
-                        <div class="w-10 h-10 rounded-2xl border-2 border-white overflow-hidden bg-black">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div>
-                    </div>
-                    <div class="flex flex-col items-center gap-0.5 cursor-pointer group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${id}', this, '${data.userId}')">
-                        <div class="action-circle"><i data-lucide="heart" class="w-5 h-5 ${iLiked ? 'fill-red-500 text-red-500' : 'text-white'}"></i></div>
-                        <span class="text-[10px] font-bold text-shadow like-count">${formatCount(data.likes)}</span>
-                    </div>
-                    <div class="flex flex-col items-center gap-0.5 cursor-pointer" onclick="openComments('${id}')">
-                        <div class="action-circle"><i data-lucide="message-circle" class="w-5 h-5 text-white"></i></div>
-                        <span class="text-[10px] font-bold text-shadow comment-count">${formatCount(data.commentCount)}</span>
-                    </div>
-                    <div class="flex flex-col items-center gap-0.5 cursor-pointer ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${id}', this)">
-                        <div class="action-circle"><i data-lucide="bookmark" class="w-5 h-5 ${iFav ? 'fill-yellow-500 text-yellow-500' : 'text-white'}"></i></div>
-                        <span class="text-[10px] font-bold text-shadow fav-text">${formatCount(data.favorites ? data.favorites.length : 0)}</span>
-                    </div>
-                    <div class="flex flex-col items-center cursor-pointer" onclick="openOptions('${id}', '${data.url}', '${escapeHtml(data.username)}', ${data.allowDownloads !== false}, '${data.userId}', ${!!data.isPinned})">
-                        <div class="action-circle"><i data-lucide="more-horizontal" class="w-5 h-5 text-white"></i></div>
+            <div class="video-card w-full h-full relative bg-black flex items-center justify-center" data-id="${id}" data-in-view="true">
+                <video id="fullscreen-active-video" class="w-full h-full ${fitClass}" loop playsinline preload="auto" src="${cachedUrl}"></video>
+                <div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 opacity-0">
+                    <div class="bg-black/45 rounded-full p-4 backdrop-blur-md border border-white/15 shadow-2xl">
+                        <i data-lucide="play" class="w-10 h-10 text-white fill-white ml-0.5"></i>
                     </div>
                 </div>
-                <div class="absolute bottom-10 left-3 right-20 z-20 text-left pointer-events-none">
-                    <div class="creator-prism-card pointer-events-auto">
-                        <div class="flex items-center justify-between mb-1">
-                            <h3 class="font-bold text-sm text-shadow flex items-center">@${escapeHtml(data.username)}${badge}</h3>
-                            <span class="text-[9px] text-gray-400">${dateStr}</span>
+                <div class="absolute inset-0 z-10" onclick="togglePlay(this)" ondblclick="handleDoubleTap(event, '${id}', '${data.userId}')"></div>
+                <div class="absolute inset-x-0 bottom-0 h-60 bg-gradient-to-t from-black/80 via-black/25 to-transparent pointer-events-none"></div>
+                <div class="transparent-reaction-rail">
+                    <div class="relative mb-2 cursor-pointer" onclick="viewUserProfile('${data.userId}'); closeFullVideo()">
+                        <div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div>
+                    </div>
+                    <div class="reaction-btn-item group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${id}', this, '${data.userId}')">
+                        <div class="action-circle"><i data-lucide="heart" class="w-8 h-8 ${iLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-white fill-white/90'}"></i></div>
+                        <span class="text-xs font-bold text-shadow like-count">${formatCount(data.likes)}</span>
+                    </div>
+                    <div class="reaction-btn-item" onclick="openComments('${id}')">
+                        <div class="action-circle"><i data-lucide="message-circle" class="w-8 h-8 text-white fill-white/90"></i></div>
+                        <span class="text-xs font-bold text-shadow comment-count">${formatCount(data.commentCount)}</span>
+                    </div>
+                    <div class="reaction-btn-item ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${id}', this)">
+                        <div class="action-circle"><i data-lucide="bookmark" class="w-8 h-8 ${iFav ? 'fill-yellow-400 text-yellow-400' : 'text-white fill-white/90'}"></i></div>
+                        <span class="text-xs font-bold text-shadow fav-text">${formatCount(data.favorites ? data.favorites.length : 0)}</span>
+                    </div>
+                    <div class="reaction-btn-item" onclick="openOptions('${id}', '${data.url}', '${escapeHtml(data.username)}', ${data.allowDownloads !== false}, '${data.userId}', ${!!data.isPinned})">
+                        <div class="action-circle"><i data-lucide="redo-2" class="w-8 h-8 text-white"></i></div>
+                        <span class="text-xs font-bold text-shadow">Options</span>
+                    </div>
+                    <div class="mt-1 cursor-pointer" onclick="openSoundSheet('${id}', event)">
+                        <div class="w-10 h-10 bg-gray-900 rounded-full border-[5px] border-gray-800/90 flex items-center justify-center overflow-hidden shadow-xl animate-spin-slow">
+                            ${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}
                         </div>
-                        <p class="text-xs text-gray-100 line-clamp-3">${formatDescription(escapeHtml(data.description))}</p>
+                    </div>
+                </div>
+                <div class="absolute bottom-12 left-3.5 right-20 z-20 text-left pointer-events-none flex flex-col items-start gap-1.5">
+                    <div class="creator-tag-chip pointer-events-auto">${dateStr}</div>
+                    <button onclick="toggleRepostVideo('${id}', this, event)" class="repost-frosted-pill pointer-events-auto ${iReposted ? 'reposted' : ''}">
+                        <i data-lucide="repeat-2" class="w-3.5 h-3.5"></i>
+                        <span>${iReposted ? 'Republié pour tes followers ✓' : 'Republier pour tes followers'}</span>
+                    </button>
+                    <h3 class="font-extrabold font-display text-[16px] text-white text-shadow flex items-center pointer-events-auto">${escapeHtml(data.username)}${badge}</h3>
+                    <p class="video-desc-text text-[13px] text-white/95 text-shadow line-clamp-3 pointer-events-auto">${formatDescription(escapeHtml(data.description))}</p>
+                    <div onclick="openSoundSheet('${id}', event)" class="flex items-center gap-2 text-xs font-semibold text-white/95 pointer-events-auto cursor-pointer hover:text-cyan-300 transition text-shadow">
+                        <i data-lucide="music" class="w-3.5 h-3.5 shrink-0"></i>
+                        <span class="truncate max-w-[240px]">Contient : ${soundLabel}</span>
                     </div>
                 </div>
             </div>`; 
             container.innerHTML = html; 
             overlay.classList.remove('hidden'); 
             overlay.classList.add('flex'); 
-            lucide.createIcons(); 
+            lucide.createIcons();
+            const fullVid = document.getElementById('fullscreen-active-video');
+            if (fullVid) {
+                const fullCard = fullVid.parentElement;
+                fullVid.addEventListener('ended', () => restartOrAdvanceVideo(fullVid, fullCard));
+                fullVid.addEventListener('timeupdate', () => {
+                    if (fullVid.duration > 0 && fullVid.currentTime >= fullVid.duration - 0.35) {
+                        if (fullVid.eofTimer) clearTimeout(fullVid.eofTimer);
+                        const rem = Math.max(80, (fullVid.duration - fullVid.currentTime) * 1000 + 80);
+                        fullVid.eofTimer = setTimeout(() => {
+                            if (fullCard.dataset.userPaused !== "true" && (fullVid.ended || fullVid.paused || fullVid.currentTime >= fullVid.duration - 0.35)) {
+                                restartOrAdvanceVideo(fullVid, fullCard);
+                            }
+                        }, rem);
+                    }
+                });
+                playVideoSynchronized(fullVid, fullCard, true);
+            }
         };
-        window.closeFullVideo = () => { const overlay = document.getElementById('fullscreen-video-overlay'); overlay.classList.add('hidden'); overlay.classList.remove('flex'); document.getElementById('fullscreen-video-container').innerHTML = ""; };
+        window.closeFullVideo = () => {
+            const overlay = document.getElementById('fullscreen-video-overlay');
+            overlay.querySelectorAll('video').forEach(v => v.pause());
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+            document.getElementById('fullscreen-video-container').innerHTML = "";
+        };
 
         window.openMyProfile = () => { 
             if(!checkAuth()) return; 
@@ -3463,14 +4136,14 @@
                 grid.appendChild(div);
             });
             if (count === 0) {
-                grid.innerHTML = "<div class='col-span-3 text-center text-gray-500 text-xs py-10'>Aucune vidéo dans cette catégorie pour le moment.</div>";
+                grid.innerHTML = "<div class='col-span-3 sm:col-span-4 md:col-span-5 text-center text-gray-500 text-xs py-10'>Aucune vidéo dans cette catégorie pour le moment.</div>";
             }
             lucide.createIcons();
         }
 
         window.loadTrendingVideos = async () => {
             const grid = document.getElementById('trending-grid');
-            grid.innerHTML = "<div class='col-span-3 text-center text-gray-500 text-xs py-8'>Chargement des tendances...</div>";
+            grid.innerHTML = "<div class='col-span-3 sm:col-span-4 md:col-span-5 text-center text-gray-500 text-xs py-8'>Chargement des tendances...</div>";
             
             try {
                 const q = query(collection(db, "videos"), orderBy("likes", "desc"), limit(21));
@@ -3520,7 +4193,7 @@
                     adminContainer.innerHTML = `<button onclick="toggleBan('${data.uid}')" class="w-full bg-rose-950 hover:bg-rose-900 text-rose-200 font-bold py-2.5 rounded-xl mt-2 border border-rose-500/40 uppercase tracking-widest text-[11px]">⚠️ Bannir cet utilisateur</button>`;
                 }
             } 
-            const grid = document.getElementById('profile-videos-grid'); grid.innerHTML = "<div class='col-span-3 text-center text-gray-500 text-xs py-8'>Chargement...</div>"; 
+            const grid = document.getElementById('profile-videos-grid'); grid.innerHTML = "<div class='col-span-3 sm:col-span-4 md:col-span-5 text-center text-gray-500 text-xs py-8'>Chargement...</div>"; 
             profileVideosData = {}; let likes = 0; const snap = await getDocs(query(collection(db, "videos"), orderBy("createdAt", "desc"))); 
             grid.innerHTML = "";
             let items = [];
@@ -3535,7 +4208,6 @@
                     items.push({ id: d.id, data: v });
                 }
             });
-            // Sort pinned videos first on profile
             items.sort((a, b) => (b.data.isPinned ? 1 : 0) - (a.data.isPinned ? 1 : 0));
 
             items.forEach(({ id, data: v }) => {
@@ -3561,7 +4233,7 @@
                 grid.appendChild(div);
             });
 
-            if(items.length === 0) grid.innerHTML = "<div class='col-span-3 text-center text-gray-500 text-xs py-10'>Aucune vidéo dans cet onglet.</div>";
+            if(items.length === 0) grid.innerHTML = "<div class='col-span-3 sm:col-span-4 md:col-span-5 text-center text-gray-500 text-xs py-10'>Aucune vidéo dans cet onglet.</div>";
             document.getElementById('profile-likes').innerText = formatCount(likes);
             lucide.createIcons(); 
         }
@@ -3592,15 +4264,15 @@
         async function initBotSystem() { await checkAndSpawnBot(); setInterval(checkAndSpawnBot, 60000); }
         async function checkAndSpawnBot() { try { const sysRef = doc(db, "system", "bot_config"); const snap = await getDoc(sysRef); let lastRun = 0; if (snap.exists()) { lastRun = snap.data().lastRun?.toMillis() || 0; } const now = Date.now(); if (now - lastRun > 1800000) { await setDoc(sysRef, { lastRun: serverTimestamp() }); await createAndActivateBot(); } } catch (e) {} }
         async function createAndActivateBot() { const fname = CAM_FIRST[Math.floor(Math.random() * CAM_FIRST.length)]; const lname = CAM_NAMES[Math.floor(Math.random() * CAM_NAMES.length)]; const username = `${fname}_${lname}${Math.floor(Math.random()*100)}`; const botId = "bot_" + crypto.randomUUID(); await setDoc(doc(db, "users", botId), { username: username, email: `${username.toLowerCase()}@bot.local`, photoURL: "", bio: "J'aime le Cameroun 🇨🇲", followers: [], following: [], blockedUsers: [], blockedBy: [], uid: botId, isVerified: false, isBot: true, createdAt: serverTimestamp() }); const videosSnap = await getDocs(query(collection(db, "videos"), limit(20))); if (!videosSnap.empty) { const videos = videosSnap.docs; const randomVideo = videos[Math.floor(Math.random() * videos.length)]; const vidData = randomVideo.data(); if (Math.random() > 0.5) { await updateDoc(doc(db, "videos", randomVideo.id), { likes: increment(1), likedBy: arrayUnion(botId) }); if (vidData.userId !== botId) { await addDoc(collection(db, "users", vidData.userId, "notifications"), { type: 'like', text: "a aimé votre vidéo", fromUid: botId, fromUsername: username, fromPhoto: "", createdAt: serverTimestamp(), read: false }); } } else { const comments = ["Super !", "J'adore 😍", "Propre", "Validé ✅", "Cameroun oye 🇨🇲", "Mdrrr", "Top", "Bien joué", "Le feu 🔥", "Respect"]; const txt = comments[Math.floor(Math.random() * comments.length)]; await addDoc(collection(db, `videos/${randomVideo.id}/comments`), { text: txt, userId: botId, username: username, userPhotoURL: "", likes: 0, likedBy: [], createdAt: serverTimestamp() }); await updateDoc(doc(db, "videos", randomVideo.id), { commentCount: increment(1) }); if (vidData.userId !== botId) { await addDoc(collection(db, "users", vidData.userId, "notifications"), { type: 'comment', text: "a commenté: " + txt, fromUid: botId, fromUsername: username, fromPhoto: "", createdAt: serverTimestamp(), read: false }); } } } }
-        (function() { let startY = 0; let currentY = 0; let isPulling = false; const threshold = 120; const bodyContent = document.getElementById('main-app-container'); const loader = document.getElementById('ptr-loader'); const spinner = document.getElementById('ptr-spinner'); const arrow = document.getElementById('ptr-arrow'); document.addEventListener('touchstart', (e) => { const activeScreen = document.querySelector('.screen.active'); if (!activeScreen) return; let scrollContainer = activeScreen.querySelector('.overflow-y-scroll, .overflow-y-auto'); if (!scrollContainer) scrollContainer = activeScreen; if (scrollContainer.scrollTop <= 0) { startY = e.touches[0].clientY; currentY = startY; isPulling = true; } else { isPulling = false; } }, { passive: true }); document.addEventListener('touchmove', (e) => { if (!isPulling) return; currentY = e.touches[0].clientY; const diff = currentY - startY; if (diff > 0) { const translateVal = Math.min(diff * 0.4, 150); loader.style.transform = `translateY(${translateVal - 64}px)`; if (translateVal > 60) { arrow.style.transform = "rotate(180deg)"; } else { arrow.style.transform = "rotate(0deg)"; } } }, { passive: true }); document.addEventListener('touchend', (e) => { if (!isPulling) return; isPulling = false; const diff = currentY - startY; if (diff > threshold) { loader.style.transform = `translateY(20px)`; arrow.classList.add('hidden'); spinner.classList.remove('hidden'); refreshCurrentScreen().then(() => { setTimeout(() => { loader.style.transform = ''; arrow.classList.remove('hidden'); arrow.style.transform = "rotate(0deg)"; spinner.classList.add('hidden'); }, 800); }); } else { loader.style.transform = ''; } }); })();
+        (function() { let startY = 0; let currentY = 0; let isPulling = false; const threshold = 120; const loader = document.getElementById('ptr-loader'); const spinner = document.getElementById('ptr-spinner'); const arrow = document.getElementById('ptr-arrow'); document.addEventListener('touchstart', (e) => { const activeScreen = document.querySelector('.screen.active'); if (!activeScreen) return; let scrollContainer = activeScreen.querySelector('.overflow-y-scroll, .overflow-y-auto'); if (!scrollContainer) scrollContainer = activeScreen; if (scrollContainer.scrollTop <= 0) { startY = e.touches[0].clientY; currentY = startY; isPulling = true; } else { isPulling = false; } }, { passive: true }); document.addEventListener('touchmove', (e) => { if (!isPulling) return; currentY = e.touches[0].clientY; const diff = currentY - startY; if (diff > 0) { const translateVal = Math.min(diff * 0.4, 150); loader.style.transform = `translateY(${translateVal - 64}px)`; if (translateVal > 60) { arrow.style.transform = "rotate(180deg)"; } else { arrow.style.transform = "rotate(0deg)"; } } }, { passive: true }); document.addEventListener('touchend', (e) => { if (!isPulling) return; isPulling = false; const diff = currentY - startY; if (diff > threshold) { loader.style.transform = `translateY(20px)`; arrow.classList.add('hidden'); spinner.classList.remove('hidden'); refreshCurrentScreen().then(() => { setTimeout(() => { loader.style.transform = ''; arrow.classList.remove('hidden'); arrow.style.transform = "rotate(0deg)"; spinner.classList.add('hidden'); }, 800); }); } else { loader.style.transform = ''; } }); })();
         
         // --- TRANSLATIONS ---
         const translations = {
             fr: {
-                app_created_by: "Application créée par", studio_name: "\"Le Studio Ralph Nyamè\". 2025", subtitle: "Réseau Social Vidéo", auth_success: "Compte créé ! Connectez-vous.", email_placeholder: "Email", pass_placeholder: "Mot de passe", forgot_pass: "Mot de passe oublié ?", login_btn: "Se connecter", no_account: "Pas encore de compte ?", signup_link: "S'inscrire", username_placeholder: "Nom d'utilisateur", privacy_text: "En cochant cette case, j'accepte la", privacy_link: "Politique de Confidentialité", register_btn: "Créer mon compte", has_account: "Déjà un compte ?", login_link: "Se connecter", reset_title: "Réinitialisation", reset_desc: "Entrez votre email pour recevoir un lien.", send_link_btn: "Envoyer le lien", back_login: "Retour à la connexion", tab_following: "Abonnements", tab_foryou: "Pour toi", nav_discover: "Découvrir", search_placeholder: "Rechercher des utilisateurs...", trending_title: "Top Vidéos", inbox_title: "Boîte de réception", tab_activities: "Activités", tab_messages: "Messages", profile_title: "Profil", following: "Abonnements", followers: "Abonnés", likes: "J'aime", edit_profile: "Modifier le profil", follow_btn: "S'abonner", message_btn: "Message", privacy_modal_title: "Politique de Confidentialité", close_btn: "Fermer", upload_title: "Nouvelle Publication", select_video: "Sélectionner une vidéo", desc_placeholder: "Décris ta vidéo... #Hashtags", publish_btn: "Publier", comments_title: "Commentaires", comment_placeholder: "Ajouter un commentaire...", options_share: "Partager la vidéo", options_download: "Enregistrer la vidéo", options_report: "Signaler le contenu", nav_home: "Accueil", nav_inbox: "Boîte", nav_profile: "Profil", offline_title: "Pas de connexion internet", offline_desc: "Vérifiez votre connexion et réessayez.", retry_btn: "Réessayer", reply: "Répondre", login_required_title: "Connexion requise", login_required_desc: "Connectez-vous pour aimer, commenter et publier des vidéos."
+                app_created_by: "Application créée par", studio_name: "\"Le Studio Ralph Nyamè\". 2025", subtitle: "Réseau Social Vidéo", auth_success: "Compte créé ! Connectez-vous.", email_placeholder: "Email", pass_placeholder: "Mot de passe", forgot_pass: "Mot de passe oublié ?", login_btn: "Se connecter", no_account: "Pas encore de compte ?", signup_link: "S'inscrire", username_placeholder: "Nom d'utilisateur", privacy_text: "En cochant cette case, j'accepte la", privacy_link: "Politique de Confidentialité", register_btn: "Créer mon compte", has_account: "Déjà un compte ?", login_link: "Se connecter", reset_title: "Réinitialisation", reset_desc: "Entrez votre email pour recevoir un lien.", send_link_btn: "Envoyer le lien", back_login: "Retour à la connexion", tab_following: "Suivis", tab_foryou: "Pour toi", nav_discover: "Amis", search_placeholder: "Rechercher des utilisateurs...", trending_title: "Top Vidéos", inbox_title: "Boîte de réception", tab_activities: "Activités", tab_messages: "Messages", profile_title: "Profil", following: "Abonnements", followers: "Abonnés", likes: "J'aime", edit_profile: "Modifier le profil", follow_btn: "S'abonner", message_btn: "Message", privacy_modal_title: "Politique de Confidentialité", close_btn: "Fermer", upload_title: "Nouvelle Publication", select_video: "Sélectionner une vidéo", desc_placeholder: "Décris ta vidéo... #Hashtags", publish_btn: "Publier", comments_title: "Commentaires", comment_placeholder: "Ajouter un commentaire...", options_share: "Partager la vidéo", options_download: "Enregistrer la vidéo", options_report: "Signaler le contenu", nav_home: "Accueil", nav_inbox: "Messages", nav_profile: "Profil", offline_title: "Pas de connexion internet", offline_desc: "Vérifiez votre connexion et réessayez.", retry_btn: "Réessayer", reply: "Répondre", login_required_title: "Connexion requise", login_required_desc: "Connectez-vous pour aimer, commenter et publier des vidéos."
             },
             en: {
-                app_created_by: "App created by", studio_name: "\"Ralph Nyamè Studio\". 2025", subtitle: "Video Social Network", auth_success: "Account created! Please login.", email_placeholder: "Email", pass_placeholder: "Password", forgot_pass: "Forgot password?", login_btn: "Login", no_account: "No account yet?", signup_link: "Sign up", username_placeholder: "Username", privacy_text: "By checking this, I accept the", privacy_link: "Privacy Policy", register_btn: "Create account", has_account: "Already have an account?", login_link: "Login", reset_title: "Reset Password", reset_desc: "Enter your email to receive a link.", send_link_btn: "Send Link", back_login: "Back to login", tab_following: "Following", tab_foryou: "For You", nav_discover: "Discover", search_placeholder: "Search users...", trending_title: "Top Videos", inbox_title: "Inbox", tab_activities: "Activities", tab_messages: "Messages", profile_title: "Profile", following: "Following", followers: "Followers", likes: "Likes", edit_profile: "Edit Profile", follow_btn: "Follow", message_btn: "Message", privacy_modal_title: "Privacy Policy", close_btn: "Close", upload_title: "New Post", select_video: "Select Video", desc_placeholder: "Describe your video... #Hashtags", publish_btn: "Publish", comments_title: "Comments", comment_placeholder: "Add a comment...", options_share: "Share Video", options_download: "Save Video", options_report: "Report Content", nav_home: "Home", nav_inbox: "Inbox", nav_profile: "Profile", offline_title: "No Internet Connection", offline_desc: "Check your connection and try again.", retry_btn: "Retry", reply: "Reply", login_required_title: "Login Required", login_required_desc: "Login to like, comment and post videos."
+                app_created_by: "App created by", studio_name: "\"Ralph Nyamè Studio\". 2025", subtitle: "Video Social Network", auth_success: "Account created! Please login.", email_placeholder: "Email", pass_placeholder: "Password", forgot_pass: "Forgot password?", login_btn: "Login", no_account: "No account yet?", signup_link: "Sign up", username_placeholder: "Username", privacy_text: "By checking this, I accept the", privacy_link: "Privacy Policy", register_btn: "Create account", has_account: "Already have an account?", login_link: "Login", reset_title: "Reset Password", reset_desc: "Enter your email to receive a link.", send_link_btn: "Send Link", back_login: "Back to login", tab_following: "Following", tab_foryou: "For You", nav_discover: "Friends", search_placeholder: "Search users...", trending_title: "Top Videos", inbox_title: "Inbox", tab_activities: "Activities", tab_messages: "Messages", profile_title: "Profile", following: "Following", followers: "Followers", likes: "Likes", edit_profile: "Edit Profile", follow_btn: "Follow", message_btn: "Message", privacy_modal_title: "Privacy Policy", close_btn: "Close", upload_title: "New Post", select_video: "Select Video", desc_placeholder: "Describe your video... #Hashtags", publish_btn: "Publish", comments_title: "Comments", comment_placeholder: "Add a comment...", options_share: "Share Video", options_download: "Save Video", options_report: "Report Content", nav_home: "Home", nav_inbox: "Messages", nav_profile: "Profile", offline_title: "No Internet Connection", offline_desc: "Check your connection and try again.", retry_btn: "Retry", reply: "Reply", login_required_title: "Login Required", login_required_desc: "Login to like, comment and post videos."
             },
             es: {
                 app_created_by: "Aplicación creada por", studio_name: "\"Ralph Nyamè Studio\". 2025", subtitle: "Red Social de Video", auth_success: "¡Cuenta creada! Inicia sesión.", email_placeholder: "Correo electrónico", pass_placeholder: "Contraseña", forgot_pass: "¿Olvidaste tu contraseña?", login_btn: "Iniciar Sesión", no_account: "¿No tienes cuenta?", signup_link: "Regístrate", username_placeholder: "Usuario", privacy_text: "Al marcar esto, acepto la", privacy_link: "Política de Privacidad", register_btn: "Crear cuenta", has_account: "¿Ya tienes cuenta?", login_link: "Iniciar Sesión", reset_title: "Restablecer contraseña", reset_desc: "Ingresa tu correo para recibir un enlace.", send_link_btn: "Enviar enlace", back_login: "Volver al inicio", tab_following: "Siguiendo", tab_foryou: "Para ti", nav_discover: "Descubrir", search_placeholder: "Buscar usuarios...", trending_title: "Videos Populares", inbox_title: "Bandeja de entrada", tab_activities: "Actividades", tab_messages: "Mensajes", profile_title: "Perfil", following: "Siguiendo", followers: "Seguidores", likes: "Me gusta", edit_profile: "Editar perfil", follow_btn: "Seguir", message_btn: "Mensaje", privacy_modal_title: "Política de Privacidad", close_btn: "Cerrar", upload_title: "Nueva Publicación", select_video: "Seleccionar video", desc_placeholder: "Describe tu video... #Hashtags", publish_btn: "Publicar", comments_title: "Comentarios", comment_placeholder: "Añadir un comentario...", options_share: "Compartir", options_download: "Descargar", options_report: "Reportar", nav_home: "Inicio", nav_inbox: "Bandeja", nav_profile: "Perfil", offline_title: "Sin conexión a internet", offline_desc: "Verifica tu conexión e inténtalo de nuevo.", retry_btn: "Reintentar", reply: "Responder", login_required_title: "Inicio de sesión requerido", login_required_desc: "Inicia sesión para dar me gusta, comentar y publicar videos."
