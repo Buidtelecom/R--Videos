@@ -38,27 +38,52 @@
       });
     </script>
     <style>
-        /* FULL EDGE-TO-EDGE TABLET & MOBILE DESIGN + TRANSPARENT IMMERSIVE UI */
+        /* FULL EDGE-TO-EDGE TABLET & MOBILE DESIGN + ZERO EDGE LINES + LIGHT/DARK THEME */
         :root {
             --bg-primary: #05070e;
-            --bg-elevated: rgba(13, 18, 34, 0.84);
+            --bg-elevated: rgba(13, 18, 34, 0.88);
             --bg-card: #0c1222;
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
             --accent-red: #ff2a5f;
             --accent-cyan: #06b6d4;
             --accent-amber: #f59e0b;
-            --border-glass: rgba(255, 255, 255, 0.14);
+            --border-glass: rgba(255, 255, 255, 0.12);
         }
-        * { box-sizing: border-box; }
-        body, html {
-            height: 100%;
+        body.light-theme {
+            --bg-primary: #f8fafc;
+            --bg-elevated: rgba(255, 255, 255, 0.94);
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --border-glass: rgba(15, 23, 42, 0.10);
+        }
+        *, *::before, *::after {
+            box-sizing: border-box;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+        }
+        *::-webkit-scrollbar,
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar,
+        div::-webkit-scrollbar {
+            width: 0px !important;
+            height: 0px !important;
+            display: none !important;
+            background: transparent !important;
+        }
+        html, body {
+            position: fixed;
+            inset: 0;
             width: 100%;
-            height: 100dvh;
-            width: 100vw;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #000000;
-            color: white;
+            height: 100%;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            outline: 0 !important;
+            overflow: hidden !important;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             overscroll-behavior: none;
             -webkit-tap-highlight-color: transparent;
@@ -72,9 +97,12 @@
             -webkit-transform: translateZ(0);
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
+            border: 0 !important;
+            outline: 0 !important;
+            display: block;
         }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+        .no-scrollbar { -ms-overflow-style: none !important; scrollbar-width: none !important; }
         
         /* Animations */
         .animate-spin-slow { animation: spin 5.5s linear infinite; }
@@ -103,18 +131,19 @@
             filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
         }
 
-        /* Full Edge-to-Edge Container (Covers 100% of Phone, Tablet, and Screen Edges) */
+        /* Full Edge-to-Edge Container (Covers 100% of Phone, Tablet, and Screen Edges without 1px subpixel bleed) */
         .app-shell-wrapper {
-            width: 100vw;
-            height: 100dvh;
-            max-width: 100%;
-            margin: 0;
-            padding: 0;
             position: fixed;
             inset: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            outline: 0 !important;
             background: var(--bg-primary);
-            overflow: hidden;
-            contain: layout paint;
+            overflow: hidden !important;
+            clip-path: inset(0px);
         }
 
         .screen {
@@ -246,25 +275,22 @@
             margin: 0 auto;
             height: auto;
             max-height: 82%;
-            background: rgba(11, 16, 30, 0.96);
-            backdrop-filter: blur(26px);
-            -webkit-backdrop-filter: blur(26px);
+            background: rgba(11, 16, 30, 0.98);
             border-top-left-radius: 28px;
             border-top-right-radius: 28px;
-            border-top: 1px solid rgba(255, 255, 255, 0.16);
+            border-top: 1px solid var(--border-glass);
             z-index: 80;
-            transform: translateY(105%);
-            visibility: hidden;
-            pointer-events: none;
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s;
-            display: flex;
+            display: none;
             flex-direction: column;
             box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.7);
         }
         .bottom-sheet.open {
-            transform: translateY(0);
-            visibility: visible;
-            pointer-events: auto;
+            display: flex;
+            animation: sheetUp 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes sheetUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
         }
         
         .full-screen-modal {
@@ -274,17 +300,12 @@
             height: 100%;
             background: var(--bg-primary);
             z-index: 75;
-            transform: translateX(102%);
-            visibility: hidden;
-            pointer-events: none;
-            transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.28s;
-            display: flex;
+            display: none;
             flex-direction: column;
         }
         .full-screen-modal.open {
-            transform: translateX(0);
-            visibility: visible;
-            pointer-events: auto;
+            display: flex;
+            animation: fadeIn 0.2s ease-out;
         }
         
         .liked svg { fill: #ff2a5f !important; color: #ff2a5f !important; filter: drop-shadow(0 0 10px rgba(255, 42, 95, 0.75)); }
@@ -375,7 +396,7 @@
             background-size: 1.4em 1.4em;
         }
 
-        /* Video Progress Bar sits directly on top of the transparent bottom nav */
+        /* Video Progress Bar: zero white track line at the bottom */
         .video-progress-container {
             position: absolute;
             bottom: 56px;
@@ -389,20 +410,127 @@
         }
         .video-progress-track {
             width: 100%;
-            height: 2.5px;
-            background: rgba(255, 255, 255, 0.25);
+            height: 2px;
+            background: transparent;
             transition: height 0.15s ease;
             overflow: hidden;
         }
         .video-progress-container:hover .video-progress-track,
         .video-progress-container:active .video-progress-track {
-            height: 6px;
+            height: 5px;
+            background: rgba(255, 42, 95, 0.18);
         }
         .video-progress-fill {
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, #ffffff, #ff2a5f);
-            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+            background: #ff2a5f;
+        }
+
+        /* ============================================================================
+           COMPLETE LIGHT THEME ("Thème Clair") & DARK THEME ("Thème Sombre") SUPPORT
+           ============================================================================ */
+        body.light-theme #discover-screen,
+        body.light-theme #inbox-screen,
+        body.light-theme #profile-screen,
+        body.light-theme #auth-screen,
+        body.light-theme #offline-screen,
+        body.light-theme #splash-screen,
+        body.light-theme .full-screen-modal,
+        body.light-theme #chat-messages {
+            background: #f8fafc !important;
+            color: #0f172a !important;
+        }
+        body.light-theme .glass-panel,
+        body.light-theme #upload-modal > div {
+            background: #ffffff !important;
+            border-color: rgba(15, 23, 42, 0.10) !important;
+            color: #0f172a !important;
+            box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06) !important;
+        }
+        body.light-theme .bottom-sheet {
+            background: #ffffff !important;
+            border-top: 1px solid rgba(15, 23, 42, 0.12) !important;
+            color: #0f172a !important;
+            box-shadow: 0 -12px 36px rgba(15, 23, 42, 0.12) !important;
+        }
+        body.light-theme #comments-list,
+        body.light-theme #comment-input-area,
+        body.light-theme #chat-screen > div,
+        body.light-theme #settings-modal > div {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            border-color: rgba(15, 23, 42, 0.08) !important;
+        }
+        body.light-theme .auth-input,
+        body.light-theme #search-input,
+        body.light-theme #comment-input,
+        body.light-theme #chat-input,
+        body.light-theme select {
+            background: #f1f5f9 !important;
+            border-color: rgba(15, 23, 42, 0.14) !important;
+            color: #0f172a !important;
+        }
+        body.light-theme .msg-other {
+            background-color: #e2e8f0 !important;
+            color: #0f172a !important;
+            border-color: rgba(15, 23, 42, 0.08) !important;
+        }
+        body.light-theme #discover-screen h2,
+        body.light-theme #discover-screen h3,
+        body.light-theme #inbox-screen h2,
+        body.light-theme #profile-screen h1,
+        body.light-theme #profile-screen h2,
+        body.light-theme #settings-modal h3,
+        body.light-theme #settings-modal .text-white,
+        body.light-theme #options-modal .text-white,
+        body.light-theme #comments-sheet .text-white,
+        body.light-theme #upload-modal .text-white,
+        body.light-theme #edit-modal .text-white,
+        body.light-theme #privacy-modal .text-white,
+        body.light-theme #profile-following,
+        body.light-theme #profile-followers {
+            color: #0f172a !important;
+        }
+        body.light-theme #discover-screen .text-gray-300,
+        body.light-theme #discover-screen .text-gray-400,
+        body.light-theme #inbox-screen .text-gray-200,
+        body.light-theme #inbox-screen .text-gray-400,
+        body.light-theme #profile-screen .text-gray-300,
+        body.light-theme #profile-screen .text-gray-400,
+        body.light-theme #settings-modal .text-gray-300,
+        body.light-theme #settings-modal .text-gray-400,
+        body.light-theme #comments-sheet .text-gray-100,
+        body.light-theme #comments-sheet .text-gray-200 {
+            color: #334155 !important;
+        }
+        body.light-theme #options-modal button.bg-white\/5,
+        body.light-theme #settings-modal button.bg-white\/5,
+        body.light-theme #inbox-content > div,
+        body.light-theme #comments-list > div {
+            background: #f1f5f9 !important;
+            border-color: rgba(15, 23, 42, 0.08) !important;
+            color: #0f172a !important;
+        }
+        body.light-theme #bottom-nav {
+            background: linear-gradient(to top, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.82), transparent) !important;
+            color: #0f172a !important;
+        }
+        body.light-theme #bottom-nav .nav-item span {
+            color: #0f172a !important;
+            text-shadow: none !important;
+        }
+        body.light-theme #bottom-nav .nav-item svg {
+            color: #0f172a !important;
+        }
+        body.light-theme #bottom-nav #nav-feed.opacity-100 svg {
+            fill: #ff2a5f !important;
+            color: #ff2a5f !important;
+        }
+        body.light-theme .toast-item {
+            background: rgba(255, 255, 255, 0.96) !important;
+            color: #0f172a !important;
+            border-color: rgba(15, 23, 42, 0.12) !important;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.15) !important;
         }
 
         /* Video Visual FX Filters */
@@ -624,12 +752,15 @@
                     <span id="tab-foryou" class="text-[15px] font-extrabold text-white pb-1.5 border-b-[3px] border-white cursor-pointer transition-all text-shadow" onclick="switchFeed('foryou')" data-i18n="tab_foryou">Pour toi</span>
                 </div>
 
-                <!-- Right: Search & Settings Icons -->
-                <div class="flex items-center gap-2 pointer-events-auto">
-                    <button onclick="openSettingsModal()" class="w-8 h-8 rounded-full bg-black/50 border border-white/15 flex items-center justify-center text-white active:scale-90 transition" title="Paramètres">
+                <!-- Right: Theme (Clair/Sombre), Settings & Search Icons -->
+                <div class="flex items-center gap-1.5 pointer-events-auto">
+                    <button id="feed-theme-btn" onclick="toggleThemeMode()" class="w-8 h-8 rounded-full bg-black/45 flex items-center justify-center text-amber-300 active:scale-90 transition" title="Changer de thème (Clair / Sombre)">
+                        <i id="feed-theme-icon" data-lucide="sun" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="openSettingsModal()" class="w-8 h-8 rounded-full bg-black/45 flex items-center justify-center text-white active:scale-90 transition" title="Paramètres">
                         <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
                     </button>
-                    <button onclick="navigateTo('discover')" class="w-9 h-9 rounded-full flex items-center justify-center text-white drop-shadow-md active:scale-90 transition" title="Rechercher">
+                    <button onclick="navigateTo('discover')" class="w-8 h-8 rounded-full flex items-center justify-center text-white drop-shadow-md active:scale-90 transition" title="Rechercher">
                         <i data-lucide="search" class="w-5 h-5 stroke-[2.5]"></i>
                     </button>
                 </div>
@@ -641,7 +772,7 @@
                 <button onclick="clearFeedHashtagFilter()" class="text-white/70 hover:text-white"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
             </div>
 
-            <div id="feed-container" class="h-full w-full overflow-y-scroll snap-y-mandatory no-scrollbar relative bg-black">
+            <div id="feed-container" class="h-full w-full overflow-y-auto snap-y-mandatory no-scrollbar relative bg-black border-0 outline-none">
                 <div id="loading-feed" class="flex flex-col items-center justify-center h-full text-gray-400 gap-3">
                     <div class="animate-spin rounded-full h-9 w-9 border-2 border-[#ff2a5f] border-t-transparent"></div>
                     <span class="text-xs font-medium tracking-wider uppercase text-gray-500">Chargement du flux...</span>
@@ -984,10 +1115,20 @@
                     </div>
                 </div>
 
-                <!-- 3. Langue, Audio & Notifications -->
+                <!-- 3. Thème (Clair / Sombre), Langue & Audio -->
                 <div class="glass-panel p-4 rounded-2xl space-y-3">
                     <div class="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
-                        <i data-lucide="bell-ring" class="w-4 h-4"></i> Préférences & Langue
+                        <i data-lucide="sun-moon" class="w-4 h-4"></i> Thème (Clair / Sombre) & Préférences
+                    </div>
+                    <div class="flex items-center justify-between pb-2 border-b border-white/10">
+                        <div>
+                            <div class="text-xs font-bold text-white">Apparence de l'application</div>
+                            <div class="text-[10px] text-gray-400">Basculer entre le mode Sombre et le mode Clair</div>
+                        </div>
+                        <button id="setting-theme-toggle-btn" onclick="toggleThemeMode()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white text-xs font-bold flex items-center gap-2 shadow-md active:scale-95 transition">
+                            <i id="setting-theme-icon" data-lucide="moon" class="w-4 h-4"></i>
+                            <span id="setting-theme-label">Mode Sombre 🌙</span>
+                        </button>
                     </div>
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-white">Langue de l'application</span>
@@ -1341,6 +1482,15 @@
                     <span class="font-bold text-xs">Utiliser le son de cette vidéo 🎵</span>
                 </button>
 
+                <!-- Theme Mode Switcher (Clair / Sombre) -->
+                <button id="opt-theme-switch" onclick="toggleThemeMode()" class="flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-white transition">
+                    <div class="flex items-center gap-3.5">
+                        <div class="p-1.5 bg-amber-500/20 rounded-xl text-amber-400"><i data-lucide="sun" class="w-4 h-4"></i></div>
+                        <span class="font-semibold text-xs">Thème de l'application (Clair / Sombre)</span>
+                    </div>
+                    <span id="opt-theme-badge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-white/10 text-amber-300">Sombre 🌙</span>
+                </button>
+
                 <!-- Fun Option: Visual FX Filter Switcher -->
                 <button id="opt-vfx-filter" onclick="cycleVideoVisualFilter()" class="flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-white transition">
                     <div class="flex items-center gap-3.5">
@@ -1466,6 +1616,7 @@
 
         // App Settings State
         let appSettings = {
+            theme: safeGetStorage('rv_theme', 'dark'),
             aspectMode: safeGetStorage('rv_aspect_mode', 'contain'),
             cacheEnabled: safeGetStorage('rv_cache_enabled', 'true') !== 'false',
             cacheLimitMB: parseInt(safeGetStorage('rv_cache_limit', '100'), 10) || 100,
@@ -1475,6 +1626,35 @@
             startMuted: safeGetStorage('rv_start_muted', 'false') === 'true',
             autoScroll: safeGetStorage('rv_auto_scroll', 'false') === 'true'
         };
+
+        function applyThemeUI(theme) {
+            const isLight = theme === 'light';
+            document.body.classList.toggle('light-theme', isLight);
+            const metaTheme = document.querySelector('meta[name="theme-color"]');
+            if (metaTheme) metaTheme.setAttribute('content', isLight ? '#f8fafc' : '#05070e');
+
+            const feedIcon = document.getElementById('feed-theme-icon');
+            if (feedIcon) feedIcon.setAttribute('data-lucide', isLight ? 'moon' : 'sun');
+
+            const setIcon = document.getElementById('setting-theme-icon');
+            if (setIcon) setIcon.setAttribute('data-lucide', isLight ? 'sun' : 'moon');
+
+            const setLbl = document.getElementById('setting-theme-label');
+            if (setLbl) setLbl.innerText = isLight ? 'Mode Clair ☀️' : 'Mode Sombre 🌙';
+
+            const optBadge = document.getElementById('opt-theme-badge');
+            if (optBadge) optBadge.innerText = isLight ? 'Clair ☀️' : 'Sombre 🌙';
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        window.toggleThemeMode = () => {
+            appSettings.theme = appSettings.theme === 'light' ? 'dark' : 'light';
+            safeSetStorage('rv_theme', appSettings.theme);
+            applyThemeUI(appSettings.theme);
+            showToast(appSettings.theme === 'light' ? "Thème Clair activé ☀️" : "Thème Sombre activé 🌙", "success");
+        };
+        applyThemeUI(appSettings.theme);
 
         let isGlobalMuted = appSettings.startMuted;
         let currentPlaybackRate = appSettings.defaultSpeed;
