@@ -721,6 +721,164 @@
             background-repeat: no-repeat;
             background-color: #4b0908;
         }
+            /* Modern Visual Filmstrip Video Trimmer & Segment Splitter */
+        .studio-filmstrip-wrapper {
+            position: relative;
+            height: 54px;
+            border-radius: 14px;
+            background: #080c18;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            overflow: hidden;
+            user-select: none;
+            touch-action: none;
+        }
+        .studio-filmstrip-frames {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .studio-filmstrip-frames canvas {
+            flex: 1 1 0%;
+            height: 100%;
+            object-fit: cover;
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .studio-trim-mask {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            background: rgba(3, 5, 12, 0.76);
+            backdrop-filter: grayscale(0.8);
+            pointer-events: none;
+            z-index: 12;
+        }
+        .studio-trim-selection {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            border-top: 3px solid #ec514c;
+            border-bottom: 3px solid #ec514c;
+            box-shadow: 0 0 12px rgba(236, 81, 76, 0.35);
+            pointer-events: none;
+            z-index: 15;
+        }
+        .studio-trim-handle {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 18px;
+            background: linear-gradient(180deg, #ec514c 0%, #b32322 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: ew-resize;
+            z-index: 22;
+            pointer-events: auto;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.65);
+        }
+        .studio-trim-handle.left {
+            left: 0;
+            border-top-left-radius: 10px;
+            border-bottom-left-radius: 10px;
+        }
+        .studio-trim-handle.right {
+            right: 0;
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        .studio-trim-handle::after {
+            content: "";
+            width: 2.5px;
+            height: 20px;
+            border-radius: 99px;
+            background: #ffffff;
+        }
+        .studio-playhead-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2.5px;
+            background: #ffffff;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.95);
+            z-index: 25;
+            pointer-events: none;
+            transform: translateX(-50%);
+        }
+        .studio-playhead-line::before {
+            content: "";
+            position: absolute;
+            top: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 11px;
+            height: 11px;
+            border-radius: 9999px;
+            background: #ffffff;
+            border: 2px solid #ec514c;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.6);
+        }
+        .studio-deleted-segment-block {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                -45deg,
+                rgba(190, 18, 60, 0.78),
+                rgba(190, 18, 60, 0.78) 6px,
+                rgba(66, 8, 6, 0.88) 6px,
+                rgba(66, 8, 6, 0.88) 12px
+            );
+            border-left: 1px dashed rgba(255, 255, 255, 0.5);
+            border-right: 1px dashed rgba(255, 255, 255, 0.5);
+            z-index: 14;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 10px;
+            font-weight: 800;
+            pointer-events: none;
+        }
+        .studio-split-marker {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #06b6d4;
+            box-shadow: 0 0 6px rgba(6, 182, 212, 0.9);
+            z-index: 18;
+            pointer-events: none;
+        }
+        .studio-seg-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 10.5px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.16s ease;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.05);
+            color: #cbd5e1;
+        }
+        .studio-seg-chip.active {
+            background: rgba(236, 81, 76, 0.22);
+            border-color: #ec514c;
+            color: #ffffff;
+            box-shadow: 0 2px 10px rgba(236, 81, 76, 0.25);
+        }
+        .studio-seg-chip.deleted {
+            background: rgba(127, 29, 29, 0.35);
+            border-color: rgba(244, 63, 94, 0.35);
+            color: #fda4af;
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body class="relative overflow-hidden bg-black">
@@ -1573,6 +1731,15 @@
                         <!-- Camera Shutter White Flash Overlay -->
                         <div id="studio-shutter-flash" class="hidden absolute inset-0 bg-white pointer-events-none z-50"></div>
 
+                        <!-- Video / Camera Loading Announcement Overlay -->
+                        <div id="studio-media-loading-overlay" class="hidden absolute inset-0 bg-[#05070e]/92 backdrop-blur-md z-40 flex-col items-center justify-center p-6 text-center pointer-events-none">
+                            <div class="w-14 h-14 rounded-2xl bg-[#4b0908]/90 border border-[#ec514c]/50 flex items-center justify-center mb-3 shadow-[0_8px_28px_rgba(228,61,53,0.45)]">
+                                <div class="w-7 h-7 border-[3px] border-[#ec514c] border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                            <p id="studio-loading-title" class="text-white text-xs md:text-sm font-extrabold font-display mb-1">Chargement de la vidéo en cours...</p>
+                            <span id="studio-loading-subtitle" class="text-[11px] text-gray-300 max-w-xs leading-relaxed">Préparation de l'aperçu dans R-Studio, veuillez patienter un instant...</span>
+                        </div>
+
                         <!-- Optional 3x3 Framing Grid & Ring-Light Overlays -->
                         <div id="studio-grid-overlay" class="absolute inset-0 pointer-events-none hidden studio-grid-lines z-15"></div>
                         <div id="studio-ring-light-overlay" class="absolute inset-0 pointer-events-none hidden studio-ring-light z-15"></div>
@@ -1705,24 +1872,56 @@
 
                     <!-- TAB 1: DÉCOUPAGE, CADENCE, ROTATION & PROPORTIONS -->
                     <div id="studio-tab-cut" class="studio-panel-section active space-y-2.5">
-                        <!-- Trim Timeline Box -->
-                        <div class="glass-panel p-3 rounded-2xl space-y-2">
+                        <!-- Modern Visual Filmstrip Trimmer & Segment Splitter -->
+                        <div class="glass-panel p-3 rounded-2xl space-y-2.5">
                             <div class="flex items-center justify-between text-xs">
-                                <span class="font-bold text-white flex items-center gap-1.5"><i data-lucide="scissors" class="w-3.5 h-3.5 text-cyan-400"></i> Découpage Précis (&lt; 120s)</span>
-                                <span id="trim-duration-display" class="text-cyan-400 font-extrabold bg-cyan-500/10 px-2 py-0.5 rounded-md">0s</span>
+                                <span class="font-bold text-white flex items-center gap-1.5">
+                                    <i data-lucide="scissors" class="w-3.5 h-3.5 text-[#ec514c]"></i>
+                                    <span>Rognage &amp; Découpage Moderne</span>
+                                </span>
+                                <div class="flex items-center gap-1.5">
+                                    <span id="trim-range-readout" class="text-[10px] font-mono font-bold text-gray-300 bg-white/5 px-2 py-0.5 rounded-md">00:00.0 - 00:00.0</span>
+                                    <span id="trim-duration-display" class="text-[#ec514c] font-extrabold bg-[#ec514c]/15 border border-[#ec514c]/30 px-2 py-0.5 rounded-md">0s</span>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-2 justify-between">
-                                <div class="flex items-center gap-1">
-                                    <button onclick="nudgeStudioTrim('start', -0.5)" class="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] font-bold text-gray-300">-0.5s</button>
-                                    <input type="number" id="trim-start" class="bg-gray-900 text-white border border-gray-700 rounded-lg px-2 py-1 text-xs w-16 text-center outline-none" placeholder="Début (s)" min="0" step="0.5" onchange="updateTrimPreview()">
-                                    <button onclick="nudgeStudioTrim('start', 0.5)" class="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] font-bold text-gray-300">+0.5s</button>
-                                </div>
-                                <span class="text-gray-500 text-xs font-bold">→</span>
-                                <div class="flex items-center gap-1">
-                                    <button onclick="nudgeStudioTrim('end', -0.5)" class="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] font-bold text-gray-300">-0.5s</button>
-                                    <input type="number" id="trim-end" class="bg-gray-900 text-white border border-gray-700 rounded-lg px-2 py-1 text-xs w-16 text-center outline-none" placeholder="Fin (s)" min="0" step="0.5" onchange="updateTrimPreview()">
-                                    <button onclick="nudgeStudioTrim('end', 0.5)" class="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] font-bold text-gray-300">+0.5s</button>
-                                </div>
+
+                            <!-- Hidden inputs preserved for compatibility -->
+                            <input type="hidden" id="trim-start" value="0" onchange="updateTrimPreview()">
+                            <input type="hidden" id="trim-end" value="30" onchange="updateTrimPreview()">
+                            <div class="hidden" aria-hidden="true">
+                                <button type="button" onclick="nudgeStudioTrim('start', -0.5)">-0.5s</button>
+                                <button type="button" onclick="nudgeStudioTrim('start', 0.5)">+0.5s</button>
+                            </div>
+
+                            <!-- Interactive Filmstrip Timeline with Left/Right Drag Handles & Playhead -->
+                            <div id="studio-filmstrip-track" class="studio-filmstrip-wrapper">
+                                <div id="studio-filmstrip-frames" class="studio-filmstrip-frames"></div>
+                                <div id="studio-deleted-segments-layer" class="absolute inset-0 pointer-events-none"></div>
+                                <div id="studio-split-markers-layer" class="absolute inset-0 pointer-events-none"></div>
+                                <div id="trim-mask-left" class="studio-trim-mask" style="left:0%;width:0%;"></div>
+                                <div id="trim-mask-right" class="studio-trim-mask" style="right:0%;width:0%;"></div>
+                                <div id="trim-selection-box" class="studio-trim-selection" style="left:0%;right:0%;"></div>
+                                <div id="trim-handle-left" class="studio-trim-handle left" style="left:0%;" title="Glisser pour rogner le début"></div>
+                                <div id="trim-handle-right" class="studio-trim-handle right" style="right:0%;" title="Glisser pour rogner la fin"></div>
+                                <div id="trim-playhead-line" class="studio-playhead-line" style="left:0%;"></div>
+                            </div>
+
+                            <!-- Interactive Segments Chips Row (Appears when video is loaded or split) -->
+                            <div id="studio-segments-bar" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5"></div>
+
+                            <!-- Split & Delete Segment Action Bar -->
+                            <div class="flex items-center justify-between gap-2 pt-1 border-t border-white/10">
+                                <button type="button" onclick="splitStudioVideoAtPlayhead()" class="flex-1 py-2 px-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white text-[11px] font-bold flex items-center justify-center gap-1.5 active:scale-95 transition">
+                                    <i data-lucide="scissors" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                    <span>Scinder au curseur</span>
+                                </button>
+                                <button type="button" onclick="deleteSelectedStudioSegment()" class="flex-1 py-2 px-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-200 text-[11px] font-bold flex items-center justify-center gap-1.5 active:scale-95 transition">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5 text-[#ec514c]"></i>
+                                    <span>Supprimer la partie</span>
+                                </button>
+                                <button type="button" onclick="resetStudioTrimAndCuts()" class="py-2 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 text-[11px] font-semibold flex items-center justify-center gap-1 active:scale-95 transition" title="Réinitialiser le découpage">
+                                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                                </button>
                             </div>
                         </div>
 
@@ -3248,7 +3447,8 @@
                 iconColor = 'text-emerald-400';
                 svgPath = '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>';
             }
-            toast.innerHTML = `<svg class="w-4 h-4 shrink-0 ${iconColor}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${svgPath}</svg><span class="flex-1">${escapeHtml(message)}</span>`;
+            const displayMsg = window.translateDynamicPhrase ? window.translateDynamicPhrase(String(message || '')) : String(message || '');
+            toast.innerHTML = `<svg class="w-4 h-4 shrink-0 ${iconColor}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${svgPath}</svg><span class="flex-1">${escapeHtml(displayMsg)}</span>`;
             container.appendChild(toast);
             setTimeout(() => {
                 toast.style.opacity = '0';
@@ -5222,6 +5422,9 @@
                     div.setAttribute('data-trim-start', trimStart);
                     div.setAttribute('data-trim-end', trimEnd);
                     div.setAttribute('data-muted-video', (data.studioConfig?.keepOriginalAudio === false || data.muted === true || data.hasAudio === false) ? 'true' : 'false');
+                    if (Array.isArray(data.studioConfig?.deletedRanges) && data.studioConfig.deletedRanges.length > 0) {
+                        div.setAttribute('data-deleted-ranges', JSON.stringify(data.studioConfig.deletedRanges));
+                    }
                     
                     div.innerHTML = `
                         <video class="w-full h-full ${fitClass} ${ data.studioConfig?.filterPreset || vfxClass } pointer-events-none bg-black" style="${ data.studioConfig?.customFilterCss ? 'filter:' + escapeHtml(data.studioConfig.customFilterCss) + ';' : '' }${ data.studioConfig?.transformCss ? 'transform:' + escapeHtml(data.studioConfig.transformCss) + ';' : '' }" muted playsinline webkit-playsinline preload="none"></video>
@@ -5340,9 +5543,27 @@
 
                     const triggerBump = () => { if (!v.dataset.bumped) { v.dataset.bumped = "true"; handleBump(docId, data.userId); } };
 
+                    let cardDeletedRanges = [];
+                    try {
+                        const rawRanges = div.getAttribute('data-deleted-ranges');
+                        if (rawRanges) cardDeletedRanges = JSON.parse(rawRanges) || [];
+                    } catch (e) {}
+
                     let lastProgressUpdate = 0;
                     v.addEventListener('timeupdate', () => {
                         const cur = v.currentTime || 0;
+                        if (cardDeletedRanges.length > 0) {
+                            for (let rIdx = 0; rIdx < cardDeletedRanges.length; rIdx++) {
+                                const r = cardDeletedRanges[rIdx];
+                                if (cur >= r.start && cur < r.end - 0.05) {
+                                    try { v.currentTime = r.end; } catch (e) {}
+                                    if (v === activePlayingVideo && rvMasterAudio && !rvMasterAudio.paused) {
+                                        try { rvMasterAudio.currentTime = r.end; } catch (e) {}
+                                    }
+                                    return;
+                                }
+                            }
+                        }
                         // Detect seamless native hardware loop wrap-around when v.loop === true
                         if (v.lastTimeUpdatePos !== undefined && cur < v.lastTimeUpdatePos - 0.5) {
                             triggerBump();
@@ -5443,12 +5664,50 @@
         };
 
         let studioCapturedPhotoDataUrl = null;
+        let studioMediaLoadingTimer = null;
+
+        function showStudioMediaLoading(titleText = "Chargement de la vidéo en cours...", subText = "Préparation de l'aperçu dans R-Studio, veuillez patienter un instant...") {
+            const overlay = document.getElementById('studio-media-loading-overlay');
+            const titleEl = document.getElementById('studio-loading-title');
+            const subEl = document.getElementById('studio-loading-subtitle');
+            const emptyPrompt = document.getElementById('studio-empty-prompt');
+            if (emptyPrompt) emptyPrompt.classList.add('hidden');
+            if (titleEl) {
+                titleEl.__rvFrText = titleText;
+                titleEl.innerText = window.translateDynamicPhrase ? window.translateDynamicPhrase(titleText) : titleText;
+            }
+            if (subEl) {
+                subEl.__rvFrText = subText;
+                subEl.innerText = window.translateDynamicPhrase ? window.translateDynamicPhrase(subText) : subText;
+            }
+            if (overlay) {
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+            }
+            if (studioMediaLoadingTimer) clearTimeout(studioMediaLoadingTimer);
+            studioMediaLoadingTimer = setTimeout(() => {
+                hideStudioMediaLoading();
+            }, 9000);
+        }
+
+        function hideStudioMediaLoading() {
+            if (studioMediaLoadingTimer) {
+                clearTimeout(studioMediaLoadingTimer);
+                studioMediaLoadingTimer = null;
+            }
+            const overlay = document.getElementById('studio-media-loading-overlay');
+            if (overlay) {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+            }
+        }
 
         function stopStudioCameraStream() {
             if (studioRecTimerInterval) {
                 clearInterval(studioRecTimerInterval);
                 studioRecTimerInterval = null;
             }
+            showStudioMediaLoading("Traitement de votre vidéo filmée...", "Assemblage et préparation de votre prise dans l'éditeur R-Studio...");
             if (studioMediaRecorder && studioMediaRecorder.state !== 'inactive') {
                 try { studioMediaRecorder.stop(); } catch (e) {}
             }
@@ -5507,6 +5766,7 @@
                 }
                 try {
                     stopStudioCameraStream();
+                    showStudioMediaLoading("Ouverture de la caméra en direct...", "Initialisation du capteur vidéo HD, veuillez patienter...");
                     // Enter Fullscreen Live Camera Mode so the user sees the entire camera view in 100% full screen
                     if (previewArea) previewArea.classList.add('camera-fullscreen-active');
                     try {
@@ -5525,7 +5785,10 @@
                         camVid.classList.remove('hidden');
                         studioEditState.mirrored = (studioCameraFacing === 'user');
                         applyStudioVisualTransformAndFilter();
+                        camVid.onloadeddata = () => hideStudioMediaLoading();
+                        camVid.onplaying = () => hideStudioMediaLoading();
                         await camVid.play().catch(() => {});
+                        hideStudioMediaLoading();
                     }
                     if (camHud) {
                         camHud.classList.remove('hidden');
@@ -5533,6 +5796,7 @@
                     }
                     lucide.createIcons();
                 } catch (err) {
+                    hideStudioMediaLoading();
                     if (previewArea) previewArea.classList.remove('camera-fullscreen-active');
                     showToast("Accès caméra direct non autorisé : ouverture de l'appareil photo natif...", "info");
                     triggerNativePhoneCamera();
@@ -5800,14 +6064,15 @@
                 if (ev.data && ev.data.size > 0) studioRecordedChunks.push(ev.data);
             };
             studioMediaRecorder.onstop = () => {
+                showStudioMediaLoading("Traitement de votre vidéo filmée...", "Assemblage et préparation de votre prise dans l'éditeur R-Studio...");
                 const blobType = (studioMediaRecorder && studioMediaRecorder.mimeType) || 'video/mp4';
                 const ext = blobType.includes('mp4') ? 'mp4' : 'webm';
                 const blob = new Blob(studioRecordedChunks, { type: blobType });
                 studioRecordedFile = new File([blob], `rcam_${Date.now()}.${ext}`, { type: blobType });
                 studioSelectedFile = studioRecordedFile;
                 stopStudioCameraStream();
-                loadFileIntoStudioEditor(studioRecordedFile);
                 window.switchStudioSourceMode('gallery');
+                loadFileIntoStudioEditor(studioRecordedFile);
                 showToast("Prise vidéo enregistrée ! Tu peux maintenant la monter avant de publier 🎬", "success");
             };
 
@@ -6174,21 +6439,407 @@
             lucide.createIcons();
         };
 
+        // ============================================================================
+        // MODERN VISUAL FILMSTRIP VIDEO TRIMMER & SEGMENT SPLITTER / CUTTER
+        // ============================================================================
+        let studioTrimState = {
+            duration: 30,
+            start: 0,
+            end: 30,
+            playhead: 0,
+            splitPoints: [],
+            deletedRanges: [],
+            selectedSegmentIdx: 0,
+            interactionBound: false
+        };
+
+        function formatTrimTimestamp(sec) {
+            const s = Math.max(0, Number(sec) || 0);
+            const mins = Math.floor(s / 60);
+            const rem = (s % 60).toFixed(1).padStart(4, '0');
+            return `${String(mins).padStart(2, '0')}:${rem}`;
+        }
+
+        function getStudioSegmentsList() {
+            const dur = Math.max(1, studioTrimState.duration || 30);
+            const points = [0, ...studioTrimState.splitPoints.filter(p => p > 0.15 && p < dur - 0.15), dur].sort((a, b) => a - b);
+            const segments = [];
+            for (let i = 0; i < points.length - 1; i++) {
+                const s = points[i];
+                const e = points[i + 1];
+                if (e - s < 0.08) continue;
+                const isDeleted = studioTrimState.deletedRanges.some(r => Math.abs(r.start - s) < 0.15 && Math.abs(r.end - e) < 0.15)
+                    || (e <= studioTrimState.start + 0.08)
+                    || (s >= studioTrimState.end - 0.08);
+                segments.push({ index: segments.length, start: s, end: e, deleted: isDeleted });
+            }
+            return segments;
+        }
+
+        function computeNetTrimmedDuration() {
+            let gross = Math.max(0, studioTrimState.end - studioTrimState.start);
+            studioTrimState.deletedRanges.forEach(r => {
+                const overlapStart = Math.max(studioTrimState.start, r.start);
+                const overlapEnd = Math.min(studioTrimState.end, r.end);
+                if (overlapEnd > overlapStart) {
+                    gross -= (overlapEnd - overlapStart);
+                }
+            });
+            return Math.max(0.5, gross);
+        }
+
+        function renderModernTrimmerUI() {
+            const dur = Math.max(1, studioTrimState.duration || 30);
+            const leftPct = Math.max(0, Math.min(96, (studioTrimState.start / dur) * 100));
+            const rightPct = Math.max(0, Math.min(96, ((dur - studioTrimState.end) / dur) * 100));
+            const playheadPct = Math.max(0, Math.min(100, (studioTrimState.playhead / dur) * 100));
+
+            const maskL = document.getElementById('trim-mask-left');
+            const maskR = document.getElementById('trim-mask-right');
+            const selBox = document.getElementById('trim-selection-box');
+            const handL = document.getElementById('trim-handle-left');
+            const handR = document.getElementById('trim-handle-right');
+            const phLine = document.getElementById('trim-playhead-line');
+            const rangeLbl = document.getElementById('trim-range-readout');
+            const durLbl = document.getElementById('trim-duration-display');
+            const inpStart = document.getElementById('trim-start');
+            const inpEnd = document.getElementById('trim-end');
+
+            if (maskL) maskL.style.width = `${leftPct}%`;
+            if (maskR) maskR.style.width = `${rightPct}%`;
+            if (selBox) {
+                selBox.style.left = `${leftPct}%`;
+                selBox.style.right = `${rightPct}%`;
+            }
+            if (handL) handL.style.left = `${leftPct}%`;
+            if (handR) handR.style.right = `${rightPct}%`;
+            if (phLine) phLine.style.left = `${playheadPct}%`;
+
+            if (inpStart) inpStart.value = studioTrimState.start.toFixed(1);
+            if (inpEnd) inpEnd.value = studioTrimState.end.toFixed(1);
+
+            const netDur = computeNetTrimmedDuration();
+            if (rangeLbl) rangeLbl.innerText = `${formatTrimTimestamp(studioTrimState.start)} - ${formatTrimTimestamp(studioTrimState.end)}`;
+            if (durLbl) durLbl.innerText = `${netDur.toFixed(1)}s`;
+
+            // Render split markers
+            const splitLayer = document.getElementById('studio-split-markers-layer');
+            if (splitLayer) {
+                splitLayer.innerHTML = studioTrimState.splitPoints
+                    .map(pt => `<div class="studio-split-marker" style="left:${((pt / dur) * 100).toFixed(2)}%;"></div>`)
+                    .join('');
+            }
+
+            // Render deleted middle segment overlays
+            const delLayer = document.getElementById('studio-deleted-segments-layer');
+            if (delLayer) {
+                delLayer.innerHTML = studioTrimState.deletedRanges
+                    .map(r => {
+                        const l = ((r.start / dur) * 100).toFixed(2);
+                        const w = (((r.end - r.start) / dur) * 100).toFixed(2);
+                        return `<div class="studio-deleted-segment-block" style="left:${l}%;width:${w}%;">🗑️</div>`;
+                    })
+                    .join('');
+            }
+
+            // Render interactive segment pills
+            const segBar = document.getElementById('studio-segments-bar');
+            if (segBar) {
+                const segs = getStudioSegmentsList();
+                if (studioTrimState.selectedSegmentIdx >= segs.length) {
+                    studioTrimState.selectedSegmentIdx = Math.max(0, segs.length - 1);
+                }
+                const partWord = (window.getCurrentLangCode && window.getCurrentLangCode() === 'en') ? 'Part' : ((window.getCurrentLangCode && window.getCurrentLangCode() === 'es') ? 'Parte' : 'Partie');
+                segBar.innerHTML = segs.map((sg, idx) => {
+                    const activeCls = idx === studioTrimState.selectedSegmentIdx ? 'active' : '';
+                    const delCls = sg.deleted ? 'deleted' : '';
+                    const lenS = (sg.end - sg.start).toFixed(1);
+                    return `<button type="button" onclick="selectStudioSegmentByIndex(${idx})" class="studio-seg-chip shrink-0 ${activeCls} ${delCls}">
+                        <span>${partWord} ${idx + 1} (${lenS}s)</span>
+                    </button>`;
+                }).join('');
+            }
+        }
+
+        window.selectStudioSegmentByIndex = (idx) => {
+            const segs = getStudioSegmentsList();
+            if (!segs[idx]) return;
+            studioTrimState.selectedSegmentIdx = idx;
+            const sg = segs[idx];
+            studioTrimState.playhead = sg.start;
+            const v = document.getElementById('video-preview');
+            if (v && v.duration) {
+                try { v.currentTime = sg.start; } catch (e) {}
+            }
+            renderModernTrimmerUI();
+        };
+
+        window.splitStudioVideoAtPlayhead = () => {
+            const v = document.getElementById('video-preview');
+            if (!v || !v.duration) {
+                showToast("Sélectionnez d'abord une vidéo à découper", "info");
+                return;
+            }
+            let cutTime = v.currentTime || studioTrimState.playhead || 0;
+            // If cursor is too close to the start/end or an existing split, split at the midpoint of the currently selected segment
+            const segs = getStudioSegmentsList();
+            const currentSeg = segs[studioTrimState.selectedSegmentIdx] || { start: studioTrimState.start, end: studioTrimState.end };
+            const tooClose = [0, studioTrimState.start, studioTrimState.end, studioTrimState.duration, ...studioTrimState.splitPoints]
+                .some(pt => Math.abs(pt - cutTime) < 0.35);
+
+            if (tooClose || cutTime <= studioTrimState.start + 0.35 || cutTime >= studioTrimState.end - 0.35) {
+                cutTime = (currentSeg.start + currentSeg.end) / 2;
+            }
+            if (cutTime <= 0.25 || cutTime >= studioTrimState.duration - 0.25) {
+                showToast("Placez le curseur à l'endroit où couper la vidéo", "info");
+                return;
+            }
+            studioTrimState.splitPoints.push(Number(cutTime.toFixed(2)));
+            studioTrimState.splitPoints = Array.from(new Set(studioTrimState.splitPoints)).sort((a, b) => a - b);
+            studioTrimState.playhead = cutTime;
+
+            const updatedSegs = getStudioSegmentsList();
+            const nextIdx = updatedSegs.findIndex(s => Math.abs(s.start - cutTime) < 0.2);
+            if (nextIdx !== -1) studioTrimState.selectedSegmentIdx = nextIdx;
+
+            renderModernTrimmerUI();
+            showToast(`Vidéo scindée à ${formatTrimTimestamp(cutTime)} ✂️ Sélectionnez une partie à supprimer`, "success");
+        };
+
+        window.deleteSelectedStudioSegment = () => {
+            const v = document.getElementById('video-preview');
+            if (!v || !v.duration) {
+                showToast("Sélectionnez d'abord une vidéo", "info");
+                return;
+            }
+            let segs = getStudioSegmentsList();
+            // If the user hasn't split yet (only 1 segment), split automatically at the current playhead and delete the shorter part!
+            if (segs.length === 1) {
+                let ph = v.currentTime || studioTrimState.playhead || 0;
+                if (ph > studioTrimState.start + 0.4 && ph < studioTrimState.end - 0.4) {
+                    studioTrimState.splitPoints.push(Number(ph.toFixed(2)));
+                    segs = getStudioSegmentsList();
+                    studioTrimState.selectedSegmentIdx = (ph - studioTrimState.start <= studioTrimState.end - ph) ? 0 : 1;
+                } else {
+                    showToast("Placez le curseur ou cliquez sur « Scinder au curseur » pour choisir la partie à supprimer ✂️", "info");
+                    return;
+                }
+            }
+
+            const activeSegs = segs.filter(s => !s.deleted);
+            if (activeSegs.length <= 1) {
+                showToast("Impossible de supprimer la dernière partie restante de la vidéo", "error");
+                return;
+            }
+
+            const target = segs[studioTrimState.selectedSegmentIdx];
+            if (!target || target.deleted) {
+                showToast("Sélectionnez une partie active à supprimer", "info");
+                return;
+            }
+
+            // If target segment is at the start, advance trimStart
+            if (Math.abs(target.start - studioTrimState.start) < 0.15) {
+                studioTrimState.start = target.end;
+            } else if (Math.abs(target.end - studioTrimState.end) < 0.15) {
+                // If target segment is at the end, pull back trimEnd
+                studioTrimState.end = target.start;
+            } else {
+                // Middle segment: add to deletedRanges so playback skips right over it
+                studioTrimState.deletedRanges.push({ start: target.start, end: target.end });
+            }
+
+            // Move playhead to next available active segment
+            const refreshedSegs = getStudioSegmentsList();
+            const nextValid = refreshedSegs.findIndex(s => !s.deleted);
+            if (nextValid !== -1) {
+                studioTrimState.selectedSegmentIdx = nextValid;
+                studioTrimState.playhead = refreshedSegs[nextValid].start;
+                try { v.currentTime = studioTrimState.playhead; } catch (e) {}
+            }
+
+            renderModernTrimmerUI();
+            showToast(`Partie ${target.index + 1} (${formatTrimTimestamp(target.start)} - ${formatTrimTimestamp(target.end)}) supprimée ! 🗑️`, "success");
+        };
+
+        window.resetStudioTrimAndCuts = () => {
+            const v = document.getElementById('video-preview');
+            const dur = (v && v.duration && isFinite(v.duration)) ? Math.min(v.duration, 120) : studioTrimState.duration;
+            studioTrimState.start = 0;
+            studioTrimState.end = dur;
+            studioTrimState.playhead = 0;
+            studioTrimState.splitPoints = [];
+            studioTrimState.deletedRanges = [];
+            studioTrimState.selectedSegmentIdx = 0;
+            if (v && v.duration) {
+                try { v.currentTime = 0; } catch (e) {}
+            }
+            renderModernTrimmerUI();
+            showToast("Rognage et découpes réinitialisés ↺", "info");
+        };
+
+        function bindModernTrimmerGestures() {
+            const track = document.getElementById('studio-filmstrip-track');
+            const handL = document.getElementById('trim-handle-left');
+            const handR = document.getElementById('trim-handle-right');
+            if (!track || studioTrimState.interactionBound) return;
+            studioTrimState.interactionBound = true;
+
+            let dragMode = null; // 'left' | 'right' | 'playhead'
+
+            const timeFromClientX = (clientX) => {
+                const rect = track.getBoundingClientRect();
+                const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / Math.max(1, rect.width)));
+                return ratio * (studioTrimState.duration || 30);
+            };
+
+            const onPointerMove = (e) => {
+                if (!dragMode) return;
+                const v = document.getElementById('video-preview');
+                const t = timeFromClientX(e.clientX);
+                if (dragMode === 'left') {
+                    studioTrimState.start = Math.max(0, Math.min(t, studioTrimState.end - 0.5));
+                    studioTrimState.playhead = studioTrimState.start;
+                    if (v && v.duration) { try { v.currentTime = studioTrimState.start; } catch (err) {} }
+                } else if (dragMode === 'right') {
+                    studioTrimState.end = Math.min(studioTrimState.duration, Math.max(t, studioTrimState.start + 0.5));
+                    studioTrimState.playhead = studioTrimState.end;
+                    if (v && v.duration) { try { v.currentTime = Math.max(0, studioTrimState.end - 0.1); } catch (err) {} }
+                } else if (dragMode === 'playhead') {
+                    studioTrimState.playhead = Math.max(studioTrimState.start, Math.min(studioTrimState.end, t));
+                    const segs = getStudioSegmentsList();
+                    const sIdx = segs.findIndex(sg => studioTrimState.playhead >= sg.start && studioTrimState.playhead <= sg.end);
+                    if (sIdx !== -1) studioTrimState.selectedSegmentIdx = sIdx;
+                    if (v && v.duration) { try { v.currentTime = studioTrimState.playhead; } catch (err) {} }
+                }
+                renderModernTrimmerUI();
+            };
+
+            const stopDrag = () => {
+                dragMode = null;
+            };
+
+            if (handL) {
+                handL.addEventListener('pointerdown', (e) => {
+                    e.stopPropagation();
+                    dragMode = 'left';
+                    handL.setPointerCapture(e.pointerId);
+                });
+                handL.addEventListener('pointermove', onPointerMove);
+                handL.addEventListener('pointerup', stopDrag);
+                handL.addEventListener('pointercancel', stopDrag);
+            }
+            if (handR) {
+                handR.addEventListener('pointerdown', (e) => {
+                    e.stopPropagation();
+                    dragMode = 'right';
+                    handR.setPointerCapture(e.pointerId);
+                });
+                handR.addEventListener('pointermove', onPointerMove);
+                handR.addEventListener('pointerup', stopDrag);
+                handR.addEventListener('pointercancel', stopDrag);
+            }
+            track.addEventListener('pointerdown', (e) => {
+                if (e.target === handL || e.target === handR) return;
+                dragMode = 'playhead';
+                track.setPointerCapture(e.pointerId);
+                onPointerMove(e);
+            });
+            track.addEventListener('pointermove', onPointerMove);
+            track.addEventListener('pointerup', stopDrag);
+            track.addEventListener('pointercancel', stopDrag);
+        }
+
+        function generateFilmstripThumbnails(fileURL, durationSec) {
+            const container = document.getElementById('studio-filmstrip-frames');
+            if (!container) return;
+            container.innerHTML = '';
+            const numFrames = 8;
+            const canvases = [];
+            for (let i = 0; i < numFrames; i++) {
+                const c = document.createElement('canvas');
+                c.width = 64;
+                c.height = 96;
+                const ctx = c.getContext('2d');
+                ctx.fillStyle = i % 2 === 0 ? '#111827' : '#1e293b';
+                ctx.fillRect(0, 0, c.width, c.height);
+                container.appendChild(c);
+                canvases.push(c);
+            }
+
+            const thumbVid = document.createElement('video');
+            thumbVid.muted = true;
+            thumbVid.playsInline = true;
+            thumbVid.preload = 'auto';
+            thumbVid.src = fileURL;
+
+            let idx = 0;
+            const captureNext = () => {
+                if (idx >= numFrames) {
+                    thumbVid.removeAttribute('src');
+                    thumbVid.load();
+                    return;
+                }
+                const targetTime = Math.min(durationSec - 0.05, Math.max(0, ((idx + 0.5) / numFrames) * durationSec));
+                try {
+                    thumbVid.currentTime = targetTime;
+                } catch (e) {
+                    idx++;
+                    captureNext();
+                }
+            };
+
+            thumbVid.addEventListener('seeked', () => {
+                try {
+                    const c = canvases[idx];
+                    if (c) {
+                        const ctx = c.getContext('2d');
+                        ctx.drawImage(thumbVid, 0, 0, c.width, c.height);
+                    }
+                } catch (e) {}
+                idx++;
+                captureNext();
+            });
+
+            thumbVid.addEventListener('loadeddata', () => {
+                captureNext();
+            }, { once: true });
+        }
+
         function loadFileIntoStudioEditor(fileObj) {
             if (!fileObj) return;
             studioSelectedFile = fileObj;
+            showStudioMediaLoading("Chargement de la vidéo en cours...", "Préparation de l'aperçu et du découpage dans R-Studio, veuillez patienter...");
+
             const v = document.getElementById('video-preview');
             const fileURL = URL.createObjectURL(fileObj);
             v.src = fileURL;
             v.classList.remove('hidden');
             v.muted = false; // Allow user to hear their clip inside the Upload Editor
+            v.load();
+
+            const onVideoVisualReady = () => {
+                hideStudioMediaLoading();
+            };
+            v.addEventListener('loadeddata', onVideoVisualReady, { once: true });
+            v.addEventListener('canplay', onVideoVisualReady, { once: true });
+            v.addEventListener('playing', onVideoVisualReady, { once: true });
+            v.addEventListener('error', () => hideStudioMediaLoading(), { once: true });
 
             v.onloadedmetadata = () => { 
                 const dur = v.duration && isFinite(v.duration) ? v.duration : 30; 
                 const maxDur = Math.min(dur, 120); 
-                document.getElementById('trim-start').value = 0; 
-                document.getElementById('trim-end').value = Math.floor(maxDur); 
-                document.getElementById('trim-duration-display').innerText = Math.floor(maxDur) + 's';
+                studioTrimState.duration = maxDur;
+                studioTrimState.start = 0;
+                studioTrimState.end = maxDur;
+                studioTrimState.playhead = 0;
+                studioTrimState.splitPoints = [];
+                studioTrimState.deletedRanges = [];
+                studioTrimState.selectedSegmentIdx = 0;
+
+                bindModernTrimmerGestures();
+                renderModernTrimmerUI();
+                generateFilmstripThumbnails(fileURL, maxDur);
 
                 const w = v.videoWidth || 9;
                 const h = v.videoHeight || 16;
@@ -6212,10 +6863,32 @@
                     const cBadge = document.getElementById('studio-cover-time-badge');
                     if (cBadge) cBadge.innerText = parseFloat(coverSlider.value).toFixed(1) + 's';
                 };
+
+                v.ontimeupdate = () => {
+                    const cur = v.currentTime || 0;
+                    // Skip any deleted middle segments automatically
+                    for (let i = 0; i < studioTrimState.deletedRanges.length; i++) {
+                        const r = studioTrimState.deletedRanges[i];
+                        if (cur >= r.start && cur < r.end - 0.05) {
+                            v.currentTime = r.end;
+                            return;
+                        }
+                    }
+                    if (cur >= studioTrimState.end || cur < studioTrimState.start - 0.15) {
+                        v.currentTime = studioTrimState.start;
+                        v.play().catch(() => {});
+                    }
+                    studioTrimState.playhead = v.currentTime || 0;
+                    const phLine = document.getElementById('trim-playhead-line');
+                    if (phLine && studioTrimState.duration > 0) {
+                        const pct = Math.max(0, Math.min(100, (studioTrimState.playhead / studioTrimState.duration) * 100));
+                        phLine.style.left = `${pct}%`;
+                    }
+                };
             };
             
             applyStudioVisualTransformAndFilter();
-            v.play().catch(() => {});
+            v.play().then(() => hideStudioMediaLoading()).catch(() => {});
             const emptyPrompt = document.getElementById('studio-empty-prompt');
             if (emptyPrompt) emptyPrompt.classList.add('hidden');
             document.getElementById('video-file-input').classList.add('hidden');
@@ -6226,16 +6899,24 @@
 
         window.previewVideoUpload = (i) => { 
             if(i && i.files && i.files[0]) { 
+                showStudioMediaLoading("Chargement de la vidéo en cours...", "Préparation de l'aperçu et du découpage dans R-Studio, veuillez patienter...");
                 stopStudioCameraStream();
                 loadFileIntoStudioEditor(i.files[0]);
             } 
         };
         window.changeVideoFile = () => { document.getElementById('video-file-input').click(); };
         window.deleteVideoFile = () => {
+            hideStudioMediaLoading();
             stopStudioCameraStream();
             studioSelectedFile = null;
             studioRecordedFile = null;
             studioCapturedPhotoDataUrl = null;
+            studioTrimState.splitPoints = [];
+            studioTrimState.deletedRanges = [];
+            const framesBox = document.getElementById('studio-filmstrip-frames');
+            if (framesBox) framesBox.innerHTML = '';
+            const segBar = document.getElementById('studio-segments-bar');
+            if (segBar) segBar.innerHTML = '';
             const photoPrev = document.getElementById('studio-photo-preview');
             if (photoPrev) { photoPrev.src = ""; photoPrev.classList.add('hidden'); }
             const savePhotoBtn = document.getElementById('studio-save-photo-btn');
@@ -6251,13 +6932,16 @@
         };
         window.updateTrimPreview = () => {
             const v = document.getElementById('video-preview'); if (!v.duration) return;
-            let start = parseFloat(document.getElementById('trim-start').value) || 0; let end = parseFloat(document.getElementById('trim-end').value) || Math.min(v.duration, 120);
+            let start = parseFloat(document.getElementById('trim-start').value) || 0;
+            let end = parseFloat(document.getElementById('trim-end').value) || Math.min(v.duration, 120);
             if (start < 0) start = 0; if (end > v.duration) end = v.duration;
             if (end - start > 120) { end = start + 120; if (end > v.duration) { end = v.duration; start = Math.max(0, end - 120); } }
-            if (end <= start + 1) { end = Math.min(v.duration, start + 1); }
-            document.getElementById('trim-start').value = start.toFixed(1); document.getElementById('trim-end').value = end.toFixed(1);
-            document.getElementById('trim-duration-display').innerText = Math.round(end - start) + 's';
-            v.currentTime = start; v.play().catch(()=>{}); v.ontimeupdate = null; v.ontimeupdate = () => { if(v.currentTime >= end) { v.currentTime = start; v.play().catch(()=>{}); } };
+            if (end <= start + 0.5) { end = Math.min(v.duration, start + 0.5); }
+            studioTrimState.start = start;
+            studioTrimState.end = end;
+            renderModernTrimmerUI();
+            v.currentTime = start;
+            v.play().catch(()=>{});
         };
         window.uploadVideo = async () => {
             const f = studioSelectedFile || document.getElementById('video-file-input').files[0] || document.getElementById('native-camera-file-input')?.files[0] || studioRecordedFile;
@@ -6300,7 +6984,8 @@
                 overlayColor: studioEditState.overlayColor || '#ffffff',
                 overlayPos: studioEditState.overlayPos || 'center',
                 overlaySticker: studioEditState.overlaySticker || '',
-                keepOriginalAudio: document.getElementById('studio-keep-original-audio')?.checked !== false
+                keepOriginalAudio: document.getElementById('studio-keep-original-audio')?.checked !== false,
+                deletedRanges: studioTrimState.deletedRanges || []
             };
 
             try {
@@ -7256,26 +7941,920 @@
             }
         };
 
+        // ============================================================================
+        // COMPLETE FULL-APP TRANSLATION ENGINE (FR / EN / ES + ALL DYNAMIC & STATIC TEXT)
+        // Translates 100% of words, buttons, tabs, modals, R-Studio, feed cards & toasts
+        // ============================================================================
+        const RV_FULL_PHRASES = {
+            en: {
+                '"Le Studio Ralph Nyamè". 2025': '"Ralph Nyamè Studio". 2025',
+                '#PourToi': '#ForYou',
+                '#Humour': '#Comedy',
+                '#Musique': '#Music',
+                '#Danse': '#Dance',
+                '#Tendance': '#Trending',
+                '(identifiant package :': '(package ID:',
+                ') est une création logicielle originale développée par': ') is an original software creation developed by',
+                ", dotée de son propre moteur d'édition": ', featuring its own editing engine',
+                ". Chaque publication fait l'objet d'une vérification d'empreinte cryptographique": '. Every post undergoes cryptographic fingerprint verification',
+                '0 Mo utilisés': '0 MB used',
+                '0 vidéo(s) en cache': '0 video(s) cached',
+                '0.75x (Ralenti)': '0.75x (Slow-Mo)',
+                '1.0x (Normal)': '1.0x (Normal)',
+                '1.25x (Dynamique)': '1.25x (Dynamic)',
+                '1.5x (Rapide)': '1.5x (Fast)',
+                '2.0x (Ultra)': '2.0x (Ultra)',
+                '100 Mo': '100 MB',
+                '1. Découpage & Format': '1. Trim & Format',
+                '2. Filtres & Couleurs': '2. Filters & Colors',
+                '3. Texte & Stickers': '3. Text & Stickers',
+                '4. Son & Mixage': '4. Sound & Mixing',
+                '5. Infos & Options': '5. Info & Options',
+                '1. Informations Collectées': '1. Collected Information',
+                '2. Utilisation des Données & Sécurité': '2. Data Usage & Security',
+                '3. Contrôle & Suppression de Compte': '3. Account Control & Deletion',
+                '4. Politique de Contenu Généré par les Utilisateurs (UGC) — Tolérance Zéro': '4. User-Generated Content (UGC) Policy — Zero Tolerance',
+                '5. Garantie 100 % Utilisateurs Réels & Anti-Manipulation (Google Play Integrity)': '5. 100% Real Users & Anti-Manipulation Guarantee (Google Play Integrity)',
+                '6. Propriété Intellectuelle, Licence Originale & Anti-Plagiat (DMCA)': '6. Intellectual Property, Original License & Anti-Plagiarism (DMCA)',
+                '7. Déclaration des Permissions Matérielles (Data Safety)': '7. Hardware Permissions Disclosure (Data Safety)',
+                ": Utilisé uniquement pour importer ou sauvegarder les vidéos et photos choisies par l'utilisateur.": ': Used solely to import or save videos and photos selected by the user.',
+                ": Utilisés uniquement lorsque l'utilisateur ouvre volontairement la caméra dans R-Studio pour filmer ou prendre une photo en direct. Aucun enregistrement en arrière-plan n'est effectué.": ': Used solely when the user voluntarily opens the camera in R-Studio to record video or take a live photo. No background recording ever takes place.',
+                '@createur': '@creator',
+                '@utilisateur': '@user',
+                'Abonnements': 'Following',
+                'Abonnés': 'Followers',
+                'Accueil': 'Home',
+                'Activer la mise en cache vidéo': 'Enable smart video caching',
+                'Activités': 'Activities',
+                'Affichage tablette/mobile, synchronisation A/V & effets': 'Tablet/mobile display, A/V sync & visual effects',
+                'Affichage, Proportions & Synchronisation': 'Display, Aspect Ratio & Synchronization',
+                'Ajouter un Sticker animé sur la vidéo': 'Add an animated Sticker on the video',
+                'Amis': 'Friends',
+                'Annuler': 'Cancel',
+                'Appareil Photo HD': 'HD Phone Camera',
+                "Apparence de l'application": 'App Appearance',
+                'Application créée par': 'App created by',
+                'Arctique ❄️': 'Arctic ❄️',
+                'Aucun': 'None',
+                'Auto': 'Auto',
+                'Autoriser la réutilisation du son / Duos': 'Allow sound reuse / Duets',
+                'Autoriser le téléchargement': 'Allow video downloads',
+                'Autoriser les commentaires': 'Allow comments',
+                'Autre motif': 'Other reason',
+                'Avertissement 1 / 3': 'Warning 1 / 3',
+                'Bas ⬇️': 'Bottom ⬇️',
+                'Basculer entre le mode Sombre et le mode Clair': 'Switch between Dark mode and Light mode',
+                'Bienvenue sur R-Videos. Votre sécurité et la protection de vos données personnelles sont notre priorité absolue.': 'Welcome to R-Videos. Your safety and personal data protection are our top priority.',
+                'Boîte de réception': 'Inbox',
+                'Brouillon': 'Draft',
+                'Bulle Glass': 'Glass Bubble',
+                'Cache Vidéo Intelligent': 'Smart Video Cache',
+                'Cadence des vidéos du flux': 'Feed video playback speed',
+                'Caméra & Microphone': 'Camera & Microphone',
+                'Caméra Live': 'Live Camera',
+                'Ce contenu sera immédiatement masqué de votre flux et transmis à notre équipe de modération.': 'This content will be immediately hidden from your feed and sent to our moderation team.',
+                'Centre 🎯': 'Center 🎯',
+                'Cette action est irréversible.': 'This action cannot be undone.',
+                'Challenge Officiel': 'Official Challenge',
+                'Changer': 'Change',
+                'Chargement du flux...': 'Loading video feed...',
+                'Chargement...': 'Loading...',
+                'Chargement de la vidéo en cours...': 'Loading video...',
+                "Préparation de l'aperçu dans R-Studio, veuillez patienter un instant...": 'Preparing preview in R-Studio, please wait a moment...',
+                "Préparation de l'aperçu et du découpage dans R-Studio, veuillez patienter...": 'Preparing video preview and trimmer in R-Studio, please wait...',
+                'Ouverture de la caméra en direct...': 'Opening live camera...',
+                'Initialisation du capteur vidéo HD, veuillez patienter...': 'Initializing HD video sensor, please wait...',
+                'Traitement de votre vidéo filmée...': 'Processing your recorded video...',
+                "Assemblage et préparation de votre prise dans l'éditeur R-Studio...": 'Assembling and preparing your recording in R-Studio editor...',
+                'Cinéma': 'Cinema',
+                'Cinéma 🎬': 'Cinema 🎬',
+                'Classement viral': 'Viral ranking',
+                'Commentaires': 'Comments',
+                'Compte & Confidentialité': 'Account & Privacy',
+                'Compte créé ! Connectez-vous.': 'Account created! Please log in.',
+                'Conformité Google Play Store • Mise à jour : 2026': 'Google Play Store Compliance • Updated: 2026',
+                'Conformément aux exigences Google Play sur la suppression des données, vous pouvez supprimer intégralement et instantanément votre compte et vos vidéos depuis': 'In accordance with Google Play data deletion requirements, you can permanently and instantly delete your account and videos from',
+                'Connectez-vous pour aimer, commenter, partager vos créations et rejoindre la communauté R-Videos.': 'Log in to like, comment, share your creations, and join the R-Videos community.',
+                'Connexion requise': 'Login Required',
+                'Conserver le son original de la vidéo': 'Keep original video sound',
+                'Contenu inapproprié ou choquant': 'Inappropriate or shocking content',
+                'Contenus vidéos publiés volontairement et interactions sociales.': 'Voluntarily published video content and social interactions.',
+                'Contraste': 'Contrast',
+                "Coupe le son au lancement de l'application": 'Mute sound when launching the app',
+                'Couverture (Miniature)': 'Cover (Thumbnail)',
+                'Créer mon compte': 'Create my account',
+                'Cyber Néon 💜': 'Cyber Neon 💜',
+                'Cyber 💜': 'Cyber 💜',
+                'Discours haineux ou harcèlement': 'Hate speech or harassment',
+                'Déconnexion': 'Log out',
+                'Découpage Précis (< 120s)': 'Precision Trimmer (< 120s)',
+                'Rognage & Découpage Moderne': 'Modern Video Trimmer & Splitter',
+                'Scinder au curseur': 'Split at cursor',
+                'Supprimer la partie': 'Delete part',
+                'Découvrir': 'Discover',
+                'Défilement Automatique (Auto-Scroll)': 'Auto-Scroll to Next Video',
+                'Déjà un compte ?': 'Already have an account?',
+                'Démarrer les vidéos en muet': 'Start videos muted',
+                'Désactive si tu veux publier ta vidéo en mode muet': 'Disable if you want to publish your video muted',
+                "En cochant cette case, j'accepte la": 'By checking this box, I accept the',
+                'Enregistrer': 'Save',
+                'Enregistrer Photo': 'Save Photo',
+                'Enregistrer la vidéo': 'Save Video',
+                'Entrez votre email pour recevoir un lien de réinitialisation.': 'Enter your email to receive a password reset link.',
+                'Envoyer': 'Send',
+                'Envoyer le lien': 'Send reset link',
+                'Explorez les créateurs, sons et vidéos virales': 'Explore creators, sounds, and viral videos',
+                'Faible': 'Low',
+                'Fermer': 'Close',
+                'Filmer': 'Record',
+                'Arrêter': 'Stop',
+                'Pause': 'Pause',
+                'Filtre Visuel Fun (Cinéma / Néon / N&B)': 'Fun Visual Filter (Cinema / Neon / B&W)',
+                'Filtres Cinématiques R-Studio': 'R-Studio Cinematic Filters',
+                'Fluidité & Préchargement': 'Smooth Playback & Preloading',
+                'Format Auto': 'Auto Format',
+                "Format d'affichage par défaut": 'Default Display Format',
+                'Format original ou plein écran 9:16': 'Original format or 9:16 fullscreen',
+                'Galerie / Éditeur': 'Gallery / Editor',
+                "Glisse le texte sur l'écran pour le placer": 'Drag text on screen to position it',
+                'Géométrie & Cadence': 'Geometry & Speed',
+                'Haut ⬆️': 'Top ⬆️',
+                'Impact': 'Impact',
+                'Informations de compte (pseudonyme, adresse email, photo de profil).': 'Account information (username, email address, profile picture).',
+                "J'ai compris les règles": 'I understand the rules',
+                "J'aime": 'Likes',
+                "Je certifie que cette vidéo est originale et sans plagiat (Droits d'auteur)": 'I certify that this video is original and plagiarism-free (Copyright)',
+                "L'application": 'The application',
+                "L'auteur a désactivé les commentaires.": 'The creator has disabled comments.',
+                "Langue de l'application": 'App Language',
+                'Lecture': 'Play',
+                'Les vidéos lues sont sauvegardées dans le cache local pour une relecture instantanée sans re-téléchargement. Au-delà de la limite choisie, les plus anciennes sont purgées automatiquement.': 'Watched videos are saved in local cache for instant replay without re-downloading. Beyond the selected limit, the oldest videos are automatically purged.',
+                'Limite maximale avant purge auto': 'Maximum limit before auto-purge',
+                'Luminosité': 'Brightness',
+                'Message': 'Message',
+                'Message épinglé': 'Pinned message',
+                'Messagerie directe': 'Direct messaging',
+                'Messages': 'Messages',
+                'Miroir': 'Mirror',
+                'Mode Sombre 🌙': 'Dark Mode 🌙',
+                'Mode Clair ☀️': 'Light Mode ☀️',
+                'Sombre 🌙': 'Dark 🌙',
+                'Clair ☀️': 'Light ☀️',
+                'Modifier': 'Edit',
+                'Modifier la publication': 'Edit post',
+                'Modifier le commentaire': 'Edit comment',
+                'Modifier le message': 'Edit message',
+                'Modifier la publication (texte, lieu, format)': 'Edit post (caption, location, format)',
+                'Modifier le profil': 'Edit Profile',
+                'Mot de passe oublié ?': 'Forgot password?',
+                'Motif : Non-respect des règles communautaires': 'Reason: Community Guidelines Violation',
+                'N&B 🖤': 'B&W 🖤',
+                'Niveau de sanction du compte :': 'Account sanction level:',
+                'Noir & Blanc 🖤': 'Black & White 🖤',
+                'Non': 'No',
+                'Normal': 'Normal',
+                'Notre système de sécurité R-Shield AI a détecté un contenu non conforme (nudité, arnaque ou vidéo non authentique).': 'Our R-Shield AI safety system detected non-compliant content (nudity, scam, or unauthentic video).',
+                "Nous appliquons une tolérance zéro concernant les contenus abusifs, haineux, violents, harcelants, pornographiques, frauduleux ou illégaux. Chaque vidéo et profil dispose d'outils de signalement et de blocage immédiat. Tout contrevenant est banni définitivement.": 'We enforce zero tolerance for abusive, hateful, violent, harassing, pornographic, fraudulent, or illegal content. Every video and profile provides immediate reporting and blocking tools. Violators are permanently banned.',
+                'Nouvelle Publication': 'New Post',
+                'Néon': 'Neon',
+                'Optimiser le flux pour les connexions mobiles': 'Optimize video stream for mobile data',
+                'Options & Studio Fun': 'Options & Fun Studio',
+                'Original': 'Original',
+                'Ou clique sur « Caméra Live » en haut pour te filmer directement': 'Or tap "Live Camera" above to record yourself directly',
+                'Oui': 'Yes',
+                'Paramètres, Cache & Options Fun': 'Settings, Cache & Fun Options',
+                'Partager la vidéo': 'Share Video',
+                'Participer': 'Join Now',
+                'Pas de connexion internet': 'No Internet Connection',
+                'Pas encore de compte ?': "Don't have an account?",
+                'Passer automatiquement à la vidéo suivante à la fin': 'Automatically scroll to next video when finished',
+                'Photo': 'Photo',
+                'Photo de profil': 'Profile Picture',
+                'Plein écran 9:16': 'Fullscreen 9:16',
+                'Plein écran 9:16 (Remplir)': 'Fullscreen 9:16 (Fill)',
+                'Plein écran immersif (9:16)': 'Immersive Fullscreen (9:16)',
+                'Politique de Confidentialité': 'Privacy Policy',
+                'Politique de Confidentialité & CGU': 'Privacy Policy & Terms',
+                'Politique de Confidentialité & CGU Play Store': 'Privacy Policy & Play Store Terms',
+                'Position rapide :': 'Quick position:',
+                'Pour Toi : Éligible ✓': 'For You: Eligible ✓',
+                'Pour Toi : Refusé 🚫': 'For You: Rejected 🚫',
+                'Pour toi': 'For You',
+                'Profil': 'Profile',
+                'Profil > Modifier le profil > Supprimer mon compte': 'Profile > Edit Profile > Delete My Account',
+                "Proportions d'origine": 'Original Aspect Ratio',
+                "Proportions d'origine (Auto)": 'Original Aspect Ratio (Auto)',
+                "Proportions d'origine (Fidèle)": 'Original Aspect Ratio (True)',
+                "Proportions dans l'application": 'In-App Aspect Ratio',
+                'Proportions de la vidéo': 'Video Aspect Ratio',
+                'Précharger la vidéo suivante en arrière-plan': 'Preload next video in background',
+                'Publie ta meilleure vidéo ou réutilise un son populaire pour passer en tendance !': 'Post your best video or reuse a trending sound to go viral!',
+                'Publier': 'Publish',
+                'R-Shield AI : Contrôle Authenticité, Anti-Nudité & Anti-Arnaque actif': 'R-Shield AI: Authenticity, Anti-Nudity & Anti-Scam Protection Active',
+                'R-Shield AI : Authenticité, Anti-Nudité & Anti-Arnaque vérifiés': 'R-Shield AI: Authenticity, Anti-Nudity & Anti-Scam Verified',
+                'R-Studio Pro • Caméra & Montage Créatif': 'R-Studio Pro • Camera & Creative Editing',
+                'Respecter les vraies proportions ou plein écran 9:16': 'Preserve true aspect ratio or fill 9:16 fullscreen',
+                'Retirer': 'Remove',
+                'Retour': 'Back',
+                'Retour à la connexion': 'Back to login',
+                'Réessayer': 'Retry',
+                'Réglages': 'Settings',
+                'Réinitialisation': 'Password Reset',
+                'Réinitialiser': 'Reset',
+                'Réseau Social Vidéo Nouvelle Génération': 'Next-Generation Video Social Network',
+                'Rétro VHS 📼': 'Retro VHS 📼',
+                "S'abonner": 'Follow',
+                'Abonné ✓': 'Following ✓',
+                "S'inscrire": 'Sign up',
+                'Saturation': 'Saturation',
+                "Score d'authenticité R-Shield :": 'R-Shield Authenticity Score:',
+                'Se connecter': 'Log in',
+                'Se déconnecter': 'Log out',
+                'Signaler & Masquer': 'Report & Hide',
+                'Signaler le contenu': 'Report Content',
+                'Soleil 237 🌅': 'Sun 237 🌅',
+                'Son original': 'Original sound',
+                'Son réutilisé attaché': 'Reused sound attached',
+                'Sons & Ambiances Populaires en 1 clic :': '1-Tap Popular Sounds & Vibes:',
+                'Souhaitez-vous vraiment vous déconnecter de votre compte ?': 'Are you sure you want to log out of your account?',
+                'Spam ou publicité trompeuse': 'Spam or misleading advertising',
+                'Stockage / Galerie': 'Storage / Gallery',
+                'Strike 1/3 (Sous surveillance)': 'Strike 1/3 (Under watch)',
+                'Suivis': 'Following',
+                'Supprimer': 'Delete',
+                'Suppr.': 'Del.',
+                'Supprimer ?': 'Delete?',
+                'Supprimer la vidéo': 'Delete video',
+                'Supprimer la vidéo ?': 'Delete video?',
+                'Supprimer le commentaire ?': 'Delete comment?',
+                'Supprimer le message ?': 'Delete message?',
+                'Supprimer la conversation ?': 'Delete conversation?',
+                'SUPPRIMER COMPTE ?': 'DELETE ACCOUNT?',
+                'Effacer toutes les activités ?': 'Clear all activities?',
+                'Bloquer cet utilisateur ?': 'Block this user?',
+                'Bannir cet utilisateur ?': 'Ban this user?',
+                'Supprimer mon compte': 'Delete my account',
+                'Sélectionner une vidéo': 'Select a video',
+                'Teinte (Hue)': 'Hue',
+                'Texte incrusté sur la vidéo': 'On-Video Text Overlay',
+                'Thème (Clair / Sombre) & Préférences': 'Theme (Light / Dark) & Preferences',
+                "Thème de l'application (Clair / Sombre)": 'App Theme (Light / Dark)',
+                'Titre du son ou musique associée': 'Sound title or associated music',
+                'Top Vidéos': 'Top Videos',
+                'Tout effacer': 'Clear all',
+                'Utilisateur': 'User',
+                'Utiliser ce son': 'Use this sound',
+                'Utiliser le son de cette vidéo 🎵': 'Use sound from this video 🎵',
+                'Vider le cache': 'Clear cache',
+                'Vidéo refusée du « Pour toi »': 'Video rejected from "For You"',
+                'Vidéos associées': 'Related videos',
+                'Vidéos utilisant ce son': 'Videos using this sound',
+                "Violation des droits d'auteur": 'Copyright infringement',
+                'Visibilité dans « Pour toi » :': 'Visibility in "For You":',
+                'Vitesse de lecture': 'Playback speed',
+                'Vitesse de lecture par défaut': 'Default playback speed',
+                "Vos données servent exclusivement au fonctionnement du flux vidéo, de la messagerie et des notifications. Aucune donnée n'est vendue à des tiers.": 'Your data is used exclusively for video feed operation, messaging, and notifications. No data is ever sold to third parties.',
+                'Vérifiez votre connexion et réessayez.': 'Check your internet connection and try again.',
+                'contre le plagiat et la copie non autorisée.': 'against plagiarism and unauthorized copying.',
+                'et de son système de sécurité': 'and its security engine',
+                'Éclatant ✨': 'Vivid ✨',
+                'Économiseur de données': 'Data Saver',
+                "Écouter l'extrait": 'Preview sound',
+                'Éditeur': 'Editor',
+                'Épingler sur mon profil': 'Pin to my profile',
+                'Épingler sur mon profil 📌': 'Pin to my profile 📌',
+                'Désépingler du profil': 'Unpin from profile',
+                'Épingler': 'Pin',
+                'Désépingler': 'Unpin',
+                '📌 Épinglé': '📌 Pinned',
+                '⚠️ Attention : Si vous continuez à publier du contenu non conforme, votre compte sera lourdement sanctionné et banni définitivement.': '⚠️ Warning: If you continue posting non-compliant content, your account will be heavily sanctioned and permanently banned.',
+                '⚽ Sport': '⚽ Sports',
+                '🇨🇲 237 Talents': '🇨🇲 237 Talents',
+                '🌍 Public': '🌍 Public',
+                '🌍 Public (Tout le monde)': '🌍 Public (Everyone)',
+                '🎵 Musique': '🎵 Music',
+                '👥 Abonnés': '👥 Followers',
+                '👥 Abonnés uniquement': '👥 Followers only',
+                '💃 Danse': '💃 Dance',
+                '🔒 Privé': '🔒 Private',
+                '🔒 Privé (Moi seul)': '🔒 Private (Only me)',
+                '🔥 Tout': '🔥 All',
+                '😂 Humour': '😂 Comedy',
+                '😂 Humour Viral': '😂 Viral Comedy',
+                '🚫 Bloquée / Exclue': '🚫 Blocked / Excluded',
+                'Republier pour tes followers': 'Repost for your followers',
+                'Republié pour tes followers ✓': 'Reposted for your followers ✓',
+                'Voir la traduction': 'See translation',
+                "Afficher l'original": 'Show original',
+                'Aucune vidéo disponible': 'No videos available',
+                'Aucune vidéo dans cet onglet.': 'No videos in this tab.',
+                'Aucune vidéo dans cette catégorie pour le moment.': 'No videos in this category yet.',
+                'Aucune activité récente.': 'No recent activity.',
+                'Aucune conversation active.': 'No active conversations.',
+                'Chargement des activités...': 'Loading activities...',
+                'Chargement des messages...': 'Loading messages...',
+                'Chargement des commentaires...': 'Loading comments...',
+                'Chargement des tendances...': 'Loading trends...',
+                'Recherche des vidéos avec ce son...': 'Searching videos with this sound...',
+                'Soyez le premier à commenter ! ✨': 'Be the first to comment! ✨',
+                'Tapez au moins 2 caractères...': 'Type at least 2 characters...',
+                'Aucun créateur trouvé.': 'No creators found.',
+                'Pas de bio': 'No bio yet',
+                'Nouveau membre': 'New member',
+                'Créateur R-Videos': 'R-Videos Creator',
+                "À l'instant": 'Just now',
+                'Récemment': 'Recently',
+                'Répondre': 'Reply',
+                'Ajouter un commentaire...': 'Add a comment...',
+                'Ajouter un lieu': 'Add a location',
+                'Anneau Lumineux Selfie (Flash Écran)': 'Selfie Ring Light (Screen Flash)',
+                'Bio': 'Bio',
+                'Changer de thème (Clair / Sombre)': 'Switch theme (Light / Dark)',
+                'Contenu...': 'Content...',
+                'Durée max': 'Max duration',
+                'Début (s)': 'Start (s)',
+                'Décris ta vidéo... #Hashtags @Amis': 'Describe your video... #Hashtags @Friends',
+                'Détails supplémentaires (optionnel)...': 'Additional details (optional)...',
+                'Email': 'Email',
+                'Email (Gmail requis)': 'Email (Gmail required)',
+                'Envoyer un message...': 'Send a message...',
+                'Fin (s)': 'End (s)',
+                'Glisser pour déplacer le sticker': 'Drag to move sticker',
+                'Glisser pour déplacer le texte': 'Drag to move text',
+                'Glisser pour rogner le début': 'Drag to trim start',
+                'Glisser pour rogner la fin': 'Drag to trim end',
+                'Réinitialiser le découpage': 'Reset trim & cuts',
+                'Grille de cadrage': 'Framing grid',
+                'Inverser Caméra Avant / Arrière': 'Flip Front / Back Camera',
+                'Lieu (optionnel)': 'Location (optional)',
+                'Miroir horizontal': 'Horizontal mirror',
+                'Mode Miroir': 'Mirror Mode',
+                'Mode Surprise / Live': 'Surprise / Live Mode',
+                'Mot de passe': 'Password',
+                "Nom d'utilisateur": 'Username',
+                'Paramètres': 'Settings',
+                'Partager mon profil': 'Share my profile',
+                'Pivoter de 90°': 'Rotate 90°',
+                'Prendre une photo en direct': 'Take a live photo',
+                'Proportions vidéo': 'Video aspect ratio',
+                'Publier sur R-Videos': 'Post on R-Videos',
+                'Rechercher': 'Search',
+                'Rechercher des créateurs (@nom)...': 'Search creators (@name)...',
+                'Retardateur': 'Timer',
+                'Sauvegarder un brouillon': 'Save draft',
+                'Son': 'Sound',
+                'Tag (@ami)': 'Tag (@friend)',
+                'Titre du son (ex: Son original ou titre musical)': 'Sound title (e.g. Original sound or song title)',
+                'Écris un titre ou sous-titre à afficher sur la vidéo...': 'Write a title or caption to display on the video...'
+            },
+            es: {
+                '"Le Studio Ralph Nyamè". 2025': '"Estudio Ralph Nyamè". 2025',
+                '#PourToi': '#ParaTi',
+                '#Humour': '#Humor',
+                '#Musique': '#Música',
+                '#Danse': '#Baile',
+                '#Tendance': '#Tendencia',
+                '(identifiant package :': '(ID del paquete:',
+                ') est une création logicielle originale développée par': ') es una creación de software original desarrollada por',
+                ", dotée de son propre moteur d'édition": ', con su propio motor de edición',
+                ". Chaque publication fait l'objet d'une vérification d'empreinte cryptographique": '. Cada publicación pasa por una verificación de huella criptográfica',
+                '0 Mo utilisés': '0 MB usados',
+                '0 vidéo(s) en cache': '0 video(s) en caché',
+                '0.75x (Ralenti)': '0.75x (Cámara lenta)',
+                '1.0x (Normal)': '1.0x (Normal)',
+                '1.25x (Dynamique)': '1.25x (Dinámico)',
+                '1.5x (Rapide)': '1.5x (Rápido)',
+                '2.0x (Ultra)': '2.0x (Ultra)',
+                '100 Mo': '100 MB',
+                '1. Découpage & Format': '1. Recorte y Formato',
+                '2. Filtres & Couleurs': '2. Filtros y Colores',
+                '3. Texte & Stickers': '3. Texto y Stickers',
+                '4. Son & Mixage': '4. Sonido y Mezcla',
+                '5. Infos & Options': '5. Info y Opciones',
+                '1. Informations Collectées': '1. Información Recopilada',
+                '2. Utilisation des Données & Sécurité': '2. Uso de Datos y Seguridad',
+                '3. Contrôle & Suppression de Compte': '3. Control y Eliminación de Cuenta',
+                '4. Politique de Contenu Généré par les Utilisateurs (UGC) — Tolérance Zéro': '4. Política de Contenido Generado por Usuarios (UGC) — Tolerancia Cero',
+                '5. Garantie 100 % Utilisateurs Réels & Anti-Manipulation (Google Play Integrity)': '5. Garantía 100% Usuarios Reales y Anti-Manipulación (Google Play Integrity)',
+                '6. Propriété Intellectuelle, Licence Originale & Anti-Plagiat (DMCA)': '6. Propiedad Intelectual, Licencia Original y Anti-Plagio (DMCA)',
+                '7. Déclaration des Permissions Matérielles (Data Safety)': '7. Declaración de Permisos de Hardware (Data Safety)',
+                ": Utilisé uniquement pour importer ou sauvegarder les vidéos et photos choisies par l'utilisateur.": ': Usado únicamente para importar o guardar los videos y fotos elegidos por el usuario.',
+                ": Utilisés uniquement lorsque l'utilisateur ouvre volontairement la caméra dans R-Studio pour filmer ou prendre une photo en direct. Aucun enregistrement en arrière-plan n'est effectué.": ': Usados únicamente cuando el usuario abre voluntariamente la cámara en R-Studio para grabar o tomar una foto en vivo. Nunca se graba en segundo plano.',
+                '@createur': '@creador',
+                '@utilisateur': '@usuario',
+                'Abonnements': 'Siguiendo',
+                'Abonnés': 'Seguidores',
+                'Accueil': 'Inicio',
+                'Activer la mise en cache vidéo': 'Activar caché inteligente de video',
+                'Activités': 'Actividades',
+                'Affichage tablette/mobile, synchronisation A/V & effets': 'Pantalla móvil/tablet, sincronización A/V y efectos',
+                'Affichage, Proportions & Synchronisation': 'Pantalla, Proporciones y Sincronización',
+                'Ajouter un Sticker animé sur la vidéo': 'Añadir un Sticker animado al video',
+                'Amis': 'Amigos',
+                'Annuler': 'Cancelar',
+                'Appareil Photo HD': 'Cámara HD Nativa',
+                "Apparence de l'application": 'Apariencia de la aplicación',
+                'Application créée par': 'Aplicación creada por',
+                'Arctique ❄️': 'Ártico ❄️',
+                'Aucun': 'Ninguno',
+                'Auto': 'Auto',
+                'Autoriser la réutilisation du son / Duos': 'Permitir reutilizar el sonido / Dúos',
+                'Autoriser le téléchargement': 'Permitir descargas',
+                'Autoriser les commentaires': 'Permitir comentarios',
+                'Autre motif': 'Otro motivo',
+                'Avertissement 1 / 3': 'Advertencia 1 / 3',
+                'Bas ⬇️': 'Abajo ⬇️',
+                'Basculer entre le mode Sombre et le mode Clair': 'Cambiar entre modo Oscuro y modo Claro',
+                'Bienvenue sur R-Videos. Votre sécurité et la protection de vos données personnelles sont notre priorité absolue.': 'Bienvenido a R-Videos. Tu seguridad y la protección de tus datos personales son nuestra máxima prioridad.',
+                'Boîte de réception': 'Bandeja de entrada',
+                'Brouillon': 'Borrador',
+                'Bulle Glass': 'Burbuja Cristal',
+                'Cache Vidéo Intelligent': 'Caché de Video Inteligente',
+                'Cadence des vidéos du flux': 'Velocidad de reproducción de videos',
+                'Caméra & Microphone': 'Cámara y Micrófono',
+                'Caméra Live': 'Cámara en Vivo',
+                'Ce contenu sera immédiatement masqué de votre flux et transmis à notre équipe de modération.': 'Este contenido se ocultará inmediatamente de tu feed y se enviará a nuestro equipo de moderación.',
+                'Centre 🎯': 'Centro 🎯',
+                'Cette action est irréversible.': 'Esta acción es irreversible.',
+                'Challenge Officiel': 'Reto Oficial',
+                'Changer': 'Cambiar',
+                'Chargement du flux...': 'Cargando el feed...',
+                'Chargement...': 'Cargando...',
+                'Chargement de la vidéo en cours...': 'Cargando el video...',
+                "Préparation de l'aperçu dans R-Studio, veuillez patienter un instant...": 'Preparando la vista previa en R-Studio, espera un momento...',
+                "Préparation de l'aperçu et du découpage dans R-Studio, veuillez patienter...": 'Preparando vista previa y recortador en R-Studio, por favor espera...',
+                'Ouverture de la caméra en direct...': 'Abriendo cámara en vivo...',
+                'Initialisation du capteur vidéo HD, veuillez patienter...': 'Iniciando sensor de video HD, por favor espera...',
+                'Traitement de votre vidéo filmée...': 'Procesando tu video grabado...',
+                "Assemblage et préparation de votre prise dans l'éditeur R-Studio...": 'Ensamblando y preparando tu grabación en el editor R-Studio...',
+                'Cinéma': 'Cine',
+                'Cinéma 🎬': 'Cine 🎬',
+                'Classement viral': 'Ranking viral',
+                'Commentaires': 'Comentarios',
+                'Compte & Confidentialité': 'Cuenta y Privacidad',
+                'Compte créé ! Connectez-vous.': '¡Cuenta creada! Inicia sesión.',
+                'Conformité Google Play Store • Mise à jour : 2026': 'Cumplimiento con Google Play Store • Actualizado: 2026',
+                'Conformément aux exigences Google Play sur la suppression des données, vous pouvez supprimer intégralement et instantanément votre compte et vos vidéos depuis': 'De acuerdo con los requisitos de eliminación de datos de Google Play, puedes eliminar total e instantáneamente tu cuenta y tus videos desde',
+                'Connectez-vous pour aimer, commenter, partager vos créations et rejoindre la communauté R-Videos.': 'Inicia sesión para dar me gusta, comentar, compartir tus creaciones y unirte a la comunidad R-Videos.',
+                'Connexion requise': 'Inicio de sesión requerido',
+                'Conserver le son original de la vidéo': 'Conservar el sonido original del video',
+                'Contenu inapproprié ou choquant': 'Contenido inapropiado u ofensivo',
+                'Contenus vidéos publiés volontairement et interactions sociales.': 'Contenidos de video publicados voluntariamente e interacciones sociales.',
+                'Contraste': 'Contraste',
+                "Coupe le son au lancement de l'application": 'Silenciar el sonido al iniciar la aplicación',
+                'Couverture (Miniature)': 'Portada (Miniatura)',
+                'Créer mon compte': 'Crear mi cuenta',
+                'Cyber Néon 💜': 'Cyber Neón 💜',
+                'Cyber 💜': 'Cyber 💜',
+                'Discours haineux ou harcèlement': 'Discurso de odio o acoso',
+                'Déconnexion': 'Cerrar sesión',
+                'Découpage Précis (< 120s)': 'Recorte Preciso (< 120s)',
+                'Rognage & Découpage Moderne': 'Recortador y Divisor de Video Moderno',
+                'Scinder au curseur': 'Dividir en el cursor',
+                'Supprimer la partie': 'Eliminar parte',
+                'Découvrir': 'Descubrir',
+                'Défilement Automatique (Auto-Scroll)': 'Desplazamiento Automático (Auto-Scroll)',
+                'Déjà un compte ?': '¿Ya tienes una cuenta?',
+                'Démarrer les vidéos en muet': 'Iniciar videos en silencio',
+                'Désactive si tu veux publier ta vidéo en mode muet': 'Desactiva si deseas publicar tu video sin sonido',
+                "En cochant cette case, j'accepte la": 'Al marcar esta casilla, acepto la',
+                'Enregistrer': 'Guardar',
+                'Enregistrer Photo': 'Guardar Foto',
+                'Enregistrer la vidéo': 'Guardar video',
+                'Entrez votre email pour recevoir un lien de réinitialisation.': 'Ingresa tu correo para recibir un enlace de restablecimiento.',
+                'Envoyer': 'Enviar',
+                'Envoyer le lien': 'Enviar enlace',
+                'Explorez les créateurs, sons et vidéos virales': 'Explora creadores, sonidos y videos virales',
+                'Faible': 'Bajo',
+                'Fermer': 'Cerrar',
+                'Filmer': 'Grabar',
+                'Arrêter': 'Detener',
+                'Pause': 'Pausa',
+                'Filtre Visuel Fun (Cinéma / Néon / N&B)': 'Filtro Visual Divertido (Cine / Neón / B&N)',
+                'Filtres Cinématiques R-Studio': 'Filtros Cinematográficos R-Studio',
+                'Fluidité & Préchargement': 'Fluidez y Precarga',
+                'Format Auto': 'Formato Auto',
+                "Format d'affichage par défaut": 'Formato de visualización predeterminado',
+                'Format original ou plein écran 9:16': 'Formato original o pantalla completa 9:16',
+                'Galerie / Éditeur': 'Galería / Editor',
+                "Glisse le texte sur l'écran pour le placer": 'Arrastra el texto en la pantalla para colocarlo',
+                'Géométrie & Cadence': 'Geometría y Velocidad',
+                'Haut ⬆️': 'Arriba ⬆️',
+                'Impact': 'Impacto',
+                'Informations de compte (pseudonyme, adresse email, photo de profil).': 'Información de la cuenta (nombre de usuario, correo electrónico, foto de perfil).',
+                "J'ai compris les règles": 'Entiendo las reglas',
+                "J'aime": 'Me gusta',
+                "Je certifie que cette vidéo est originale et sans plagiat (Droits d'auteur)": 'Certifico que este video es original y libre de plagio (Derechos de autor)',
+                "L'application": 'La aplicación',
+                "L'auteur a désactivé les commentaires.": 'El autor ha desactivado los comentarios.',
+                "Langue de l'application": 'Idioma de la aplicación',
+                'Lecture': 'Reproducir',
+                'Les vidéos lues sont sauvegardées dans le cache local pour une relecture instantanée sans re-téléchargement. Au-delà de la limite choisie, les plus anciennes sont purgées automatiquement.': 'Los videos reproducidos se guardan en la caché local para su reproducción instantánea sin volver a descargar. Más allá del límite elegido, los más antiguos se eliminan automáticamente.',
+                'Limite maximale avant purge auto': 'Límite máximo antes de limpieza automática',
+                'Luminosité': 'Brillo',
+                'Message': 'Mensaje',
+                'Message épinglé': 'Mensaje fijado',
+                'Messagerie directe': 'Mensajería directa',
+                'Messages': 'Mensajes',
+                'Miroir': 'Espejo',
+                'Mode Sombre 🌙': 'Modo Oscuro 🌙',
+                'Mode Clair ☀️': 'Modo Claro ☀️',
+                'Sombre 🌙': 'Oscuro 🌙',
+                'Clair ☀️': 'Claro ☀️',
+                'Modifier': 'Editar',
+                'Modifier la publication': 'Editar publicación',
+                'Modifier le commentaire': 'Editar comentario',
+                'Modifier le message': 'Editar mensaje',
+                'Modifier la publication (texte, lieu, format)': 'Editar publicación (texto, lugar, formato)',
+                'Modifier le profil': 'Editar perfil',
+                'Mot de passe oublié ?': '¿Olvidaste tu contraseña?',
+                'Motif : Non-respect des règles communautaires': 'Motivo: Incumplimiento de las normas de la comunidad',
+                'N&B 🖤': 'B&N 🖤',
+                'Niveau de sanction du compte :': 'Nivel de sanción de la cuenta:',
+                'Noir & Blanc 🖤': 'Blanco y Negro 🖤',
+                'Non': 'No',
+                'Normal': 'Normal',
+                'Notre système de sécurité R-Shield AI a détecté un contenu non conforme (nudité, arnaque ou vidéo non authentique).': 'Nuestro sistema de seguridad R-Shield AI detectó contenido no permitido (desnudez, estafa o video no auténtico).',
+                "Nous appliquons une tolérance zéro concernant les contenus abusifs, haineux, violents, harcelants, pornographiques, frauduleux ou illégaux. Chaque vidéo et profil dispose d'outils de signalement et de blocage immédiat. Tout contrevenant est banni définitivement.": 'Aplicamos tolerancia cero ante contenidos abusivos, de odio, violentos, de acoso, pornográficos, fraudulentos o ilegales. Cada video y perfil cuenta con herramientas de reporte y bloqueo inmediato. Todo infractor es expulsado definitivamente.',
+                'Nouvelle Publication': 'Nueva Publicación',
+                'Néon': 'Neón',
+                'Optimiser le flux pour les connexions mobiles': 'Optimizar el flujo para conexiones móviles',
+                'Options & Studio Fun': 'Opciones y Estudio Fun',
+                'Original': 'Original',
+                'Ou clique sur « Caméra Live » en haut pour te filmer directement': 'O toca "Cámara en Vivo" arriba para grabarte directamente',
+                'Oui': 'Sí',
+                'Paramètres, Cache & Options Fun': 'Ajustes, Caché y Opciones Fun',
+                'Partager la vidéo': 'Compartir video',
+                'Participer': 'Participar',
+                'Pas de connexion internet': 'Sin conexión a internet',
+                'Pas encore de compte ?': '¿Aún no tienes cuenta?',
+                'Passer automatiquement à la vidéo suivante à la fin': 'Pasar automáticamente al siguiente video al terminar',
+                'Photo': 'Foto',
+                'Photo de profil': 'Foto de perfil',
+                'Plein écran 9:16': 'Pantalla completa 9:16',
+                'Plein écran 9:16 (Remplir)': 'Pantalla completa 9:16 (Rellenar)',
+                'Plein écran immersif (9:16)': 'Pantalla completa inmersiva (9:16)',
+                'Politique de Confidentialité': 'Política de Privacidad',
+                'Politique de Confidentialité & CGU': 'Política de Privacidad y Condiciones',
+                'Politique de Confidentialité & CGU Play Store': 'Política de Privacidad y Condiciones de Play Store',
+                'Position rapide :': 'Posición rápida:',
+                'Pour Toi : Éligible ✓': 'Para Ti: Elegible ✓',
+                'Pour Toi : Refusé 🚫': 'Para Ti: Rechazado 🚫',
+                'Pour toi': 'Para ti',
+                'Profil': 'Perfil',
+                'Profil > Modifier le profil > Supprimer mon compte': 'Perfil > Editar perfil > Eliminar mi cuenta',
+                "Proportions d'origine": 'Proporciones originales',
+                "Proportions d'origine (Auto)": 'Proporciones originales (Auto)',
+                "Proportions d'origine (Fidèle)": 'Proporciones originales (Fiel)',
+                "Proportions dans l'application": 'Proporciones en la aplicación',
+                'Proportions de la vidéo': 'Proporciones del video',
+                'Précharger la vidéo suivante en arrière-plan': 'Precargar el siguiente video en segundo plano',
+                'Publie ta meilleure vidéo ou réutilise un son populaire pour passer en tendance !': '¡Publica tu mejor video o reutiliza un sonido popular para ser tendencia!',
+                'Publier': 'Publicar',
+                'R-Shield AI : Contrôle Authenticité, Anti-Nudité & Anti-Arnaque actif': 'R-Shield AI: Control de Autenticidad, Anti-Desnudez y Anti-Estafa activo',
+                'R-Shield AI : Authenticité, Anti-Nudité & Anti-Arnaque vérifiés': 'R-Shield AI: Autenticidad, Anti-Desnudez y Anti-Estafa verificados',
+                'R-Studio Pro • Caméra & Montage Créatif': 'R-Studio Pro • Cámara y Edición Creativa',
+                'Respecter les vraies proportions ou plein écran 9:16': 'Respetar proporciones reales o pantalla completa 9:16',
+                'Retirer': 'Quitar',
+                'Retour': 'Volver',
+                'Retour à la connexion': 'Volver al inicio de sesión',
+                'Réessayer': 'Reintentar',
+                'Réglages': 'Ajustes',
+                'Réinitialisation': 'Restablecer contraseña',
+                'Réinitialiser': 'Restablecer',
+                'Réseau Social Vidéo Nouvelle Génération': 'Red Social de Video de Nueva Generación',
+                'Rétro VHS 📼': 'Retro VHS 📼',
+                "S'abonner": 'Seguir',
+                'Abonné ✓': 'Siguiendo ✓',
+                "S'inscrire": 'Regístrate',
+                'Saturation': 'Saturación',
+                "Score d'authenticité R-Shield :": 'Puntuación de autenticidad R-Shield:',
+                'Se connecter': 'Iniciar sesión',
+                'Se déconnecter': 'Cerrar sesión',
+                'Signaler & Masquer': 'Reportar y Ocultar',
+                'Signaler le contenu': 'Reportar contenido',
+                'Soleil 237 🌅': 'Sol 237 🌅',
+                'Son original': 'Sonido original',
+                'Son réutilisé attaché': 'Sonido reutilizado adjunto',
+                'Sons & Ambiances Populaires en 1 clic :': 'Sonidos y Ambientes Populares en 1 clic:',
+                'Souhaitez-vous vraiment vous déconnecter de votre compte ?': '¿Seguro que deseas cerrar sesión en tu cuenta?',
+                'Spam ou publicité trompeuse': 'Spam o publicidad engañosa',
+                'Stockage / Galerie': 'Almacenamiento / Galería',
+                'Strike 1/3 (Sous surveillance)': 'Strike 1/3 (Bajo vigilancia)',
+                'Suivis': 'Siguiendo',
+                'Supprimer': 'Eliminar',
+                'Suppr.': 'Elim.',
+                'Supprimer ?': '¿Eliminar?',
+                'Supprimer la vidéo': 'Eliminar video',
+                'Supprimer la vidéo ?': '¿Eliminar el video?',
+                'Supprimer le commentaire ?': '¿Eliminar el comentario?',
+                'Supprimer le message ?': '¿Eliminar el mensaje?',
+                'Supprimer la conversation ?': '¿Eliminar la conversación?',
+                'SUPPRIMER COMPTE ?': '¿ELIMINAR CUENTA?',
+                'Effacer toutes les activités ?': '¿Borrar todas las actividades?',
+                'Bloquer cet utilisateur ?': '¿Bloquear a este usuario?',
+                'Bannir cet utilisateur ?': '¿Expulsar a este usuario?',
+                'Supprimer mon compte': 'Eliminar mi cuenta',
+                'Sélectionner une vidéo': 'Seleccionar un video',
+                'Teinte (Hue)': 'Matiz (Hue)',
+                'Texte incrusté sur la vidéo': 'Texto superpuesto en el video',
+                'Thème (Clair / Sombre) & Préférences': 'Tema (Claro / Oscuro) y Preferencias',
+                "Thème de l'application (Clair / Sombre)": 'Tema de la aplicación (Claro / Oscuro)',
+                'Titre du son ou musique associée': 'Título del sonido o música asociada',
+                'Top Vidéos': 'Videos Populares',
+                'Tout effacer': 'Borrar todo',
+                'Utilisateur': 'Usuario',
+                'Utiliser ce son': 'Usar este sonido',
+                'Utiliser le son de cette vidéo 🎵': 'Usar el sonido de este video 🎵',
+                'Vider le cache': 'Vaciar caché',
+                'Vidéo refusée du « Pour toi »': 'Video rechazado de "Para ti"',
+                'Vidéos associées': 'Videos relacionados',
+                'Vidéos utilisant ce son': 'Videos que usan este sonido',
+                "Violation des droits d'auteur": 'Infracción de derechos de autor',
+                'Visibilité dans « Pour toi » :': 'Visibilidad en "Para ti":',
+                'Vitesse de lecture': 'Velocidad de reproducción',
+                'Vitesse de lecture par défaut': 'Velocidad de reproducción predeterminada',
+                "Vos données servent exclusivement au fonctionnement du flux vidéo, de la messagerie et des notifications. Aucune donnée n'est vendue à des tiers.": 'Tus datos se utilizan exclusivamente para el funcionamiento del feed de video, mensajería y notificaciones. Ningún dato se vende a terceros.',
+                'Vérifiez votre connexion et réessayez.': 'Verifica tu conexión e inténtalo de nuevo.',
+                'contre le plagiat et la copie non autorisée.': 'contra el plagio y la copia no autorizada.',
+                'et de son système de sécurité': 'y su sistema de seguridad',
+                'Éclatant ✨': 'Vibrante ✨',
+                'Économiseur de données': 'Ahorro de datos',
+                "Écouter l'extrait": 'Escuchar fragmento',
+                'Éditeur': 'Editor',
+                'Épingler sur mon profil': 'Fijar en mi perfil',
+                'Épingler sur mon profil 📌': 'Fijar en mi perfil 📌',
+                'Désépingler du profil': 'Desfijar del perfil',
+                'Épingler': 'Fijar',
+                'Désépingler': 'Desfijar',
+                '📌 Épinglé': '📌 Fijado',
+                '⚠️ Attention : Si vous continuez à publier du contenu non conforme, votre compte sera lourdement sanctionné et banni définitivement.': '⚠️ Atención: Si continúas publicando contenido que incumpla las normas, tu cuenta será severamente sancionada y suspendida definitivamente.',
+                '⚽ Sport': '⚽ Deporte',
+                '🇨🇲 237 Talents': '🇨🇲 237 Talentos',
+                '🌍 Public': '🌍 Público',
+                '🌍 Public (Tout le monde)': '🌍 Público (Todos)',
+                '🎵 Musique': '🎵 Música',
+                '👥 Abonnés': '👥 Seguidores',
+                '👥 Abonnés uniquement': '👥 Solo seguidores',
+                '💃 Danse': '💃 Baile',
+                '🔒 Privé': '🔒 Privado',
+                '🔒 Privé (Moi seul)': '🔒 Privado (Solo yo)',
+                '🔥 Tout': '🔥 Todo',
+                '😂 Humour': '😂 Humor',
+                '😂 Humour Viral': '😂 Humor Viral',
+                '🚫 Bloquée / Exclue': '🚫 Bloqueado / Excluido',
+                'Republier pour tes followers': 'Republicar para tus seguidores',
+                'Republié pour tes followers ✓': 'Republicado para tus seguidores ✓',
+                'Voir la traduction': 'Ver traducción',
+                "Afficher l'original": 'Ver original',
+                'Aucune vidéo disponible': 'No hay videos disponibles',
+                'Aucune vidéo dans cet onglet.': 'No hay videos en esta pestaña.',
+                'Aucune vidéo dans cette catégorie pour le moment.': 'No hay videos en esta categoría por el momento.',
+                'Aucune activité récente.': 'Sin actividad reciente.',
+                'Aucune conversation active.': 'No hay conversaciones activas.',
+                'Chargement des activités...': 'Cargando actividades...',
+                'Chargement des messages...': 'Cargando mensajes...',
+                'Chargement des commentaires...': 'Cargando comentarios...',
+                'Chargement des tendances...': 'Cargando tendencias...',
+                'Recherche des vidéos avec ce son...': 'Buscando videos con este sonido...',
+                'Soyez le premier à commenter ! ✨': '¡Sé el primero en comentar! ✨',
+                'Tapez au moins 2 caractères...': 'Escribe al menos 2 caracteres...',
+                'Aucun créateur trouvé.': 'No se encontraron creadores.',
+                'Pas de bio': 'Sin biografía',
+                'Nouveau membre': 'Nuevo miembro',
+                'Créateur R-Videos': 'Creador de R-Videos',
+                "À l'instant": 'Justo ahora',
+                'Récemment': 'Recientemente',
+                'Répondre': 'Responder',
+                'Ajouter un commentaire...': 'Añadir un comentario...',
+                'Ajouter un lieu': 'Añadir ubicación',
+                'Anneau Lumineux Selfie (Flash Écran)': 'Aro de Luz Selfie (Flash de Pantalla)',
+                'Bio': 'Biografía',
+                'Changer de thème (Clair / Sombre)': 'Cambiar tema (Claro / Oscuro)',
+                'Contenu...': 'Contenido...',
+                'Durée max': 'Duración máx.',
+                'Début (s)': 'Inicio (s)',
+                'Décris ta vidéo... #Hashtags @Amis': 'Describe tu video... #Hashtags @Amigos',
+                'Détails supplémentaires (optionnel)...': 'Detalles adicionales (opcional)...',
+                'Email': 'Correo electrónico',
+                'Email (Gmail requis)': 'Correo electrónico (Gmail obligatorio)',
+                'Envoyer un message...': 'Enviar un mensaje...',
+                'Fin (s)': 'Fin (s)',
+                'Glisser pour déplacer le sticker': 'Arrastra para mover el sticker',
+                'Glisser pour déplacer le texte': 'Arrastra para mover el texto',
+                'Glisser pour rogner le début': 'Arrastra para recortar el inicio',
+                'Glisser pour rogner la fin': 'Arrastra para recortar el final',
+                'Réinitialiser le découpage': 'Restablecer recorte y cortes',
+                'Grille de cadrage': 'Cuadrícula de encuadre',
+                'Inverser Caméra Avant / Arrière': 'Cambiar Cámara Frontal / Trasera',
+                'Lieu (optionnel)': 'Ubicación (opcional)',
+                'Miroir horizontal': 'Espejo horizontal',
+                'Mode Miroir': 'Modo Espejo',
+                'Mode Surprise / Live': 'Modo Sorpresa / En Vivo',
+                'Mot de passe': 'Contraseña',
+                "Nom d'utilisateur": 'Nombre de usuario',
+                'Paramètres': 'Ajustes',
+                'Partager mon profil': 'Compartir mi perfil',
+                'Pivoter de 90°': 'Girar 90°',
+                'Prendre une photo en direct': 'Tomar una foto en vivo',
+                'Proportions vidéo': 'Proporciones del video',
+                'Publier sur R-Videos': 'Publicar en R-Videos',
+                'Rechercher': 'Buscar',
+                'Rechercher des créateurs (@nom)...': 'Buscar creadores (@nombre)...',
+                'Retardateur': 'Temporizador',
+                'Sauvegarder un brouillon': 'Guardar borrador',
+                'Son': 'Sonido',
+                'Tag (@ami)': 'Etiquetar (@amigo)',
+                'Titre du son (ex: Son original ou titre musical)': 'Título del sonido (ej: Sonido original o canción)',
+                'Écris un titre ou sous-titre à afficher sur la vidéo...': 'Escribe un título o subtítulo para mostrar en el video...'
+            }
+        };
+
+        window.getCurrentLangCode = () => safeGetStorage('rv_lang', 'fr');
+
+        window.translateDynamicPhrase = (str, targetLang = null) => {
+            if (!str || typeof str !== 'string') return str;
+            const lang = targetLang || window.getCurrentLangCode();
+            if (lang === 'fr') return str;
+            const dict = RV_FULL_PHRASES[lang] || RV_FULL_PHRASES['en'];
+            const trimmed = str.replace(/\s+/g, ' ').trim();
+            if (!trimmed) return str;
+            if (dict[trimmed]) return dict[trimmed];
+
+            // Dynamic parameterized pattern translations (EN & ES)
+            if (lang === 'en') {
+                if (trimmed.startsWith('Contient : ')) return 'Contains: ' + trimmed.slice(11).replace('Son original - ', 'Original sound - ');
+                if (trimmed.startsWith('Créé par @')) return 'Created by @' + trimmed.slice(10);
+                if (trimmed.startsWith('Il y a ') && trimmed.endsWith(' min')) return trimmed.slice(7) + ' ago';
+                if (trimmed.startsWith('Il y a ') && trimmed.endsWith(' h')) return trimmed.slice(7) + ' ago';
+                if (trimmed.startsWith('Il y a ') && trimmed.endsWith(' j')) return trimmed.slice(7, -2) + ' d ago';
+                if (trimmed.startsWith('📌 Épinglé • ')) return '📌 Pinned • ' + window.translateDynamicPhrase(trimmed.slice(13), 'en');
+                if (trimmed.startsWith('Membre • ')) return 'Member • ' + window.translateDynamicPhrase(trimmed.slice(9), 'en');
+                if (/^\d+\s+vidéo\(s\)\s+utilisent ce son$/.test(trimmed)) return trimmed.replace('vidéo(s) utilisent ce son', 'video(s) use this sound');
+                if (/^\d+\s+vidéo\(s\)\s+sauvegardée\(s\)\s+en cache$/.test(trimmed)) return trimmed.replace('vidéo(s) sauvegardée(s) en cache', 'video(s) saved in cache');
+                if (/^\d+\s+vidéo\(s\)\s+en cache$/.test(trimmed)) return trimmed.replace('vidéo(s) en cache', 'video(s) cached');
+                if (/^[\d\.]+\s+Mo\s*\/\s*[\d\.]+\s+Mo$/.test(trimmed)) return trimmed.replace(/Mo/g, 'MB');
+                if (/^[\d\.]+\s+Mo(\s+utilisés)?$/.test(trimmed)) return trimmed.replace('Mo utilisés', 'MB used').replace('Mo', 'MB');
+                if (/^Partie\s+\d+\s+\(/.test(trimmed)) return trimmed.replace(/^Partie/, 'Part');
+                if (trimmed.startsWith('Paysage/Carré ')) return trimmed.replace('Paysage/Carré ', 'Landscape/Square ');
+                if (trimmed.startsWith('Son désactivé')) return 'Sound muted 🔇';
+                if (trimmed.startsWith('Son activé')) return 'Sound enabled 🔊';
+                if (trimmed.includes("n'a pas de son activé")) return 'This video has no sound enabled 🔇';
+                if (trimmed.startsWith('Vitesse de lecture : ')) return trimmed.replace('Vitesse de lecture : ', 'Playback speed: ');
+                if (trimmed.startsWith('Cadence vidéo : ')) return trimmed.replace('Cadence vidéo : ', 'Video speed: ');
+                if (trimmed.startsWith('Filtre vidéo : ')) return trimmed.replace('Filtre vidéo : ', 'Video filter: ');
+                if (trimmed === 'Republication annulée') return 'Repost cancelled';
+                if (trimmed.startsWith('Vidéo republiée')) return 'Video reposted for your followers! 🔁';
+                if (trimmed.startsWith('Ajouté aux favoris')) return 'Added to favorites ⭐';
+                if (trimmed.startsWith('Lien copié')) return 'Link copied to clipboard!';
+                if (trimmed.startsWith('Vidéo scindée à ')) return trimmed.replace('Vidéo scindée à ', 'Video split at ').replace('Sélectionnez une partie à supprimer', 'Select a part to delete');
+                if (trimmed.includes('supprimée ! 🗑️')) return trimmed.replace('Partie ', 'Part ').replace('supprimée ! 🗑️', 'deleted! 🗑️');
+                if (trimmed.startsWith('Rognage et découpes réinitialisés')) return 'Trim and cuts reset ↺';
+            } else if (lang === 'es') {
+                if (trimmed.startsWith('Contient : ')) return 'Contiene: ' + trimmed.slice(11).replace('Son original - ', 'Sonido original - ');
+                if (trimmed.startsWith('Créé par @')) return 'Creado por @' + trimmed.slice(10);
+                if (trimmed.startsWith('Il y a ') && trimmed.endsWith(' min')) return 'Hace ' + trimmed.slice(7);
+                if (trimmed.startsWith('Il y a ') && trimmed.endsWith(' h')) return 'Hace ' + trimmed.slice(7);
+                if (trimmed.startsWith('Il y a ') && trimmed.endsWith(' j')) return 'Hace ' + trimmed.slice(7, -2) + ' d';
+                if (trimmed.startsWith('📌 Épinglé • ')) return '📌 Fijado • ' + window.translateDynamicPhrase(trimmed.slice(13), 'es');
+                if (trimmed.startsWith('Membre • ')) return 'Miembro • ' + window.translateDynamicPhrase(trimmed.slice(9), 'es');
+                if (/^\d+\s+vidéo\(s\)\s+utilisent ce son$/.test(trimmed)) return trimmed.replace('vidéo(s) utilisent ce son', 'video(s) usan este sonido');
+                if (/^\d+\s+vidéo\(s\)\s+sauvegardée\(s\)\s+en cache$/.test(trimmed)) return trimmed.replace('vidéo(s) sauvegardée(s) en cache', 'video(s) guardado(s) en caché');
+                if (/^\d+\s+vidéo\(s\)\s+en cache$/.test(trimmed)) return trimmed.replace('vidéo(s) en cache', 'video(s) en caché');
+                if (/^[\d\.]+\s+Mo\s*\/\s*[\d\.]+\s+Mo$/.test(trimmed)) return trimmed.replace(/Mo/g, 'MB');
+                if (/^[\d\.]+\s+Mo(\s+utilisés)?$/.test(trimmed)) return trimmed.replace('Mo utilisés', 'MB usados').replace('Mo', 'MB');
+                if (/^Partie\s+\d+\s+\(/.test(trimmed)) return trimmed.replace(/^Partie/, 'Parte');
+                if (trimmed.startsWith('Paysage/Carré ')) return trimmed.replace('Paysage/Carré ', 'Horizontal/Cuadrado ');
+                if (trimmed.startsWith('Son désactivé')) return 'Sonido desactivado 🔇';
+                if (trimmed.startsWith('Son activé')) return 'Sonido activado 🔊';
+                if (trimmed.includes("n'a pas de son activé")) return 'Este video no tiene sonido activado 🔇';
+                if (trimmed.startsWith('Vitesse de lecture : ')) return trimmed.replace('Vitesse de lecture : ', 'Velocidad de reproducción: ');
+                if (trimmed.startsWith('Cadence vidéo : ')) return trimmed.replace('Cadence vidéo : ', 'Velocidad de video: ');
+                if (trimmed.startsWith('Filtre vidéo : ')) return trimmed.replace('Filtre vidéo : ', 'Filtro de video: ');
+                if (trimmed === 'Republication annulée') return 'Republicación cancelada';
+                if (trimmed.startsWith('Vidéo republiée')) return '¡Video republicado para tus seguidores! 🔁';
+                if (trimmed.startsWith('Ajouté aux favoris')) return 'Añadido a favoritos ⭐';
+                if (trimmed.startsWith('Lien copié')) return '¡Enlace copiado al portapapeles!';
+                if (trimmed.startsWith('Vidéo scindée à ')) return trimmed.replace('Vidéo scindée à ', 'Video dividido en ').replace('Sélectionnez une partie à supprimer', 'Selecciona una parte para eliminar');
+                if (trimmed.includes('supprimée ! 🗑️')) return trimmed.replace('Partie ', 'Parte ').replace('supprimée ! 🗑️', 'eliminada! 🗑️');
+                if (trimmed.startsWith('Rognage et découpes réinitialisés')) return 'Recorte y divisiones restablecidos ↺';
+            }
+            return str;
+        };
+
+        let isApplyingDOMTranslation = false;
+
+        function translateEntireAppDOM(lang) {
+            if (!document.body || isApplyingDOMTranslation) return;
+            isApplyingDOMTranslation = true;
+            try {
+                let t = translations[lang] || translations['en'];
+                if (lang === 'fr') t = translations['fr'];
+
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (t && t[key]) {
+                        if (!el.__rvFrText) el.__rvFrText = translations.fr[key] || el.innerText;
+                        el.innerText = t[key];
+                    }
+                });
+                document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-placeholder');
+                    if (t && t[key]) {
+                        if (!el.__rvFrPlaceholder) el.__rvFrPlaceholder = translations.fr[key] || el.placeholder;
+                        el.placeholder = t[key];
+                    }
+                });
+
+                // Translate all placeholders and title attributes across the entire DOM
+                document.querySelectorAll('[placeholder], [title]').forEach(el => {
+                    if (el.hasAttribute('placeholder') && !el.hasAttribute('data-i18n-placeholder')) {
+                        if (!el.__rvFrPlaceholder) el.__rvFrPlaceholder = el.getAttribute('placeholder');
+                        const origP = el.__rvFrPlaceholder;
+                        const nextP = (lang === 'fr') ? origP : window.translateDynamicPhrase(origP, lang);
+                        if (el.getAttribute('placeholder') !== nextP) el.setAttribute('placeholder', nextP);
+                    }
+                    if (el.hasAttribute('title')) {
+                        if (!el.__rvFrTitle) el.__rvFrTitle = el.getAttribute('title');
+                        const origT = el.__rvFrTitle;
+                        const nextT = (lang === 'fr') ? origT : window.translateDynamicPhrase(origT, lang);
+                        if (el.getAttribute('title') !== nextT) el.setAttribute('title', nextT);
+                    }
+                });
+
+                // Walk all text nodes in document.body to translate every static and dynamic word
+                const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+                    acceptNode(node) {
+                        const p = node.parentElement;
+                        if (!p) return NodeFilter.FILTER_REJECT;
+                        const tag = p.tagName;
+                        if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'CODE') return NodeFilter.FILTER_REJECT;
+                        if (p.classList && (p.classList.contains('video-desc-text') || p.id === 'profile-handle' || p.id === 'profile-bio' || p.id === 'chat-username')) {
+                            if (node.nodeValue && node.nodeValue.trim() !== 'Pas de bio' && node.nodeValue.trim() !== 'No bio yet' && node.nodeValue.trim() !== 'Sin biografía') {
+                                return NodeFilter.FILTER_REJECT;
+                            }
+                        }
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                });
+
+                let textNode;
+                while ((textNode = walker.nextNode())) {
+                    const currentVal = textNode.nodeValue;
+                    if (!currentVal || !currentVal.trim()) continue;
+                    const p = textNode.parentElement;
+                    if (p && p.hasAttribute('data-i18n') && p.childNodes.length === 1) continue;
+
+                    if (!textNode.__rvFrText) {
+                        textNode.__rvFrText = currentVal;
+                    }
+                    const baseFr = textNode.__rvFrText;
+                    const trimmedBase = baseFr.replace(/\s+/g, ' ').trim();
+                    if (lang === 'fr') {
+                        if (textNode.nodeValue !== baseFr) textNode.nodeValue = baseFr;
+                    } else {
+                        const translated = window.translateDynamicPhrase(trimmedBase, lang);
+                        if (translated && translated !== trimmedBase) {
+                            const leadingSpace = /^\s+/.test(baseFr) ? ' ' : '';
+                            const trailingSpace = /\s+$/.test(baseFr) ? ' ' : '';
+                            const finalVal = leadingSpace + translated + trailingSpace;
+                            if (textNode.nodeValue !== finalVal) textNode.nodeValue = finalVal;
+                        }
+                    }
+                }
+            } finally {
+                isApplyingDOMTranslation = false;
+            }
+        }
+
+        // Automatically translate newly added dynamic nodes (feed cards, comments, modals, toasts)
+        let domTranslateRaf = null;
+        const i18nMutationObserver = new MutationObserver(() => {
+            if (isApplyingDOMTranslation) return;
+            const currentLang = window.getCurrentLangCode();
+            if (currentLang === 'fr') return;
+            if (domTranslateRaf) cancelAnimationFrame(domTranslateRaf);
+            domTranslateRaf = requestAnimationFrame(() => {
+                translateEntireAppDOM(currentLang);
+            });
+        });
+
         window.changeLanguage = (lang) => {
             safeSetStorage('rv_lang', lang);
-            let t = translations[lang];
-            if (!t) t = translations['en']; 
-            if (lang === 'fr') t = translations['fr'];
-
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (t[key]) el.innerText = t[key];
-            });
-            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-                const key = el.getAttribute('data-i18n-placeholder');
-                if (t[key]) el.placeholder = t[key];
-            });
-            
+            document.documentElement.lang = lang || 'fr';
+            translateEntireAppDOM(lang);
+            if (typeof renderModernTrimmerUI === 'function') {
+                try { renderModernTrimmerUI(); } catch (e) {}
+            }
             const sel = document.getElementById('lang-selector');
             if(sel) sel.value = lang;
             const setSel = document.getElementById('settings-lang-select');
             if(setSel) setSel.value = lang;
         };
+
+        if (document.body) {
+            i18nMutationObserver.observe(document.body, { childList: true, subtree: true });
+        }
 
         window.addEventListener('load', () => {
             const savedLang = safeGetStorage('rv_lang', 'fr');
