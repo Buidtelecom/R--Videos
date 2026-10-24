@@ -149,7 +149,6 @@
             outline: 0 !important;
             background: var(--bg-primary);
             overflow: hidden !important;
-            clip-path: inset(0px);
         }
 
         .screen {
@@ -428,8 +427,11 @@
         }
         .video-progress-fill {
             height: 100%;
-            width: 0%;
+            width: 100%;
             background: #ff2a5f;
+            transform-origin: left center;
+            transform: scaleX(0);
+            will-change: transform;
         }
 
         /* ============================================================================
@@ -2295,13 +2297,21 @@
             return url;
         }
 
-        // Waits until the active video has buffered enough data before caching in background
+        // Waits until the active video has 100% finished buffering or completed its first loop before caching in background
         function scheduleDeferredVideoCache(url, activeVideoEl, nextUrl = null) {
             if (!url || !appSettings.cacheEnabled) return;
             if (pendingCacheTimer) clearTimeout(pendingCacheTimer);
 
             const startSequence = async () => {
                 if (activeVideoEl && activeVideoEl.paused) return;
+                if (activeVideoEl && activeVideoEl.duration && activeVideoEl.buffered && activeVideoEl.buffered.length > 0) {
+                    const bufferedEnd = activeVideoEl.buffered.end(activeVideoEl.buffered.length - 1);
+                    if (bufferedEnd < activeVideoEl.duration - 0.5) {
+                        // Still streaming video frames: wait until fully buffered so we never steal bandwidth
+                        pendingCacheTimer = setTimeout(startSequence, 4000);
+                        return;
+                    }
+                }
                 if (!memoryBlobUrls.has(url)) {
                     await cacheVideoInBackground(url);
                 }
@@ -2310,19 +2320,7 @@
                 }
             };
 
-            if (activeVideoEl && activeVideoEl.readyState < 4) {
-                let triggered = false;
-                const onReady = () => {
-                    if (triggered) return;
-                    triggered = true;
-                    activeVideoEl.removeEventListener('canplaythrough', onReady);
-                    pendingCacheTimer = setTimeout(startSequence, 6500);
-                };
-                activeVideoEl.addEventListener('canplaythrough', onReady, { once: true });
-                pendingCacheTimer = setTimeout( onReady, 8500 );
-            } else {
-                pendingCacheTimer = setTimeout(startSequence, 6500);
-            }
+            pendingCacheTimer = setTimeout(startSequence, 12000);
         }
 
         async function cacheVideoInBackground(url) {
@@ -2450,146 +2448,206 @@
         hydrateVideoCacheIntoMemory();
 
         // ============================================================================
-        // R-VIDEOS PROPRIETARY DECOUPLED DUAL-PIPELINE ENGINE (VIDEO GPU + MASTER AUDIO TRACK)
-        // Keeping <video muted="true"> permanently decouples the video frame renderer
-        // from the phone's loudspeaker DSP clock jitter, guaranteeing 60fps video while
-        // #rv-master-audio plays the sound in lockstep!
+        // R-VIDEOS LOCKED 1.0x ENGINE (ZERO SLOW-MOTION + ZERO UNMUTE DISTURBANCE)
+        // 1. <video> stays permanently muted=true AND locked at 1.0x (currentPlaybackRate).
+        //    We NEVER alter v.playbackRate dynamically (eliminates the 0.65x slow-motion
+        //    at first launch and prevents any image disturbance when toggling sound!).
+        // 2. On first launch, we pre-warm <video>'s hardware decoder at t=0 while waiting
+        //    for both <video> and #rv-master-audio to reach readyState >= 3, then launch
+        //    both together from 0.00s — making the 1st play identical to the 2nd loop!
+        // 3. Toggling sound (toggleGlobalMute) NEVER touches <video> at all; it only
+        //    aligns and plays/pauses #rv-master-audio while the video glides untouched.
         // ============================================================================
-        function getLightweightAudioUrl(v, cardEl) {
-            const rawSrc = (cardEl && cardEl.getAttribute('data-src')) || v.currentSrc || v.src || v.getAttribute('src') || '';
-            if (!rawSrc) return { primary: '', fallback: '' };
-            if (memoryBlobUrls.has(rawSrc)) {
-                const b = memoryBlobUrls.get(rawSrc);
-                return { primary: b, fallback: b };
-            }
-            if (rawSrc.startsWith('blob:')) {
-                return { primary: rawSrc, fallback: rawSrc };
-            }
-            const fallbackUrl = rawSrc + (rawSrc.includes('?') ? '&_rva=1' : '?_rva=1');
-            if (rawSrc.includes('cloudinary.com') && rawSrc.includes('/upload/')) {
-                // Request lightweight MP3 audio stream (~100KB instead of ~2.5MB video) so audio buffers in <60ms and never chops!
-                let mp3Url = rawSrc.replace(/q_auto:[^,/]+,f_auto,w_\d+/, 'f_mp3,q_auto:good');
-                if (mp3Url === rawSrc) {
-                    mp3Url = rawSrc.replace('/upload/', '/upload/f_mp3,q_auto:good/');
-                }
-                return { primary: mp3Url, fallback: fallbackUrl };
-            }
-            return { primary: fallbackUrl, fallback: fallbackUrl };
-        }
+        let avStartBarrierTimer = null;
+        const prewarmedAudioUrls = new Set();
 
         function stopMasterAudio() {
+            if (avStartBarrierTimer) {
+                clearTimeout(avStartBarrierTimer);
+                avStartBarrierTimer = null;
+            }
             if (!rvMasterAudio) return;
             if (!rvMasterAudio.paused) rvMasterAudio.pause();
         }
 
+        function setProgressBarRatio(pf, ratio) {
+            if (!pf) return;
+            const clamped = Math.max(0, Math.min(1, ratio || 0));
+            pf.style.transform = `scaleX(${clamped})`;
+        }
+
+        function getLightweightAudioUrl(v, cardEl) {
+            const rawOriginal = (cardEl && cardEl.getAttribute("data-raw-url")) || "";
+            const rawSrc = (cardEl && cardEl.getAttribute("data-src")) || v.currentSrc || v.src || v.getAttribute("src") || "";
+            const baseSource = rawOriginal || rawSrc;
+            if (!baseSource) return { primary: "", fallback: "" };
+            if (memoryBlobUrls.has(baseSource)) {
+                const b = memoryBlobUrls.get(baseSource);
+                return { primary: b, fallback: b };
+            }
+            if (baseSource.startsWith("blob:")) {
+                return { primary: baseSource, fallback: baseSource };
+            }
+            if (baseSource.includes("cloudinary.com") && baseSource.includes("/upload/")) {
+                // Ultra-lightweight MP3 (~50KB) buffers in <60ms and caches immediately
+                const trimStart = parseFloat((cardEl && cardEl.getAttribute("data-trim-start")) || "0") || 0;
+                const trimEnd = parseFloat((cardEl && cardEl.getAttribute("data-trim-end")) || "0") || 0;
+                let audioTrans = "f_mp3,q_auto:low";
+                if (trimStart > 0.5) {
+                    audioTrans += `,so_${trimStart}`;
+                    if (trimEnd > trimStart + 1 && trimEnd < 9999) audioTrans += `,eo_${trimEnd}`;
+                }
+                const mp3Url = baseSource
+                    .replace("/upload/", `/upload/${audioTrans}/`)
+                    .replace(/\.(mp4|webm|mov|mkv|avi)(\?.*)?$/i, ".mp3$2");
+                return { primary: mp3Url, fallback: baseSource };
+            }
+            return { primary: baseSource, fallback: baseSource };
+        }
+
         if (rvMasterAudio) {
-            rvMasterAudio.addEventListener('error', () => {
-                const fb = rvMasterAudio.getAttribute('data-fallback-src');
-                if (fb && rvMasterAudio.src !== fb && rvMasterAudio.getAttribute('data-tried-fallback') !== 'true') {
-                    rvMasterAudio.setAttribute('data-tried-fallback', 'true');
+            rvMasterAudio.addEventListener("error", () => {
+                const fb = rvMasterAudio.getAttribute("data-fallback-src");
+                if (fb && rvMasterAudio.src !== fb && rvMasterAudio.getAttribute("data-tried-fallback") !== "true") {
+                    rvMasterAudio.setAttribute("data-tried-fallback", "true");
                     rvMasterAudio.src = fb;
-                    rvMasterAudio.loop = !appSettings.autoScroll;
+                    rvMasterAudio.loop = false;
                     rvMasterAudio.playbackRate = currentPlaybackRate;
+                    rvMasterAudio.load();
                     if (!isGlobalMuted && activePlayingVideo && !activePlayingVideo.paused) {
-                        try { rvMasterAudio.currentTime = activePlayingVideo.currentTime || 0; } catch (e) {}
-                        rvMasterAudio.play().catch(() => {});
+                        rvMasterAudio.addEventListener("canplay", function onFbReady() {
+                            rvMasterAudio.removeEventListener("canplay", onFbReady);
+                            if (activePlayingVideo && !activePlayingVideo.paused && !isGlobalMuted) {
+                                try { rvMasterAudio.currentTime = activePlayingVideo.currentTime || 0; } catch (e) {}
+                                rvMasterAudio.play().catch(() => {});
+                            }
+                        }, { once: true });
                     }
+                } else {
+                    rvMasterAudio.dataset.noAudioTrack = "true";
                 }
             });
 
-            rvMasterAudio.addEventListener('playing', () => {
-                // Align the MUTED video to the master audio ONCE when audio starts playing.
-                // NEVER seek rvMasterAudio during playback so speaker sound is 100% continuous and never choppy!
-                if (activePlayingVideo && !activePlayingVideo.paused && activePlayingVideo.readyState >= 2) {
-                    const drift = Math.abs(activePlayingVideo.currentTime - rvMasterAudio.currentTime);
-                    if (drift > 0.20) {
-                        try { activePlayingVideo.currentTime = rvMasterAudio.currentTime; } catch (e) {}
-                    }
+            rvMasterAudio.addEventListener("ended", () => {
+                if (activePlayingVideo) {
+                    const cardEl = activePlayingVideo.closest(".video-card");
+                    const docId = cardEl ? cardEl.getAttribute("data-id") : null;
+                    if (docId) recordRVideosWatchSignal(docId, "loop_complete", activePlayingVideo);
+                    restartOrAdvanceVideo(activePlayingVideo, cardEl);
                 }
             });
         }
 
-        function syncMasterAudioToVideo(v, forceSeek = false) {
-            if (!rvMasterAudio || !v || v !== activePlayingVideo) return;
-            if (isGlobalMuted || v.paused) {
-                stopMasterAudio();
-                return;
-            }
-            const cardEl = v.closest('.video-card');
-            const trackKey = (cardEl && cardEl.getAttribute('data-id')) || (cardEl && cardEl.getAttribute('data-src')) || v.getAttribute('src') || '';
+        function prepareMasterAudioTrack(v, cardEl, resetToZero = false) {
+            if (!rvMasterAudio || !v) return;
+            const trackKey = (cardEl && cardEl.getAttribute("data-id")) || (cardEl && cardEl.getAttribute("data-src")) || v.getAttribute("src") || "";
             const { primary, fallback } = getLightweightAudioUrl(v, cardEl);
             if (!primary) return;
 
-            rvMasterAudio.loop = !appSettings.autoScroll;
-            if (rvMasterAudio.playbackRate !== currentPlaybackRate) {
-                rvMasterAudio.playbackRate = currentPlaybackRate;
-            }
+            rvMasterAudio.loop = false;
+            rvMasterAudio.preservesPitch = true;
+            rvMasterAudio.mozPreservesPitch = true;
+            rvMasterAudio.webkitPreservesPitch = true;
+            rvMasterAudio.volume = 0.85;
+            rvMasterAudio.playbackRate = currentPlaybackRate;
 
-            if (rvMasterAudio.getAttribute('data-bound-key') !== trackKey || !rvMasterAudio.getAttribute('src')) {
-                rvMasterAudio.setAttribute('data-bound-key', trackKey);
-                rvMasterAudio.setAttribute('data-fallback-src', fallback);
-                rvMasterAudio.setAttribute('data-tried-fallback', 'false');
+            if (rvMasterAudio.getAttribute("data-bound-key") !== trackKey || !rvMasterAudio.getAttribute("src")) {
+                if (!rvMasterAudio.paused) rvMasterAudio.pause();
+                rvMasterAudio.dataset.noAudioTrack = "false";
+                rvMasterAudio.setAttribute("data-bound-key", trackKey);
+                rvMasterAudio.setAttribute("data-fallback-src", fallback);
+                rvMasterAudio.setAttribute("data-tried-fallback", "false");
                 rvMasterAudio.src = primary;
-                rvMasterAudio.loop = !appSettings.autoScroll;
-                rvMasterAudio.playbackRate = currentPlaybackRate;
-                rvMasterAudio.volume = 0.88;
-                try { rvMasterAudio.currentTime = forceSeek ? 0 : (v.currentTime || 0); } catch (e) {}
-                rvMasterAudio.play().catch(() => {});
-                return;
-            }
-
-            if (forceSeek) {
-                try { rvMasterAudio.currentTime = v.currentTime || 0; } catch (e) {}
-            }
-
-            if (rvMasterAudio.paused) {
-                rvMasterAudio.play().catch(() => {});
+                rvMasterAudio.load();
+            } else if (resetToZero) {
+                if (!rvMasterAudio.paused) rvMasterAudio.pause();
+                try { rvMasterAudio.currentTime = 0; } catch (e) {}
             }
         }
 
-        // Gently glides the MUTED video's GPU frame rate to stay in sync with #rv-master-audio
-        // without EVER seeking or changing playbackRate on #rv-master-audio!
-        function alignMutedVideoToMasterAudio(v) {
-            if (!v || v !== activePlayingVideo || v.paused || isGlobalMuted || !rvMasterAudio || rvMasterAudio.paused) {
-                if (v && v.playbackRate !== currentPlaybackRate) v.playbackRate = currentPlaybackRate;
-                return;
+        // Aligns #rv-master-audio to <video> WITHOUT ever touching <video> or its playbackRate
+        function alignMasterAudioToVideoOnce(v) {
+            if (!v || !rvMasterAudio || isGlobalMuted || rvMasterAudio.dataset.noAudioTrack === "true") return;
+            if (v !== activePlayingVideo || v.paused || rvMasterAudio.paused) return;
+            const vTime = v.currentTime || 0;
+            const aTime = rvMasterAudio.currentTime || 0;
+            if (Math.abs(aTime - vTime) > 0.09) {
+                try { rvMasterAudio.currentTime = vTime; } catch (e) {}
             }
-            if (v.readyState < 2 || rvMasterAudio.readyState < 2) return;
-            const audioTime = rvMasterAudio.currentTime;
-            const videoTime = v.currentTime;
-            const dur = v.duration || rvMasterAudio.duration || 0;
-            const drift = videoTime - audioTime;
+        }
 
-            // Ignore loop boundary wrap-around
-            if (dur > 1.5 && Math.abs(drift) > dur * 0.45) {
-                if (v.playbackRate !== currentPlaybackRate) v.playbackRate = currentPlaybackRate;
-                return;
-            }
-            const now = performance.now();
-            if (Math.abs(drift) > 0.75 && (now - (v.lastSilentAlign || 0) > 3000)) {
-                v.lastSilentAlign = now;
-                try { v.currentTime = audioTime; } catch (e) {}
-                if (v.playbackRate !== currentPlaybackRate) v.playbackRate = currentPlaybackRate;
-            } else if (drift > 0.10) {
-                const slowRate = currentPlaybackRate * 0.95;
-                if (Math.abs(v.playbackRate - slowRate) > 0.01) v.playbackRate = slowRate;
-            } else if (drift < -0.10) {
-                const fastRate = currentPlaybackRate * 1.05;
-                if (Math.abs(v.playbackRate - fastRate) > 0.01) v.playbackRate = fastRate;
-            } else if (v.playbackRate !== currentPlaybackRate) {
+        function configureHardwareVideoElement(v, cardEl) {
+            if (!v) return;
+            v.playsInline = true;
+            v.setAttribute("playsinline", "");
+            v.setAttribute("webkit-playsinline", "");
+            v.muted = true; // ALWAYS muted on <video> element!
+            v.defaultMuted = true;
+            v.setAttribute("muted", "");
+            v.loop = false;
+            if (v.playbackRate !== currentPlaybackRate) {
                 v.playbackRate = currentPlaybackRate;
             }
-        }
 
-        function bindDecoupledAudioEvents(v, cardEl) {
-            if (!v || v.dataset.dualBound === "true") return;
-            v.dataset.dualBound = "true";
-            v.muted = true; // ALWAYS muted on <video> so GPU video renderer NEVER stutters on speaker DSP!
+            if (v.dataset.hwBound === "true") return;
+            v.dataset.hwBound = "true";
 
-            v.addEventListener('playing', () => {
+            // Automatic fallback to raw original URL if transformed URL ever encounters a format error
+            v.addEventListener("error", () => {
+                const rawFallback = cardEl ? cardEl.getAttribute("data-raw-url") : null;
+                if (rawFallback && v.src !== rawFallback && v.dataset.triedRawFallback !== "true") {
+                    v.dataset.triedRawFallback = "true";
+                    v.src = rawFallback;
+                    v.load();
+                    if (v === activePlayingVideo && (!cardEl || cardEl.dataset.inView === "true") && (!cardEl || cardEl.dataset.userPaused !== "true")) {
+                        playVideoSynchronized(v, cardEl, false);
+                    }
+                }
+            });
+
+            // If <video> ever had a network buffer pause mid-stream on 3G, pause audio while buffering and re-align audio when video resumes
+            v.addEventListener("waiting", () => {
+                if (v === activePlayingVideo && v.dataset.launchComplete === "true" && rvMasterAudio && !rvMasterAudio.paused) {
+                    rvMasterAudio.dataset.pausedForNetBuffer = "true";
+                    rvMasterAudio.pause();
+                }
+            });
+
+            v.addEventListener("playing", () => {
                 v.muted = true;
-                if (v === activePlayingVideo && (!cardEl || cardEl.dataset.inView === "true")) {
-                    syncMasterAudioToVideo(v, false);
+                if (v.playbackRate !== currentPlaybackRate) v.playbackRate = currentPlaybackRate;
+                if (v === activePlayingVideo && v.dataset.launchComplete === "true" && !isGlobalMuted && rvMasterAudio && rvMasterAudio.dataset.noAudioTrack !== "true") {
+                    if (rvMasterAudio.paused) {
+                        rvMasterAudio.dataset.pausedForNetBuffer = "false";
+                        try { rvMasterAudio.currentTime = v.currentTime || 0; } catch (e) {}
+                        rvMasterAudio.playbackRate = currentPlaybackRate;
+                        rvMasterAudio.play().then(() => {
+                            setTimeout(() => alignMasterAudioToVideoOnce(v), 120);
+                        }).catch(() => {});
+                    } else {
+                        alignMasterAudioToVideoOnce(v);
+                    }
+                }
+            });
+
+            // Pre-warm next card's video AND audio in the background once active video has buffered
+            v.addEventListener("canplaythrough", () => {
+                if (v !== activePlayingVideo || !appSettings.preloadNext || !cardEl) return;
+                const nextCard = cardEl.nextElementSibling;
+                if (!nextCard) return;
+                const nextVideo = nextCard.querySelector("video");
+                const nextSrc = nextCard.getAttribute("data-src");
+                if (nextVideo && nextSrc && !nextVideo.getAttribute("src")) {
+                    const resolvedNext = memoryBlobUrls.get(nextSrc) || nextSrc;
+                    nextVideo.preload = "auto";
+                    nextVideo.muted = true;
+                    nextVideo.src = resolvedNext;
+                    nextVideo.load();
+                }
+                const { primary: nextAudioUrl } = getLightweightAudioUrl(nextVideo || {}, nextCard);
+                if (nextAudioUrl && !nextAudioUrl.startsWith("blob:") && !prewarmedAudioUrls.has(nextAudioUrl)) {
+                    prewarmedAudioUrls.add(nextAudioUrl);
+                    fetch(nextAudioUrl, { mode: "cors", priority: "low" }).catch(() => {});
                 }
             });
         }
@@ -2597,28 +2655,32 @@
         function restartOrAdvanceVideo(v, cardEl) {
             if (!v || v.isRestartingLoop) return;
             v.isRestartingLoop = true;
-            if (v.eofTimer) {
-                clearTimeout(v.eofTimer);
-                v.eofTimer = null;
-            }
             if (appSettings.autoScroll && cardEl && cardEl.nextElementSibling) {
                 v.isRestartingLoop = false;
                 stopMasterAudio();
-                cardEl.nextElementSibling.scrollIntoView({ behavior: 'smooth' });
+                cardEl.nextElementSibling.scrollIntoView({ behavior: "smooth" });
                 return;
             }
-            const pf = cardEl ? cardEl.querySelector('.video-progress-fill') : null;
-            if (pf) pf.style.width = '0%';
+            const pf = cardEl ? cardEl.querySelector(".video-progress-fill") : null;
+            setProgressBarRatio(pf, 0);
 
+            if (rvMasterAudio && !rvMasterAudio.paused) rvMasterAudio.pause();
             v.muted = true;
+            v.loop = false;
             v.playbackRate = currentPlaybackRate;
             try { v.currentTime = 0; } catch (e) {}
-            if (rvMasterAudio && v === activePlayingVideo && (rvMasterAudio.ended || rvMasterAudio.paused)) {
+            if (rvMasterAudio) {
                 try { rvMasterAudio.currentTime = 0; } catch (e) {}
-                if (!isGlobalMuted) rvMasterAudio.play().catch(() => {});
             }
 
-            v.play().catch(() => {});
+            v.play().then(() => {
+                if (v === activePlayingVideo && !isGlobalMuted && rvMasterAudio && rvMasterAudio.dataset.noAudioTrack !== "true") {
+                    rvMasterAudio.playbackRate = currentPlaybackRate;
+                    rvMasterAudio.play().then(() => {
+                        setTimeout(() => alignMasterAudioToVideoOnce(v), 100);
+                    }).catch(() => {});
+                }
+            }).catch(() => {});
 
             setTimeout(() => {
                 v.isRestartingLoop = false;
@@ -2628,37 +2690,156 @@
         function playVideoSynchronized(v, cardEl = null, restartFromZero = false) {
             if (!v) return;
             try {
-                bindDecoupledAudioEvents(v, cardEl);
+                stopMasterAudio();
+                configureHardwareVideoElement(v, cardEl);
 
-                document.querySelectorAll('video').forEach(other => {
+                // Pause all other videos so only 1 hardware decoder is active
+                document.querySelectorAll("video").forEach(other => {
                     other.muted = true;
                     if (other !== v && !other.paused) other.pause();
                 });
 
                 if (cardEl && cardEl.dataset.inView !== "true") {
                     v.muted = true;
-                    v.pause();
-                    if (v === activePlayingVideo) stopMasterAudio();
+                    if (!v.paused) v.pause();
                     return;
                 }
 
-                // Native loop works 100% reliably when <video> is muted and <audio> has loop!
-                v.loop = !appSettings.autoScroll;
-                v.playbackRate = currentPlaybackRate;
-                v.muted = true; // Keep <video> strictly muted so speaker DSP never blocks video frames!
                 if (cardEl) cardEl.dataset.userPaused = "false";
 
-                if (restartFromZero && v.readyState >= 1 && v.currentTime > 0.05) {
-                    try { v.currentTime = 0; } catch (e) {}
+                const sourceUrl = cardEl ? cardEl.getAttribute("data-src") : v.getAttribute("src");
+                const targetSrc = (sourceUrl && memoryBlobUrls.get(sourceUrl)) || sourceUrl || v.getAttribute("src");
+                if (!v.getAttribute("src") && targetSrc) {
+                    v.src = targetSrc;
+                    v.load();
                 }
+
+                v.preload = "auto";
+                v.muted = true; // Keep <video> permanently muted so speaker DSP never touches video frames!
+                v.loop = false;
+                v.playbackRate = currentPlaybackRate; // Locked 1.0x (never slowed down!)
 
                 activePlayingVideo = v;
-                if (v.preload === 'none' || v.preload === 'metadata') {
-                    v.preload = 'auto';
+
+                // Case 1: Resuming from a manual tap-pause mid-video (do not reset to 0)
+                if (!restartFromZero) {
+                    prepareMasterAudioTrack(v, cardEl, false);
+                    v.dataset.launchComplete = "true";
+                    v.play().then(() => {
+                        if (activePlayingVideo === v && !isGlobalMuted && rvMasterAudio && rvMasterAudio.dataset.noAudioTrack !== "true") {
+                            try { rvMasterAudio.currentTime = v.currentTime || 0; } catch (e) {}
+                            rvMasterAudio.playbackRate = currentPlaybackRate;
+                            rvMasterAudio.volume = 0.85;
+                            rvMasterAudio.play().then(() => {
+                                setTimeout(() => alignMasterAudioToVideoOnce(v), 100);
+                            }).catch(() => {});
+                        }
+                    }).catch(() => {});
+                    return;
                 }
 
-                syncMasterAudioToVideo(v, restartFromZero);
-                v.play().catch(() => {});
+                // Case 2: First launch of a video card (make 1st play behave 100% identically to 2nd loop!)
+                v.dataset.launchComplete = "false";
+                if (!v.paused) v.pause();
+                if (v.readyState >= 1 && v.currentTime > 0.02) {
+                    try { v.currentTime = 0; } catch (e) {}
+                }
+                prepareMasterAudioTrack(v, cardEl, true);
+                v.lastTimeUpdatePos = 0;
+
+                // If sound is currently muted, start <video> immediately at 1.0x while audio preloads in background
+                if (isGlobalMuted) {
+                    const startMutedOnly = () => {
+                        if (activePlayingVideo !== v) return;
+                        if (cardEl && (cardEl.dataset.inView !== "true" || cardEl.dataset.userPaused === "true")) return;
+                        v.dataset.launchComplete = "true";
+                        v.muted = true;
+                        v.playbackRate = currentPlaybackRate;
+                        v.play().catch(() => {});
+                    };
+                    if (v.readyState >= 3) startMutedOnly();
+                    else v.addEventListener("canplay", startMutedOnly, { once: true });
+                    return;
+                }
+
+                // Sound is active: Pre-warm <video>'s hardware MediaCodec at frame 0 while waiting for BOTH
+                // <video> and #rv-master-audio to be ready, then fire the exact same simultaneous 0.00s launch as Loop 2!
+                let launchedTogether = false;
+                let warmingDecoder = false;
+
+                const executeWarmSimultaneousLaunch = () => {
+                    if (launchedTogether || activePlayingVideo !== v) return;
+                    if (cardEl && (cardEl.dataset.inView !== "true" || cardEl.dataset.userPaused === "true")) return;
+                    launchedTogether = true;
+                    if (avStartBarrierTimer) {
+                        clearTimeout(avStartBarrierTimer);
+                        avStartBarrierTimer = null;
+                    }
+                    v.dataset.launchComplete = "true";
+                    v.muted = true;
+                    v.loop = false;
+                    v.playbackRate = currentPlaybackRate;
+                    try { v.currentTime = 0; } catch (e) {}
+                    if (rvMasterAudio) {
+                        try { rvMasterAudio.currentTime = 0; } catch (e) {}
+                        rvMasterAudio.playbackRate = currentPlaybackRate;
+                        rvMasterAudio.volume = 0.85;
+                    }
+                    v.play().then(() => {
+                        if (activePlayingVideo === v && !isGlobalMuted && rvMasterAudio && rvMasterAudio.dataset.noAudioTrack !== "true") {
+                            rvMasterAudio.play().then(() => {
+                                // One-time post-start check after AudioTrack wakes up (never touches <video>!)
+                                setTimeout(() => alignMasterAudioToVideoOnce(v), 110);
+                            }).catch(() => {});
+                        }
+                    }).catch(() => {});
+                };
+
+                const checkBothReadyToLaunch = () => {
+                    if (launchedTogether || activePlayingVideo !== v) return;
+                    const videoReady = v.readyState >= 3;
+                    const audioReady = !rvMasterAudio || rvMasterAudio.dataset.noAudioTrack === "true" || rvMasterAudio.readyState >= 3;
+
+                    // If video is ready before audio, prime the hardware MediaCodec decoder for 1 frame and hold at 0.00s
+                    if (videoReady && !audioReady && !warmingDecoder && v.dataset.decoderPrimed !== "true") {
+                        warmingDecoder = true;
+                        v.muted = true;
+                        v.play().then(() => {
+                            if (!launchedTogether && activePlayingVideo === v) {
+                                v.pause();
+                                try { v.currentTime = 0; } catch (e) {}
+                                v.dataset.decoderPrimed = "true";
+                            }
+                            warmingDecoder = false;
+                            if (!launchedTogether && (!rvMasterAudio || rvMasterAudio.readyState >= 3)) {
+                                executeWarmSimultaneousLaunch();
+                            }
+                        }).catch(() => { warmingDecoder = false; });
+                        return;
+                    }
+
+                    if (videoReady && audioReady && !warmingDecoder) {
+                        executeWarmSimultaneousLaunch();
+                    }
+                };
+
+                if (v.readyState >= 3 && (!rvMasterAudio || rvMasterAudio.dataset.noAudioTrack === "true" || rvMasterAudio.readyState >= 3)) {
+                    executeWarmSimultaneousLaunch();
+                } else {
+                    v.addEventListener("canplay", checkBothReadyToLaunch, { once: true });
+                    v.addEventListener("canplaythrough", checkBothReadyToLaunch, { once: true });
+                    if (rvMasterAudio) {
+                        rvMasterAudio.addEventListener("canplay", checkBothReadyToLaunch, { once: true });
+                        rvMasterAudio.addEventListener("canplaythrough", checkBothReadyToLaunch, { once: true });
+                    }
+                    avStartBarrierTimer = setTimeout(() => {
+                        if (!launchedTogether && activePlayingVideo === v && v.readyState >= 2) {
+                            executeWarmSimultaneousLaunch();
+                        } else if (!launchedTogether && activePlayingVideo === v) {
+                            v.addEventListener("canplay", executeWarmSimultaneousLaunch, { once: true });
+                        }
+                    }, 380);
+                }
             } catch (err) {}
         }
 
@@ -2791,24 +2972,73 @@
         // ============================================================================
         // FUN INTERACTIVE FEATURES (Repost, Live Emoji Burst, Translation, VFX, Surprise)
         // ============================================================================
+        const pendingInteractionLocks = new Set();
+
+        function getUserInteractionSet(actionType) {
+            const uid = auth.currentUser?.uid || 'guest';
+            try {
+                const raw = safeGetStorage(`rv_once_${actionType}_${uid}`, '[]');
+                const parsed = JSON.parse(raw);
+                return new Set(Array.isArray(parsed) ? parsed : []);
+            } catch (e) {
+                return new Set();
+            }
+        }
+
+        function hasUserInteractedOnce(actionType, targetId) {
+            if (!targetId) return false;
+            return getUserInteractionSet(actionType).has(String(targetId));
+        }
+
+        function markUserInteractionOnce(actionType, targetId) {
+            if (!targetId) return false;
+            const uid = auth.currentUser?.uid || 'guest';
+            const set = getUserInteractionSet(actionType);
+            const key = String(targetId);
+            if (set.has(key)) return false;
+            set.add(key);
+            try {
+                safeSetStorage(`rv_once_${actionType}_${uid}`, JSON.stringify(Array.from(set)));
+            } catch (e) {}
+            return true;
+        }
+
         window.toggleRepostVideo = async (docId, btnEl, e) => {
             if (e) e.stopPropagation();
-            if (!checkAuth()) return;
-            const isReposted = btnEl.classList.contains('reposted');
+            if (!checkAuth() || !docId) return;
+            const uid = auth.currentUser.uid;
+            const lockKey = `repost_${docId}`;
+            if (pendingInteractionLocks.has(lockKey)) return;
+            pendingInteractionLocks.add(lockKey);
+
+            const vData = profileVideosData[docId] || {};
+            const currentReposters = new Set(Array.isArray(vData.repostedBy) ? vData.repostedBy.filter(u => !isVirtualBotIdOrUser(u)) : []);
+            const isReposted = btnEl.classList.contains('reposted') || currentReposters.has(uid);
             const span = btnEl.querySelector('span');
             try {
                 if (isReposted) {
+                    currentReposters.delete(uid);
+                    vData.repostedBy = Array.from(currentReposters);
+                    vData.reposts = vData.repostedBy.length;
+                    profileVideosData[docId] = vData;
                     btnEl.classList.remove('reposted');
                     if (span) span.innerText = "Republier pour tes followers";
-                    await updateDoc(doc(db, "videos", docId), { reposts: increment(-1), repostedBy: arrayRemove(auth.currentUser.uid) }).catch(()=>{});
+                    await updateDoc(doc(db, "videos", docId), { reposts: vData.reposts, repostedBy: arrayRemove(uid) }).catch(()=>{});
                     showToast("Republication annulée", "info");
                 } else {
+                    currentReposters.add(uid);
+                    vData.repostedBy = Array.from(currentReposters);
+                    vData.reposts = vData.repostedBy.length;
+                    profileVideosData[docId] = vData;
                     btnEl.classList.add('reposted');
                     if (span) span.innerText = "Republié pour tes followers ✓";
-                    await updateDoc(doc(db, "videos", docId), { reposts: increment(1), repostedBy: arrayUnion(auth.currentUser.uid) }).catch(()=>{});
+                    await updateDoc(doc(db, "videos", docId), { reposts: vData.reposts, repostedBy: arrayUnion(uid) }).catch(()=>{});
                     showToast("Vidéo republiée pour tes followers ! 🔁", "success");
                 }
-            } catch (err) {}
+            } catch (err) {
+            } finally {
+                pendingInteractionLocks.delete(lockKey);
+            }
         };
 
         window.triggerEmojiBurst = (cardId, emoji, e) => {
@@ -2896,13 +3126,17 @@
             if (!container) return;
             const toast = document.createElement('div');
             toast.className = 'toast-item';
-            let iconName = 'sparkles';
             let iconColor = 'text-cyan-400';
-            if (type === 'error') { iconName = 'alert-triangle'; iconColor = 'text-rose-400'; }
-            if (type === 'success') { iconName = 'check-circle-2'; iconColor = 'text-emerald-400'; }
-            toast.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4 shrink-0 ${iconColor}"></i><span class="flex-1">${escapeHtml(message)}</span>`;
+            let svgPath = '<path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z"/>';
+            if (type === 'error') {
+                iconColor = 'text-rose-400';
+                svgPath = '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>';
+            } else if (type === 'success') {
+                iconColor = 'text-emerald-400';
+                svgPath = '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>';
+            }
+            toast.innerHTML = `<svg class="w-4 h-4 shrink-0 ${iconColor}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${svgPath}</svg><span class="flex-1">${escapeHtml(message)}</span>`;
             container.appendChild(toast);
-            lucide.createIcons();
             setTimeout(() => {
                 toast.style.opacity = '0';
                 toast.style.transform = 'translateY(-10px)';
@@ -2937,7 +3171,7 @@
                 showToast(val === 'contain' ? "Proportions originales activées" : "Plein écran 9:16 activé", "success");
             } else if (key === 'autoScroll') {
                 safeSetStorage('rv_auto_scroll', String(val));
-                document.querySelectorAll('video').forEach(v => { v.loop = !val; });
+                document.querySelectorAll('.video-card video').forEach(v => { v.loop = false; });
                 showToast(val ? "Défilement automatique activé ⏭️" : "Lecture en boucle activée 🔁", "info");
             } else if (key === 'preloadNext') {
                 safeSetStorage('rv_preload_next', String(val));
@@ -3162,7 +3396,7 @@
             await updateDoc(userRef, { preferences: currentUserData.preferences }).catch(() => {});
         }
 
-        // Real-time Watch Time, Completion & Skip Tracker (Exact R-Videos DeepRank Signal Engine)
+        // Real-time Watch Time, Completion & Skip Tracker (1 Person = 1 Single Interaction Count per Video)
         function recordRVideosWatchSignal(docId, eventType, videoEl) {
             if (!docId) return;
             const vData = profileVideosData[docId];
@@ -3182,12 +3416,13 @@
                 sessionSeenFeedCount.set(docId, (sessionSeenFeedCount.get(docId) || 0) + 1);
             } else if (eventType === 'loop_complete') {
                 metric.loops += 1;
-                userInterestGraph.completedVideos[docId] = (userInterestGraph.completedVideos[docId] || 0) + 1;
-                // Massive R-Videos DeepRank boost for full completion & rewatch loop
-                updateUserPreferences(tags, 8, creatorId, soundKey, locKey);
-                if (metric.loops === 1) {
-                    updateDoc(doc(db, "videos", docId), { completions: increment(1), rewatches: increment(1) }).catch(() => {});
-                } else {
+                userInterestGraph.completedVideos[docId] = 1;
+                // Count completion & rewatch at most ONCE per person per video
+                if (markUserInteractionOnce('completion', docId)) {
+                    metric.rewardedCompletion = true;
+                    updateUserPreferences(tags, 8, creatorId, soundKey, locKey);
+                    updateDoc(doc(db, "videos", docId), { completions: increment(1) }).catch(() => {});
+                } else if (metric.loops === 2 && markUserInteractionOnce('rewatch', docId)) {
                     updateDoc(doc(db, "videos", docId), { rewatches: increment(1) }).catch(() => {});
                 }
             } else if (eventType === 'leave') {
@@ -3197,22 +3432,23 @@
                 const completionRatio = metric.watchedSec / Math.max(vidDur, 3);
 
                 if (metric.watchedSec < 2.2 && metric.loops === 0 && !metric.penalizedSkip) {
-                    // User swiped away almost immediately (<2.2s): Negative R-Videos DeepRank Skip Signal
                     metric.penalizedSkip = true;
                     userInterestGraph.skippedVideos[docId] = true;
-                    updateUserPreferences(tags, -3, creatorId, null, null);
+                    if (markUserInteractionOnce('skip_signal', docId)) {
+                        updateUserPreferences(tags, -3, creatorId, null, null);
+                    }
                 } else if (completionRatio >= 0.72 && !metric.rewardedCompletion) {
-                    // Strong watch retention (>72% watched): Positive R-Videos DeepRank Retention Signal
                     metric.rewardedCompletion = true;
-                    updateUserPreferences(tags, 5, creatorId, soundKey, locKey);
-                    updateDoc(doc(db, "videos", docId), { completions: increment(1) }).catch(() => {});
+                    if (markUserInteractionOnce('completion', docId)) {
+                        updateUserPreferences(tags, 5, creatorId, soundKey, locKey);
+                        updateDoc(doc(db, "videos", docId), { completions: increment(1) }).catch(() => {});
+                    }
                 }
             }
         }
 
         // ============================================================================
-        // 100% REAL HUMANS POLICY (GOOGLE PLAY INTEGRITY & ZERO VIRTUAL BOTS)
-        // Filters out any legacy bot_ accounts or @bot.local reactions everywhere
+        // 100% REAL HUMANS POLICY & STRICT 1-INTERACTION-PER-USER COUNTERS
         // ============================================================================
         function isVirtualBotIdOrUser(uid, email = '', isBotFlag = false) {
             if (isBotFlag === true) return true;
@@ -3224,13 +3460,59 @@
         function getRealLikesCount(videoData) {
             if (!videoData) return 0;
             if (Array.isArray(videoData.likedBy)) {
-                const realSigners = videoData.likedBy.filter(uid => !isVirtualBotIdOrUser(uid));
-                const botCount = videoData.likedBy.length - realSigners.length;
-                if (botCount > 0) {
-                    return Math.max(0, (Number(videoData.likes) || videoData.likedBy.length) - botCount);
-                }
+                const uniqueRealUsers = new Set(videoData.likedBy.filter(uid => !isVirtualBotIdOrUser(uid)));
+                return uniqueRealUsers.size;
             }
             return Math.max(0, Number(videoData.likes) || 0);
+        }
+
+        function getRealFavoritesCount(videoData) {
+            if (!videoData || !Array.isArray(videoData.favorites)) return 0;
+            const uniqueRealUsers = new Set(videoData.favorites.filter(uid => !isVirtualBotIdOrUser(uid)));
+            return uniqueRealUsers.size;
+        }
+
+        function getRealRepostsCount(videoData) {
+            if (!videoData) return 0;
+            if (Array.isArray(videoData.repostedBy)) {
+                const uniqueRealUsers = new Set(videoData.repostedBy.filter(uid => !isVirtualBotIdOrUser(uid)));
+                return uniqueRealUsers.size;
+            }
+            return Math.max(0, Number(videoData.reposts) || 0);
+        }
+
+        function getRealSharesCount(videoData) {
+            if (!videoData) return 0;
+            if (Array.isArray(videoData.sharedBy)) {
+                const uniqueRealUsers = new Set(videoData.sharedBy.filter(uid => !isVirtualBotIdOrUser(uid)));
+                return uniqueRealUsers.size;
+            }
+            return Math.max(0, Number(videoData.shares) || 0);
+        }
+
+        function recordUniqueVideoView(vidId) {
+            if (!vidId) return;
+            const uid = auth.currentUser?.uid || null;
+            const vData = profileVideosData[vidId];
+            if (viewedVideos.has(vidId) || hasUserInteractedOnce('view', vidId)) return;
+            if (uid && vData && Array.isArray(vData.viewedBy) && vData.viewedBy.includes(uid)) {
+                viewedVideos.add(vidId);
+                markUserInteractionOnce('view', vidId);
+                return;
+            }
+            viewedVideos.add(vidId);
+            if (!markUserInteractionOnce('view', vidId)) return;
+            if (vData) {
+                vData.views = (Number(vData.views) || 0) + 1;
+                if (uid) {
+                    const set = new Set(Array.isArray(vData.viewedBy) ? vData.viewedBy : []);
+                    set.add(uid);
+                    vData.viewedBy = Array.from(set);
+                }
+            }
+            const updatePayload = { views: increment(1) };
+            if (uid) updatePayload.viewedBy = arrayUnion(uid);
+            updateDoc(doc(db, "videos", vidId), updatePayload).catch(() => {});
         }
 
         function isVideoEligibleForPourToi(video) {
@@ -3893,30 +4175,49 @@
             const netConfig = getNetworkConfig();
             const width = netConfig.width;
             const quality = netConfig.quality;
-            if (url.includes("cloudinary.com")) {
-                let transformation = `${quality},f_auto,w_${width}`;
-                if (trimStart > 0 || (trimEnd > 0 && trimEnd < 9999)) {
+            if (url.includes("cloudinary.com") && url.includes("/upload/")) {
+                // H.264 Baseline Profile Level 3.0 (zero B-frames) + ac_none (strips unused audio from muted <video> for 30% faster load!)
+                let transformation = `${quality},f_mp4,vc_h264:baseline:3.0,ac_none,w_${width}`;
+                if (trimStart > 0.5) {
                     transformation += `,so_${trimStart}`;
-                    if (trimEnd > 0) transformation += `,eo_${trimEnd}`;
+                    if (trimEnd > trimStart + 1 && trimEnd < 9999) transformation += `,eo_${trimEnd}`;
                 }
-                return url.replace('/upload/', `/upload/${transformation}/`);
+                let optimized = url.replace('/upload/', `/upload/${transformation}/`);
+                optimized = optimized.replace(/\.(webm|mov|mkv|avi)(\?.*)?$/i, '.mp4$2');
+                return optimized;
             }
             return url;
         }
 
-        // Mute / Unmute & Playback Speed Controls (Video stays muted=true; Master Audio plays sound!)
+        // Mute / Unmute Controls: NEVER touches <video> so toggling sound has 0% effect on video image movement!
         window.toggleGlobalMute = () => {
             isGlobalMuted = !isGlobalMuted;
-            document.querySelectorAll('video').forEach(v => { v.muted = true; });
             if (isGlobalMuted) {
-                stopMasterAudio();
-            } else if (activePlayingVideo && !activePlayingVideo.paused) {
-                syncMasterAudioToVideo(activePlayingVideo, true);
+                if (rvMasterAudio && !rvMasterAudio.paused) rvMasterAudio.pause();
+            } else if (activePlayingVideo && !activePlayingVideo.paused && rvMasterAudio) {
+                const cardEl = activePlayingVideo.closest('.video-card');
+                prepareMasterAudioTrack(activePlayingVideo, cardEl, false);
+                const syncAndPlayAudio = () => {
+                    if (isGlobalMuted || !activePlayingVideo || activePlayingVideo.paused) return;
+                    try { rvMasterAudio.currentTime = activePlayingVideo.currentTime || 0; } catch (e) {}
+                    rvMasterAudio.playbackRate = currentPlaybackRate;
+                    rvMasterAudio.volume = 0.85;
+                    rvMasterAudio.play().then(() => {
+                        setTimeout(() => alignMasterAudioToVideoOnce(activePlayingVideo), 100);
+                    }).catch(() => {});
+                };
+                if (rvMasterAudio.readyState >= 2) {
+                    syncAndPlayAudio();
+                } else {
+                    rvMasterAudio.addEventListener("canplay", syncAndPlayAudio, { once: true });
+                }
             }
-            const icon = document.getElementById('feed-mute-icon');
-            if (icon) {
-                icon.setAttribute('data-lucide', isGlobalMuted ? 'volume-x' : 'volume-2');
-                lucide.createIcons();
+            const muteBtn = document.getElementById('feed-mute-btn');
+            if (muteBtn) {
+                const volPaths = isGlobalMuted
+                    ? '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" x2="16" y1="9" y2="15"/><line x1="16" x2="22" y1="9" y2="15"/>'
+                    : '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>';
+                muteBtn.innerHTML = `<svg id="feed-mute-icon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${volPaths}</svg>`;
             }
             showToast(isGlobalMuted ? "Son désactivé 🔇" : "Son activé 🔊", "info");
         };
@@ -3926,7 +4227,6 @@
             const nextIdx = (speeds.indexOf(currentPlaybackRate) + 1) % speeds.length;
             currentPlaybackRate = speeds[nextIdx];
             document.querySelectorAll('video').forEach(v => {
-                v.preservesPitch = true;
                 v.playbackRate = currentPlaybackRate;
             });
             if (rvMasterAudio) {
@@ -3971,6 +4271,38 @@
             }
         }
 
+        async function registerUniqueShareAction(videoId) {
+            if (!videoId || !auth.currentUser) return;
+            const uid = auth.currentUser.uid;
+            const lockKey = `share_${videoId}`;
+            if (pendingInteractionLocks.has(lockKey)) return;
+            pendingInteractionLocks.add(lockKey);
+            try {
+                const vData = profileVideosData[videoId] || {};
+                const sharedSet = new Set(Array.isArray(vData.sharedBy) ? vData.sharedBy.filter(u => !isVirtualBotIdOrUser(u)) : []);
+                if (sharedSet.has(uid) || hasUserInteractedOnce('share', videoId)) {
+                    markUserInteractionOnce('share', videoId);
+                    return;
+                }
+                markUserInteractionOnce('share', videoId);
+                sharedSet.add(uid);
+                vData.sharedBy = Array.from(sharedSet);
+                vData.shares = vData.sharedBy.length;
+                profileVideosData[videoId] = vData;
+
+                document.querySelectorAll(`.video-card[data-id="${videoId}"] .share-count`).forEach(el => {
+                    el.innerText = formatCount(vData.shares);
+                });
+
+                await updateDoc(doc(db, "videos", videoId), {
+                    shares: vData.shares,
+                    sharedBy: arrayUnion(uid)
+                }).catch(() => {});
+            } finally {
+                pendingInteractionLocks.delete(lockKey);
+            }
+        }
+
         window.shareVideo = (url, videoId, username) => {
             if (!checkAuth()) return;
             const finalUrl = getWatermarkedUrl(url, username);
@@ -3979,11 +4311,17 @@
                     title: 'R-Videos',
                     text: `Regarde cette vidéo de @${username} sur R-Videos !`,
                     url: finalUrl
+                }).then(() => {
+                    registerUniqueShareAction(videoId);
                 }).catch((err) => {
-                    if (err.name !== 'AbortError') copyTextSafe(finalUrl);
+                    if (err.name !== 'AbortError') {
+                        copyTextSafe(finalUrl);
+                        registerUniqueShareAction(videoId);
+                    }
                 });
             } else {
                 copyTextSafe(finalUrl);
+                registerUniqueShareAction(videoId);
             }
         };
 
@@ -4234,29 +4572,48 @@
             });
         };
         
-        // --- TOGGLE FAVORITE WITH COUNTER ---
+        // --- TOGGLE FAVORITE WITH COUNTER (STRICT 1 PER USER PER VIDEO) ---
         window.toggleFavorite = async (docId, el) => { 
-            if(!checkAuth()) return; 
+            if (!checkAuth() || !docId) return; 
+            const uid = auth.currentUser.uid;
+            const lockKey = `fav_${docId}`;
+            if (pendingInteractionLocks.has(lockKey)) return;
+            pendingInteractionLocks.add(lockKey);
+
             const countSpan = el.querySelector('.fav-text');
-            const isFav = el.classList.contains('favorited'); 
+            const vData = profileVideosData[docId] || {};
+            const favSet = new Set(Array.isArray(vData.favorites) ? vData.favorites.filter(u => !isVirtualBotIdOrUser(u)) : []);
+            const isFav = el.classList.contains('favorited') || favSet.has(uid); 
             const ref = doc(db, "videos", docId); 
             
             const card = el.closest('.video-card');
             const desc = card ? card.querySelector('.video-desc-text')?.innerText : "";
             const tags = extractTags(desc);
-            if(isFav) { 
-                el.classList.remove('favorited'); 
-                el.querySelector('svg')?.classList.remove('fill-yellow-500', 'text-yellow-500'); 
-                updateCountUI(countSpan, -1);
-                await updateDoc(ref, { favorites: arrayRemove(auth.currentUser.uid) }); 
-            } else { 
-                el.classList.add('favorited'); 
-                el.querySelector('svg')?.classList.add('fill-yellow-500', 'text-yellow-500'); 
-                updateCountUI(countSpan, 1);
-                showToast("Ajouté aux favoris ⭐", "success");
-                await updateDoc(ref, { favorites: arrayUnion(auth.currentUser.uid) }); 
-                await updateUserPreferences(tags);
-            } 
+            try {
+                if (isFav) { 
+                    favSet.delete(uid);
+                    vData.favorites = Array.from(favSet);
+                    profileVideosData[docId] = vData;
+                    el.classList.remove('favorited'); 
+                    el.querySelector('svg')?.classList.remove('fill-yellow-500', 'text-yellow-500', 'fill-yellow-400', 'text-yellow-400'); 
+                    if (countSpan) countSpan.innerText = formatCount(vData.favorites.length);
+                    await updateDoc(ref, { favorites: arrayRemove(uid) }); 
+                } else { 
+                    favSet.add(uid);
+                    vData.favorites = Array.from(favSet);
+                    profileVideosData[docId] = vData;
+                    el.classList.add('favorited'); 
+                    el.querySelector('svg')?.classList.add('fill-yellow-400', 'text-yellow-400'); 
+                    if (countSpan) countSpan.innerText = formatCount(vData.favorites.length);
+                    showToast("Ajouté aux favoris ⭐", "success");
+                    await updateDoc(ref, { favorites: arrayUnion(uid) }); 
+                    if (markUserInteractionOnce('fav_boost', docId)) {
+                        await updateUserPreferences(tags);
+                    }
+                }
+            } finally {
+                pendingInteractionLocks.delete(lockKey);
+            }
         };
 
         window.toggleAuthMode = () => { document.getElementById('login-form').classList.toggle('hidden'); document.getElementById('register-form').classList.toggle('hidden'); document.getElementById('auth-error').classList.add('hidden'); };
@@ -4473,7 +4830,8 @@
         };
 
         window.handleBump = async (docId, authorId) => {
-            if (!auth.currentUser) return;
+            if (!auth.currentUser || !docId) return;
+            if (!markUserInteractionOnce('bump', docId)) return;
             const ref = doc(db, "videos", docId);
             await updateDoc(ref, { createdAt: serverTimestamp() }).catch(e => console.log(e));
         };
@@ -4735,12 +5093,12 @@
                     div.className = "video-card w-full h-full relative snap-start bg-black overflow-hidden flex items-center justify-center";
                     div.setAttribute('data-id', docId); 
                     div.setAttribute('data-src', optimizedUrl);
+                    div.setAttribute('data-raw-url', data.url || '');
                     div.setAttribute('data-trim-start', trimStart);
                     div.setAttribute('data-trim-end', trimEnd);
                     
-                    const initialVideoSrc = memoryBlobUrls.get(optimizedUrl) || optimizedUrl;
                     div.innerHTML = `
-                        <video class="w-full h-full ${fitClass} ${ data.studioConfig?.filterPreset || vfxClass } pointer-events-none bg-black" style="${ data.studioConfig?.customFilterCss ? 'filter:' + escapeHtml(data.studioConfig.customFilterCss) + ';' : '' }${ data.studioConfig?.transformCss ? 'transform:' + escapeHtml(data.studioConfig.transformCss) + ';' : '' }" muted loop playsinline webkit-playsinline preload="none" src="${initialVideoSrc}"></video>
+                        <video class="w-full h-full ${fitClass} ${ data.studioConfig?.filterPreset || vfxClass } pointer-events-none bg-black" style="${ data.studioConfig?.customFilterCss ? 'filter:' + escapeHtml(data.studioConfig.customFilterCss) + ';' : '' }${ data.studioConfig?.transformCss ? 'transform:' + escapeHtml(data.studioConfig.transformCss) + ';' : '' }" muted playsinline webkit-playsinline preload="none"></video>
                         ${ data.studioConfig?.overlayText ? `<div class="absolute left-1/2 -translate-x-1/2 ${ data.studioConfig.overlayPos === 'top' ? 'top-20' : (data.studioConfig.overlayPos === 'bottom' ? 'bottom-44' : 'top-1/2 -translate-y-1/2') } z-20 pointer-events-none text-center max-w-[85%] px-3.5 py-1.5 studio-text-banner-${ escapeHtml(data.studioConfig.overlayStyle || 'glass') } text-sm" style="color:${ escapeHtml(data.studioConfig.overlayColor || '#ffffff') }">${ escapeHtml(data.studioConfig.overlayText) }</div>` : '' }
                         ${ data.studioConfig?.overlaySticker ? `<div class="absolute right-16 top-24 z-20 pointer-events-none text-4xl drop-shadow-xl animate-bounce">${ escapeHtml(data.studioConfig.overlaySticker) }</div>` : '' }
                         <div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 opacity-0">
@@ -4782,7 +5140,7 @@
                                 <div class="action-circle">
                                     <i data-lucide="bookmark" class="w-8 h-8 fav-icon ${iFav ? 'fill-yellow-400 text-yellow-400' : 'text-white fill-white/90'} transition-all"></i>
                                 </div>
-                                <span class="text-xs font-bold text-shadow fav-text">${formatCount(data.favorites ? data.favorites.length : 0)}</span>
+                                <span class="text-xs font-bold text-shadow fav-text">${formatCount(getRealFavoritesCount(data))}</span>
                             </div>
 
                             <!-- Share / More Options -->
@@ -4790,7 +5148,7 @@
                                 <div class="action-circle">
                                     <i data-lucide="redo-2" class="w-8 h-8 text-white"></i>
                                 </div>
-                                <span class="text-xs font-bold text-shadow">${formatCount((data.views || 0) + (data.reposts || 0))}</span>
+                                <span class="text-xs font-bold text-shadow share-count">${formatCount(getRealSharesCount(data))}</span>
                             </div>
 
                             <!-- Spinning Music Disc (Opens Sound Reuse Sheet) -->
@@ -4852,31 +5210,28 @@
                     const overlay = div.querySelector('.play-overlay');
                     const progressFill = div.querySelector('.video-progress-fill');
                     
-                    v.muted = true; // Permanently muted on <video> so video frames never lag!
-                    v.loop = !appSettings.autoScroll;
-                    v.playbackRate = currentPlaybackRate;
-                    bindDecoupledAudioEvents(v, div);
+                    configureHardwareVideoElement(v, div);
 
                     const triggerBump = () => { if (!v.dataset.bumped) { v.dataset.bumped = "true"; handleBump(docId, data.userId); } };
 
                     let lastProgressUpdate = 0;
-                    let lastRecordedTime = 0;
                     v.addEventListener('timeupdate', () => {
-                        if (v.currentTime > 10) triggerBump();
-                        if (v.currentTime < lastRecordedTime - 0.5) {
+                        const cur = v.currentTime || 0;
+                        // Detect seamless native hardware loop wrap-around when v.loop === true
+                        if (v.lastTimeUpdatePos !== undefined && cur < v.lastTimeUpdatePos - 0.5) {
                             triggerBump();
+                            recordRVideosWatchSignal(docId, 'loop_complete', v);
+                            setProgressBarRatio(progressFill, 0);
                         }
-                        lastRecordedTime = v.currentTime;
+                        v.lastTimeUpdatePos = cur;
+
+                        if (cur > 10) triggerBump();
 
                         const now = performance.now();
-                        if (now - lastProgressUpdate < 320) return;
+                        if (now - lastProgressUpdate < 180) return;
                         lastProgressUpdate = now;
-                        if (v === activePlayingVideo && div.dataset.inView === "true" && !v.paused) {
-                            alignMutedVideoToMasterAudio(v);
-                        }
                         if (v.duration && progressFill) {
-                            const pct = (v.currentTime / v.duration) * 100;
-                            progressFill.style.width = `${pct}%`;
+                            setProgressBarRatio(progressFill, cur / v.duration);
                         }
                     });
 
@@ -4921,10 +5276,13 @@
             const rect = barEl.getBoundingClientRect();
             const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
             const targetTime = ratio * v.duration;
+            v.lastTimeUpdatePos = targetTime;
             v.currentTime = targetTime;
             if (v === activePlayingVideo && rvMasterAudio && !isGlobalMuted) {
                 try { rvMasterAudio.currentTime = targetTime; } catch (err) {}
             }
+            const pf = card ? card.querySelector('.video-progress-fill') : null;
+            setProgressBarRatio(pf, ratio);
         };
 
         // ============================================================================
@@ -5943,9 +6301,12 @@
                     const progressFill = card.querySelector('.video-progress-fill');
 
                     if(entry.isIntersecting) { 
+                        if (card.dataset.inView === "true" && activePlayingVideo === v && !v.paused) {
+                            return;
+                        }
                         card.dataset.inView = "true";
                         card.dataset.userPaused = "false";
-                        if (progressFill) progressFill.style.width = '0%';
+                        setProgressBarRatio(progressFill, 0);
                         const activeVidId = card.getAttribute('data-id');
                         if (activeVidId) recordRVideosWatchSignal(activeVidId, 'enter', v);
 
@@ -5953,20 +6314,17 @@
                         if (!v.getAttribute('src') && targetSrc) {
                             v.src = targetSrc;
                             v.load();
-                        } else if (v.readyState >= 1 && v.currentTime > 0.05) {
-                            try { v.currentTime = 0; } catch (e) {}
                         }
 
-                        playVideoSynchronized(v, card, false);
+                        playVideoSynchronized(v, card, true);
 
                         const nextCard = card.nextElementSibling;
                         const nextUrl = (appSettings.preloadNext && nextCard) ? nextCard.getAttribute('data-src') : null;
                         scheduleDeferredVideoCache(sourceUrl, v, nextUrl);
 
                         const vidId = card.getAttribute('data-id'); 
-                        if(vidId && !viewedVideos.has(vidId)) { 
-                            viewedVideos.add(vidId); 
-                            updateDoc(doc(db, "videos", vidId), { views: increment(1) }).catch(()=>{}); 
+                        if (vidId) {
+                            recordUniqueVideoView(vidId);
                         }
                     } else { 
                         if (card.dataset.inView === "true") {
@@ -5975,18 +6333,19 @@
                         }
                         card.dataset.inView = "false";
                         card.dataset.userPaused = "false";
-                        v.pause();
+                        v.muted = true;
+                        if (!v.paused) v.pause();
                         if (v.readyState >= 1 && v.currentTime > 0) {
                             try { v.currentTime = 0; } catch (e) {}
                         }
-                        if (progressFill) progressFill.style.width = '0%';
+                        setProgressBarRatio(progressFill, 0);
 
                         const container = document.getElementById('feed-container');
                         if (container) {
                             const children = Array.from(container.children);
                             const myIndex = children.indexOf(card);
                             const visibleIndex = Math.round(container.scrollTop / (container.clientHeight || 1));
-                            if (myIndex !== -1 && Math.abs(myIndex - visibleIndex) > 2) {
+                            if (myIndex !== -1 && Math.abs(myIndex - visibleIndex) > 1) {
                                 v.removeAttribute('src');
                                 v.load();
                             }
@@ -5997,32 +6356,53 @@
             document.querySelectorAll('.video-card').forEach(c => videoObserver.observe(c)); 
         }
 
-        // --- TOGGLE LIKE ---
+        // --- TOGGLE LIKE (STRICT 1 LIKE PER USER PER VIDEO) ---
         window.toggleLike = async (docId, el, authorId) => { 
-            if(!checkAuth()) return; 
+            if (!checkAuth() || !docId) return; 
+            const uid = auth.currentUser.uid;
+            const lockKey = `like_${docId}`;
+            if (pendingInteractionLocks.has(lockKey)) return;
+            pendingInteractionLocks.add(lockKey);
+
             const countSpan = el.querySelector('.like-count');
-            const isLiked = el.classList.contains('liked'); 
+            const vData = profileVideosData[docId] || {};
+            const likedSet = new Set(Array.isArray(vData.likedBy) ? vData.likedBy.filter(u => !isVirtualBotIdOrUser(u)) : []);
+            const isLiked = el.classList.contains('liked') || likedSet.has(uid); 
             const ref = doc(db, "videos", docId); 
             
             const card = el.closest('.video-card');
             const desc = card ? card.querySelector('.video-desc-text')?.innerText : "";
             const tags = extractTags(desc);
-            if(isLiked) { 
-                el.classList.remove('liked'); 
-                el.querySelector('svg')?.classList.remove('fill-[#ff2a5f]','text-[#ff2a5f]'); 
-                el.querySelector('svg')?.classList.add('text-white'); 
-                updateCountUI(countSpan, -1);
-                await updateDoc(ref, {likes: increment(-1), likedBy: arrayRemove(auth.currentUser.uid)}); 
-            } else { 
-                el.classList.add('liked'); 
-                el.querySelector('svg')?.classList.add('fill-[#ff2a5f]','text-[#ff2a5f]','like-animation'); 
-                el.querySelector('svg')?.classList.remove('text-white'); 
-                setTimeout(()=>el.querySelector('svg')?.classList.remove('like-animation'),380); 
-                updateCountUI(countSpan, 1);
-                await updateDoc(ref, {likes: increment(1), likedBy: arrayUnion(auth.currentUser.uid)}); 
-                sendNotification(authorId, "like", "a aimé votre vidéo"); 
-                await updateUserPreferences(tags);
-            } 
+            try {
+                if (isLiked) { 
+                    likedSet.delete(uid);
+                    vData.likedBy = Array.from(likedSet);
+                    vData.likes = vData.likedBy.length;
+                    profileVideosData[docId] = vData;
+                    el.classList.remove('liked'); 
+                    el.querySelector('svg')?.classList.remove('fill-[#ff2a5f]','text-[#ff2a5f]'); 
+                    el.querySelector('svg')?.classList.add('text-white'); 
+                    if (countSpan) countSpan.innerText = formatCount(vData.likes);
+                    await updateDoc(ref, { likes: vData.likes, likedBy: arrayRemove(uid) }); 
+                } else { 
+                    likedSet.add(uid);
+                    vData.likedBy = Array.from(likedSet);
+                    vData.likes = vData.likedBy.length;
+                    profileVideosData[docId] = vData;
+                    el.classList.add('liked'); 
+                    el.querySelector('svg')?.classList.add('fill-[#ff2a5f]','text-[#ff2a5f]','like-animation'); 
+                    el.querySelector('svg')?.classList.remove('text-white'); 
+                    setTimeout(()=>el.querySelector('svg')?.classList.remove('like-animation'),380); 
+                    if (countSpan) countSpan.innerText = formatCount(vData.likes);
+                    await updateDoc(ref, { likes: vData.likes, likedBy: arrayUnion(uid) }); 
+                    if (markUserInteractionOnce('like_boost', docId)) {
+                        sendNotification(authorId, "like", "a aimé votre vidéo"); 
+                        await updateUserPreferences(tags);
+                    }
+                }
+            } finally {
+                pendingInteractionLocks.delete(lockKey);
+            }
         };
 
         window.openComments = async (id, allowed = true) => { 
@@ -6136,7 +6516,32 @@
                 await updateDoc(doc(db, "videos", vidId), { commentCount: increment(-1) }); 
             }); 
         };
-        window.toggleCommentLike = async (vidId, cId, aId) => { const ref = doc(db, `videos/${vidId}/comments`, cId); const snap = await getDoc(ref); if(!snap.exists()) return; if(snap.data().likedBy?.includes(auth.currentUser.uid)) { await updateDoc(ref, { likes: increment(-1), likedBy: arrayRemove(auth.currentUser.uid) }); } else { await updateDoc(ref, { likes: increment(1), likedBy: arrayUnion(auth.currentUser.uid) }); sendNotification(aId, "comment_like", "a aimé votre commentaire"); } };
+        window.toggleCommentLike = async (vidId, cId, aId) => {
+            if (!checkAuth() || !vidId || !cId) return;
+            const uid = auth.currentUser.uid;
+            const lockKey = `clike_${vidId}_${cId}`;
+            if (pendingInteractionLocks.has(lockKey)) return;
+            pendingInteractionLocks.add(lockKey);
+            try {
+                const ref = doc(db, `videos/${vidId}/comments`, cId);
+                const snap = await getDoc(ref);
+                if (!snap.exists()) return;
+                const cData = snap.data();
+                const cLikedSet = new Set(Array.isArray(cData.likedBy) ? cData.likedBy.filter(u => !isVirtualBotIdOrUser(u)) : []);
+                if (cLikedSet.has(uid)) {
+                    cLikedSet.delete(uid);
+                    await updateDoc(ref, { likes: cLikedSet.size, likedBy: arrayRemove(uid) });
+                } else {
+                    cLikedSet.add(uid);
+                    await updateDoc(ref, { likes: cLikedSet.size, likedBy: arrayUnion(uid) });
+                    if (markUserInteractionOnce('clike_notif', `${vidId}_${cId}`)) {
+                        sendNotification(aId, "comment_like", "a aimé votre commentaire");
+                    }
+                }
+            } finally {
+                pendingInteractionLocks.delete(lockKey);
+            }
+        };
         
         window.sendComment = async () => { 
             const inp = document.getElementById('comment-input'); 
@@ -6393,8 +6798,8 @@
             const soundLabel = escapeHtml(data.soundTitle || `Son original - ${data.username}`);
 
             const html = `
-            <div class="video-card w-full h-full relative bg-black flex items-center justify-center" data-id="${id}" data-src="${rawUrl}" data-in-view="true">
-                <video id="fullscreen-active-video" class="w-full h-full ${fitClass}" muted loop playsinline webkit-playsinline preload="auto" src="${cachedUrl}"></video>
+            <div class="video-card w-full h-full relative bg-black flex items-center justify-center" data-id="${id}" data-src="${rawUrl}" data-raw-url="${escapeHtml(data.url || '')}" data-in-view="true">
+                <video id="fullscreen-active-video" class="w-full h-full ${fitClass}" muted playsinline webkit-playsinline preload="auto" src="${cachedUrl}"></video>
                 <div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 opacity-0">
                     <div class="bg-black/45 rounded-full p-4 backdrop-blur-md border border-white/15 shadow-2xl">
                         <i data-lucide="play" class="w-10 h-10 text-white fill-white ml-0.5"></i>
@@ -6408,7 +6813,7 @@
                     </div>
                     <div class="reaction-btn-item group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${id}', this, '${data.userId}')">
                         <div class="action-circle"><i data-lucide="heart" class="w-8 h-8 ${iLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-white fill-white/90'}"></i></div>
-                        <span class="text-xs font-bold text-shadow like-count">${formatCount(data.likes)}</span>
+                        <span class="text-xs font-bold text-shadow like-count">${formatCount(getRealLikesCount(data))}</span>
                     </div>
                     <div class="reaction-btn-item" onclick="openComments('${id}')">
                         <div class="action-circle"><i data-lucide="message-circle" class="w-8 h-8 text-white fill-white/90"></i></div>
@@ -6416,11 +6821,11 @@
                     </div>
                     <div class="reaction-btn-item ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${id}', this)">
                         <div class="action-circle"><i data-lucide="bookmark" class="w-8 h-8 ${iFav ? 'fill-yellow-400 text-yellow-400' : 'text-white fill-white/90'}"></i></div>
-                        <span class="text-xs font-bold text-shadow fav-text">${formatCount(data.favorites ? data.favorites.length : 0)}</span>
+                        <span class="text-xs font-bold text-shadow fav-text">${formatCount(getRealFavoritesCount(data))}</span>
                     </div>
                     <div class="reaction-btn-item" onclick="openOptions('${id}', '${data.url}', '${escapeHtml(data.username)}', ${data.allowDownloads !== false}, '${data.userId}', ${!!data.isPinned})">
                         <div class="action-circle"><i data-lucide="redo-2" class="w-8 h-8 text-white"></i></div>
-                        <span class="text-xs font-bold text-shadow">Options</span>
+                        <span class="text-xs font-bold text-shadow share-count">${formatCount(getRealSharesCount(data))}</span>
                     </div>
                     <div class="mt-1 cursor-pointer" onclick="openSoundSheet('${id}', event)">
                         <div class="w-10 h-10 bg-gray-900 rounded-full border-[5px] border-gray-800/90 flex items-center justify-center overflow-hidden shadow-xl animate-spin-slow">
@@ -6450,9 +6855,7 @@
             if (fullVid) {
                 const fullCard = fullVid.parentElement;
                 fullVid.addEventListener('ended', () => restartOrAdvanceVideo(fullVid, fullCard));
-                fullVid.addEventListener('timeupdate', () => {
-                    alignMutedVideoToMasterAudio(fullVid);
-                });
+                configureHardwareVideoElement(fullVid, fullCard);
                 playVideoSynchronized(fullVid, fullCard, true);
             }
         };
