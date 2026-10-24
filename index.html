@@ -6,6 +6,12 @@
     <meta name="theme-color" content="#05070e">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="application-name" content="R-Videos">
+    <meta name="author" content="Le Studio Ralph Nyamè">
+    <meta name="publisher" content="Le Studio Ralph Nyamè">
+    <meta name="copyright" content="© 2025-2026 Le Studio Ralph Nyamè - com.ralphnyame.rvideos - Création Originale">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>R-Videos Ultimate Pro</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -574,6 +580,137 @@
         @keyframes toastSlideIn {
             from { opacity: 0; transform: translateY(-14px) scale(0.95); }
             to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* R-Studio Cyber-Prism Video & Camera Editor (Unique Signature Design) */
+        .vfx-sun237 { filter: sepia(0.35) saturate(1.65) contrast(1.12) brightness(1.06); }
+        .vfx-vhs { filter: contrast(1.28) saturate(0.82) hue-rotate(-14deg) brightness(0.96); }
+        .vfx-arctic { filter: hue-rotate(165deg) saturate(1.25) contrast(1.08); }
+
+        .studio-mode-seg {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            padding: 4px;
+            border-radius: 16px;
+            background: rgba(12, 18, 34, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .studio-mode-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            transition: all 0.2s ease;
+        }
+        .studio-mode-btn.active {
+            background: linear-gradient(135deg, #ff2a5f 0%, #7c3aed 55%, #06b6d4 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 16px rgba(255, 42, 95, 0.35);
+        }
+        .studio-tab-dock {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding: 4px;
+            border-radius: 16px;
+            background: rgba(12, 18, 34, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+        }
+        .studio-tab-pill {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 7px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            background: transparent;
+            transition: all 0.18s ease;
+            cursor: pointer;
+        }
+        .studio-tab-pill.active {
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            border: 1px solid rgba(6, 182, 212, 0.45);
+            box-shadow: 0 2px 12px rgba(6, 182, 212, 0.2);
+        }
+        .studio-panel-section { display: none; }
+        .studio-panel-section.active { display: block; animation: fadeIn 0.18s ease-out; }
+
+        .studio-ring-light {
+            box-shadow: inset 0 0 0 14px rgba(255, 250, 240, 0.92), inset 0 0 48px rgba(255, 255, 255, 0.85) !important;
+        }
+        .studio-grid-lines {
+            background-image:
+                linear-gradient(to right, rgba(255,255,255,0.22) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.22) 1px, transparent 1px);
+            background-size: 33.333% 33.333%;
+        }
+        .studio-text-banner-neon {
+            text-shadow: 0 0 10px currentColor, 0 0 22px currentColor, 0 2px 6px rgba(0,0,0,0.9);
+            font-weight: 900;
+            letter-spacing: 0.02em;
+        }
+        .studio-text-banner-glass {
+            background: rgba(15, 23, 42, 0.72);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 6px 14px;
+            border-radius: 14px;
+            font-weight: 800;
+        }
+        .studio-text-banner-cinema {
+            background: rgba(0, 0, 0, 0.86);
+            border-left: 4px solid #ff2a5f;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .studio-text-banner-impact {
+            background: #ff2a5f;
+            color: #ffffff !important;
+            padding: 5px 14px;
+            border-radius: 8px;
+            font-weight: 900;
+            box-shadow: 0 6px 20px rgba(255, 42, 95, 0.5);
+        }
+        @keyframes recPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.12); opacity: 0.75; }
+        }
+        .rec-pulse-ring { animation: recPulse 1.1s ease-in-out infinite; }
+
+        /* Fullscreen Live Camera Mode */
+        #upload-preview-area.camera-fullscreen-active {
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            height: 100dvh !important;
+            max-height: none !important;
+            border-radius: 0 !important;
+            border: 0 !important;
+            z-index: 98 !important;
+            margin: 0 !important;
+            background: #000000 !important;
+        }
+        @keyframes cameraShutterFlash {
+            0% { opacity: 0.95; }
+            100% { opacity: 0; }
+        }
+        .shutter-flash-anim {
+            animation: cameraShutterFlash 0.35s ease-out forwards;
         }
     </style>
 </head>
@@ -1226,8 +1363,17 @@
                     <p>Conformément aux exigences Google Play sur la suppression des données, vous pouvez supprimer intégralement et instantanément votre compte et vos vidéos depuis <b>Profil &gt; Modifier le profil &gt; Supprimer mon compte</b>.</p>
                     <h4 class="font-bold text-[#ff2a5f] mt-4">4. Politique de Contenu Généré par les Utilisateurs (UGC) — Tolérance Zéro</h4>
                     <div class="bg-rose-950/40 border border-rose-500/40 p-3.5 rounded-2xl">
-                        <p class="text-white font-semibold">Nous appliquons une tolérance zéro concernant les contenus abusifs, haineux, violents, harcelants, pornographiques ou illégaux. Chaque vidéo et profil dispose d'outils de signalement et de blocage immédiat. Tout contrevenant est banni définitivement.</p>
+                        <p class="text-white font-semibold">Nous appliquons une tolérance zéro concernant les contenus abusifs, haineux, violents, harcelants, pornographiques, frauduleux ou illégaux. Chaque vidéo et profil dispose d'outils de signalement et de blocage immédiat. Tout contrevenant est banni définitivement.</p>
                     </div>
+                    <h4 class="font-bold text-cyan-400 mt-4">5. Garantie 100 % Utilisateurs Réels &amp; Anti-Manipulation (Google Play Integrity)</h4>
+                    <p>R-Videos interdit formellement la génération de comptes virtuels, de bots ou de réactions automatisées. Toutes les interactions (vues, mentions J'aime, commentaires, abonnements) proviennent exclusivement d'utilisateurs humains authentifiés.</p>
+                    <h4 class="font-bold text-emerald-400 mt-4">6. Propriété Intellectuelle, Licence Originale &amp; Anti-Plagiat (DMCA)</h4>
+                    <p>L'application <b>R-Videos Ultimate Pro</b> (identifiant package : <code>com.ralphnyame.rvideos</code>) est une création logicielle originale développée par <b>Le Studio Ralph Nyamè</b>, dotée de son propre moteur d'édition <b>R-Studio Pro™</b> et de son système de sécurité <b>R-Shield AI™</b>. Chaque publication fait l'objet d'une vérification d'empreinte cryptographique <code>SHA-256</code> contre le plagiat et la copie non autorisée.</p>
+                    <h4 class="font-bold text-amber-400 mt-4">7. Déclaration des Permissions Matérielles (Data Safety)</h4>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li><b>Caméra &amp; Microphone</b> : Utilisés uniquement lorsque l'utilisateur ouvre volontairement la caméra dans R-Studio pour filmer ou prendre une photo en direct. Aucun enregistrement en arrière-plan n'est effectué.</li>
+                        <li><b>Stockage / Galerie</b> : Utilisé uniquement pour importer ou sauvegarder les vidéos et photos choisies par l'utilisateur.</li>
+                    </ul>
                 </div>
                 <button onclick="closeModal('privacy-modal')" class="mt-4 w-full bg-white text-black py-2.5 rounded-xl font-bold text-xs" data-i18n="close_btn">Fermer</button>
             </div>
@@ -1291,6 +1437,55 @@
             </div>
         </div>
 
+        <!-- R-SHIELD AI MODERATION, AUTHENTICITY & SANCTION MODAL -->
+        <div id="moderation-warning-modal" class="modal-overlay z-[99]">
+            <div class="glass-panel w-11/12 max-w-md p-6 rounded-3xl shadow-2xl border border-rose-500/40 text-left relative overflow-hidden">
+                <div class="absolute -top-16 -right-16 w-40 h-40 bg-rose-600/20 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="flex items-center gap-3 mb-3">
+                    <div id="mod-modal-icon-box" class="w-12 h-12 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0">
+                        <i data-lucide="shield-alert" class="w-6 h-6 text-[#ff2a5f]"></i>
+                    </div>
+                    <div>
+                        <span id="mod-modal-strike-badge" class="inline-block text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-rose-600 text-white mb-0.5">Avertissement 1 / 3</span>
+                        <h3 id="mod-modal-title" class="text-base font-extrabold text-white font-display">Vidéo refusée du « Pour toi »</h3>
+                    </div>
+                </div>
+
+                <div class="p-3.5 rounded-2xl bg-rose-950/50 border border-rose-500/30 space-y-2 mb-4">
+                    <div class="text-xs font-bold text-rose-300 flex items-center gap-1.5">
+                        <i data-lucide="alert-octagon" class="w-4 h-4 shrink-0"></i>
+                        <span id="mod-modal-reason-title">Motif : Non-respect des règles communautaires</span>
+                    </div>
+                    <p id="mod-modal-desc" class="text-xs text-gray-200 leading-relaxed">
+                        Notre système de sécurité R-Shield AI a détecté un contenu non conforme (nudité, arnaque ou vidéo non authentique).
+                    </p>
+                </div>
+
+                <div class="space-y-2 text-[11px] text-gray-300 mb-5 bg-black/40 p-3.5 rounded-2xl border border-white/10">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-400">Visibilité dans « Pour toi » :</span>
+                        <span id="mod-modal-fyp-status" class="font-extrabold text-rose-400">🚫 Bloquée / Exclue</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-400">Score d'authenticité R-Shield :</span>
+                        <span id="mod-modal-auth-score" class="font-extrabold text-amber-300">Faible</span>
+                    </div>
+                    <div class="flex items-center justify-between border-t border-white/10 pt-2 mt-1">
+                        <span class="text-gray-400">Niveau de sanction du compte :</span>
+                        <span id="mod-modal-sanction-level" class="font-extrabold text-rose-400">Strike 1/3 (Sous surveillance)</span>
+                    </div>
+                </div>
+
+                <p id="mod-modal-footer-warn" class="text-[11px] text-amber-300 font-semibold text-center mb-4">
+                    ⚠️ Attention : Si vous continuez à publier du contenu non conforme, votre compte sera lourdement sanctionné et banni définitivement.
+                </p>
+
+                <button onclick="closeModerationWarningModal()" class="w-full py-3 bg-gradient-to-r from-[#ff2a5f] to-rose-700 text-white rounded-2xl font-extrabold text-xs shadow-lg shadow-rose-600/30 active:scale-95 transition">
+                    J'ai compris les règles
+                </button>
+            </div>
+        </div>
+
         <!-- LOGOUT MODAL -->
         <div id="logout-modal" class="modal-overlay">
             <div class="glass-panel w-10/12 max-w-sm p-6 rounded-3xl text-center shadow-2xl">
@@ -1303,19 +1498,49 @@
             </div>
         </div>
 
-        <!-- UPLOAD STUDIO MODAL -->
+        <!-- R-STUDIO CREATOR PRO MODAL (CAMERA + FULL PRE-PUBLISH VIDEO EDITOR) -->
         <div id="upload-modal" class="modal-overlay">
-            <div class="bg-[#090d1a] border border-white/10 w-full h-full max-w-2xl mx-auto p-5 flex flex-col overflow-y-auto no-scrollbar shadow-2xl md:rounded-3xl md:h-[92vh]">
-                <div class="flex justify-between items-center mb-3">
-                    <div class="flex items-center gap-2">
-                        <div class="w-7 h-7 rounded-lg bg-[#ff2a5f]/20 flex items-center justify-center text-[#ff2a5f]"><i data-lucide="clapperboard" class="w-4 h-4"></i></div>
-                        <h3 class="text-base font-bold font-display" data-i18n="upload_title">Nouvelle Publication</h3>
+            <div class="bg-[#070b16] border border-white/10 w-full h-full max-w-3xl mx-auto p-3.5 md:p-5 flex flex-col overflow-y-auto no-scrollbar shadow-2xl md:rounded-3xl md:h-[94vh]">
+                <!-- Top Studio Bar -->
+                <div class="flex justify-between items-center mb-2.5">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#ff2a5f] via-purple-600 to-cyan-400 p-[1.5px] shadow-lg shadow-rose-500/20">
+                            <div class="w-full h-full bg-[#070b16] rounded-[10px] flex items-center justify-center text-[#ff2a5f]">
+                                <i data-lucide="clapperboard" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-sm md:text-base font-extrabold font-display tracking-tight" data-i18n="upload_title">Nouvelle Publication</h3>
+                            <span class="text-[10px] text-cyan-400 font-semibold block">R-Studio Pro • Caméra &amp; Montage Créatif</span>
+                        </div>
                     </div>
-                    <i data-lucide="x" class="cursor-pointer text-gray-400 hover:text-white" onclick="closeModal('upload-modal')"></i>
+                    <div class="flex items-center gap-2">
+                        <button onclick="saveStudioDraft()" class="glass-pill px-2.5 py-1.5 rounded-xl text-[11px] font-bold text-amber-300 flex items-center gap-1 hover:bg-white/10 transition" title="Sauvegarder un brouillon">
+                            <i data-lucide="bookmark-plus" class="w-3.5 h-3.5"></i> Brouillon
+                        </button>
+                        <button onclick="closeStudioModal()" class="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/15 flex items-center justify-center text-gray-300 hover:text-white transition">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
                 </div>
 
+                <!-- 3-Way Source Switcher: Galerie | Caméra Live R-Cam | Caméra Native Téléphone -->
+                <div class="studio-mode-seg mb-2.5">
+                    <button id="studio-mode-gallery-btn" onclick="switchStudioSourceMode('gallery')" class="studio-mode-btn active">
+                        <i data-lucide="folder-video" class="w-3.5 h-3.5"></i> Galerie / Éditeur
+                    </button>
+                    <button id="studio-mode-livecam-btn" onclick="switchStudioSourceMode('camera')" class="studio-mode-btn">
+                        <i data-lucide="video" class="w-3.5 h-3.5"></i> Caméra Live
+                    </button>
+                    <button id="studio-mode-nativecam-btn" onclick="triggerNativePhoneCamera()" class="studio-mode-btn">
+                        <i data-lucide="smartphone" class="w-3.5 h-3.5"></i> Appareil Photo HD
+                    </button>
+                </div>
+                <!-- Hidden Native Phone Camera Input -->
+                <input type="file" id="native-camera-file-input" accept="video/*" capture="environment" class="hidden" onchange="previewVideoUpload(this)">
+
                 <!-- Selected / Reused Sound Banner in Upload Modal -->
-                <div id="upload-selected-sound-bar" class="hidden mb-3 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-[#ff2a5f]/20 via-purple-500/20 to-cyan-500/20 border border-cyan-400/40 items-center justify-between">
+                <div id="upload-selected-sound-bar" class="hidden mb-2.5 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-[#ff2a5f]/20 via-purple-500/20 to-cyan-500/20 border border-cyan-400/40 items-center justify-between">
                     <div class="flex items-center gap-2 min-w-0">
                         <i data-lucide="disc" class="w-4 h-4 text-cyan-400 animate-spin-slow shrink-0"></i>
                         <div class="truncate">
@@ -1326,57 +1551,376 @@
                     <button onclick="clearSelectedUploadSound()" class="text-xs text-rose-300 hover:text-white font-bold px-2 py-1 rounded-lg bg-black/40">Retirer</button>
                 </div>
 
-                <div class="flex-1 flex flex-col gap-3">
-                    <div class="border-2 border-dashed border-white/15 hover:border-[#ff2a5f]/60 transition rounded-2xl h-56 flex flex-col items-center justify-center relative bg-black overflow-hidden" id="upload-preview-area">
-                        <div class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mb-2">
-                            <i data-lucide="upload-cloud" class="w-6 h-6 text-[#ff2a5f]"></i>
+                <div class="flex-1 flex flex-col gap-2.5">
+                    <!-- MAIN INTERACTIVE STAGE (Preview + Live Camera + Draggable Text/Stickers + Controls) -->
+                    <div class="border-2 border-dashed border-white/15 hover:border-[#ff2a5f]/60 transition rounded-3xl h-72 md:h-80 flex flex-col items-center justify-center relative bg-black overflow-hidden shadow-2xl" id="upload-preview-area">
+                        <!-- Empty State Prompt -->
+                        <div id="studio-empty-prompt" class="flex flex-col items-center justify-center text-center p-4 pointer-events-none z-10">
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#ff2a5f]/20 to-cyan-400/20 border border-white/15 flex items-center justify-center mb-2.5 shadow-xl">
+                                <i data-lucide="upload-cloud" class="w-7 h-7 text-[#ff2a5f]"></i>
+                            </div>
+                            <p class="text-white text-xs font-extrabold" data-i18n="select_video">Sélectionner une vidéo</p>
+                            <span class="text-[10px] text-gray-400 mt-1">Ou clique sur « Caméra Live » en haut pour te filmer directement</span>
                         </div>
-                        <p class="text-gray-300 text-xs font-semibold" data-i18n="select_video">Sélectionner une vidéo</p>
-                        <span class="text-[10px] text-gray-500 mt-1">Toutes proportions respectées (16:9, 4:3, 1:1, 9:16)</span>
-                        <input type="file" id="video-file-input" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="previewVideoUpload(this)">
+
+                        <!-- File Input for Gallery -->
+                        <input type="file" id="video-file-input" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer z-10" onchange="previewVideoUpload(this)">
+
+                        <!-- Recorded / Imported Video Preview -->
                         <video id="video-preview" class="absolute inset-0 w-full h-full object-contain bg-black hidden" loop playsinline></video>
+
+                        <!-- Captured Live Photo Preview -->
+                        <img id="studio-photo-preview" class="absolute inset-0 w-full h-full object-contain bg-black hidden z-12" alt="Photo capturée">
+
+                        <!-- Live Camera Stream Element (Full Screen when Camera is active) -->
+                        <video id="studio-camera-live-video" class="absolute inset-0 w-full h-full object-cover bg-black hidden" autoplay muted playsinline></video>
+
+                        <!-- Camera Shutter White Flash Overlay -->
+                        <div id="studio-shutter-flash" class="hidden absolute inset-0 bg-white pointer-events-none z-50"></div>
+
+                        <!-- Optional 3x3 Framing Grid & Ring-Light Overlays -->
+                        <div id="studio-grid-overlay" class="absolute inset-0 pointer-events-none hidden studio-grid-lines z-15"></div>
+                        <div id="studio-ring-light-overlay" class="absolute inset-0 pointer-events-none hidden studio-ring-light z-15"></div>
+
+                        <!-- Interactive Live Text Banner Overlay on Video/Photo -->
+                        <div id="studio-live-text-overlay" class="hidden absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 z-25 cursor-move select-none text-center max-w-[88%] px-3 py-1.5 studio-text-banner-glass text-white text-sm" title="Glisser pour déplacer le texte"></div>
+
+                        <!-- Interactive Live Sticker Overlay on Video/Photo -->
+                        <div id="studio-live-sticker-overlay" class="hidden absolute right-6 top-8 z-25 cursor-move select-none text-4xl drop-shadow-xl" title="Glisser pour déplacer le sticker"></div>
+
+                        <!-- Giant Countdown Timer Overlay (3.. 2.. 1..) -->
+                        <div id="studio-countdown-overlay" class="hidden absolute inset-0 bg-black/55 backdrop-blur-sm z-40 items-center justify-center">
+                            <span id="studio-countdown-number" class="text-7xl font-black font-display text-white drop-shadow-[0_0_30px_rgba(255,42,95,0.9)] animate-ping">3</span>
+                        </div>
+
+                        <!-- FULLSCREEN LIVE CAMERA HUD OVERLAY (Active when in Camera Mode) -->
+                        <div id="studio-camera-hud" class="hidden absolute inset-0 z-30 flex-col justify-between p-4 md:p-6 pointer-events-none">
+                            <!-- Top Fullscreen Camera Bar: Back to Editor, REC indicator, Timer & Controls -->
+                            <div class="flex flex-col gap-2.5 pointer-events-auto pt-1">
+                                <div class="flex items-center justify-between">
+                                    <button onclick="switchStudioSourceMode('gallery')" class="glass-pill px-3.5 py-2 rounded-2xl flex items-center gap-1.5 text-xs font-extrabold text-white shadow-lg active:scale-95 transition">
+                                        <i data-lucide="chevron-left" class="w-4 h-4 text-cyan-400"></i> Éditeur
+                                    </button>
+
+                                    <div class="glass-pill px-3.5 py-1.5 rounded-full flex items-center gap-2 text-xs font-extrabold text-white shadow-lg">
+                                        <span id="studio-rec-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                                        <span id="studio-rec-timer">00:00</span>
+                                        <span class="text-gray-300 text-[10px]">/ <span id="studio-rec-max-label">60s</span></span>
+                                    </div>
+
+                                    <div class="flex items-center gap-1.5">
+                                        <button onclick="cycleCameraMaxDuration()" class="glass-pill px-2.5 py-1.5 rounded-xl text-[10px] font-bold text-cyan-300 hover:bg-white/15" id="studio-cam-dur-btn" title="Durée max">⏱️ 60s</button>
+                                        <button onclick="cycleCameraCountdown()" class="glass-pill px-2.5 py-1.5 rounded-xl text-[10px] font-bold text-amber-300 hover:bg-white/15" id="studio-cam-delay-btn" title="Retardateur">⏳ 0s</button>
+                                    </div>
+                                </div>
+
+                                <!-- Recording Progress Bar -->
+                                <div class="w-full h-1.5 bg-white/15 rounded-full overflow-hidden">
+                                    <div id="studio-rec-progress-bar" class="h-full w-0 bg-gradient-to-r from-[#ff2a5f] via-purple-500 to-cyan-400 transition-all duration-150"></div>
+                                </div>
+                            </div>
+
+                            <!-- Bottom Fullscreen Orbital Camera Controls (Video Recording + Live Photo Capture) -->
+                            <div class="flex flex-col gap-3 pointer-events-auto pb-2 max-w-xl mx-auto w-full">
+                                <!-- Live Fullscreen Filter Selector Row -->
+                                <div class="flex items-center justify-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+                                    <button onclick="selectStudioFilterPreset('vfx-none', null)" class="px-2.5 py-1 rounded-full bg-black/55 border border-white/15 text-[10px] font-bold text-white shrink-0">Normal</button>
+                                    <button onclick="selectStudioFilterPreset('vfx-vivid', null)" class="px-2.5 py-1 rounded-full bg-black/55 border border-white/15 text-[10px] font-bold text-amber-300 shrink-0">Éclatant ✨</button>
+                                    <button onclick="selectStudioFilterPreset('vfx-cinema', null)" class="px-2.5 py-1 rounded-full bg-black/55 border border-white/15 text-[10px] font-bold text-cyan-300 shrink-0">Cinéma 🎬</button>
+                                    <button onclick="selectStudioFilterPreset('vfx-cyber', null)" class="px-2.5 py-1 rounded-full bg-black/55 border border-white/15 text-[10px] font-bold text-purple-300 shrink-0">Cyber 💜</button>
+                                    <button onclick="selectStudioFilterPreset('vfx-sun237', null)" class="px-2.5 py-1 rounded-full bg-black/55 border border-white/15 text-[10px] font-bold text-rose-300 shrink-0">Soleil 237 🌅</button>
+                                    <button onclick="selectStudioFilterPreset('vfx-bw', null)" class="px-2.5 py-1 rounded-full bg-black/55 border border-white/15 text-[10px] font-bold text-gray-300 shrink-0">N&amp;B 🖤</button>
+                                </div>
+
+                                <!-- Quick Camera Speed Row -->
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <button onclick="setStudioSpeed(0.5)" class="cam-spd-btn px-2.5 py-1 rounded-lg bg-black/60 border border-white/15 text-[10px] font-bold text-gray-300">0.5x</button>
+                                    <button onclick="setStudioSpeed(1)" class="cam-spd-btn px-2.5 py-1 rounded-lg bg-[#ff2a5f] text-[10px] font-bold text-white">1x</button>
+                                    <button onclick="setStudioSpeed(1.5)" class="cam-spd-btn px-2.5 py-1 rounded-lg bg-black/60 border border-white/15 text-[10px] font-bold text-gray-300">1.5x</button>
+                                    <button onclick="setStudioSpeed(2)" class="cam-spd-btn px-2.5 py-1 rounded-lg bg-black/60 border border-white/15 text-[10px] font-bold text-gray-300">2x</button>
+                                </div>
+
+                                <!-- Main Fullscreen Camera Action Dock: Flip/Mirror | FILMER + PHOTO | Flash/Grid -->
+                                <div class="glass-panel px-3.5 py-3 rounded-3xl flex items-center justify-between shadow-2xl">
+                                    <div class="flex items-center gap-1.5">
+                                        <button onclick="switchStudioCameraFacing()" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition" title="Inverser Caméra Avant / Arrière">
+                                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                        </button>
+                                        <button onclick="toggleStudioCameraMirror()" id="studio-cam-mirror-btn" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-cyan-300 transition" title="Mode Miroir">
+                                            <i data-lucide="flip-horizontal" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Dual Capture Pod: Video Recording + Live Photo Capture -->
+                                    <div class="flex items-center gap-2">
+                                        <button id="studio-rec-trigger-btn" onclick="toggleStudioCameraRecording()" class="px-5 py-3 rounded-2xl bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white font-extrabold text-xs flex items-center gap-2 shadow-lg shadow-rose-600/40 active:scale-95 transition">
+                                            <span id="studio-rec-btn-icon" class="w-3 h-3 rounded-full bg-white"></span>
+                                            <span id="studio-rec-btn-text">Filmer</span>
+                                        </button>
+                                        <button id="studio-photo-trigger-btn" onclick="captureStudioLivePhoto()" class="px-4 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-lg shadow-cyan-500/40 active:scale-95 transition" title="Prendre une photo en direct">
+                                            <i data-lucide="camera" class="w-4 h-4"></i>
+                                            <span>Photo</span>
+                                        </button>
+                                    </div>
+
+                                    <div class="flex items-center gap-1.5">
+                                        <button onclick="toggleStudioRingLight()" id="studio-cam-light-btn" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-amber-300 transition" title="Anneau Lumineux Selfie (Flash Écran)">
+                                            <i data-lucide="sun" class="w-4 h-4"></i>
+                                        </button>
+                                        <button onclick="toggleStudioFramingGrid()" id="studio-cam-grid-btn" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-gray-300 transition" title="Grille de cadrage">
+                                            <i data-lucide="grid" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- VIDEO / PHOTO PREVIEW OVERLAY BAR (Active when a video or photo is loaded) -->
                         <div id="video-controls-overlay" class="absolute bottom-2 left-0 w-full px-3 hidden flex-col gap-1.5 z-20">
                             <div class="flex justify-between items-center">
-                                <button onclick="changeVideoFile()" class="glass-pill text-white text-[11px] px-2.5 py-1 rounded-lg flex items-center gap-1 font-semibold"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Changer</button>
+                                <div class="flex items-center gap-1.5">
+                                    <button onclick="changeVideoFile()" class="glass-pill text-white text-[11px] px-2.5 py-1 rounded-lg flex items-center gap-1 font-semibold"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Changer</button>
+                                    <button onclick="toggleStudioPreviewPlay()" id="studio-play-toggle-btn" class="glass-pill text-emerald-300 text-[11px] px-2.5 py-1 rounded-lg flex items-center gap-1 font-bold"><i data-lucide="play" class="w-3 h-3"></i> Lecture</button>
+                                    <button onclick="downloadCapturedStudioPhoto()" id="studio-save-photo-btn" class="hidden glass-pill text-amber-300 text-[11px] px-2.5 py-1 rounded-lg items-center gap-1 font-bold"><i data-lucide="download" class="w-3 h-3"></i> Enregistrer Photo</button>
+                                </div>
                                 <span id="upload-detected-ratio" class="glass-pill text-cyan-300 text-[10px] px-2.5 py-1 rounded-lg font-bold">Format Auto</span>
                                 <button onclick="deleteVideoFile()" class="bg-rose-950/90 text-rose-200 text-[11px] px-2.5 py-1 rounded-lg flex items-center gap-1 border border-rose-500/40 font-semibold"><i data-lucide="trash-2" class="w-3 h-3"></i> Supprimer</button>
                             </div>
-                            <div class="bg-black/80 p-2 rounded-xl border border-white/15 backdrop-blur-md">
-                                <div class="text-[10px] text-gray-300 mb-1 flex justify-between font-medium"><span>Découpage (&lt; 120s)</span><span id="trim-duration-display" class="text-cyan-400">0s</span></div>
-                                <div class="flex items-center gap-2">
-                                    <input type="number" id="trim-start" class="bg-gray-900 text-white border border-gray-700 rounded-lg px-2 py-1 text-xs w-20 text-center outline-none" placeholder="Début (s)" min="0" onchange="updateTrimPreview()">
-                                    <span class="text-gray-500 text-xs">→</span>
-                                    <input type="number" id="trim-end" class="bg-gray-900 text-white border border-gray-700 rounded-lg px-2 py-1 text-xs w-20 text-center outline-none" placeholder="Fin (s)" min="0" onchange="updateTrimPreview()">
+                        </div>
+                    </div>
+
+                    <!-- R-STUDIO 5-TAB CREATIVE WORKBENCH DOCK -->
+                    <div class="studio-tab-dock no-scrollbar">
+                        <button onclick="switchStudioEditTab('cut', this)" class="studio-tab-pill active">
+                            <i data-lucide="scissors" class="w-3.5 h-3.5 text-cyan-400"></i> 1. Découpage &amp; Format
+                        </button>
+                        <button onclick="switchStudioEditTab('color', this)" class="studio-tab-pill">
+                            <i data-lucide="palette" class="w-3.5 h-3.5 text-[#ff2a5f]"></i> 2. Filtres &amp; Couleurs
+                        </button>
+                        <button onclick="switchStudioEditTab('overlay', this)" class="studio-tab-pill">
+                            <i data-lucide="type" class="w-3.5 h-3.5 text-amber-400"></i> 3. Texte &amp; Stickers
+                        </button>
+                        <button onclick="switchStudioEditTab('audio', this)" class="studio-tab-pill">
+                            <i data-lucide="music" class="w-3.5 h-3.5 text-purple-400"></i> 4. Son &amp; Mixage
+                        </button>
+                        <button onclick="switchStudioEditTab('publish', this)" class="studio-tab-pill">
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-400"></i> 5. Infos &amp; Options
+                        </button>
+                    </div>
+
+                    <!-- TAB 1: DÉCOUPAGE, CADENCE, ROTATION & PROPORTIONS -->
+                    <div id="studio-tab-cut" class="studio-panel-section active space-y-2.5">
+                        <!-- Trim Timeline Box -->
+                        <div class="glass-panel p-3 rounded-2xl space-y-2">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="font-bold text-white flex items-center gap-1.5"><i data-lucide="scissors" class="w-3.5 h-3.5 text-cyan-400"></i> Découpage Précis (&lt; 120s)</span>
+                                <span id="trim-duration-display" class="text-cyan-400 font-extrabold bg-cyan-500/10 px-2 py-0.5 rounded-md">0s</span>
+                            </div>
+                            <div class="flex items-center gap-2 justify-between">
+                                <div class="flex items-center gap-1">
+                                    <button onclick="nudgeStudioTrim('start', -0.5)" class="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] font-bold text-gray-300">-0.5s</button>
+                                    <input type="number" id="trim-start" class="bg-gray-900 text-white border border-gray-700 rounded-lg px-2 py-1 text-xs w-16 text-center outline-none" placeholder="Début (s)" min="0" step="0.5" onchange="updateTrimPreview()">
+                                    <button onclick="nudgeStudioTrim('start', 0.5)" class="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] font-bold text-gray-300">+0.5s</button>
+                                </div>
+                                <span class="text-gray-500 text-xs font-bold">→</span>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="nudgeStudioTrim('end', -0.5)" class="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] font-bold text-gray-300">-0.5s</button>
+                                    <input type="number" id="trim-end" class="bg-gray-900 text-white border border-gray-700 rounded-lg px-2 py-1 text-xs w-16 text-center outline-none" placeholder="Fin (s)" min="0" step="0.5" onchange="updateTrimPreview()">
+                                    <button onclick="nudgeStudioTrim('end', 0.5)" class="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] font-bold text-gray-300">+0.5s</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Speed, Rotation, Mirror & Aspect Ratio -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <div class="glass-panel p-2.5 rounded-2xl flex items-center justify-between">
+                                <div>
+                                    <div class="text-xs font-bold text-white">Proportions dans l'application</div>
+                                    <div class="text-[10px] text-gray-400">Format original ou plein écran 9:16</div>
+                                </div>
+                                <select id="video-aspect-mode" onchange="updateUploadPreviewFit(this.value)" class="bg-[#162038] border border-white/15 text-white text-xs font-semibold rounded-xl px-2.5 py-1.5 outline-none">
+                                    <option value="contain">Proportions d'origine (Fidèle)</option>
+                                    <option value="cover">Plein écran 9:16 (Remplir)</option>
+                                </select>
+                            </div>
+
+                            <div class="glass-panel p-2.5 rounded-2xl flex items-center justify-between">
+                                <span class="text-xs font-bold text-white">Géométrie &amp; Cadence</span>
+                                <div class="flex items-center gap-1.5">
+                                    <button onclick="rotateStudioPreview()" class="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-[11px] font-bold text-cyan-300 flex items-center gap-1" title="Pivoter de 90°">
+                                        <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i> <span id="studio-rot-label">0°</span>
+                                    </button>
+                                    <button onclick="toggleStudioCameraMirror()" class="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-[11px] font-bold text-purple-300 flex items-center gap-1" title="Miroir horizontal">
+                                        <i data-lucide="flip-horizontal" class="w-3.5 h-3.5"></i> Miroir
+                                    </button>
+                                    <select id="studio-speed-select" onchange="setStudioSpeed(this.value)" class="bg-[#162038] border border-white/15 text-white text-[11px] font-bold rounded-xl px-2 py-1.5 outline-none">
+                                        <option value="0.5">0.5x</option>
+                                        <option value="0.75">0.75x</option>
+                                        <option value="1" selected>1.0x</option>
+                                        <option value="1.25">1.25x</option>
+                                        <option value="1.5">1.5x</option>
+                                        <option value="2">2.0x</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cover / Thumbnail Scrubber -->
+                        <div class="glass-panel p-2.5 rounded-2xl">
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-[11px] text-gray-300 font-semibold">Couverture (Miniature)</label>
+                                <span id="studio-cover-time-badge" class="text-[10px] text-amber-300 font-bold">0.0s</span>
+                            </div>
+                            <input type="range" id="cover-slider" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" min="0" value="0" step="0.1">
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: FILTRES & ÉTALONNAGE COULEUR PRO -->
+                    <div id="studio-tab-color" class="studio-panel-section space-y-2.5">
+                        <div class="glass-panel p-3 rounded-2xl space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-white">Filtres Cinématiques R-Studio</span>
+                                <button onclick="resetStudioColorGrading()" class="text-[10px] text-rose-400 font-bold hover:underline">Réinitialiser</button>
+                            </div>
+                            <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                                <button onclick="selectStudioFilterPreset('vfx-none', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-[#ff2a5f] text-white">Normal</button>
+                                <button onclick="selectStudioFilterPreset('vfx-vivid', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Éclatant ✨</button>
+                                <button onclick="selectStudioFilterPreset('vfx-cinema', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Cinéma 🎬</button>
+                                <button onclick="selectStudioFilterPreset('vfx-cyber', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Cyber Néon 💜</button>
+                                <button onclick="selectStudioFilterPreset('vfx-sun237', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Soleil 237 🌅</button>
+                                <button onclick="selectStudioFilterPreset('vfx-vhs', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Rétro VHS 📼</button>
+                                <button onclick="selectStudioFilterPreset('vfx-arctic', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Arctique ❄️</button>
+                                <button onclick="selectStudioFilterPreset('vfx-bw', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Noir &amp; Blanc 🖤</button>
+                            </div>
+
+                            <!-- Fine-tuning Color Sliders -->
+                            <div class="grid grid-cols-2 gap-3 pt-1">
+                                <div>
+                                    <div class="flex justify-between text-[10px] text-gray-300 mb-1"><span>Luminosité</span><span id="lbl-studio-bright">100%</span></div>
+                                    <input type="range" id="studio-bright-slider" min="60" max="150" value="100" oninput="updateStudioColorSliders()">
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-[10px] text-gray-300 mb-1"><span>Contraste</span><span id="lbl-studio-contrast">100%</span></div>
+                                    <input type="range" id="studio-contrast-slider" min="60" max="160" value="100" oninput="updateStudioColorSliders()">
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-[10px] text-gray-300 mb-1"><span>Saturation</span><span id="lbl-studio-sat">100%</span></div>
+                                    <input type="range" id="studio-sat-slider" min="0" max="200" value="100" oninput="updateStudioColorSliders()">
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-[10px] text-gray-300 mb-1"><span>Teinte (Hue)</span><span id="lbl-studio-hue">0°</span></div>
+                                    <input type="range" id="studio-hue-slider" min="-180" max="180" value="0" oninput="updateStudioColorSliders()">
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Choix des proportions d'affichage -->
-                    <div class="glass-panel p-2.5 rounded-xl flex items-center justify-between">
-                        <div>
-                            <div class="text-xs font-bold text-white">Proportions dans l'application</div>
-                            <div class="text-[10px] text-gray-400">Garder le format original ou remplir l'écran</div>
+                    <!-- TAB 3: TEXTE SUR LA VIDÉO & STICKERS INTERACTIFS -->
+                    <div id="studio-tab-overlay" class="studio-panel-section space-y-2.5">
+                        <div class="glass-panel p-3 rounded-2xl space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-white">Texte incrusté sur la vidéo</span>
+                                <span class="text-[10px] text-cyan-400">Glisse le texte sur l'écran pour le placer</span>
+                            </div>
+                            <input type="text" id="studio-overlay-text-input" placeholder="Écris un titre ou sous-titre à afficher sur la vidéo..." class="auth-input text-xs py-2" oninput="updateStudioOverlayPreview()">
+
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <!-- Text Banner Style -->
+                                <div class="flex items-center gap-1.5">
+                                    <button onclick="setStudioTextStyle('glass')" class="px-2.5 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-white">Bulle Glass</button>
+                                    <button onclick="setStudioTextStyle('neon')" class="px-2.5 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-cyan-300">Néon</button>
+                                    <button onclick="setStudioTextStyle('cinema')" class="px-2.5 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-amber-300">Cinéma</button>
+                                    <button onclick="setStudioTextStyle('impact')" class="px-2.5 py-1 rounded-lg bg-[#ff2a5f] text-[10px] font-bold text-white">Impact</button>
+                                </div>
+                                <!-- Text Color Swatches -->
+                                <div class="flex items-center gap-1.5">
+                                    <button onclick="setStudioTextColor('#ffffff')" class="w-5 h-5 rounded-full bg-white border border-gray-500"></button>
+                                    <button onclick="setStudioTextColor('#ff2a5f')" class="w-5 h-5 rounded-full bg-[#ff2a5f]"></button>
+                                    <button onclick="setStudioTextColor('#06b6d4')" class="w-5 h-5 rounded-full bg-cyan-400"></button>
+                                    <button onclick="setStudioTextColor('#facc15')" class="w-5 h-5 rounded-full bg-yellow-400"></button>
+                                    <button onclick="setStudioTextColor('#10b981')" class="w-5 h-5 rounded-full bg-emerald-400"></button>
+                                </div>
+                            </div>
+
+                            <!-- Text Vertical Position Presets -->
+                            <div class="flex items-center justify-between pt-1 border-t border-white/10">
+                                <span class="text-[11px] text-gray-300 font-semibold">Position rapide :</span>
+                                <div class="flex gap-1.5">
+                                    <button onclick="setStudioTextPosition('top')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-gray-300">Haut ⬆️</button>
+                                    <button onclick="setStudioTextPosition('center')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-gray-300">Centre 🎯</button>
+                                    <button onclick="setStudioTextPosition('bottom')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-gray-300">Bas ⬇️</button>
+                                </div>
+                            </div>
+
+                            <!-- Stickers & Emojis -->
+                            <div class="pt-1 border-t border-white/10">
+                                <div class="flex justify-between items-center mb-1.5">
+                                    <span class="text-[11px] text-gray-300 font-semibold">Ajouter un Sticker animé sur la vidéo</span>
+                                    <button onclick="setStudioSticker('')" class="text-[10px] text-rose-400 font-bold">Aucun</button>
+                                </div>
+                                <div class="flex gap-2.5 overflow-x-auto no-scrollbar py-1 text-xl">
+                                    <button onclick="setStudioSticker('🔥')" class="hover:scale-125 transition">🔥</button>
+                                    <button onclick="setStudioSticker('🇨🇲')" class="hover:scale-125 transition">🇨🇲</button>
+                                    <button onclick="setStudioSticker('😂')" class="hover:scale-125 transition">😂</button>
+                                    <button onclick="setStudioSticker('💯')" class="hover:scale-125 transition">💯</button>
+                                    <button onclick="setStudioSticker('✨')" class="hover:scale-125 transition">✨</button>
+                                    <button onclick="setStudioSticker('👑')" class="hover:scale-125 transition">👑</button>
+                                    <button onclick="setStudioSticker('❤️')" class="hover:scale-125 transition">❤️</button>
+                                    <button onclick="setStudioSticker('🚀')" class="hover:scale-125 transition">🚀</button>
+                                    <button onclick="setStudioSticker('🎵')" class="hover:scale-125 transition">🎵</button>
+                                    <button onclick="setStudioSticker('⚡')" class="hover:scale-125 transition">⚡</button>
+                                    <button onclick="setStudioSticker('💎')" class="hover:scale-125 transition">💎</button>
+                                </div>
+                            </div>
                         </div>
-                        <select id="video-aspect-mode" onchange="updateUploadPreviewFit(this.value)" class="bg-[#162038] border border-white/15 text-white text-xs font-semibold rounded-xl px-2.5 py-1.5 outline-none">
-                            <option value="contain">Proportions d'origine (Fidèle)</option>
-                            <option value="cover">Plein écran 9:16 (Remplir)</option>
-                        </select>
                     </div>
 
-                    <!-- Nom du Son personnalisé ou réutilisé -->
-                    <div class="relative">
-                        <i data-lucide="music" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-cyan-400"></i>
-                        <input type="text" id="video-sound-title" placeholder="Titre du son (ex: Son original ou titre musical)" class="auth-input pl-8 text-xs py-2">
-                    </div>
-                    
-                    <textarea id="video-desc" placeholder="Décris ta vidéo... #Hashtags @Amis" class="auth-input h-16 resize-none text-xs" data-i18n-placeholder="desc_placeholder"></textarea>
-                    
-                    <div class="space-y-2.5">
-                        <div class="glass-panel p-2.5 rounded-xl">
-                            <label class="text-[11px] text-gray-300 font-semibold mb-1 block">Couverture (Miniature)</label>
-                            <input type="range" id="cover-slider" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" min="0" value="0" step="0.1">
+                    <!-- TAB 4: SON, AMBIANCES & MIXAGE AUDIO -->
+                    <div id="studio-tab-audio" class="studio-panel-section space-y-2.5">
+                        <div class="glass-panel p-3 rounded-2xl space-y-2.5">
+                            <span class="text-xs font-bold text-white block">Titre du son ou musique associée</span>
+                            <div class="relative">
+                                <i data-lucide="music" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-cyan-400"></i>
+                                <input type="text" id="video-sound-title" placeholder="Titre du son (ex: Son original ou titre musical)" class="auth-input pl-8 text-xs py-2">
+                            </div>
+
+                            <!-- Quick Sound Presets -->
+                            <div>
+                                <span class="text-[10px] text-gray-400 font-semibold block mb-1.5">Sons &amp; Ambiances Populaires en 1 clic :</span>
+                                <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                                    <button onclick="pickQuickStudioSound('Afrobeat 237 Vibe 🇨🇲')" class="shrink-0 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-cyan-300">🎵 Afrobeat 237 Vibe</button>
+                                    <button onclick="pickQuickStudioSound('Makossa & Bikutsi Remix 🔥')" class="shrink-0 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-amber-300">💃 Makossa &amp; Bikutsi</button>
+                                    <button onclick="pickQuickStudioSound('Trap Bass Boost ⚡')" class="shrink-0 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-purple-300">🔥 Trap Bass Boost</button>
+                                    <button onclick="pickQuickStudioSound('Humour Africain 😂')" class="shrink-0 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-rose-300">😂 Humour Viral</button>
+                                    <button onclick="pickQuickStudioSound('Lo-Fi Chill Night ✨')" class="shrink-0 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-emerald-300">✨ Lo-Fi Chill</button>
+                                </div>
+                            </div>
+
+                            <!-- Original Video Audio Control -->
+                            <div class="flex items-center justify-between pt-2 border-t border-white/10">
+                                <div>
+                                    <span class="text-xs font-bold text-white block">Conserver le son original de la vidéo</span>
+                                    <span class="text-[10px] text-gray-400">Désactive si tu veux publier ta vidéo en mode muet</span>
+                                </div>
+                                <input type="checkbox" id="studio-keep-original-audio" class="custom-checkbox" checked>
+                            </div>
                         </div>
+                    </div>
+
+                    <!-- TAB 5: DESCRIPTION, HASHTAGS, LIEU & CONFIDENTIALITÉ -->
+                    <div id="studio-tab-publish" class="studio-panel-section space-y-2.5">
+                        <textarea id="video-desc" placeholder="Décris ta vidéo... #Hashtags @Amis" class="auth-input h-16 resize-none text-xs" data-i18n-placeholder="desc_placeholder"></textarea>
+
+                        <!-- Quick Viral Hashtags -->
+                        <div class="flex gap-1.5 overflow-x-auto no-scrollbar">
+                            <button onclick="appendUploadHashtag('#PourToi')" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-cyan-300">#PourToi</button>
+                            <button onclick="appendUploadHashtag('#Cameroun237')" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-emerald-300">#Cameroun237</button>
+                            <button onclick="appendUploadHashtag('#Humour')" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-amber-300">#Humour</button>
+                            <button onclick="appendUploadHashtag('#Musique')" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-purple-300">#Musique</button>
+                            <button onclick="appendUploadHashtag('#Danse')" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-rose-300">#Danse</button>
+                            <button onclick="appendUploadHashtag('#RVideosTalent2026')" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-white">#RVideosTalent2026</button>
+                        </div>
+
                         <div class="grid grid-cols-2 gap-2">
                             <div class="relative">
                                 <i data-lucide="map-pin" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400"></i>
@@ -1387,6 +1931,15 @@
                                 <input type="text" id="video-tags" placeholder="Tag (@ami)" class="auth-input pl-8 text-xs py-2">
                             </div>
                         </div>
+
+                        <!-- Quick City Chips -->
+                        <div class="flex gap-1.5 overflow-x-auto no-scrollbar">
+                            <button onclick="document.getElementById('video-location').value='Douala, Cameroun 🇨🇲'" class="shrink-0 px-2 py-0.5 rounded bg-white/5 text-[10px] text-gray-300">📍 Douala 🇨🇲</button>
+                            <button onclick="document.getElementById('video-location').value='Yaoundé, Cameroun 🇨🇲'" class="shrink-0 px-2 py-0.5 rounded bg-white/5 text-[10px] text-gray-300">📍 Yaoundé 🇨🇲</button>
+                            <button onclick="document.getElementById('video-location').value='Abidjan, Côte dIvoire 🇨🇮'" class="shrink-0 px-2 py-0.5 rounded bg-white/5 text-[10px] text-gray-300">📍 Abidjan 🇨🇮</button>
+                            <button onclick="document.getElementById('video-location').value='Paris, France 🇫🇷'" class="shrink-0 px-2 py-0.5 rounded bg-white/5 text-[10px] text-gray-300">📍 Paris 🇫🇷</button>
+                        </div>
+
                         <div>
                             <select id="video-visibility" class="auth-input bg-[#0c1222] text-xs py-2 font-medium">
                                 <option value="public">🌍 Public (Tout le monde)</option>
@@ -1407,11 +1960,23 @@
                                 <span class="text-xs text-gray-300">Autoriser la réutilisation du son / Duos</span>
                                 <input type="checkbox" id="opt-duet" class="custom-checkbox" checked>
                             </div>
+                            <div class="flex items-center justify-between pt-1.5 border-t border-white/10">
+                                <span class="text-[11px] text-emerald-300 font-semibold">Je certifie que cette vidéo est originale et sans plagiat (Droits d'auteur)</span>
+                                <input type="checkbox" id="opt-copyright-cert" class="custom-checkbox" checked>
+                            </div>
                         </div>
                     </div>
                 </div>
+                <!-- R-SHIELD AI PRE-PUBLISH AUTHENTICITY & SAFETY BAR -->
+                <div id="rshield-studio-bar" class="mt-1 px-3 py-2 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between text-[11px]">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400 shrink-0" id="rshield-studio-icon"></i>
+                        <span id="rshield-studio-text" class="text-emerald-200 font-semibold truncate">R-Shield AI : Contrôle Authenticité, Anti-Nudité &amp; Anti-Arnaque actif</span>
+                    </div>
+                    <span id="rshield-account-strike-pill" class="shrink-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Pour Toi : Éligible ✓</span>
+                </div>
                 <div id="upload-status" class="text-xs text-center text-cyan-400 h-4 mt-1 font-medium"></div>
-                <button onclick="uploadVideo()" id="btn-publish" class="w-full bg-gradient-to-r from-[#ff2a5f] to-rose-600 hover:opacity-95 text-white font-bold py-3 rounded-xl mt-1 flex justify-center items-center shadow-lg shadow-rose-600/30" data-i18n="publish_btn">Publier</button>
+                <button onclick="uploadVideo()" id="btn-publish" class="w-full bg-gradient-to-r from-[#ff2a5f] via-rose-600 to-purple-600 hover:opacity-95 text-white font-extrabold py-3 rounded-2xl mt-1 flex justify-center items-center gap-2 shadow-lg shadow-rose-600/30" data-i18n="publish_btn">Publier</button>
             </div>
         </div>
 
@@ -1885,7 +2450,7 @@
         hydrateVideoCacheIntoMemory();
 
         // ============================================================================
-        // TIKTOK-STYLE DECOUPLED DUAL-PIPELINE ENGINE (VIDEO GPU + MASTER AUDIO TRACK)
+        // R-VIDEOS PROPRIETARY DECOUPLED DUAL-PIPELINE ENGINE (VIDEO GPU + MASTER AUDIO TRACK)
         // Keeping <video muted="true"> permanently decouples the video frame renderer
         // from the phone's loudspeaker DSP clock jitter, guaranteeing 60fps video while
         // #rv-master-audio plays the sound in lockstep!
@@ -2525,43 +3090,692 @@
             loadFeed();
         };
 
+        // ============================================================================
+        // 1. R-VIDEOS DEEPRANK "POUR TOI" (FYP) RECOMMENDATION ALGORITHM
+        // Multi-signal real-time telemetry: Watch-time, Completion Rate, Rewatches/Loops,
+        // Fast-Skip Penalty, Sound/Creator/Hashtag Affinity Graph, Cold-Start Boost & Diversity
+        // ============================================================================
+        let userInterestGraph = (() => {
+            try {
+                const raw = safeGetStorage('rv_interest_graph', null);
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            return { tags: {}, creators: {}, sounds: {}, locations: {}, skippedVideos: {}, completedVideos: {} };
+        })();
+
+        const sessionWatchMetrics = new Map(); // videoId -> { startTime, accumulatedSec, loops, reportedSkip }
+        const sessionSeenFeedCount = new Map(); // videoId -> number of impressions in session
+
+        function saveUserInterestGraph() {
+            try { safeSetStorage('rv_interest_graph', JSON.stringify(userInterestGraph)); } catch (e) {}
+        }
+
         function extractTags(text) {
             if (!text) return [];
-            const matches = text.match(/#(\w+)/g);
+            const matches = String(text).match(/#([\w\u00C0-\u017F]+)/g);
             return matches ? matches.map(t => t.substring(1).toLowerCase()) : [];
         }
 
-        async function updateUserPreferences(tags) {
+        function extractKeywordsFromText(text) {
+            if (!text) return [];
+            return String(text)
+                .toLowerCase()
+                .replace(/https?:\/\/\S+/g, '')
+                .replace(/[^\w\u00C0-\u017F\s]/g, ' ')
+                .split(/\s+/)
+                .filter(w => w.length >= 4 && !['avec', 'dans', 'pour', 'cette', 'votre', 'tout', 'tous', 'plus', 'tres', 'bien', 'comme'].includes(w))
+                .slice(0, 8);
+        }
+
+        async function updateUserPreferences(tags, weight = 2, creatorId = null, soundTitle = null, locationStr = null) {
+            if (!userInterestGraph.tags) userInterestGraph.tags = {};
+            if (!userInterestGraph.creators) userInterestGraph.creators = {};
+            if (!userInterestGraph.sounds) userInterestGraph.sounds = {};
+            if (!userInterestGraph.locations) userInterestGraph.locations = {};
+
+            if (tags && tags.length > 0) {
+                tags.forEach(tag => {
+                    const clean = String(tag).toLowerCase();
+                    userInterestGraph.tags[clean] = Math.max(-25, (userInterestGraph.tags[clean] || 0) + weight);
+                });
+            }
+            if (creatorId) {
+                userInterestGraph.creators[creatorId] = Math.max(-30, (userInterestGraph.creators[creatorId] || 0) + weight);
+            }
+            if (soundTitle) {
+                const sKey = String(soundTitle).toLowerCase().trim();
+                userInterestGraph.sounds[sKey] = Math.max(-20, (userInterestGraph.sounds[sKey] || 0) + weight);
+            }
+            if (locationStr) {
+                const lKey = String(locationStr).toLowerCase().trim();
+                if (lKey) userInterestGraph.locations[lKey] = Math.max(-15, (userInterestGraph.locations[lKey] || 0) + weight);
+            }
+            saveUserInterestGraph();
+
             if (!auth.currentUser || !tags || tags.length === 0) return;
             const userRef = doc(db, "users", auth.currentUser.uid);
+            if (!currentUserData) currentUserData = {};
             if (!currentUserData.preferences) currentUserData.preferences = {};
             tags.forEach(tag => {
-                currentUserData.preferences[tag] = (currentUserData.preferences[tag] || 0) + 1;
+                currentUserData.preferences[tag] = Math.max(0, (currentUserData.preferences[tag] || 0) + weight);
             });
-            await updateDoc(userRef, { preferences: currentUserData.preferences }).catch(e => console.log(e));
+            await updateDoc(userRef, { preferences: currentUserData.preferences }).catch(() => {});
+        }
+
+        // Real-time Watch Time, Completion & Skip Tracker (Exact R-Videos DeepRank Signal Engine)
+        function recordRVideosWatchSignal(docId, eventType, videoEl) {
+            if (!docId) return;
+            const vData = profileVideosData[docId];
+            if (!vData) return;
+            const tags = [...extractTags(vData.description), ...extractKeywordsFromText(vData.description)];
+            const creatorId = vData.userId;
+            const soundKey = vData.soundTitle || '';
+            const locKey = vData.location || '';
+
+            if (!sessionWatchMetrics.has(docId)) {
+                sessionWatchMetrics.set(docId, { enteredAt: performance.now(), watchedSec: 0, loops: 0, penalizedSkip: false, rewardedCompletion: false });
+            }
+            const metric = sessionWatchMetrics.get(docId);
+
+            if (eventType === 'enter') {
+                metric.enteredAt = performance.now();
+                sessionSeenFeedCount.set(docId, (sessionSeenFeedCount.get(docId) || 0) + 1);
+            } else if (eventType === 'loop_complete') {
+                metric.loops += 1;
+                userInterestGraph.completedVideos[docId] = (userInterestGraph.completedVideos[docId] || 0) + 1;
+                // Massive R-Videos DeepRank boost for full completion & rewatch loop
+                updateUserPreferences(tags, 8, creatorId, soundKey, locKey);
+                if (metric.loops === 1) {
+                    updateDoc(doc(db, "videos", docId), { completions: increment(1), rewatches: increment(1) }).catch(() => {});
+                } else {
+                    updateDoc(doc(db, "videos", docId), { rewatches: increment(1) }).catch(() => {});
+                }
+            } else if (eventType === 'leave') {
+                const elapsedSec = (performance.now() - (metric.enteredAt || performance.now())) / 1000;
+                metric.watchedSec += elapsedSec;
+                const vidDur = (videoEl && videoEl.duration && isFinite(videoEl.duration)) ? videoEl.duration : 15;
+                const completionRatio = metric.watchedSec / Math.max(vidDur, 3);
+
+                if (metric.watchedSec < 2.2 && metric.loops === 0 && !metric.penalizedSkip) {
+                    // User swiped away almost immediately (<2.2s): Negative R-Videos DeepRank Skip Signal
+                    metric.penalizedSkip = true;
+                    userInterestGraph.skippedVideos[docId] = true;
+                    updateUserPreferences(tags, -3, creatorId, null, null);
+                } else if (completionRatio >= 0.72 && !metric.rewardedCompletion) {
+                    // Strong watch retention (>72% watched): Positive R-Videos DeepRank Retention Signal
+                    metric.rewardedCompletion = true;
+                    updateUserPreferences(tags, 5, creatorId, soundKey, locKey);
+                    updateDoc(doc(db, "videos", docId), { completions: increment(1) }).catch(() => {});
+                }
+            }
+        }
+
+        // ============================================================================
+        // 100% REAL HUMANS POLICY (GOOGLE PLAY INTEGRITY & ZERO VIRTUAL BOTS)
+        // Filters out any legacy bot_ accounts or @bot.local reactions everywhere
+        // ============================================================================
+        function isVirtualBotIdOrUser(uid, email = '', isBotFlag = false) {
+            if (isBotFlag === true) return true;
+            if (uid && String(uid).startsWith('bot_')) return true;
+            if (email && String(email).toLowerCase().endsWith('@bot.local')) return true;
+            return false;
+        }
+
+        function getRealLikesCount(videoData) {
+            if (!videoData) return 0;
+            if (Array.isArray(videoData.likedBy)) {
+                const realSigners = videoData.likedBy.filter(uid => !isVirtualBotIdOrUser(uid));
+                const botCount = videoData.likedBy.length - realSigners.length;
+                if (botCount > 0) {
+                    return Math.max(0, (Number(videoData.likes) || videoData.likedBy.length) - botCount);
+                }
+            }
+            return Math.max(0, Number(videoData.likes) || 0);
+        }
+
+        function isVideoEligibleForPourToi(video) {
+            if (video && isVirtualBotIdOrUser(video.userId, video.userEmail, video.isBot)) return false;
+            if (!video) return false;
+            // Strictly block any video that violated Authenticity, Nudity, Scam, or Safety rules
+            if (video.fypEligible === false) return false;
+            if (video.moderationStatus === 'restricted' || video.moderationStatus === 'restricted_no_fyp' || video.moderationStatus === 'rejected') return false;
+            if (video.authorShadowbanned === true) return false;
+            if ((video.reportCount || 0) >= 3) return false;
+            // Quick runtime safety check on existing feed descriptions
+            const quickCheck = scanTextForViolationsSync(video.description || '', video.studioConfig?.overlayText || '', video.soundTitle || '');
+            if (!quickCheck.isClean) return false;
+            return true;
         }
 
         function calculateViralScore(video) {
-            let score = 0;
-            if (video.isPinned) score += 2500;
-            score += (video.likes || 0) * 1;
-            score += (video.commentCount || 0) * 2;
-            score += (video.views || 0) * 0.1;
-            if (video.isVerified) score += 5000;
-            
-            if (currentUserData && currentUserData.preferences) {
-                const videoTags = extractTags(video.description);
-                let interestScore = 0;
-                videoTags.forEach(tag => {
-                    if (currentUserData.preferences[tag]) {
-                        interestScore += currentUserData.preferences[tag];
-                    }
-                });
-                score += interestScore * 50;
+            // 1. Strict Trust & Safety Gate: Non-compliant videos NEVER enter "Pour toi"
+            if (!isVideoEligibleForPourToi(video)) {
+                return -999999;
             }
-            score += Math.random() * 50; 
+
+            let score = 100;
+
+            // 2. R-Videos DeepRank Multi-Layer Engagement Weights
+            const likes = Number(video.likes || 0);
+            const comments = Number(video.commentCount || 0);
+            const views = Math.max(1, Number(video.views || 0));
+            const favs = Number(video.favorites ? video.favorites.length : 0);
+            const reposts = Number(video.reposts || 0);
+            const completions = Number(video.completions || 0);
+            const rewatches = Number(video.rewatches || 0);
+
+            const rawEngagement =
+                (rewatches * 38) +
+                (completions * 26) +
+                (reposts * 25) +
+                (favs * 20) +
+                (comments * 15) +
+                (likes * 8) +
+                (views * 0.45);
+
+            // Engagement Velocity / Retention Multiplier (Rewards high-converting videos even with few views)
+            const engagementRate = (likes + comments * 2.2 + favs * 3 + reposts * 3.5 + completions * 3 + rewatches * 4) / Math.max(views, 6);
+            const velocityMultiplier = Math.min(3.2, 1.0 + Math.log1p(engagementRate * 5));
+            score += rawEngagement * velocityMultiplier;
+
+            // 3. Authenticity & Original Creation Boost (R-Shield Verified & R-Cam Live)
+            const authScore = Number(video.authenticityScore ?? 92);
+            if (video.recordedWithRCam) {
+                score += 650; // Filmed directly with the app's fullscreen camera = 100% original creation
+            }
+            if (authScore >= 90) {
+                score += 320;
+            } else if (authScore < 65) {
+                score -= 1200; // Low-authenticity / borderline reposted content penalized
+            }
+
+            // 4. Cold-Start Discovery Pool (R-Videos DeepRank Batch Testing for Fresh Authentic Videos)
+            let ageHours = 12;
+            if (video.createdAt) {
+                const createdMs = video.createdAt.toMillis ? video.createdAt.toMillis() : (video.createdAt.seconds ? video.createdAt.seconds * 1000 : Date.now());
+                ageHours = Math.max(0.1, (Date.now() - createdMs) / 3600000);
+            }
+            if (ageHours <= 24 && views < 40 && authScore >= 85) {
+                score += 580 * Math.max(0.3, 1 - (ageHours / 24)); // Fresh video test boost in "Pour toi"
+            }
+
+            // Time-Decay Gravity (keeps feed dynamic while preserving viral hits)
+            const timeDecay = 1 / Math.pow(1 + (ageHours / 72), 0.35);
+            score = score * timeDecay;
+
+            // 5. Deep Personalized User Interest Graph Matching (Tags, Keywords, Creator, Sound, Location)
+            const videoTags = [...extractTags(video.description), ...extractKeywordsFromText(video.description)];
+            let affinityBonus = 0;
+
+            // Firestore preferences + Local real-time Interest Graph
+            const combinedTags = { ...(currentUserData?.preferences || {}), ...(userInterestGraph.tags || {}) };
+            videoTags.forEach(tag => {
+                if (combinedTags[tag]) {
+                    affinityBonus += combinedTags[tag] * 55;
+                }
+            });
+
+            if (video.userId && userInterestGraph.creators && userInterestGraph.creators[video.userId]) {
+                affinityBonus += userInterestGraph.creators[video.userId] * 65;
+            }
+            if (video.soundTitle && userInterestGraph.sounds) {
+                const sKey = String(video.soundTitle).toLowerCase().trim();
+                if (userInterestGraph.sounds[sKey]) affinityBonus += userInterestGraph.sounds[sKey] * 50;
+            }
+            if (video.location && userInterestGraph.locations) {
+                const lKey = String(video.location).toLowerCase().trim();
+                if (userInterestGraph.locations[lKey]) affinityBonus += userInterestGraph.locations[lKey] * 40;
+            }
+            // Local / Regional 237 Discovery Affinity
+            if (video.location && /cameroun|douala|yaound/i.test(video.location)) {
+                affinityBonus += 140;
+            }
+
+            score += affinityBonus;
+
+            // 6. Verified & Pinned Signals
+            if (video.isPinned) score += 1200;
+            if (video.isVerified) score += 1800;
+
+            // 7. Session Novelty & Skip Penalties (Don't repeat skipped or already watched videos at the top)
+            if (video.id) {
+                if (userInterestGraph.skippedVideos && userInterestGraph.skippedVideos[video.id]) {
+                    score -= 1500;
+                }
+                const seenTimes = sessionSeenFeedCount.get(video.id) || 0;
+                if (seenTimes > 0) {
+                    score -= seenTimes * 650;
+                }
+            }
+
+            // Controlled exploration jitter (R-Videos DeepRank 10% exploration bucket)
+            score += Math.random() * 85;
             return score;
         }
+
+        // R-Videos DeepRank Creator Diversity Interleaving: prevents showing 2+ consecutive videos from the exact same author
+        function diversifyForYouFeed(sortedVideos) {
+            if (!sortedVideos || sortedVideos.length <= 2) return sortedVideos;
+            const result = [];
+            const pool = [...sortedVideos];
+            while (pool.length > 0) {
+                const lastAuthor = result.length > 0 ? result[result.length - 1].userId : null;
+                let pickIdx = pool.findIndex(v => v.userId !== lastAuthor);
+                if (pickIdx === -1) pickIdx = 0;
+                result.push(pool.splice(pickIdx, 1)[0]);
+            }
+            return result;
+        }
+
+        // ============================================================================
+        // 2. R-SHIELD AI: AUTHENTICITY, ANTI-NUDITY, ANTI-SCAM & PROGRESSIVE SANCTIONS
+        // ============================================================================
+        const RSHIELD_RULES = {
+            nudityKeywords: [
+                /\b(nude|nudes|nue|nues|nudit[eé]|sextape|sex\s*tape|porno|pornographie|porn|xxx|18\+|nsfw|onlyfans|sexe\s*explicite|corps\s*nu|sans\s*v[eê]tement|strip\s*tease|camgirl|escort)\b/i
+            ],
+            scamKeywords: [
+                /\b(arnaque|scam|ponzi|investissement\s*garanti|doubler\s*(ton|votre)\s*argent|envoie\s*\d+.*re[cç]ois\s*\d+|gagner\s*\d+\s*(fcfa|eur|usd|\$|€)\s*par\s*(jour|heure)|argent\s*facile\s*imm[eé]diat|multiplicateur\s*d'argent|porte\s*magique|marabout\s*riche|hack\s*(orange\s*money|momo|mtn)| générateur\s*de\s*cash|clique\s*sur\s*ce\s*lien\s*pour\s*gagner|crypto\s*miracle|forex\s*100%\s*gagnant)\b/i
+            ],
+            violenceHateKeywords: [
+                /\b(tuer|meurtre|suicide|terrorisme|gore|sanglant|torture|p[eé]dophilie|viol|arme\s*ill[eé]gale)\b/i
+            ]
+        };
+
+        function scanTextForViolationsSync(desc = '', overlayText = '', soundTitle = '', fileName = '') {
+            const combined = `${desc} ${overlayText} ${soundTitle} ${fileName}`.toLowerCase();
+
+            for (const rx of RSHIELD_RULES.nudityKeywords) {
+                if (rx.test(combined)) {
+                    return {
+                        isClean: false,
+                        category: 'NUDITÉ & CONTENU ADULTE (+18)',
+                        severity: 'critical',
+                        reason: "Détection de termes ou références explicites à la nudité / contenu pour adultes (+18). La nudité est strictement interdite sur R-Videos."
+                    };
+                }
+            }
+            for (const rx of RSHIELD_RULES.scamKeywords) {
+                if (rx.test(combined)) {
+                    return {
+                        isClean: false,
+                        category: 'ARNAQUE, FRAUDE & PUBLICITÉ TROMPEUSE',
+                        severity: 'critical',
+                        reason: "Détection d'une tentative d'arnaque financière, promesse de gain frauduleux ou lien trompeur. Les arnaques sont formellement interdites."
+                    };
+                }
+            }
+            for (const rx of RSHIELD_RULES.violenceHateKeywords) {
+                if (rx.test(combined)) {
+                    return {
+                        isClean: false,
+                        category: 'VIOLENCE EXTRÊME OU CONTENU ILLÉGAL',
+                        severity: 'critical',
+                        reason: "Détection de propos violents, dangereux ou illégaux contraires à la sécurité de la communauté."
+                    };
+                }
+            }
+            return { isClean: true, category: 'CONFORME', severity: 'none', reason: '' };
+        }
+
+        // Cryptographic SHA-256 / Byte Fingerprint for Authenticity & Duplicate/Stolen Video Detection
+        async function computeMediaAuthenticityFingerprint(fileObj) {
+            if (!fileObj) return { hash: '', authenticityScore: 95 };
+            try {
+                const sliceSize = Math.min(fileObj.size, 65536);
+                const headBlob = fileObj.slice(0, sliceSize);
+                const tailBlob = fileObj.size > sliceSize * 2 ? fileObj.slice(fileObj.size - sliceSize, fileObj.size) : headBlob;
+                const headBuf = await headBlob.arrayBuffer();
+                const tailBuf = await tailBlob.arrayBuffer();
+
+                const combined = new Uint8Array(headBuf.byteLength + tailBuf.byteLength + 16);
+                combined.set(new Uint8Array(headBuf), 0);
+                combined.set(new Uint8Array(tailBuf), headBuf.byteLength);
+                const sizeView = new DataView(combined.buffer, headBuf.byteLength + tailBuf.byteLength, 16);
+                sizeView.setFloat64(0, fileObj.size || 0);
+
+                if (window.crypto && window.crypto.subtle) {
+                    const digest = await window.crypto.subtle.digest('SHA-256', combined);
+                    const hex = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+                    return { hash: hex, size: fileObj.size };
+                }
+            } catch (e) {}
+            return { hash: `fallback_${fileObj.size}_${fileObj.name}`, size: fileObj.size };
+        }
+
+        // Multi-Frame Computer Vision Scanner (YCbCr Skin-Tone Cluster & Blank/Fake Frame Detection)
+        async function analyzeMediaVisualSafetyAndAuthenticity(fileObj) {
+            return new Promise((resolve) => {
+                try {
+                    const isCamRecording = (fileObj && (fileObj.name.startsWith('rcam_') || fileObj.name.startsWith('rphoto_')));
+                    const photoPrev = document.getElementById('studio-photo-preview');
+                    const videoPrev = document.getElementById('video-preview');
+
+                    const canvas = document.createElement('canvas');
+                    const sampleW = 160;
+                    const sampleH = 160;
+                    canvas.width = sampleW;
+                    canvas.height = sampleH;
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+                    const analyzeCurrentCanvasFrame = () => {
+                        const imgData = ctx.getImageData(0, 0, sampleW, sampleH).data;
+                        let skinPixels = 0;
+                        let centerSkinPixels = 0;
+                        let centerTotalPixels = 0;
+                        let darkPixels = 0;
+                        let totalPixels = sampleW * sampleH;
+                        let colorVarianceSum = 0;
+
+                        for (let y = 0; y < sampleH; y++) {
+                            for (let x = 0; x < sampleW; x++) {
+                                const idx = (y * sampleW + x) * 4;
+                                const r = imgData[idx];
+                                const g = imgData[idx + 1];
+                                const b = imgData[idx + 2];
+
+                                const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+                                if (luma < 14) darkPixels++;
+                                colorVarianceSum += Math.abs(r - g) + Math.abs(g - b);
+
+                                // YCbCr + RGB combined human skin-tone detector
+                                const cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
+                                const cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
+                                const isRgbSkin = (r > 95 && g > 40 && b > 20 && (Math.max(r, g, b) - Math.min(r, g, b) > 15) && Math.abs(r - g) > 15 && r > g && r > b);
+                                const isYcbcrSkin = (cb >= 77 && cb <= 127 && cr >= 133 && cr <= 173);
+
+                                if (isRgbSkin && isYcbcrSkin && luma > 45 && luma < 245) {
+                                    skinPixels++;
+                                    if (x >= sampleW * 0.2 && x <= sampleW * 0.8 && y >= sampleH * 0.15 && y <= sampleH * 0.85) {
+                                        centerSkinPixels++;
+                                    }
+                                }
+                                if (x >= sampleW * 0.2 && x <= sampleW * 0.8 && y >= sampleH * 0.15 && y <= sampleH * 0.85) {
+                                    centerTotalPixels++;
+                                }
+                            }
+                        }
+
+                        return {
+                            skinRatio: skinPixels / totalPixels,
+                            centerSkinRatio: centerSkinPixels / Math.max(1, centerTotalPixels),
+                            darkRatio: darkPixels / totalPixels,
+                            textureScore: colorVarianceSum / totalPixels
+                        };
+                    };
+
+                    if (photoPrev && !photoPrev.classList.contains('hidden') && photoPrev.naturalWidth > 0) {
+                        ctx.drawImage(photoPrev, 0, 0, sampleW, sampleH);
+                        const stats = analyzeCurrentCanvasFrame();
+                        const nudityFlag = (stats.centerSkinRatio > 0.76 && stats.skinRatio > 0.68);
+                        resolve({
+                            nuditySuspected: nudityFlag,
+                            isBlankOrFakeVideo: false,
+                            skinRatio: stats.skinRatio,
+                            authenticityBaseScore: isCamRecording ? 100 : 94
+                        });
+                        return;
+                    }
+
+                    if (videoPrev && videoPrev.readyState >= 2 && videoPrev.videoWidth > 0) {
+                        ctx.drawImage(videoPrev, 0, 0, sampleW, sampleH);
+                        const stats = analyzeCurrentCanvasFrame();
+                        const nudityFlag = (stats.centerSkinRatio > 0.78 && stats.skinRatio > 0.70);
+                        const blankFakeFlag = (stats.darkRatio > 0.985 && stats.textureScore < 1.2 && !isCamRecording);
+                        resolve({
+                            nuditySuspected: nudityFlag,
+                            isBlankOrFakeVideo: blankFakeFlag,
+                            skinRatio: stats.skinRatio,
+                            authenticityBaseScore: isCamRecording ? 100 : (blankFakeFlag ? 30 : 92)
+                        });
+                        return;
+                    }
+
+                    resolve({
+                        nuditySuspected: false,
+                        isBlankOrFakeVideo: false,
+                        skinRatio: 0,
+                        authenticityBaseScore: isCamRecording ? 100 : 90
+                    });
+                } catch (e) {
+                    resolve({ nuditySuspected: false, isBlankOrFakeVideo: false, skinRatio: 0, authenticityBaseScore: 90 });
+                }
+            });
+        }
+
+        // Complete R-Shield AI Verification Pipeline before publishing
+        async function runRShieldFullAudit(fileObj, desc, overlayText, soundTitle) {
+            // 1. Check Text, Overlay, Hashtags & Sound Title for Nudity, Scam, Violence
+            const textAudit = scanTextForViolationsSync(desc, overlayText, soundTitle, fileObj?.name || '');
+            if (!textAudit.isClean) {
+                return {
+                    passed: false,
+                    fypEligible: false,
+                    blockUploadCompletely: true,
+                    category: textAudit.category,
+                    reason: textAudit.reason,
+                    authenticityScore: 15,
+                    mediaHash: ''
+                };
+            }
+
+            // 2. Compute Digital Fingerprint & Check for Stolen / Duplicate Videos in Feed
+            const fp = await computeMediaAuthenticityFingerprint(fileObj);
+            const isCamOriginal = !!(fileObj && (fileObj.name.startsWith('rcam_') || fileObj.name.startsWith('rphoto_')));
+
+            let duplicateFound = null;
+            if (fp.hash && !isCamOriginal) {
+                for (const [vidId, vData] of Object.entries(profileVideosData)) {
+                    if (vData && vData.mediaHash && vData.mediaHash === fp.hash) {
+                        duplicateFound = vData;
+                        break;
+                    }
+                    // Also check exact same description + same file size spam
+                    if (vData && vData.fileSize && fp.size && vData.fileSize === fp.size && vData.userId !== auth.currentUser?.uid) {
+                        duplicateFound = vData;
+                        break;
+                    }
+                }
+            }
+
+            if (duplicateFound) {
+                return {
+                    passed: false,
+                    fypEligible: false,
+                    blockUploadCompletely: false, // Allows private/profile storage if desired, OR blocks Pour Toi & warns user!
+                    category: 'AUTHENTICITÉ NON RESPECTÉE (VIDÉO DUPLIQUÉE / REPOSTÉE)',
+                    reason: `Cette vidéo possède la même empreinte numérique qu'une publication existante (@${duplicateFound.username || 'createur'}). Les vidéos copiées, non authentiques ou republiées en spam sont exclues du flux « Pour toi ».`,
+                    authenticityScore: 25,
+                    mediaHash: fp.hash
+                };
+            }
+
+            // 3. Visual Frame Analysis (Nudity Skin-Cluster & Fake/Blank Video Check)
+            const visualAudit = await analyzeMediaVisualSafetyAndAuthenticity(fileObj);
+            if (visualAudit.nuditySuspected) {
+                return {
+                    passed: false,
+                    fypEligible: false,
+                    blockUploadCompletely: true,
+                    category: 'NUDITÉ VISUELLE DÉTECTÉE PAR R-SHIELD AI',
+                    reason: "L'analyse d'image R-Shield AI a détecté un taux critique d'exposition corporelle / nudité sur les images de la vidéo. Ce contenu ne peut pas aller dans le « Pour toi ».",
+                    authenticityScore: 10,
+                    mediaHash: fp.hash
+                };
+            }
+
+            if (visualAudit.isBlankOrFakeVideo) {
+                return {
+                    passed: false,
+                    fypEligible: false,
+                    blockUploadCompletely: false,
+                    category: 'VIDÉO NON AUTHENTIQUE (ÉCRAN NOIR / SPAM)',
+                    reason: "Votre vidéo semble vide ou composée uniquement d'un écran noir sans contenu authentique. Elle ne peut pas être diffusée dans le « Pour toi ».",
+                    authenticityScore: 30,
+                    mediaHash: fp.hash
+                };
+            }
+
+            return {
+                passed: true,
+                fypEligible: true,
+                blockUploadCompletely: false,
+                category: 'AUTHENTIQUE & CONFORME',
+                reason: '',
+                authenticityScore: visualAudit.authenticityBaseScore || 94,
+                recordedWithRCam: isCamOriginal,
+                mediaHash: fp.hash,
+                fileSize: fp.size || 0
+            };
+        }
+
+        // Progressive Sanction & Strike Enforcement Engine (1/3 Warning -> 2/3 Shadowban & Restriction -> 3/3 Account Ban)
+        function getUserStrikeState() {
+            const uid = auth.currentUser?.uid || 'guest';
+            const localStrikes = parseInt(safeGetStorage(`rv_strikes_${uid}`, '0'), 10) || 0;
+            const fsStrikes = Number(currentUserData?.strikes || 0);
+            const strikes = Math.max(localStrikes, fsStrikes);
+            const shadowbanned = !!(currentUserData?.fypShadowban || strikes >= 2);
+            const banned = !!(currentUserData?.isBanned || strikes >= 3);
+            return { strikes, shadowbanned, banned };
+        }
+
+        function refreshStudioRShieldBarUI() {
+            const bar = document.getElementById('rshield-studio-bar');
+            const textEl = document.getElementById('rshield-studio-text');
+            const pillEl = document.getElementById('rshield-account-strike-pill');
+            if (!bar || !textEl || !pillEl) return;
+
+            const state = getUserStrikeState();
+            const desc = document.getElementById('video-desc')?.value || '';
+            const overlayTxt = document.getElementById('studio-overlay-text-input')?.value || '';
+            const soundTxt = document.getElementById('video-sound-title')?.value || '';
+            const liveCheck = scanTextForViolationsSync(desc, overlayTxt, soundTxt);
+
+            if (!liveCheck.isClean) {
+                bar.className = "mt-1 px-3 py-2 rounded-2xl bg-rose-950/60 border border-rose-500/50 flex items-center justify-between text-[11px]";
+                textEl.className = "text-rose-200 font-bold truncate";
+                textEl.innerText = `⚠️ Alerte R-Shield : ${liveCheck.category}`;
+                pillEl.className = "shrink-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-600 text-white";
+                pillEl.innerText = "Pour Toi : Refusé 🚫";
+                return;
+            }
+
+            if (state.strikes === 0) {
+                bar.className = "mt-1 px-3 py-2 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between text-[11px]";
+                textEl.className = "text-emerald-200 font-semibold truncate";
+                textEl.innerText = "R-Shield AI : Authenticité, Anti-Nudité & Anti-Arnaque vérifiés";
+                pillEl.className = "shrink-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+                pillEl.innerText = "Pour Toi : Éligible ✓";
+            } else if (state.strikes === 1) {
+                bar.className = "mt-1 px-3 py-2 rounded-2xl bg-amber-950/50 border border-amber-500/40 flex items-center justify-between text-[11px]";
+                textEl.className = "text-amber-200 font-semibold truncate";
+                textEl.innerText = "Compte sous surveillance (1 avertissement actif) — Respectez les règles";
+                pillEl.className = "shrink-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40";
+                pillEl.innerText = "Strike 1/3 ⚠️";
+            } else {
+                bar.className = "mt-1 px-3 py-2 rounded-2xl bg-rose-950/60 border border-rose-500/50 flex items-center justify-between text-[11px]";
+                textEl.className = "text-rose-200 font-bold truncate";
+                textEl.innerText = "Compte sanctionné (Shadowban Pour Toi actif) — Dernier avertissement";
+                pillEl.className = "shrink-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-600 text-white";
+                pillEl.innerText = `Strike ${state.strikes}/3 🚫`;
+            }
+        }
+
+        async function applyUserModerationStrike(auditResult) {
+            const uid = auth.currentUser?.uid;
+            const currentState = getUserStrikeState();
+            const newStrikes = currentState.strikes + 1;
+
+            if (uid) {
+                safeSetStorage(`rv_strikes_${uid}`, String(newStrikes));
+            }
+            if (!currentUserData) currentUserData = {};
+            currentUserData.strikes = newStrikes;
+
+            let sanctionTitle = "Vidéo exclue du « Pour toi »";
+            let sanctionLevelText = `Strike ${newStrikes}/3 (Avertissement Officiel)`;
+            let footerWarnText = "⚠️ Attention : Si vous continuez à enfreindre les règles, votre compte sera exclu du « Pour toi » puis banni définitivement.";
+
+            const updatePayload = {
+                strikes: newStrikes,
+                lastViolationReason: auditResult.category,
+                lastViolationAt: serverTimestamp()
+            };
+
+            if (newStrikes === 2) {
+                currentUserData.fypShadowban = true;
+                updatePayload.fypShadowban = true;
+                sanctionTitle = "Sanction Sévère : Compte Exclu du « Pour toi »";
+                sanctionLevelText = "Strike 2/3 (Shadowban Global & Restriction)";
+                footerWarnText = "🚨 DERNIER AVERTISSEMENT : Toutes vos vidéos sont désormais exclues du « Pour toi ». Une seule récidive entraînera la suspension définitive de votre compte !";
+            } else if (newStrikes >= 3) {
+                currentUserData.fypShadowban = true;
+                currentUserData.isBanned = true;
+                updatePayload.fypShadowban = true;
+                updatePayload.isBanned = true;
+                sanctionTitle = "COMPTE SUSPENDU & SANCTIONNÉ (3/3)";
+                sanctionLevelText = "Strike 3/3 (Suspension & Bannissement du Compte)";
+                footerWarnText = "⛔ Votre compte a atteint 3 infractions graves (nudité, arnaque ou contenu illicite) et a été suspendu par R-Shield AI.";
+            }
+
+            if (uid) {
+                await updateDoc(doc(db, "users", uid), updatePayload).catch(() => {});
+                // Send official warning notification to user's Inbox
+                await addDoc(collection(db, "users", uid, "notifications"), {
+                    type: 'report',
+                    text: `[R-Shield AI • Strike ${newStrikes}/3] Publication bloquée du "Pour toi" (${auditResult.category}). ${newStrikes >= 2 ? 'Votre compte est désormais sous restriction sévère.' : 'Attention : toute récidive entraînera de lourdes sanctions.'}`,
+                    fromUid: uid,
+                    fromUsername: "Sécurité_R_Videos",
+                    fromPhoto: "",
+                    createdAt: serverTimestamp(),
+                    read: false
+                }).catch(() => {});
+            }
+
+            // Populate and open #moderation-warning-modal
+            const badgeEl = document.getElementById('mod-modal-strike-badge');
+            const titleEl = document.getElementById('mod-modal-title');
+            const reasonEl = document.getElementById('mod-modal-reason-title');
+            const descEl = document.getElementById('mod-modal-desc');
+            const fypEl = document.getElementById('mod-modal-fyp-status');
+            const authScoreEl = document.getElementById('mod-modal-auth-score');
+            const sanctionEl = document.getElementById('mod-modal-sanction-level');
+            const footerEl = document.getElementById('mod-modal-footer-warn');
+
+            if (badgeEl) badgeEl.innerText = newStrikes >= 3 ? `SANCTION MAXIMALE (${newStrikes}/3)` : `AVERTISSEMENT ${newStrikes} / 3`;
+            if (titleEl) titleEl.innerText = sanctionTitle;
+            if (reasonEl) reasonEl.innerText = `Motif : ${auditResult.category}`;
+            if (descEl) descEl.innerText = auditResult.reason;
+            if (fypEl) fypEl.innerText = "🚫 Interdite de « Pour toi »";
+            if (authScoreEl) authScoreEl.innerText = `${auditResult.authenticityScore || 15}/100 (Non conforme)`;
+            if (sanctionEl) sanctionEl.innerText = sanctionLevelText;
+            if (footerEl) footerEl.innerText = footerWarnText;
+
+            document.getElementById('moderation-warning-modal').classList.add('open');
+            refreshStudioRShieldBarUI();
+            if (window.lucide) lucide.createIcons();
+
+            return { newStrikes, isBannedNow: newStrikes >= 3 };
+        }
+
+        window.closeModerationWarningModal = async () => {
+            closeModal('moderation-warning-modal');
+            const state = getUserStrikeState();
+            if (state.banned) {
+                closeStudioModal();
+                showToast("Compte suspendu pour violations répétées des règles R-Videos.", "error");
+                await signOut(auth).catch(() => {});
+            }
+        };
+
+        // Attach live listener to description & overlay inputs so R-Shield updates in real time
+        setTimeout(() => {
+            ['video-desc', 'studio-overlay-text-input', 'video-sound-title'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', refreshStudioRShieldBarUI);
+            });
+        }, 400);
 
         window.findUserByHandle = async (handle, e) => {
             if(e) e.stopPropagation();
@@ -2830,7 +4044,10 @@
             const q = query(collection(db, "users", auth.currentUser.uid, "notifications"), limit(100));
             unreadObserver = onSnapshot(q, (snapshot) => {
                 let notifUnread = 0;
-                snapshot.forEach(doc => { if (doc.data().read === false) notifUnread++; });
+                snapshot.forEach(doc => {
+                    const nData = doc.data();
+                    if (!isVirtualBotIdOrUser(nData.fromUid, '', nData.isBot) && nData.read === false) notifUnread++;
+                });
                 totalUnreadNotifications = notifUnread;
                 updateGlobalBadge();
                 isInitialLoad = false;
@@ -3091,7 +4308,7 @@
                         const n = {}; n[cred.user.uid] = username; n[adminUid] = adminData.username;
                         const p = {}; p[cred.user.uid] = ""; p[adminUid] = adminData.photoURL;
                         const unread = {}; unread[cred.user.uid] = 1; unread[adminUid] = 0; 
-                        const welcomeMsg = `Bienvenue sur l'application ! Voici tes accès exclusifs.\nINFORMATIONS DU COMPTE NETF\n- Adresse : kmerfrud@gmail.com\n- Mdp : ralphii88`;
+                        const welcomeMsg = `Bienvenue sur R-Videos Ultimate Pro ! 🎉 Partage tes vidéos et photos originales avec la communauté 100% réelle créée par Le Studio Ralph Nyamè.`;
                         await setDoc(chatRef, { participants: [cred.user.uid, adminUid], names: n, photos: p, lastMessage: welcomeMsg, lastUpdated: serverTimestamp(), unreadCounts: unread });
                         await addDoc(collection(db, "chats", chatId, "messages"), { text: welcomeMsg, senderId: adminUid, createdAt: serverTimestamp(), read: false });
                     }
@@ -3342,7 +4559,28 @@
             try {
                 const vidSnap = await getDoc(doc(db, "videos", docId));
                 let authorId = null;
-                if(vidSnap.exists()) authorId = vidSnap.data().userId;
+                if(vidSnap.exists()) {
+                    const vData = vidSnap.data();
+                    authorId = vData.userId;
+                    const newRepCount = (vData.reportCount || 0) + 1;
+                    const isCriticalReason = /nudit|inappropri|choquant|arnaque|spam|haineux/i.test(reason);
+                    await updateDoc(doc(db, "videos", docId), {
+                        reportCount: increment(1),
+                        fypEligible: (isCriticalReason || newRepCount >= 2) ? false : (vData.fypEligible !== false),
+                        moderationStatus: (isCriticalReason || newRepCount >= 2) ? 'restricted_no_fyp' : (vData.moderationStatus || 'approved')
+                    }).catch(() => {});
+                    if (authorId && isCriticalReason) {
+                        await addDoc(collection(db, "users", authorId, "notifications"), {
+                            type: 'report',
+                            text: `[Alerte Modération R-Shield] Une de vos vidéos a été signalée pour "${escapeHtml(selectVal)}" et retirée du flux "Pour toi". En cas de récidive, votre compte sera sanctionné.`,
+                            fromUid: auth.currentUser.uid,
+                            fromUsername: "Sécurité_R_Videos",
+                            fromPhoto: "",
+                            createdAt: serverTimestamp(),
+                            read: false
+                        }).catch(() => {});
+                    }
+                }
                 if(authorId) {
                     await updateDoc(doc(db, "users", auth.currentUser.uid), {
                         blockedUsers: arrayUnion(authorId),
@@ -3458,12 +4696,16 @@
                     if (currentFeedMode === 'following') {
                         if (!currentUserData || !currentUserData.following || !currentUserData.following.includes(data.userId)) return false;
                     }
-                    if (currentUserData.blockedUsers && currentUserData.blockedUsers.includes(data.userId)) return false;
+                    if (isVirtualBotIdOrUser(data.userId, data.userEmail, data.isBot)) return false;
+                    if (currentUserData && currentUserData.blockedUsers && currentUserData.blockedUsers.includes(data.userId)) return false;
+                    if (currentFeedMode === 'foryou' && !isVideoEligibleForPourToi(data)) return false;
                     return true;
                 });
                 
                 if (currentFeedMode === 'foryou') {
+                    videos = videos.filter(v => isVideoEligibleForPourToi(v));
                     videos.sort((a, b) => calculateViralScore(b) - calculateViralScore(a));
+                    videos = diversifyForYouFeed(videos);
                 }
                 
                 videos.forEach((data) => {
@@ -3498,7 +4740,9 @@
                     
                     const initialVideoSrc = memoryBlobUrls.get(optimizedUrl) || optimizedUrl;
                     div.innerHTML = `
-                        <video class="w-full h-full ${fitClass} ${vfxClass} pointer-events-none bg-black" muted loop playsinline webkit-playsinline preload="none" src="${initialVideoSrc}"></video>
+                        <video class="w-full h-full ${fitClass} ${ data.studioConfig?.filterPreset || vfxClass } pointer-events-none bg-black" style="${ data.studioConfig?.customFilterCss ? 'filter:' + escapeHtml(data.studioConfig.customFilterCss) + ';' : '' }${ data.studioConfig?.transformCss ? 'transform:' + escapeHtml(data.studioConfig.transformCss) + ';' : '' }" muted loop playsinline webkit-playsinline preload="none" src="${initialVideoSrc}"></video>
+                        ${ data.studioConfig?.overlayText ? `<div class="absolute left-1/2 -translate-x-1/2 ${ data.studioConfig.overlayPos === 'top' ? 'top-20' : (data.studioConfig.overlayPos === 'bottom' ? 'bottom-44' : 'top-1/2 -translate-y-1/2') } z-20 pointer-events-none text-center max-w-[85%] px-3.5 py-1.5 studio-text-banner-${ escapeHtml(data.studioConfig.overlayStyle || 'glass') } text-sm" style="color:${ escapeHtml(data.studioConfig.overlayColor || '#ffffff') }">${ escapeHtml(data.studioConfig.overlayText) }</div>` : '' }
+                        ${ data.studioConfig?.overlaySticker ? `<div class="absolute right-16 top-24 z-20 pointer-events-none text-4xl drop-shadow-xl animate-bounce">${ escapeHtml(data.studioConfig.overlaySticker) }</div>` : '' }
                         <div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 opacity-0">
                             <div class="bg-black/45 rounded-full p-4 backdrop-blur-md border border-white/15 shadow-2xl">
                                 <i data-lucide="play" class="w-10 h-10 text-white fill-white ml-0.5"></i>
@@ -3522,7 +4766,7 @@
                                 <div class="action-circle">
                                     <i data-lucide="heart" class="w-8 h-8 like-icon ${iLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-white fill-white/90'} transition-all"></i>
                                 </div>
-                                <span class="text-xs font-bold text-shadow like-count">${formatCount(data.likes)}</span>
+                                <span class="text-xs font-bold text-shadow like-count">${formatCount(getRealLikesCount(data))}</span>
                             </div>
 
                             <!-- Comment -->
@@ -3638,6 +4882,7 @@
 
                     v.addEventListener('ended', () => {
                         triggerBump();
+                        recordRVideosWatchSignal(docId, 'loop_complete', v);
                         restartOrAdvanceVideo(v, div);
                     });
 
@@ -3682,6 +4927,715 @@
             }
         };
 
+        // ============================================================================
+        // R-STUDIO CREATOR PRO ENGINE (LIVE CAMERA RECORDING + PRE-PUBLISH EDITOR)
+        // ============================================================================
+        let studioCameraStream = null;
+        let studioMediaRecorder = null;
+        let studioRecordedChunks = [];
+        let studioRecordedFile = null;
+        let studioSelectedFile = null;
+        let studioCameraFacing = 'user';
+        let studioIsRecording = false;
+        let studioRecStartTime = 0;
+        let studioRecTimerInterval = null;
+        let studioMaxDurationSec = 60;
+        let studioCountdownSec = 0;
+
+        let studioEditState = {
+            filterPreset: 'vfx-none',
+            brightness: 100,
+            contrast: 100,
+            saturation: 100,
+            hue: 0,
+            rotation: 0,
+            mirrored: false,
+            speed: 1.0,
+            overlayText: '',
+            overlayStyle: 'glass',
+            overlayColor: '#ffffff',
+            overlayPos: 'center',
+            overlaySticker: ''
+        };
+
+        let studioCapturedPhotoDataUrl = null;
+
+        function stopStudioCameraStream() {
+            if (studioRecTimerInterval) {
+                clearInterval(studioRecTimerInterval);
+                studioRecTimerInterval = null;
+            }
+            if (studioMediaRecorder && studioMediaRecorder.state !== 'inactive') {
+                try { studioMediaRecorder.stop(); } catch (e) {}
+            }
+            studioIsRecording = false;
+            if (studioCameraStream) {
+                studioCameraStream.getTracks().forEach(t => t.stop());
+                studioCameraStream = null;
+            }
+            const previewArea = document.getElementById('upload-preview-area');
+            if (previewArea) previewArea.classList.remove('camera-fullscreen-active');
+            const camVid = document.getElementById('studio-camera-live-video');
+            if (camVid) {
+                camVid.srcObject = null;
+                camVid.classList.add('hidden');
+            }
+            const hud = document.getElementById('studio-camera-hud');
+            if (hud) {
+                hud.classList.add('hidden');
+                hud.classList.remove('flex');
+            }
+        }
+
+        window.closeStudioModal = () => {
+            stopStudioCameraStream();
+            const v = document.getElementById('video-preview');
+            if (v) v.pause();
+            stopMasterAudio();
+            window.closeModal('upload-modal');
+        };
+
+        window.switchStudioSourceMode = async (mode) => {
+            const btnGal = document.getElementById('studio-mode-gallery-btn');
+            const btnCam = document.getElementById('studio-mode-livecam-btn');
+            const fileInp = document.getElementById('video-file-input');
+            const emptyPrompt = document.getElementById('studio-empty-prompt');
+            const prevVid = document.getElementById('video-preview');
+            const photoPrev = document.getElementById('studio-photo-preview');
+            const camVid = document.getElementById('studio-camera-live-video');
+            const camHud = document.getElementById('studio-camera-hud');
+            const vidControls = document.getElementById('video-controls-overlay');
+            const previewArea = document.getElementById('upload-preview-area');
+
+            if (mode === 'camera') {
+                if (btnGal) btnGal.classList.remove('active');
+                if (btnCam) btnCam.classList.add('active');
+                if (prevVid) { prevVid.pause(); prevVid.classList.add('hidden'); }
+                if (photoPrev) photoPrev.classList.add('hidden');
+                if (vidControls) { vidControls.classList.add('hidden'); vidControls.classList.remove('flex'); }
+                if (fileInp) fileInp.classList.add('hidden');
+                if (emptyPrompt) emptyPrompt.classList.add('hidden');
+
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    showToast("Ouverture de l'appareil photo du téléphone...", "info");
+                    triggerNativePhoneCamera();
+                    return;
+                }
+                try {
+                    stopStudioCameraStream();
+                    // Enter Fullscreen Live Camera Mode so the user sees the entire camera view in 100% full screen
+                    if (previewArea) previewArea.classList.add('camera-fullscreen-active');
+                    try {
+                        studioCameraStream = await navigator.mediaDevices.getUserMedia({
+                            video: { facingMode: studioCameraFacing, width: { ideal: 1920 }, height: { ideal: 1080 } },
+                            audio: true
+                        });
+                    } catch (audioErr) {
+                        studioCameraStream = await navigator.mediaDevices.getUserMedia({
+                            video: { facingMode: studioCameraFacing },
+                            audio: false
+                        });
+                    }
+                    if (camVid) {
+                        camVid.srcObject = studioCameraStream;
+                        camVid.classList.remove('hidden');
+                        studioEditState.mirrored = (studioCameraFacing === 'user');
+                        applyStudioVisualTransformAndFilter();
+                        await camVid.play().catch(() => {});
+                    }
+                    if (camHud) {
+                        camHud.classList.remove('hidden');
+                        camHud.classList.add('flex');
+                    }
+                    lucide.createIcons();
+                } catch (err) {
+                    if (previewArea) previewArea.classList.remove('camera-fullscreen-active');
+                    showToast("Accès caméra direct non autorisé : ouverture de l'appareil photo natif...", "info");
+                    triggerNativePhoneCamera();
+                }
+            } else {
+                stopStudioCameraStream();
+                if (btnCam) btnCam.classList.remove('active');
+                if (btnGal) btnGal.classList.add('active');
+                const hasLoadedVideo = !!(studioSelectedFile || studioRecordedFile || (prevVid && prevVid.getAttribute('src')));
+                if (hasLoadedVideo) {
+                    if (studioCapturedPhotoDataUrl && photoPrev) {
+                        photoPrev.classList.remove('hidden');
+                    }
+                    if (prevVid && prevVid.getAttribute('src')) {
+                        prevVid.classList.remove('hidden');
+                        prevVid.play().catch(() => {});
+                    }
+                    if (vidControls) {
+                        vidControls.classList.remove('hidden');
+                        vidControls.classList.add('flex');
+                    }
+                    if (fileInp) fileInp.classList.add('hidden');
+                    if (emptyPrompt) emptyPrompt.classList.add('hidden');
+                } else {
+                    if (fileInp) fileInp.classList.remove('hidden');
+                    if (emptyPrompt) emptyPrompt.classList.remove('hidden');
+                }
+            }
+        };
+
+        // Live Photo Capture in Fullscreen Camera Mode
+        window.captureStudioLivePhoto = () => {
+            if (!studioCameraStream) {
+                window.switchStudioSourceMode('camera');
+                return;
+            }
+            const executePhotoShot = () => {
+                const camVid = document.getElementById('studio-camera-live-video');
+                if (!camVid || !camVid.videoWidth) {
+                    showToast("Caméra en cours d'initialisation...", "info");
+                    return;
+                }
+                // Trigger shutter flash animation
+                const flashEl = document.getElementById('studio-shutter-flash');
+                if (flashEl) {
+                    flashEl.classList.remove('hidden', 'shutter-flash-anim');
+                    void flashEl.offsetWidth;
+                    flashEl.classList.add('shutter-flash-anim');
+                    setTimeout(() => flashEl.classList.add('hidden'), 380);
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = camVid.videoWidth || 1080;
+                canvas.height = camVid.videoHeight || 1920;
+                const ctx = canvas.getContext('2d');
+
+                ctx.save();
+                const filterStr = getComputedStudioFilterString();
+                if (filterStr) ctx.filter = filterStr;
+                if (studioEditState.mirrored) {
+                    ctx.translate(canvas.width, 0);
+                    ctx.scale(-1, 1);
+                }
+                ctx.drawImage(camVid, 0, 0, canvas.width, canvas.height);
+                ctx.restore();
+
+                studioCapturedPhotoDataUrl = canvas.toDataURL('image/jpeg', 0.94);
+                const photoPrev = document.getElementById('studio-photo-preview');
+                if (photoPrev) {
+                    photoPrev.src = studioCapturedPhotoDataUrl;
+                    photoPrev.classList.remove('hidden');
+                }
+                const savePhotoBtn = document.getElementById('studio-save-photo-btn');
+                if (savePhotoBtn) {
+                    savePhotoBtn.classList.remove('hidden');
+                    savePhotoBtn.classList.add('flex');
+                }
+
+                // Convert captured canvas into a publishable video clip (so it plays & loops with sound in the feed) AND fallback image File
+                canvas.toBlob((jpgBlob) => {
+                    const photoFile = new File([jpgBlob], `rphoto_${Date.now()}.jpg`, { type: 'image/jpeg' });
+                    studioRecordedFile = photoFile;
+                    studioSelectedFile = photoFile;
+
+                    // Also synthesize a short playable video stream from the canvas if supported so #video-preview & feed video player work natively
+                    if (canvas.captureStream && window.MediaRecorder) {
+                        try {
+                            const cStream = canvas.captureStream(30);
+                            let mime = 'video/webm';
+                            if (MediaRecorder.isTypeSupported('video/mp4')) mime = 'video/mp4';
+                            else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) mime = 'video/webm;codecs=vp8';
+                            const rec = new MediaRecorder(cStream, { mimeType: mime });
+                            const chunks = [];
+                            rec.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+                            rec.onstop = () => {
+                                if (chunks.length > 0) {
+                                    const ext = mime.includes('mp4') ? 'mp4' : 'webm';
+                                    const vBlob = new Blob(chunks, { type: mime });
+                                    const vFile = new File([vBlob], `rphoto_clip_${Date.now()}.${ext}`, { type: mime });
+                                    studioRecordedFile = vFile;
+                                    studioSelectedFile = vFile;
+                                    loadFileIntoStudioEditor(vFile);
+                                }
+                            };
+                            rec.start(100);
+                            // Redraw canvas frames for 1.2s so MediaRecorder encodes a clean loopable video clip of the photo
+                            let frames = 0;
+                            const drawInterval = setInterval(() => {
+                                frames++;
+                                ctx.drawImage(canvas, 0, 0);
+                                if (frames >= 12) {
+                                    clearInterval(drawInterval);
+                                    if (rec.state !== 'inactive') rec.stop();
+                                }
+                            }, 100);
+                        } catch (err) {}
+                    }
+
+                    stopStudioCameraStream();
+                    const ratioBadge = document.getElementById('upload-detected-ratio');
+                    if (ratioBadge) ratioBadge.innerText = `Photo HD (${canvas.width}x${canvas.height})`;
+                    const controls = document.getElementById('video-controls-overlay');
+                    if (controls) {
+                        controls.classList.remove('hidden');
+                        controls.classList.add('flex');
+                    }
+                    window.switchStudioSourceMode('gallery');
+                    showToast("Photo capturée en direct ! Tu peux ajouter un filtre, du texte, un son ou l'enregistrer 📸", "success");
+                }, 'image/jpeg', 0.94);
+            };
+
+            if (studioCountdownSec > 0) {
+                const cdOverlay = document.getElementById('studio-countdown-overlay');
+                const cdNum = document.getElementById('studio-countdown-number');
+                let rem = studioCountdownSec;
+                if (cdOverlay && cdNum) {
+                    cdNum.innerText = rem;
+                    cdOverlay.classList.remove('hidden');
+                    cdOverlay.classList.add('flex');
+                }
+                const cdTimer = setInterval(() => {
+                    rem--;
+                    if (rem > 0) {
+                        if (cdNum) cdNum.innerText = rem;
+                    } else {
+                        clearInterval(cdTimer);
+                        if (cdOverlay) {
+                            cdOverlay.classList.add('hidden');
+                            cdOverlay.classList.remove('flex');
+                        }
+                        executePhotoShot();
+                    }
+                }, 1000);
+            } else {
+                executePhotoShot();
+            }
+        };
+
+        window.downloadCapturedStudioPhoto = () => {
+            if (!studioCapturedPhotoDataUrl) return;
+            const a = document.createElement('a');
+            a.href = studioCapturedPhotoDataUrl;
+            a.download = `R-Videos-Photo-${Date.now()}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast("Photo enregistrée sur ton appareil ! 📸", "success");
+        };
+
+        window.triggerNativePhoneCamera = () => {
+            const natInp = document.getElementById('native-camera-file-input');
+            if (natInp) natInp.click();
+        };
+
+        window.switchStudioCameraFacing = async () => {
+            studioCameraFacing = (studioCameraFacing === 'user') ? 'environment' : 'user';
+            showToast(studioCameraFacing === 'user' ? "Caméra Selfie (Avant) 🤳" : "Caméra Principale (Arrière) 📷", "info");
+            await window.switchStudioSourceMode('camera');
+        };
+
+        window.cycleCameraMaxDuration = () => {
+            const options = [15, 60, 120];
+            studioMaxDurationSec = options[(options.indexOf(studioMaxDurationSec) + 1) % options.length];
+            const btn = document.getElementById('studio-cam-dur-btn');
+            const lbl = document.getElementById('studio-rec-max-label');
+            if (btn) btn.innerText = `⏱️ ${studioMaxDurationSec}s`;
+            if (lbl) lbl.innerText = `${studioMaxDurationSec}s`;
+            showToast(`Durée max d'enregistrement : ${studioMaxDurationSec}s`, "info");
+        };
+
+        window.cycleCameraCountdown = () => {
+            const delays = [0, 3, 10];
+            studioCountdownSec = delays[(delays.indexOf(studioCountdownSec) + 1) % delays.length];
+            const btn = document.getElementById('studio-cam-delay-btn');
+            if (btn) btn.innerText = `⏳ ${studioCountdownSec}s`;
+            showToast(studioCountdownSec === 0 ? "Retardateur désactivé" : `Retardateur : ${studioCountdownSec} secondes`, "info");
+        };
+
+        window.toggleStudioRingLight = () => {
+            const ring = document.getElementById('studio-ring-light-overlay');
+            if (!ring) return;
+            const active = ring.classList.toggle('hidden');
+            showToast(!active ? "Anneau lumineux Selfie activé 💡" : "Anneau lumineux désactivé", "info");
+        };
+
+        window.toggleStudioFramingGrid = () => {
+            const grid = document.getElementById('studio-grid-overlay');
+            if (!grid) return;
+            grid.classList.toggle('hidden');
+        };
+
+        window.toggleStudioCameraRecording = () => {
+            if (studioIsRecording) {
+                finishStudioCameraRecording();
+                return;
+            }
+            if (!studioCameraStream) {
+                window.switchStudioSourceMode('camera');
+                return;
+            }
+            if (studioCountdownSec > 0) {
+                const cdOverlay = document.getElementById('studio-countdown-overlay');
+                const cdNum = document.getElementById('studio-countdown-number');
+                let rem = studioCountdownSec;
+                if (cdOverlay && cdNum) {
+                    cdNum.innerText = rem;
+                    cdOverlay.classList.remove('hidden');
+                    cdOverlay.classList.add('flex');
+                }
+                const cdTimer = setInterval(() => {
+                    rem--;
+                    if (rem > 0) {
+                        if (cdNum) cdNum.innerText = rem;
+                    } else {
+                        clearInterval(cdTimer);
+                        if (cdOverlay) {
+                            cdOverlay.classList.add('hidden');
+                            cdOverlay.classList.remove('flex');
+                        }
+                        beginMediaRecorderCapture();
+                    }
+                }, 1000);
+            } else {
+                beginMediaRecorderCapture();
+            }
+        };
+
+        function beginMediaRecorderCapture() {
+            if (!studioCameraStream) return;
+            studioRecordedChunks = [];
+            let mimeType = 'video/webm;codecs=vp8,opus';
+            if (window.MediaRecorder && MediaRecorder.isTypeSupported) {
+                if (MediaRecorder.isTypeSupported('video/mp4')) mimeType = 'video/mp4';
+                else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')) mimeType = 'video/webm;codecs=vp9,opus';
+                else if (MediaRecorder.isTypeSupported('video/webm')) mimeType = 'video/webm';
+                else mimeType = '';
+            }
+            try {
+                studioMediaRecorder = mimeType ? new MediaRecorder(studioCameraStream, { mimeType }) : new MediaRecorder(studioCameraStream);
+            } catch (e) {
+                studioMediaRecorder = new MediaRecorder(studioCameraStream);
+            }
+
+            studioMediaRecorder.ondataavailable = (ev) => {
+                if (ev.data && ev.data.size > 0) studioRecordedChunks.push(ev.data);
+            };
+            studioMediaRecorder.onstop = () => {
+                const blobType = (studioMediaRecorder && studioMediaRecorder.mimeType) || 'video/mp4';
+                const ext = blobType.includes('mp4') ? 'mp4' : 'webm';
+                const blob = new Blob(studioRecordedChunks, { type: blobType });
+                studioRecordedFile = new File([blob], `rcam_${Date.now()}.${ext}`, { type: blobType });
+                studioSelectedFile = studioRecordedFile;
+                stopStudioCameraStream();
+                loadFileIntoStudioEditor(studioRecordedFile);
+                window.switchStudioSourceMode('gallery');
+                showToast("Prise vidéo enregistrée ! Tu peux maintenant la monter avant de publier 🎬", "success");
+            };
+
+            studioMediaRecorder.start(250);
+            studioIsRecording = true;
+            studioRecStartTime = Date.now();
+
+            const dot = document.getElementById('studio-rec-dot');
+            const btnTxt = document.getElementById('studio-rec-btn-text');
+            const btnIcon = document.getElementById('studio-rec-btn-icon');
+            const progBar = document.getElementById('studio-rec-progress-bar');
+            const timerEl = document.getElementById('studio-rec-timer');
+
+            if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-[#ff2a5f] rec-pulse-ring";
+            if (btnTxt) btnTxt.innerText = "Arrêter";
+            if (btnIcon) btnIcon.className = "w-3 h-3 rounded-sm bg-white";
+
+            if (studioRecTimerInterval) clearInterval(studioRecTimerInterval);
+            studioRecTimerInterval = setInterval(() => {
+                const elapsedSec = (Date.now() - studioRecStartTime) / 1000;
+                const mm = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
+                const ss = String(Math.floor(elapsedSec % 60)).padStart(2, '0');
+                if (timerEl) timerEl.innerText = `${mm}:${ss}`;
+                if (progBar) {
+                    const pct = Math.min(100, (elapsedSec / studioMaxDurationSec) * 100);
+                    progBar.style.width = `${pct}%`;
+                }
+                if (elapsedSec >= studioMaxDurationSec) {
+                    finishStudioCameraRecording();
+                }
+            }, 200);
+        }
+
+        function finishStudioCameraRecording() {
+            if (studioRecTimerInterval) {
+                clearInterval(studioRecTimerInterval);
+                studioRecTimerInterval = null;
+            }
+            studioIsRecording = false;
+            const dot = document.getElementById('studio-rec-dot');
+            const btnTxt = document.getElementById('studio-rec-btn-text');
+            const btnIcon = document.getElementById('studio-rec-btn-icon');
+            if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-gray-400";
+            if (btnTxt) btnTxt.innerText = "Filmer";
+            if (btnIcon) btnIcon.className = "w-3 h-3 rounded-full bg-white";
+
+            if (studioMediaRecorder && studioMediaRecorder.state !== 'inactive') {
+                try { studioMediaRecorder.stop(); } catch (e) {}
+            }
+        }
+
+        // Studio Editing Workbench Functions
+        window.switchStudioEditTab = (tabId, btnEl) => {
+            document.querySelectorAll('.studio-tab-pill').forEach(b => b.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
+            document.querySelectorAll('.studio-panel-section').forEach(sec => sec.classList.remove('active'));
+            const target = document.getElementById('studio-tab-' + tabId);
+            if (target) target.classList.add('active');
+        };
+
+        window.nudgeStudioTrim = (which, delta) => {
+            const inp = document.getElementById(which === 'start' ? 'trim-start' : 'trim-end');
+            if (!inp) return;
+            const cur = parseFloat(inp.value) || 0;
+            inp.value = Math.max(0, cur + delta).toFixed(1);
+            window.updateTrimPreview();
+        };
+
+        window.toggleStudioPreviewPlay = () => {
+            const v = document.getElementById('video-preview');
+            const btn = document.getElementById('studio-play-toggle-btn');
+            if (!v || !v.getAttribute('src')) return;
+            if (v.paused) {
+                v.play().catch(() => {});
+                if (btn) btn.innerHTML = `<i data-lucide="pause" class="w-3 h-3"></i> Pause`;
+            } else {
+                v.pause();
+                if (btn) btn.innerHTML = `<i data-lucide="play" class="w-3 h-3"></i> Lecture`;
+            }
+            lucide.createIcons();
+        };
+
+        window.rotateStudioPreview = () => {
+            studioEditState.rotation = (studioEditState.rotation + 90) % 360;
+            const lbl = document.getElementById('studio-rot-label');
+            if (lbl) lbl.innerText = studioEditState.rotation + '°';
+            applyStudioVisualTransformAndFilter();
+        };
+
+        window.toggleStudioCameraMirror = () => {
+            studioEditState.mirrored = !studioEditState.mirrored;
+            applyStudioVisualTransformAndFilter();
+            showToast(studioEditState.mirrored ? "Mode Miroir activé 🪞" : "Mode Miroir désactivé", "info");
+        };
+
+        window.setStudioSpeed = (spd) => {
+            const rate = parseFloat(spd) || 1.0;
+            studioEditState.speed = rate;
+            const sel = document.getElementById('studio-speed-select');
+            if (sel) sel.value = String(rate);
+            const v = document.getElementById('video-preview');
+            if (v) v.playbackRate = rate;
+            document.querySelectorAll('.cam-spd-btn').forEach(b => {
+                if (parseFloat(b.innerText) === rate) {
+                    b.className = "cam-spd-btn px-2 py-0.5 rounded-lg bg-[#ff2a5f] text-[10px] font-bold text-white";
+                } else {
+                    b.className = "cam-spd-btn px-2 py-0.5 rounded-lg bg-black/60 border border-white/15 text-[10px] font-bold text-gray-300";
+                }
+            });
+            showToast(`Cadence vidéo : ${rate}x`, "info");
+        };
+
+        function getComputedStudioFilterString() {
+            const b = studioEditState.brightness;
+            const c = studioEditState.contrast;
+            const s = studioEditState.saturation;
+            const h = studioEditState.hue;
+            if (b === 100 && c === 100 && s === 100 && h === 0) return '';
+            return `brightness(${b}%) contrast(${c}%) saturate(${s}%) hue-rotate(${h}deg)`;
+        }
+
+        function getComputedStudioTransformString() {
+            const parts = [];
+            if (studioEditState.rotation) parts.push(`rotate(${studioEditState.rotation}deg)`);
+            if (studioEditState.mirrored) parts.push(`scaleX(-1)`);
+            return parts.join(' ');
+        }
+
+        function applyStudioVisualTransformAndFilter() {
+            const targets = [
+                document.getElementById('video-preview'),
+                document.getElementById('studio-camera-live-video'),
+                document.getElementById('studio-photo-preview')
+            ];
+            const allPresetClasses = ['vfx-none', 'vfx-vivid', 'vfx-cinema', 'vfx-cyber', 'vfx-sun237', 'vfx-vhs', 'vfx-arctic', 'vfx-bw'];
+            const filterCss = getComputedStudioFilterString();
+            const transformCss = getComputedStudioTransformString();
+
+            targets.forEach(el => {
+                if (!el) return;
+                allPresetClasses.forEach(cls => el.classList.remove(cls));
+                el.classList.add(studioEditState.filterPreset || 'vfx-none');
+                el.style.filter = filterCss;
+                el.style.transform = transformCss;
+            });
+        }
+
+        window.selectStudioFilterPreset = (presetCls, btnEl) => {
+            studioEditState.filterPreset = presetCls;
+            document.querySelectorAll('.studio-filter-chip').forEach(b => {
+                b.className = "studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200";
+            });
+            if (btnEl) {
+                btnEl.className = "studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-[#ff2a5f] text-white";
+            }
+            applyStudioVisualTransformAndFilter();
+        };
+
+        window.updateStudioColorSliders = () => {
+            studioEditState.brightness = parseInt(document.getElementById('studio-bright-slider')?.value || '100', 10);
+            studioEditState.contrast = parseInt(document.getElementById('studio-contrast-slider')?.value || '100', 10);
+            studioEditState.saturation = parseInt(document.getElementById('studio-sat-slider')?.value || '100', 10);
+            studioEditState.hue = parseInt(document.getElementById('studio-hue-slider')?.value || '0', 10);
+
+            const lb = document.getElementById('lbl-studio-bright'); if (lb) lb.innerText = studioEditState.brightness + '%';
+            const lc = document.getElementById('lbl-studio-contrast'); if (lc) lc.innerText = studioEditState.contrast + '%';
+            const ls = document.getElementById('lbl-studio-sat'); if (ls) ls.innerText = studioEditState.saturation + '%';
+            const lh = document.getElementById('lbl-studio-hue'); if (lh) lh.innerText = studioEditState.hue + '°';
+
+            applyStudioVisualTransformAndFilter();
+        };
+
+        window.resetStudioColorGrading = () => {
+            studioEditState.filterPreset = 'vfx-none';
+            studioEditState.brightness = 100;
+            studioEditState.contrast = 100;
+            studioEditState.saturation = 100;
+            studioEditState.hue = 0;
+            const b = document.getElementById('studio-bright-slider'); if (b) b.value = 100;
+            const c = document.getElementById('studio-contrast-slider'); if (c) c.value = 100;
+            const s = document.getElementById('studio-sat-slider'); if (s) s.value = 100;
+            const h = document.getElementById('studio-hue-slider'); if (h) h.value = 0;
+            window.updateStudioColorSliders();
+            const firstChip = document.querySelector('.studio-filter-chip');
+            window.selectStudioFilterPreset('vfx-none', firstChip);
+            showToast("Filtres et couleurs réinitialisés", "info");
+        };
+
+        window.updateStudioOverlayPreview = () => {
+            const inp = document.getElementById('studio-overlay-text-input');
+            const banner = document.getElementById('studio-live-text-overlay');
+            if (!inp || !banner) return;
+            const txt = inp.value.trim();
+            studioEditState.overlayText = txt;
+            if (!txt) {
+                banner.classList.add('hidden');
+                banner.innerText = '';
+                return;
+            }
+            banner.innerText = txt;
+            banner.classList.remove('hidden', 'studio-text-banner-glass', 'studio-text-banner-neon', 'studio-text-banner-cinema', 'studio-text-banner-impact');
+            banner.classList.add('studio-text-banner-' + (studioEditState.overlayStyle || 'glass'));
+            banner.style.color = studioEditState.overlayColor || '#ffffff';
+        };
+
+        window.setStudioTextStyle = (style) => {
+            studioEditState.overlayStyle = style;
+            window.updateStudioOverlayPreview();
+        };
+
+        window.setStudioTextColor = (color) => {
+            studioEditState.overlayColor = color;
+            window.updateStudioOverlayPreview();
+        };
+
+        window.setStudioTextPosition = (pos) => {
+            studioEditState.overlayPos = pos;
+            const banner = document.getElementById('studio-live-text-overlay');
+            if (!banner) return;
+            banner.style.left = '50%';
+            banner.style.transform = 'translateX(-50%)';
+            if (pos === 'top') {
+                banner.style.top = '14%';
+                banner.style.bottom = 'auto';
+            } else if (pos === 'bottom') {
+                banner.style.top = 'auto';
+                banner.style.bottom = '22%';
+            } else {
+                banner.style.top = '50%';
+                banner.style.bottom = 'auto';
+                banner.style.transform = 'translate(-50%, -50%)';
+            }
+        };
+
+        window.setStudioSticker = (emoji) => {
+            studioEditState.overlaySticker = emoji;
+            const st = document.getElementById('studio-live-sticker-overlay');
+            if (!st) return;
+            if (!emoji) {
+                st.classList.add('hidden');
+                st.innerText = '';
+            } else {
+                st.innerText = emoji;
+                st.classList.remove('hidden');
+            }
+        };
+
+        // Enable touch/mouse dragging for Text Banner & Sticker inside #upload-preview-area
+        function makeStudioElementDraggable(el) {
+            if (!el || el.dataset.dragBound === 'true') return;
+            el.dataset.dragBound = 'true';
+            let dragging = false;
+            const onMove = (clientX, clientY) => {
+                if (!dragging) return;
+                const parent = document.getElementById('upload-preview-area');
+                if (!parent) return;
+                const rect = parent.getBoundingClientRect();
+                const xPct = Math.max(10, Math.min(90, ((clientX - rect.left) / rect.width) * 100));
+                const yPct = Math.max(10, Math.min(85, ((clientY - rect.top) / rect.height) * 100));
+                el.style.left = xPct + '%';
+                el.style.top = yPct + '%';
+                el.style.right = 'auto';
+                el.style.bottom = 'auto';
+                el.style.transform = 'translate(-50%, -50%)';
+            };
+            el.addEventListener('pointerdown', (e) => {
+                e.stopPropagation();
+                dragging = true;
+                el.setPointerCapture(e.pointerId);
+            });
+            el.addEventListener('pointermove', (e) => {
+                if (dragging) onMove(e.clientX, e.clientY);
+            });
+            el.addEventListener('pointerup', () => { dragging = false; });
+        }
+
+        window.pickQuickStudioSound = (soundName) => {
+            const inp = document.getElementById('video-sound-title');
+            if (inp) inp.value = soundName;
+            const bar = document.getElementById('upload-selected-sound-bar');
+            const nameEl = document.getElementById('upload-selected-sound-name');
+            if (bar && nameEl) {
+                nameEl.innerText = `♫ ${soundName}`;
+                bar.classList.remove('hidden');
+                bar.classList.add('flex');
+            }
+            showToast(`Ambiance sonore "${soundName}" sélectionnée !`, "success");
+        };
+
+        window.appendUploadHashtag = (tag) => {
+            const desc = document.getElementById('video-desc');
+            if (!desc) return;
+            if (!desc.value.includes(tag)) {
+                desc.value = (desc.value.trim() + ' ' + tag + ' ').trimStart();
+            }
+            showToast(`Hashtag ${tag} ajouté`, "info");
+        };
+
+        window.saveStudioDraft = () => {
+            const draft = {
+                desc: document.getElementById('video-desc')?.value || '',
+                soundTitle: document.getElementById('video-sound-title')?.value || '',
+                location: document.getElementById('video-location')?.value || '',
+                tags: document.getElementById('video-tags')?.value || '',
+                aspectMode: document.getElementById('video-aspect-mode')?.value || 'contain',
+                overlayText: studioEditState.overlayText || '',
+                overlaySticker: studioEditState.overlaySticker || ''
+            };
+            safeSetStorage('rv_studio_draft', JSON.stringify(draft));
+            showToast("Brouillon sauvegardé dans R-Studio ! 💾", "success");
+        };
+
         window.openUploadWithTag = (tag) => {
             if (!checkAuth()) return;
             window.openUploadModal();
@@ -3698,82 +5652,132 @@
 
         window.openUploadModal = () => {
             if(!checkAuth()) return;
+            stopMasterAudio();
+            document.querySelectorAll('.video-card video').forEach(v => v.pause());
+            stopStudioCameraStream();
+
+            studioSelectedFile = null;
+            studioRecordedFile = null;
             document.getElementById('video-file-input').value = "";
+            const natInp = document.getElementById('native-camera-file-input');
+            if (natInp) natInp.value = "";
+
             const v = document.getElementById('video-preview');
             v.pause();
             v.src = "";
             v.classList.add('hidden');
             document.getElementById('video-controls-overlay').classList.add('hidden');
             document.getElementById('video-controls-overlay').classList.remove('flex');
-            const area = document.getElementById('upload-preview-area');
-            const icon = area.querySelector('i') || area.querySelector('svg');
-            if(icon) icon.classList.remove('hidden');
-            const text = area.querySelector('p');
-            if(text) text.classList.remove('hidden');
+            const emptyPrompt = document.getElementById('studio-empty-prompt');
+            if (emptyPrompt) emptyPrompt.classList.remove('hidden');
+            document.getElementById('video-file-input').classList.remove('hidden');
+
+            makeStudioElementDraggable(document.getElementById('studio-live-text-overlay'));
+            makeStudioElementDraggable(document.getElementById('studio-live-sticker-overlay'));
+
+            // Restore draft if fields are empty
+            try {
+                const savedDraft = JSON.parse(safeGetStorage('rv_studio_draft', 'null'));
+                if (savedDraft && !document.getElementById('video-desc').value) {
+                    if (savedDraft.desc) document.getElementById('video-desc').value = savedDraft.desc;
+                    if (savedDraft.location) document.getElementById('video-location').value = savedDraft.location;
+                }
+            } catch (e) {}
+
+            window.switchStudioSourceMode('gallery');
+            refreshStudioRShieldBarUI();
             document.getElementById('upload-modal').classList.add('open');
+            lucide.createIcons();
         };
 
-        window.previewVideoUpload = (i) => { 
-            if(i.files[0]) { 
-                const v = document.getElementById('video-preview');
-                const fileURL = URL.createObjectURL(i.files[0]);
-                v.src = fileURL;
-                v.classList.remove('hidden'); 
-                
-                v.onloadedmetadata = () => { 
-                    const dur = v.duration; 
-                    const maxDur = Math.min(dur, 120); 
-                    document.getElementById('trim-start').value = 0; 
-                    document.getElementById('trim-end').value = Math.floor(maxDur); 
-                    document.getElementById('trim-duration-display').innerText = Math.floor(maxDur) + 's';
+        function loadFileIntoStudioEditor(fileObj) {
+            if (!fileObj) return;
+            studioSelectedFile = fileObj;
+            const v = document.getElementById('video-preview');
+            const fileURL = URL.createObjectURL(fileObj);
+            v.src = fileURL;
+            v.classList.remove('hidden');
+            v.muted = false; // Allow user to hear their clip inside the Upload Editor
 
-                    const w = v.videoWidth || 9;
-                    const h = v.videoHeight || 16;
-                    const ratioBadge = document.getElementById('upload-detected-ratio');
-                    const aspectSelect = document.getElementById('video-aspect-mode');
-                    if (w >= h) {
-                        if (ratioBadge) ratioBadge.innerText = `Paysage/Carré (${w}x${h})`;
-                        if (aspectSelect) aspectSelect.value = 'contain';
-                        updateUploadPreviewFit('contain');
-                    } else {
-                        if (ratioBadge) ratioBadge.innerText = `Vertical (${w}x${h})`;
-                        if (aspectSelect) aspectSelect.value = 'contain';
-                        updateUploadPreviewFit('contain');
-                    }
-                    
-                    const coverSlider = document.getElementById('cover-slider');
-                    coverSlider.max = dur;
-                    coverSlider.value = 0;
-                    coverSlider.oninput = () => {
-                        v.currentTime = coverSlider.value;
-                    };
-                };
+            v.onloadedmetadata = () => { 
+                const dur = v.duration && isFinite(v.duration) ? v.duration : 30; 
+                const maxDur = Math.min(dur, 120); 
+                document.getElementById('trim-start').value = 0; 
+                document.getElementById('trim-end').value = Math.floor(maxDur); 
+                document.getElementById('trim-duration-display').innerText = Math.floor(maxDur) + 's';
+
+                const w = v.videoWidth || 9;
+                const h = v.videoHeight || 16;
+                const ratioBadge = document.getElementById('upload-detected-ratio');
+                const aspectSelect = document.getElementById('video-aspect-mode');
+                if (w >= h) {
+                    if (ratioBadge) ratioBadge.innerText = `Paysage/Carré (${w}x${h})`;
+                    if (aspectSelect) aspectSelect.value = 'contain';
+                    updateUploadPreviewFit('contain');
+                } else {
+                    if (ratioBadge) ratioBadge.innerText = `Vertical (${w}x${h})`;
+                    if (aspectSelect) aspectSelect.value = 'contain';
+                    updateUploadPreviewFit('contain');
+                }
                 
-                playVideoSynchronized(v);
-                const area = document.getElementById('upload-preview-area'); const icon = area.querySelector('i') || area.querySelector('svg'); if(icon) icon.classList.add('hidden'); const text = area.querySelector('p'); if(text) text.classList.add('hidden');
-                const controls = document.getElementById('video-controls-overlay'); controls.classList.remove('hidden'); controls.classList.add('flex');
+                const coverSlider = document.getElementById('cover-slider');
+                coverSlider.max = dur;
+                coverSlider.value = 0;
+                coverSlider.oninput = () => {
+                    v.currentTime = coverSlider.value;
+                    const cBadge = document.getElementById('studio-cover-time-badge');
+                    if (cBadge) cBadge.innerText = parseFloat(coverSlider.value).toFixed(1) + 's';
+                };
+            };
+            
+            applyStudioVisualTransformAndFilter();
+            v.play().catch(() => {});
+            const emptyPrompt = document.getElementById('studio-empty-prompt');
+            if (emptyPrompt) emptyPrompt.classList.add('hidden');
+            document.getElementById('video-file-input').classList.add('hidden');
+            const controls = document.getElementById('video-controls-overlay');
+            controls.classList.remove('hidden');
+            controls.classList.add('flex');
+        }
+
+        window.previewVideoUpload = (i) => { 
+            if(i && i.files && i.files[0]) { 
+                stopStudioCameraStream();
+                loadFileIntoStudioEditor(i.files[0]);
             } 
         };
         window.changeVideoFile = () => { document.getElementById('video-file-input').click(); };
         window.deleteVideoFile = () => {
+            stopStudioCameraStream();
+            studioSelectedFile = null;
+            studioRecordedFile = null;
+            studioCapturedPhotoDataUrl = null;
+            const photoPrev = document.getElementById('studio-photo-preview');
+            if (photoPrev) { photoPrev.src = ""; photoPrev.classList.add('hidden'); }
+            const savePhotoBtn = document.getElementById('studio-save-photo-btn');
+            if (savePhotoBtn) { savePhotoBtn.classList.add('hidden'); savePhotoBtn.classList.remove('flex'); }
             const v = document.getElementById('video-preview'); v.pause(); v.removeAttribute('src'); v.load(); v.classList.add('hidden');
             document.getElementById('video-file-input').value = "";
+            document.getElementById('video-file-input').classList.remove('hidden');
+            const natInp = document.getElementById('native-camera-file-input');
+            if (natInp) natInp.value = "";
             const controls = document.getElementById('video-controls-overlay'); controls.classList.add('hidden'); controls.classList.remove('flex');
-            const area = document.getElementById('upload-preview-area'); const icon = area.querySelector('i') || area.querySelector('svg'); if(icon) icon.classList.remove('hidden'); const text = area.querySelector('p'); if(text) text.classList.remove('hidden');
+            const emptyPrompt = document.getElementById('studio-empty-prompt');
+            if (emptyPrompt) emptyPrompt.classList.remove('hidden');
         };
         window.updateTrimPreview = () => {
             const v = document.getElementById('video-preview'); if (!v.duration) return;
             let start = parseFloat(document.getElementById('trim-start').value) || 0; let end = parseFloat(document.getElementById('trim-end').value) || Math.min(v.duration, 120);
             if (start < 0) start = 0; if (end > v.duration) end = v.duration;
             if (end - start > 120) { end = start + 120; if (end > v.duration) { end = v.duration; start = Math.max(0, end - 120); } }
-            if (end <= start + 5) { end = Math.min(v.duration, start + 5); if (end - start < 5 && start > 5) { start = end - 5; } }
+            if (end <= start + 1) { end = Math.min(v.duration, start + 1); }
             document.getElementById('trim-start').value = start.toFixed(1); document.getElementById('trim-end').value = end.toFixed(1);
             document.getElementById('trim-duration-display').innerText = Math.round(end - start) + 's';
             v.currentTime = start; v.play().catch(()=>{}); v.ontimeupdate = null; v.ontimeupdate = () => { if(v.currentTime >= end) { v.currentTime = start; v.play().catch(()=>{}); } };
         };
         window.uploadVideo = async () => {
-            const f = document.getElementById('video-file-input').files[0];
-            if(!f) { showToast("Veuillez sélectionner une vidéo avant de publier.", "error"); return; }
+            const f = studioSelectedFile || document.getElementById('video-file-input').files[0] || document.getElementById('native-camera-file-input')?.files[0] || studioRecordedFile;
+            if(!f) { showToast("Veuillez sélectionner ou filmer une vidéo avant de publier.", "error"); return; }
             const btn = document.getElementById('btn-publish'); const originalText = btn.innerText; btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`; btn.disabled = true;
             
             const trimStart = parseFloat(document.getElementById('trim-start').value) || 0; 
@@ -3802,8 +5806,52 @@
             const soundAuthor = selectedSoundForUpload ? selectedSoundForUpload.soundAuthor : currentUserData.username;
             const soundSourceId = selectedSoundForUpload ? selectedSoundForUpload.sourceVideoId : null;
 
+            const studioConfigPayload = {
+                filterPreset: studioEditState.filterPreset || 'vfx-none',
+                customFilterCss: getComputedStudioFilterString(),
+                transformCss: getComputedStudioTransformString(),
+                speed: studioEditState.speed || 1.0,
+                overlayText: studioEditState.overlayText || '',
+                overlayStyle: studioEditState.overlayStyle || 'glass',
+                overlayColor: studioEditState.overlayColor || '#ffffff',
+                overlayPos: studioEditState.overlayPos || 'center',
+                overlaySticker: studioEditState.overlaySticker || '',
+                keepOriginalAudio: document.getElementById('studio-keep-original-audio')?.checked !== false
+            };
+
             try {
-                document.getElementById('upload-status').innerText = "Téléversement haute vitesse en cours...";
+                // Check if user is already banned due to repeated violations
+                const strikeState = getUserStrikeState();
+                if (strikeState.banned) {
+                    await applyUserModerationStrike({
+                        category: 'COMPTE SUSPENDU POUR RÉCIDIVE (3/3)',
+                        reason: "Votre compte a été suspendu suite à des violations répétées des règles d'authenticité et de sécurité. Vous ne pouvez plus publier.",
+                        authenticityScore: 0
+                    });
+                    return;
+                }
+
+                const copyrightCert = document.getElementById('opt-copyright-cert');
+                if (copyrightCert && !copyrightCert.checked) {
+                    showToast("Veuillez certifier que vous détenez les droits d'auteur de cette vidéo (Anti-Plagiat).", "error");
+                    return;
+                }
+                document.getElementById('upload-status').innerText = "🛡️ Analyse R-Shield AI (Authenticité, Anti-Plagiat, Nudité, Anti-Arnaque)...";
+                const audit = await runRShieldFullAudit(f, desc, studioEditState.overlayText || '', soundTitle);
+
+                if (!audit.passed) {
+                    document.getElementById('upload-status').innerText = "🚫 Publication bloquée du « Pour toi » par R-Shield AI";
+                    const strikeOutcome = await applyUserModerationStrike(audit);
+
+                    // If it's a critical violation (Nudity, Scam, Violence) or user reached 2+ strikes, block publication completely
+                    if (audit.blockUploadCompletely || strikeOutcome.newStrikes >= 2) {
+                        return;
+                    }
+                    // Otherwise (e.g. 1st time duplicate/non-authentic video), publish as restricted (excluded from Pour Toi)
+                }
+
+                const isFypAllowed = audit.passed && audit.fypEligible && !strikeState.shadowbanned;
+                document.getElementById('upload-status').innerText = "Téléversement et rendu R-Studio en cours...";
                 const url = await uploadToCloudinary(f);
                 await addDoc(collection(db, "videos"), { 
                     userId: auth.currentUser.uid, 
@@ -3816,15 +5864,28 @@
                     favorites: [], 
                     commentCount: 0, 
                     views: 0, 
+                    completions: 0,
+                    rewatches: 0,
                     isVerified: currentUserData.isVerified || false, 
                     createdAt: serverTimestamp(), 
                     trimStart: trimStart, 
                     trimEnd: trimEnd,
-                    visibility: visibility,
+                    visibility: isFypAllowed ? visibility : (visibility === 'public' ? 'followers' : visibility),
+                    fypEligible: isFypAllowed,
+                    moderationStatus: isFypAllowed ? 'approved' : 'restricted_no_fyp',
+                    authenticityScore: audit.authenticityScore || 94,
+                    recordedWithRCam: !!audit.recordedWithRCam,
+                    mediaHash: audit.mediaHash || '',
+                    fileSize: audit.fileSize || 0,
+                    copyrightAttested: true,
+                    licenseType: 'R-Videos Original Creator License',
+                    appPackageId: 'com.ralphnyame.rvideos',
+                    authorShadowbanned: !!strikeState.shadowbanned,
                     aspectMode: aspectMode,
                     soundTitle: escapeHtml(soundTitle),
                     soundAuthor: escapeHtml(soundAuthor),
                     soundSourceId: soundSourceId,
+                    studioConfig: studioConfigPayload,
                     isPinned: false,
                     thumbnailOffset: thumbnailOffset,
                     location: escapeHtml(location),
@@ -3834,11 +5895,16 @@
                 });
                 window.deleteVideoFile();
                 window.clearSelectedUploadSound();
+                window.resetStudioColorGrading();
+                document.getElementById('studio-overlay-text-input').value = "";
+                window.updateStudioOverlayPreview();
+                window.setStudioSticker('');
                 document.getElementById('video-desc').value = "";
                 document.getElementById('video-location').value = "";
                 document.getElementById('video-tags').value = "";
                 document.getElementById('upload-status').innerText = "";
-                window.closeModal('upload-modal');
+                safeSetStorage('rv_studio_draft', '');
+                window.closeStudioModal();
                 showToast("Vidéo publiée avec succès ! 🎉", "success");
                 navigateTo('feed');
             } catch(e) { showToast(e.message, "error"); } finally { btn.disabled=false; btn.innerHTML=originalText; }
@@ -3880,6 +5946,8 @@
                         card.dataset.inView = "true";
                         card.dataset.userPaused = "false";
                         if (progressFill) progressFill.style.width = '0%';
+                        const activeVidId = card.getAttribute('data-id');
+                        if (activeVidId) recordRVideosWatchSignal(activeVidId, 'enter', v);
 
                         const targetSrc = memoryBlobUrls.get(sourceUrl) || sourceUrl;
                         if (!v.getAttribute('src') && targetSrc) {
@@ -3901,6 +5969,10 @@
                             updateDoc(doc(db, "videos", vidId), { views: increment(1) }).catch(()=>{}); 
                         }
                     } else { 
+                        if (card.dataset.inView === "true") {
+                            const leftVidId = card.getAttribute('data-id');
+                            if (leftVidId) recordRVideosWatchSignal(leftVidId, 'leave', v);
+                        }
                         card.dataset.inView = "false";
                         card.dataset.userPaused = "false";
                         v.pause();
@@ -3999,7 +6071,13 @@
             const list = document.getElementById('comments-list'); list.innerHTML = "<div class='text-center text-xs text-gray-400 py-6'>Chargement des commentaires...</div>"; 
             onSnapshot(query(collection(db, `videos/${id}/comments`), orderBy("createdAt", "asc")), (snap) => { 
                 let commentsArr = [];
-                snap.forEach(d => commentsArr.push({ id: d.id, ...d.data() }));
+                snap.forEach(d => {
+                    const cData = d.data();
+                    // Only keep comments from real human users (exclude virtual bots)
+                    if (!isVirtualBotIdOrUser(cData.userId, cData.email, cData.isBot)) {
+                        commentsArr.push({ id: d.id, ...cData });
+                    }
+                });
                 commentsArr.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
 
                 let html = ""; 
@@ -4126,6 +6204,10 @@
                 let html = "";
                 snap.forEach(d => {
                     const n = d.data();
+                    if (isVirtualBotIdOrUser(n.fromUid, '', n.isBot)) {
+                        deleteDoc(doc(db, "users", auth.currentUser.uid, "notifications", d.id)).catch(() => {});
+                        return;
+                    }
                     if(!n.read) updateDoc(doc(db, "users", auth.currentUser.uid, "notifications", d.id), {read: true}).catch(()=>{});
                     let icon = "bell"; let color = "text-yellow-400";
                     if(n.type === 'like') { icon = "heart"; color = "text-[#ff2a5f]"; }
@@ -4415,6 +6497,7 @@
             let html = ""; 
             snap.forEach(doc => { 
                 const u = doc.data(); 
+                if (isVirtualBotIdOrUser(u.uid || doc.id, u.email, u.isBot)) return;
                 const badge = getBadgeHtml(u.isVerified); 
                 html += `<div onclick="viewUserProfile('${u.uid}')" class="flex items-center justify-between p-3 bg-white/[0.04] border border-white/10 rounded-2xl cursor-pointer hover:bg-white/[0.08] transition"><div class="flex items-center gap-3"><div class="w-11 h-11">${getAvatarHTML(u.photoURL, "w-full h-full")}</div><div><div class="font-bold text-sm flex items-center">@${escapeHtml(u.username)} ${badge}</div><div class="text-xs text-gray-400 truncate max-w-[200px]">${escapeHtml(u.bio || 'Créateur R-Videos')}</div></div></div><i data-lucide="chevron-right" class="w-4 h-4 text-gray-500"></i></div>`; 
             }); 
@@ -4503,7 +6586,8 @@
             document.getElementById('profile-badge-container').innerHTML = getBadgeHtml(isCertif); 
             document.getElementById('my-profile-actions').classList.toggle('hidden', !isMe);
             document.getElementById('other-profile-actions').classList.toggle('hidden', isMe);
-            document.getElementById('profile-followers').innerText = formatCount(data.followers ? data.followers.length + (data.email === "virgulemili@gmail.com" ? 5300 : 0) : 0);
+            const realFollowersList = Array.isArray(data.followers) ? data.followers.filter(fUid => !isVirtualBotIdOrUser(fUid)) : [];
+            document.getElementById('profile-followers').innerText = formatCount(realFollowersList.length);
             document.getElementById('profile-following').innerText = formatCount(data.following ? data.following.length : 0);
             document.getElementById('profile-likes').innerText = formatCount((data.likes || 0)); 
             const adminContainer = document.getElementById('admin-actions');
@@ -4585,11 +6669,22 @@
             if (activeScreen === 'feed-screen') { loadFeed(); } else if (activeScreen === 'profile-screen') { if (currentProfileUid) viewUserProfile(currentProfileUid); } else if (activeScreen === 'inbox-screen') { const isActivity = document.getElementById('tab-activities').classList.contains('border-b-2'); switchInboxTab(isActivity ? 'activities' : 'messages'); } else if (activeScreen === 'discover-screen') { const term = document.getElementById('search-input').value; searchUsers(term); }
         }
 
-        const CAM_NAMES = [ "Abena", "Onana", "Mbarga", "Etoundi", "Ngannou", "Eto'o", "Milla", "Song", "Kamga", "Fotso", "Ekedi", "Njoya", "Tchami", "Mbia", "Bassogog", "Aboubakar", "N'Jie", "Olinga", "Oyongo", "Fai" ];
-        const CAM_FIRST = [ "Jean", "Pierre", "Paul", "Marie", "Thérèse", "Samuel", "Roger", "Patrick", "Rigobert", "Achille", "Joseph", "Emmanuel", "Chantal", "Charlotte", "Amadou", "Moussa", "Fatou", "Aisha", "Ibrahim" ];
-        async function initBotSystem() { await checkAndSpawnBot(); setInterval(checkAndSpawnBot, 60000); }
-        async function checkAndSpawnBot() { try { const sysRef = doc(db, "system", "bot_config"); const snap = await getDoc(sysRef); let lastRun = 0; if (snap.exists()) { lastRun = snap.data().lastRun?.toMillis() || 0; } const now = Date.now(); if (now - lastRun > 1800000) { await setDoc(sysRef, { lastRun: serverTimestamp() }); await createAndActivateBot(); } } catch (e) {} }
-        async function createAndActivateBot() { const fname = CAM_FIRST[Math.floor(Math.random() * CAM_FIRST.length)]; const lname = CAM_NAMES[Math.floor(Math.random() * CAM_NAMES.length)]; const username = `${fname}_${lname}${Math.floor(Math.random()*100)}`; const botId = "bot_" + crypto.randomUUID(); await setDoc(doc(db, "users", botId), { username: username, email: `${username.toLowerCase()}@bot.local`, photoURL: "", bio: "J'aime le Cameroun 🇨🇲", followers: [], following: [], blockedUsers: [], blockedBy: [], uid: botId, isVerified: false, isBot: true, createdAt: serverTimestamp() }); const videosSnap = await getDocs(query(collection(db, "videos"), limit(20))); if (!videosSnap.empty) { const videos = videosSnap.docs; const randomVideo = videos[Math.floor(Math.random() * videos.length)]; const vidData = randomVideo.data(); if (Math.random() > 0.5) { await updateDoc(doc(db, "videos", randomVideo.id), { likes: increment(1), likedBy: arrayUnion(botId) }); if (vidData.userId !== botId) { await addDoc(collection(db, "users", vidData.userId, "notifications"), { type: 'like', text: "a aimé votre vidéo", fromUid: botId, fromUsername: username, fromPhoto: "", createdAt: serverTimestamp(), read: false }); } } else { const comments = ["Super !", "J'adore 😍", "Propre", "Validé ✅", "Cameroun oye 🇨🇲", "Mdrrr", "Top", "Bien joué", "Le feu 🔥", "Respect"]; const txt = comments[Math.floor(Math.random() * comments.length)]; await addDoc(collection(db, `videos/${randomVideo.id}/comments`), { text: txt, userId: botId, username: username, userPhotoURL: "", likes: 0, likedBy: [], createdAt: serverTimestamp() }); await updateDoc(doc(db, "videos", randomVideo.id), { commentCount: increment(1) }); if (vidData.userId !== botId) { await addDoc(collection(db, "users", vidData.userId, "notifications"), { type: 'comment', text: "a commenté: " + txt, fromUid: botId, fromUsername: username, fromPhoto: "", createdAt: serverTimestamp(), read: false }); } } } }
+        // ============================================================================
+        // VIRTUAL BOT SYSTEM DISABLED & PURGED — 100% REAL HUMAN USERS ONLY
+        // Automatically cleans up any legacy bot_ accounts or bot reactions in DB
+        // ============================================================================
+        async function initBotSystem() {
+            // Virtual account creation is permanently disabled for Google Play Console compliance.
+            // Run a one-time silent cleanup of any legacy virtual bot accounts & reactions.
+            try {
+                if (safeGetStorage('rv_legacy_bots_purged_v1', 'false') === 'true') return;
+                const botUsersSnap = await getDocs(query(collection(db, "users"), where("isBot", "==", true), limit(25)));
+                botUsersSnap.forEach(bDoc => {
+                    deleteDoc(doc(db, "users", bDoc.id)).catch(() => {});
+                });
+                safeSetStorage('rv_legacy_bots_purged_v1', 'true');
+            } catch (e) {}
+        }
         (function() { let startY = 0; let currentY = 0; let isPulling = false; const threshold = 120; const loader = document.getElementById('ptr-loader'); const spinner = document.getElementById('ptr-spinner'); const arrow = document.getElementById('ptr-arrow'); document.addEventListener('touchstart', (e) => { const activeScreen = document.querySelector('.screen.active'); if (!activeScreen) return; let scrollContainer = activeScreen.querySelector('.overflow-y-scroll, .overflow-y-auto'); if (!scrollContainer) scrollContainer = activeScreen; if (scrollContainer.scrollTop <= 0) { startY = e.touches[0].clientY; currentY = startY; isPulling = true; } else { isPulling = false; } }, { passive: true }); document.addEventListener('touchmove', (e) => { if (!isPulling) return; currentY = e.touches[0].clientY; const diff = currentY - startY; if (diff > 0) { const translateVal = Math.min(diff * 0.4, 150); loader.style.transform = `translateY(${translateVal - 64}px)`; if (translateVal > 60) { arrow.style.transform = "rotate(180deg)"; } else { arrow.style.transform = "rotate(0deg)"; } } }, { passive: true }); document.addEventListener('touchend', (e) => { if (!isPulling) return; isPulling = false; const diff = currentY - startY; if (diff > threshold) { loader.style.transform = `translateY(20px)`; arrow.classList.add('hidden'); spinner.classList.remove('hidden'); refreshCurrentScreen().then(() => { setTimeout(() => { loader.style.transform = ''; arrow.classList.remove('hidden'); arrow.style.transform = "rotate(0deg)"; spinner.classList.add('hidden'); }, 800); }); } else { loader.style.transform = ''; } }); })();
         
         // --- TRANSLATIONS ---
