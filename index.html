@@ -2789,17 +2789,12 @@
             if (audioMemoryBlobUrls.has(audioUrl)) return Promise.resolve(audioMemoryBlobUrls.get(audioUrl));
             if (audioPreloadInFlight.has(audioUrl)) return audioPreloadInFlight.get(audioUrl);
 
-            const fetchStartTs = performance.now();
             const p = fetch(audioUrl, { mode: "cors" })
                 .then(resp => {
                     if (!resp.ok) throw new Error("Audio preload HTTP " + resp.status);
                     return resp.blob();
                 })
                 .then(blob => {
-                    const elapsedMs = Math.max(1, performance.now() - fetchStartTs);
-                    if (blob && blob.size > 4096 && typeof recordNetworkThroughputSample === "function") {
-                        recordNetworkThroughputSample(blob.size, elapsedMs);
-                    }
                     audioPreloadInFlight.delete(audioUrl);
                     return storeAudioBlobInMemory(audioUrl, blob) || audioUrl;
                 })
@@ -3362,23 +3357,9 @@
                 }
             });
 
-            // Measure video initial frame load latency to feed automatic Economy Mode detector
-            v.addEventListener("loadstart", () => {
-                v.dataset.loadStartTs = String(performance.now());
-            });
-            v.addEventListener("loadeddata", () => {
-                const startTs = parseFloat(v.dataset.loadStartTs || "0");
-                if (startTs > 0 && typeof recordVideoLoadLatency === "function") {
-                    recordVideoLoadLatency(performance.now() - startTs);
-                }
-            });
-
-            // If <video> ever had a network buffer pause mid-stream on 3G, pause audio while buffering, re-align when resumed, and notify speed detector
+            // If <video> ever had a network buffer pause mid-stream, pause audio while buffering and re-align when resumed
             v.addEventListener("waiting", () => {
                 if (v === activePlayingVideo && v.dataset.launchComplete === "true") {
-                    if (typeof recordVideoBufferingStall === "function") {
-                        recordVideoBufferingStall();
-                    }
                     if (rvMasterAudio && !rvMasterAudio.paused) {
                         rvMasterAudio.dataset.pausedForNetBuffer = "true";
                         rvMasterAudio.pause();
@@ -3984,7 +3965,6 @@
             } else if (key === 'preloadNext') {
                 safeSetStorage('rv_preload_next', String(val));
             } else if (key === 'dataSaver') {
-                networkSpeedMonitor.userManualOverride = !!val;
                 safeSetStorage('rv_data_saver_manual', String(val));
                 safeSetStorage('rv_data_saver', String(val));
                 refreshUpcomingFeedUrlsForNetworkChange();
@@ -4066,24 +4046,10 @@
         }
 
         // ============================================================================
-        // CONTINUOUS INTERNET CONNECTION SPEED ANALYZER (HIGH-QUALITY PRIORITY)
-        // Always defaults to and actively strives to return to High Quality Mode
-        // (width: 480, q_auto:good). Only switches to Economy Mode temporarily when
-        // real-time connection speed drops, and automatically restores High Quality
-        // as soon as connection speed recovers.
+        // QUALITÉ VIDÉO FIXE DU FIL D'ACTUALITÉ (420p HD) & MODE ÉCONOMIQUE MANUEL (360p)
+        // Aucune gestion automatique : qualité fixée à 420p HD par défaut, ou 360p si
+        // l'économiseur de données est activé manuellement par l'utilisateur.
         // ============================================================================
-        const networkSpeedMonitor = {
-            measuredMbps: null,
-            measuredRttMs: null,
-            recentStallCount: 0,
-            lastStallTimestamp: 0,
-            consecutiveFastLoads: 0,
-            lastSwitchTimestamp: 0,
-            userManualOverride: safeGetStorage('rv_data_saver_manual', 'false') === 'true',
-            monitorIntervalId: null,
-            initialized: false
-        };
-
         function refreshUpcomingFeedUrlsForNetworkChange() {
             const container = document.getElementById("feed-container");
             if (!container) return;
@@ -4093,12 +4059,11 @@
                 if (!rawUrl || !rawUrl.includes("cloudinary.com")) return;
                 const trimStart = parseFloat(card.getAttribute("data-trim-start") || "0") || 0;
                 const trimEnd = parseFloat(card.getAttribute("data-trim-end") || "0") || 0;
-                const newOptimizedUrl = getOptimizedVideoUrl(rawUrl, 480, trimStart, trimEnd);
+                const newOptimizedUrl = getOptimizedVideoUrl(rawUrl, 420, trimStart, trimEnd);
                 if (!newOptimizedUrl) return;
                 card.setAttribute("data-src", newOptimizedUrl);
 
                 const vid = card.querySelector("video");
-                // Update non-active preloaded videos so upcoming cards immediately reflect High Quality or Economy Mode
                 if (vid && vid !== activePlayingVideo && card.dataset.inView !== "true") {
                     const currentSrc = vid.getAttribute("src");
                     if (currentSrc && currentSrc !== newOptimizedUrl) {
@@ -4111,186 +4076,11 @@
             });
         }
 
-        function evaluateAndApplyAutoEconomyMode(reason = "periodic") {
-            if (networkSpeedMonitor.userManualOverride) return appSettings.dataSaver;
-
-            const now = Date.now();
-            // Automatically forgive temporary stalls after 8 seconds of smooth playback so the app always returns to High Quality!
-            if (networkSpeedMonitor.recentStallCount > 0 && now - networkSpeedMonitor.lastStallTimestamp > 8000) {
-                networkSpeedMonitor.recentStallCount = Math.max(0, networkSpeedMonitor.recentStallCount - 1);
-                if (networkSpeedMonitor.recentStallCount > 0) {
-                    networkSpeedMonitor.lastStallTimestamp = now - 4000;
-                }
-            }
-
-            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-            let isConnectionCurrentlySlow = false;
-
-            if (connection) {
-                if (connection.saveData === true) {
-                    isConnectionCurrentlySlow = true;
-                }
-                const eff = String(connection.effectiveType || "").toLowerCase();
-                if (eff === "slow-2g" || eff === "2g") {
-                    isConnectionCurrentlySlow = true;
-                }
-                if (typeof connection.downlink === "number" && connection.downlink > 0 && connection.downlink < 1.4) {
-                    isConnectionCurrentlySlow = true;
-                }
-                if (typeof connection.rtt === "number" && connection.rtt > 0 && connection.rtt > 480) {
-                    isConnectionCurrentlySlow = true;
-                }
-            }
-
-            if (networkSpeedMonitor.measuredMbps !== null && networkSpeedMonitor.measuredMbps < 1.35) {
-                isConnectionCurrentlySlow = true;
-            }
-            if (networkSpeedMonitor.measuredRttMs !== null && networkSpeedMonitor.measuredRttMs > 520) {
-                isConnectionCurrentlySlow = true;
-            }
-            if (networkSpeedMonitor.recentStallCount >= 1) {
-                isConnectionCurrentlySlow = true;
-            }
-
-            // Default preference is ALWAYS High Quality (targetEconomy = false) unless connection is actively slow right now
-            const targetEconomy = isConnectionCurrentlySlow ? true : false;
-
-            if (targetEconomy !== appSettings.dataSaver) {
-                // Prevent rapid oscillation within 4s, but allow immediate return to High Quality once stable
-                if (!targetEconomy && now - networkSpeedMonitor.lastSwitchTimestamp < 4000 && reason !== "init") {
-                    return appSettings.dataSaver;
-                }
-                networkSpeedMonitor.lastSwitchTimestamp = now;
-                appSettings.dataSaver = targetEconomy;
-                safeSetStorage("rv_data_saver", String(targetEconomy));
-                const dsCheckbox = document.getElementById("setting-datasaver");
-                if (dsCheckbox) dsCheckbox.checked = targetEconomy;
-                refreshUpcomingFeedUrlsForNetworkChange();
-            }
-            return appSettings.dataSaver;
-        }
-
-        function recordNetworkThroughputSample(bytes, durationMs) {
-            if (!bytes || !durationMs || durationMs <= 0) return;
-            const sampleMbps = (bytes * 8) / (durationMs * 1000);
-            if (networkSpeedMonitor.measuredMbps === null) {
-                networkSpeedMonitor.measuredMbps = sampleMbps;
-            } else {
-                // Favor faster recovery toward High Quality when throughput improves
-                const weightNew = sampleMbps >= networkSpeedMonitor.measuredMbps ? 0.55 : 0.35;
-                networkSpeedMonitor.measuredMbps = networkSpeedMonitor.measuredMbps * (1 - weightNew) + sampleMbps * weightNew;
-            }
-            if (sampleMbps >= 1.8 && networkSpeedMonitor.recentStallCount > 0) {
-                networkSpeedMonitor.recentStallCount = 0;
-            }
-            evaluateAndApplyAutoEconomyMode("throughput_sample");
-        }
-
-        function recordVideoLoadLatency(loadMs) {
-            if (!loadMs || loadMs <= 0) return;
-            if (loadMs > 2100) {
-                networkSpeedMonitor.recentStallCount = Math.min(2, networkSpeedMonitor.recentStallCount + 1);
-                networkSpeedMonitor.lastStallTimestamp = Date.now();
-                networkSpeedMonitor.consecutiveFastLoads = 0;
-                evaluateAndApplyAutoEconomyMode("slow_video_load");
-            } else if (loadMs < 950) {
-                networkSpeedMonitor.consecutiveFastLoads += 1;
-                if (networkSpeedMonitor.recentStallCount > 0) {
-                    networkSpeedMonitor.recentStallCount = 0;
-                }
-                if (networkSpeedMonitor.measuredMbps !== null && networkSpeedMonitor.measuredMbps < 1.6) {
-                    networkSpeedMonitor.measuredMbps = 2.4;
-                }
-                evaluateAndApplyAutoEconomyMode("fast_video_load");
-            }
-        }
-
-        function recordVideoBufferingStall() {
-            networkSpeedMonitor.recentStallCount = Math.min(2, networkSpeedMonitor.recentStallCount + 1);
-            networkSpeedMonitor.lastStallTimestamp = Date.now();
-            networkSpeedMonitor.consecutiveFastLoads = 0;
-            evaluateAndApplyAutoEconomyMode("video_stall");
-        }
-
-        async function probeInitialConnectionSpeed() {
-            if (!navigator.onLine) return;
-            try {
-                const startTs = performance.now();
-                const resp = await fetch("https://res.cloudinary.com/demo/image/upload/w_1,q_1/sample.jpg", {
-                    method: "HEAD",
-                    mode: "cors",
-                    cache: "no-store"
-                });
-                if (resp && resp.ok) {
-                    const rtt = Math.max(1, performance.now() - startTs);
-                    networkSpeedMonitor.measuredRttMs = networkSpeedMonitor.measuredRttMs === null
-                        ? rtt
-                        : (networkSpeedMonitor.measuredRttMs * 0.4 + rtt * 0.6);
-                    // If ping is healthy (< 350ms), clear any stale slow state so we return to High Quality
-                    if (rtt < 350) {
-                        if (networkSpeedMonitor.measuredMbps !== null && networkSpeedMonitor.measuredMbps < 1.5) {
-                            networkSpeedMonitor.measuredMbps = 2.2;
-                        }
-                        if (Date.now() - networkSpeedMonitor.lastStallTimestamp > 5000) {
-                            networkSpeedMonitor.recentStallCount = 0;
-                        }
-                    }
-                    evaluateAndApplyAutoEconomyMode("latency_probe");
-                }
-            } catch (e) {}
-        }
-
-        function initAutoConnectionSpeedDetector() {
-            if (networkSpeedMonitor.initialized) return;
-            networkSpeedMonitor.initialized = true;
-            evaluateAndApplyAutoEconomyMode("init");
-
-            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-            if (connection && typeof connection.addEventListener === "function") {
-                connection.addEventListener("change", () => {
-                    probeInitialConnectionSpeed();
-                    evaluateAndApplyAutoEconomyMode("connection_change");
-                });
-            }
-            window.addEventListener("online", () => {
-                probeInitialConnectionSpeed();
-                evaluateAndApplyAutoEconomyMode("online");
-            });
-
-            // Continuous background connection analyzer: checks connection at all times and strives to return to High Quality
-            networkSpeedMonitor.monitorIntervalId = setInterval(() => {
-                if (document.hidden) return;
-                // Whenever in Economy Mode or periodically, probe connection to see if we can return to High Quality right away
-                if (appSettings.dataSaver && !networkSpeedMonitor.userManualOverride) {
-                    probeInitialConnectionSpeed();
-                }
-                evaluateAndApplyAutoEconomyMode("continuous_heartbeat");
-            }, 6000);
-
-            probeInitialConnectionSpeed();
-        }
-        initAutoConnectionSpeedDetector();
-
         function getNetworkConfig() {
-            evaluateAndApplyAutoEconomyMode("get_config");
             if (appSettings.dataSaver) {
-                return { width: 240, quality: 'q_auto:low' };
+                return { width: 360, quality: 'q_auto:eco' };
             }
-            // By default, ALWAYS prioritize High Quality (width: 480, q_auto:good) for the best user experience!
-            let config = { width: 480, quality: 'q_auto:good' };
-            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-            if (connection) {
-                if (connection.saveData) {
-                    return { width: 240, quality: 'q_auto:low' };
-                }
-                const eff = String(connection.effectiveType || "").toLowerCase();
-                if (eff === 'slow-2g' || eff === '2g') {
-                    config = { width: 240, quality: 'q_auto:low' };
-                } else if (eff === '3g' && typeof connection.downlink === "number" && connection.downlink > 0 && connection.downlink < 1.6) {
-                    config = { width: 360, quality: 'q_auto:eco' };
-                }
-            }
-            return config;
+            return { width: 420, quality: 'q_auto:good' };
         }
 
         function unescapeHtml(text) {
@@ -6409,7 +6199,7 @@
                     const iReposted = isGuestMode ? false : data.repostedBy?.includes(auth.currentUser.uid);
                     const trimStart = data.trimStart || 0;
                     const trimEnd = data.trimEnd || 0;
-                    const optimizedUrl = getOptimizedVideoUrl(data.url, 480, trimStart, trimEnd);
+                    const optimizedUrl = getOptimizedVideoUrl(data.url, 420, trimStart, trimEnd);
                     const badge = getBadgeHtml(authorIdentity.isVerified);
                     
                     const safeDesc = formatDescription(escapeHtml(data.description));
