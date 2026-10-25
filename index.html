@@ -2789,12 +2789,17 @@
             if (audioMemoryBlobUrls.has(audioUrl)) return Promise.resolve(audioMemoryBlobUrls.get(audioUrl));
             if (audioPreloadInFlight.has(audioUrl)) return audioPreloadInFlight.get(audioUrl);
 
+            const fetchStartTs = performance.now();
             const p = fetch(audioUrl, { mode: "cors" })
                 .then(resp => {
                     if (!resp.ok) throw new Error("Audio preload HTTP " + resp.status);
                     return resp.blob();
                 })
                 .then(blob => {
+                    const elapsedMs = Math.max(1, performance.now() - fetchStartTs);
+                    if (blob && blob.size > 4096 && typeof recordNetworkThroughputSample === "function") {
+                        recordNetworkThroughputSample(blob.size, elapsedMs);
+                    }
                     audioPreloadInFlight.delete(audioUrl);
                     return storeAudioBlobInMemory(audioUrl, blob) || audioUrl;
                 })
@@ -3067,8 +3072,11 @@
             }
             if (activeIdx === -1) activeIdx = 0;
 
-            // 1. Pre-cache lightweight audio MP3 blobs for current + next 3 cards + previous 1 card
-            const audioTargets = [activeIdx, activeIdx + 1, activeIdx + 2, activeIdx + 3, activeIdx - 1];
+            // 1. Pre-cache lightweight audio MP3 blobs (adapts depth & pacing to Economy Mode)
+            const audioTargets = appSettings.dataSaver
+                ? [activeIdx, activeIdx + 1, activeIdx + 2]
+                : [activeIdx, activeIdx + 1, activeIdx + 2, activeIdx + 3, activeIdx - 1];
+            const staggerMs = appSettings.dataSaver ? 110 : 60;
             audioTargets.forEach((idx, order) => {
                 if (idx < 0 || idx >= cards.length) return;
                 const c = cards[idx];
@@ -3077,7 +3085,7 @@
                 if (networkPrimary && !networkPrimary.startsWith("blob:") && !audioMemoryBlobUrls.has(networkPrimary)) {
                     setTimeout(() => {
                         preloadAudioUrlIntoMemory(networkPrimary);
-                    }, order * 60);
+                    }, order * staggerMs);
                 }
             });
 
@@ -3354,11 +3362,27 @@
                 }
             });
 
-            // If <video> ever had a network buffer pause mid-stream on 3G, pause audio while buffering and re-align audio when video resumes
+            // Measure video initial frame load latency to feed automatic Economy Mode detector
+            v.addEventListener("loadstart", () => {
+                v.dataset.loadStartTs = String(performance.now());
+            });
+            v.addEventListener("loadeddata", () => {
+                const startTs = parseFloat(v.dataset.loadStartTs || "0");
+                if (startTs > 0 && typeof recordVideoLoadLatency === "function") {
+                    recordVideoLoadLatency(performance.now() - startTs);
+                }
+            });
+
+            // If <video> ever had a network buffer pause mid-stream on 3G, pause audio while buffering, re-align when resumed, and notify speed detector
             v.addEventListener("waiting", () => {
-                if (v === activePlayingVideo && v.dataset.launchComplete === "true" && rvMasterAudio && !rvMasterAudio.paused) {
-                    rvMasterAudio.dataset.pausedForNetBuffer = "true";
-                    rvMasterAudio.pause();
+                if (v === activePlayingVideo && v.dataset.launchComplete === "true") {
+                    if (typeof recordVideoBufferingStall === "function") {
+                        recordVideoBufferingStall();
+                    }
+                    if (rvMasterAudio && !rvMasterAudio.paused) {
+                        rvMasterAudio.dataset.pausedForNetBuffer = "true";
+                        rvMasterAudio.pause();
+                    }
                 }
             });
 
@@ -3960,7 +3984,10 @@
             } else if (key === 'preloadNext') {
                 safeSetStorage('rv_preload_next', String(val));
             } else if (key === 'dataSaver') {
+                networkSpeedMonitor.userManualOverride = true;
                 safeSetStorage('rv_data_saver', String(val));
+                refreshUpcomingFeedUrlsForNetworkChange();
+                showToast(val ? "Mode Économie activé ⚡" : "Mode Haute Qualité activé ✨", "info");
             } else if (key === 'defaultSpeed') {
                 const spd = parseFloat(val) || 1.0;
                 appSettings.defaultSpeed = spd;
@@ -4037,11 +4064,205 @@
             element.innerText = val;
         }
 
+        // ============================================================================
+        // AUTOMATIC INTERNET CONNECTION SPEED DETECTOR & ECONOMY MODE CONTROLLER
+        // Continuously monitors Network Information API (downlink, rtt, effectiveType,
+        // saveData), real-time download throughput (Mbps), and video load/stall latency
+        // to automatically activate or deactivate Economy Mode (appSettings.dataSaver).
+        // ============================================================================
+        const networkSpeedMonitor = {
+            measuredMbps: null,
+            measuredRttMs: null,
+            recentStallCount: 0,
+            consecutiveFastLoads: 0,
+            lastSwitchTimestamp: 0,
+            userManualOverride: false,
+            initialized: false
+        };
+
+        function refreshUpcomingFeedUrlsForNetworkChange() {
+            const container = document.getElementById("feed-container");
+            if (!container) return;
+            const cards = Array.from(container.querySelectorAll(".video-card"));
+            cards.forEach(card => {
+                const rawUrl = card.getAttribute("data-raw-url");
+                if (!rawUrl || !rawUrl.includes("cloudinary.com")) return;
+                const trimStart = parseFloat(card.getAttribute("data-trim-start") || "0") || 0;
+                const trimEnd = parseFloat(card.getAttribute("data-trim-end") || "0") || 0;
+                const newOptimizedUrl = getOptimizedVideoUrl(rawUrl, 480, trimStart, trimEnd);
+                if (!newOptimizedUrl) return;
+                card.setAttribute("data-src", newOptimizedUrl);
+
+                const vid = card.querySelector("video");
+                // Only update non-active preloaded videos so the currently playing video is never interrupted
+                if (vid && vid !== activePlayingVideo && card.dataset.inView !== "true") {
+                    const currentSrc = vid.getAttribute("src");
+                    if (currentSrc && currentSrc !== newOptimizedUrl) {
+                        const resolved = memoryBlobUrls.get(newOptimizedUrl) || newOptimizedUrl;
+                        vid.src = resolved;
+                        vid.preload = "auto";
+                        try { vid.load(); } catch (e) {}
+                    }
+                }
+            });
+        }
+
+        function evaluateAndApplyAutoEconomyMode(reason = "periodic") {
+            if (networkSpeedMonitor.userManualOverride) return appSettings.dataSaver;
+
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            let slowSignal = false;
+            let fastSignal = true;
+
+            if (connection) {
+                if (connection.saveData === true) {
+                    slowSignal = true;
+                    fastSignal = false;
+                }
+                const eff = String(connection.effectiveType || "").toLowerCase();
+                if (eff === "slow-2g" || eff === "2g" || eff === "3g") {
+                    slowSignal = true;
+                    fastSignal = false;
+                }
+                if (typeof connection.downlink === "number" && connection.downlink > 0) {
+                    if (connection.downlink < 2.0) {
+                        slowSignal = true;
+                        fastSignal = false;
+                    } else if (connection.downlink < 2.8) {
+                        fastSignal = false;
+                    }
+                }
+                if (typeof connection.rtt === "number" && connection.rtt > 0) {
+                    if (connection.rtt > 380) {
+                        slowSignal = true;
+                        fastSignal = false;
+                    } else if (connection.rtt > 240) {
+                        fastSignal = false;
+                    }
+                }
+            }
+
+            if (networkSpeedMonitor.measuredMbps !== null) {
+                if (networkSpeedMonitor.measuredMbps < 1.8) {
+                    slowSignal = true;
+                    fastSignal = false;
+                } else if (networkSpeedMonitor.measuredMbps < 2.6) {
+                    fastSignal = false;
+                }
+            }
+
+            if (networkSpeedMonitor.measuredRttMs !== null) {
+                if (networkSpeedMonitor.measuredRttMs > 420) {
+                    slowSignal = true;
+                    fastSignal = false;
+                } else if (networkSpeedMonitor.measuredRttMs > 250) {
+                    fastSignal = false;
+                }
+            }
+
+            if (networkSpeedMonitor.recentStallCount >= 1) {
+                slowSignal = true;
+                fastSignal = false;
+            }
+
+            let targetEconomy = appSettings.dataSaver;
+            if (slowSignal) {
+                targetEconomy = true;
+            } else if (fastSignal) {
+                targetEconomy = false;
+            }
+
+            const now = Date.now();
+            // Instant switch to Economy Mode on slow signal; 8s hysteresis before leaving Economy Mode
+            if (targetEconomy !== appSettings.dataSaver) {
+                if (!targetEconomy && now - networkSpeedMonitor.lastSwitchTimestamp < 8000 && reason !== "init") {
+                    return appSettings.dataSaver;
+                }
+                networkSpeedMonitor.lastSwitchTimestamp = now;
+                appSettings.dataSaver = targetEconomy;
+                safeSetStorage("rv_data_saver", String(targetEconomy));
+                const dsCheckbox = document.getElementById("setting-datasaver");
+                if (dsCheckbox) dsCheckbox.checked = targetEconomy;
+                refreshUpcomingFeedUrlsForNetworkChange();
+            }
+            return appSettings.dataSaver;
+        }
+
+        function recordNetworkThroughputSample(bytes, durationMs) {
+            if (!bytes || !durationMs || durationMs <= 0) return;
+            const sampleMbps = (bytes * 8) / (durationMs * 1000);
+            if (networkSpeedMonitor.measuredMbps === null) {
+                networkSpeedMonitor.measuredMbps = sampleMbps;
+            } else {
+                networkSpeedMonitor.measuredMbps = networkSpeedMonitor.measuredMbps * 0.6 + sampleMbps * 0.4;
+            }
+            evaluateAndApplyAutoEconomyMode("throughput_sample");
+        }
+
+        function recordVideoLoadLatency(loadMs) {
+            if (!loadMs || loadMs <= 0) return;
+            if (loadMs > 1700) {
+                networkSpeedMonitor.recentStallCount = Math.min(4, networkSpeedMonitor.recentStallCount + 1);
+                networkSpeedMonitor.consecutiveFastLoads = 0;
+                evaluateAndApplyAutoEconomyMode("slow_video_load");
+            } else if (loadMs < 550) {
+                networkSpeedMonitor.consecutiveFastLoads += 1;
+                if (networkSpeedMonitor.consecutiveFastLoads >= 2 && networkSpeedMonitor.recentStallCount > 0) {
+                    networkSpeedMonitor.recentStallCount = Math.max(0, networkSpeedMonitor.recentStallCount - 1);
+                }
+                evaluateAndApplyAutoEconomyMode("fast_video_load");
+            }
+        }
+
+        function recordVideoBufferingStall() {
+            networkSpeedMonitor.recentStallCount = Math.min(4, networkSpeedMonitor.recentStallCount + 1);
+            networkSpeedMonitor.consecutiveFastLoads = 0;
+            evaluateAndApplyAutoEconomyMode("video_stall");
+        }
+
+        async function probeInitialConnectionSpeed() {
+            try {
+                const startTs = performance.now();
+                const resp = await fetch("https://res.cloudinary.com/demo/image/upload/w_1,q_1/sample.jpg", {
+                    method: "HEAD",
+                    mode: "cors",
+                    cache: "no-store"
+                });
+                if (resp && resp.ok) {
+                    const rtt = Math.max(1, performance.now() - startTs);
+                    networkSpeedMonitor.measuredRttMs = networkSpeedMonitor.measuredRttMs === null
+                        ? rtt
+                        : (networkSpeedMonitor.measuredRttMs * 0.5 + rtt * 0.5);
+                    evaluateAndApplyAutoEconomyMode("latency_probe");
+                }
+            } catch (e) {}
+        }
+
+        function initAutoConnectionSpeedDetector() {
+            if (networkSpeedMonitor.initialized) return;
+            networkSpeedMonitor.initialized = true;
+            evaluateAndApplyAutoEconomyMode("init");
+
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (connection && typeof connection.addEventListener === "function") {
+                connection.addEventListener("change", () => {
+                    evaluateAndApplyAutoEconomyMode("connection_change");
+                });
+            }
+            window.addEventListener("online", () => {
+                probeInitialConnectionSpeed();
+                evaluateAndApplyAutoEconomyMode("online");
+            });
+            probeInitialConnectionSpeed();
+        }
+        initAutoConnectionSpeedDetector();
+
         function getNetworkConfig() {
+            evaluateAndApplyAutoEconomyMode("get_config");
             if (appSettings.dataSaver) {
                 return { width: 240, quality: 'q_auto:low' };
             }
-            let config = { width: 320, quality: 'q_auto:eco' }; 
+            let config = { width: 360, quality: 'q_auto:eco' };
             const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
             if (connection) {
                 if (connection.saveData) {
@@ -4053,14 +4274,21 @@
                         config = { width: 240, quality: 'q_auto:low' };
                         break;
                     case '3g':
-                        config = { width: 360, quality: 'q_auto:eco' };
+                        config = { width: 320, quality: 'q_auto:eco' };
                         break;
                     case '4g':
                         config = { width: 480, quality: 'q_auto:good' };
                         break;
                     default:
-                        config = { width: 320, quality: 'q_auto:eco' };
+                        config = { width: 360, quality: 'q_auto:eco' };
                         break;
+                }
+            }
+            if (networkSpeedMonitor.measuredMbps !== null) {
+                if (networkSpeedMonitor.measuredMbps < 1.8) {
+                    return { width: 240, quality: 'q_auto:low' };
+                } else if (networkSpeedMonitor.measuredMbps >= 3.2 && config.width < 480) {
+                    return { width: 480, quality: 'q_auto:good' };
                 }
             }
             return config;
