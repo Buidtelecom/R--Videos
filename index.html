@@ -495,6 +495,7 @@
         body.light-theme #upload-modal .text-white,
         body.light-theme #edit-modal .text-white,
         body.light-theme #privacy-modal .text-white,
+        body.light-theme #profile-social-modal .text-white,
         body.light-theme #profile-following,
         body.light-theme #profile-followers {
             color: #0f172a !important;
@@ -1261,25 +1262,35 @@
                         <div id="profile-joined-date" class="text-[10px] text-gray-400 mb-2 flex items-center gap-1"></div>
                         <p id="profile-bio" class="text-gray-300 text-xs mb-4 text-center max-w-md leading-relaxed">...</p>
 
-                        <!-- Stats Card -->
-                        <div class="grid grid-cols-3 gap-2 w-full max-w-sm glass-panel rounded-2xl p-3 text-center">
-                            <div>
+                        <!-- Stats Card (Clickable: Abonnements, Abonnés, J'aime, Vues du profil) -->
+                        <div class="grid grid-cols-4 gap-1.5 w-full max-w-md glass-panel rounded-2xl p-3 text-center">
+                            <div onclick="openProfileSocialModal('following')" class="cursor-pointer hover:bg-white/5 rounded-xl py-1 transition active:scale-95" title="Voir les abonnements (10 plus récents)">
                                 <div class="font-extrabold text-base font-display text-white" id="profile-following">0</div>
-                                <div class="text-[11px] text-gray-400" data-i18n="following">Abonnements</div>
+                                <div class="text-[10px] text-gray-400 truncate px-0.5" data-i18n="following">Abonnements</div>
                             </div>
-                            <div class="border-x border-white/10">
+                            <div onclick="openProfileSocialModal('followers')" class="border-x border-white/10 cursor-pointer hover:bg-white/5 py-1 transition active:scale-95" title="Voir les abonnés (10 plus récents)">
                                 <div class="font-extrabold text-base font-display text-white" id="profile-followers">0</div>
-                                <div class="text-[11px] text-gray-400" data-i18n="followers">Abonnés</div>
+                                <div class="text-[10px] text-gray-400 truncate px-0.5" data-i18n="followers">Abonnés</div>
                             </div>
-                            <div>
+                            <div onclick="openProfileSocialModal('likes')" class="border-r border-white/10 cursor-pointer hover:bg-white/5 py-1 transition active:scale-95" title="Voir qui a aimé (10 plus récents)">
                                 <div class="font-extrabold text-base font-display text-[#ff2a5f]" id="profile-likes">0</div>
-                                <div class="text-[11px] text-gray-400" data-i18n="likes">J'aime</div>
+                                <div class="text-[10px] text-gray-400 truncate px-0.5" data-i18n="likes">J'aime</div>
+                            </div>
+                            <div onclick="openProfileSocialModal('views')" class="cursor-pointer hover:bg-white/5 rounded-xl py-1 transition active:scale-95 relative" title="Qui a regardé ce profil (10 plus récents)">
+                                <div class="font-extrabold text-base font-display text-cyan-400 flex items-center justify-center gap-1">
+                                    <span id="profile-views-count">0</span>
+                                    <i id="profile-views-ghost-badge" data-lucide="eye" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                </div>
+                                <div class="text-[10px] text-gray-400 truncate px-0.5">Visiteurs</div>
                             </div>
                         </div>
 
                         <div id="my-profile-actions" class="flex gap-2 mt-4 w-full max-w-sm hidden">
                             <button onclick="openEditProfile()" class="flex-1 bg-white/10 hover:bg-white/15 py-2.5 rounded-xl text-xs font-bold border border-white/15 transition" data-i18n="edit_profile">Modifier le profil</button>
-                            <button onclick="openSettingsModal()" class="glass-pill px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 text-white">
+                            <button onclick="openProfileSocialModal('views')" class="glass-pill px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 text-cyan-300" title="Voir qui a visité mon profil / Mode Invisible">
+                                <i data-lucide="eye" class="w-4 h-4 text-cyan-400"></i> Visites
+                            </button>
+                            <button onclick="openSettingsModal()" class="glass-pill px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 text-white">
                                 <i data-lucide="sliders" class="w-4 h-4 text-[#ff2a5f]"></i> Réglages
                             </button>
                             <button onclick="shareMyProfile()" class="glass-pill px-3 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center text-cyan-400" title="Partager mon profil">
@@ -1305,6 +1316,59 @@
                 </div>
                 <div id="profile-videos-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2"></div>
             </div>
+        </div>
+
+        <!-- PROFILE SOCIAL & VISITORS BOTTOM SHEET (Likes, Abonnés, Abonnements, Visiteurs du profil — Max 10 récents) -->
+        <div id="profile-social-modal" class="bottom-sheet z-[91] h-[78%]">
+            <div class="w-full flex justify-center pt-2.5 pb-1 cursor-pointer" onclick="closeProfileSocialModal()">
+                <div class="w-12 h-1 bg-gray-600 rounded-full"></div>
+            </div>
+            <div class="px-4 py-2.5 border-b border-white/10 flex items-center justify-between">
+                <div>
+                    <h3 id="profile-social-title" class="font-extrabold text-sm md:text-base font-display text-white">Interactions du profil</h3>
+                    <p class="text-[10px] text-gray-400">Affichage limité aux 10 personnes les plus récentes</p>
+                </div>
+                <button onclick="closeProfileSocialModal()" class="p-1.5 text-gray-400 hover:text-white rounded-full bg-white/5">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <!-- 4 Interactive Tabs: J'aime | Abonnés | Abonnements | Visiteurs -->
+            <div class="grid grid-cols-4 gap-1 p-2 bg-white/[0.02] border-b border-white/10 text-center">
+                <button id="ps-tab-likes" onclick="switchProfileSocialTab('likes')" class="py-2 px-1 rounded-xl text-[11px] font-bold transition flex items-center justify-center gap-1 bg-[#ff2a5f] text-white">
+                    <i data-lucide="heart" class="w-3.5 h-3.5"></i>
+                    <span class="truncate">J'aime</span>
+                </button>
+                <button id="ps-tab-followers" onclick="switchProfileSocialTab('followers')" class="py-2 px-1 rounded-xl text-[11px] font-bold transition flex items-center justify-center gap-1 text-gray-400 hover:text-white bg-white/5">
+                    <i data-lucide="users" class="w-3.5 h-3.5"></i>
+                    <span class="truncate">Abonnés</span>
+                </button>
+                <button id="ps-tab-following" onclick="switchProfileSocialTab('following')" class="py-2 px-1 rounded-xl text-[11px] font-bold transition flex items-center justify-center gap-1 text-gray-400 hover:text-white bg-white/5">
+                    <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
+                    <span class="truncate">Abonnements</span>
+                </button>
+                <button id="ps-tab-views" onclick="switchProfileSocialTab('views')" class="py-2 px-1 rounded-xl text-[11px] font-bold transition flex items-center justify-center gap-1 text-gray-400 hover:text-white bg-white/5">
+                    <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                    <span class="truncate">Visiteurs</span>
+                </button>
+            </div>
+            <!-- Ghost / Invisible Mode Toggle Banner (Shown in Visiteurs tab) -->
+            <div id="ps-ghost-mode-bar" class="hidden px-4 py-2.5 bg-cyan-950/40 border-b border-cyan-500/30 items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center shrink-0">
+                        <i id="ps-ghost-icon" data-lucide="eye" class="w-4 h-4 text-cyan-300"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="text-xs font-extrabold text-white flex items-center gap-1.5">
+                            <span>Historique des visites de profil</span>
+                            <span id="ps-ghost-status-pill" class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-extrabold">Activé</span>
+                        </div>
+                        <p class="text-[10px] text-gray-300 leading-snug">Si tu désactives, tu deviens invisible quand tu regardes les profils et tu ne vois plus tes visiteurs.</p>
+                    </div>
+                </div>
+                <input type="checkbox" id="ps-ghost-toggle-checkbox" onchange="toggleProfileViewsVisibility(this.checked)" class="custom-checkbox shrink-0" checked>
+            </div>
+            <!-- List of up to 10 most recent users -->
+            <div id="profile-social-list" class="flex-1 overflow-y-auto p-4 space-y-2.5 no-scrollbar"></div>
         </div>
 
         <!-- SOUND / AUDIO SHEET MODAL ("Réutiliser les sons des vidéos d'autres personnes") -->
@@ -1547,6 +1611,13 @@
                 <div class="glass-panel p-4 rounded-2xl space-y-2.5">
                     <div class="flex items-center gap-2 text-purple-400 font-bold text-xs uppercase tracking-wider mb-1">
                         <i data-lucide="shield-check" class="w-4 h-4"></i> Compte & Confidentialité
+                    </div>
+                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10">
+                        <div class="pr-2">
+                            <div class="text-xs font-bold text-white">Historique des vues du profil (Mode Visible / Invisible)</div>
+                            <div class="text-[10px] text-gray-400">Voir qui a regardé ton profil. Désactive pour visiter en mode invisible.</div>
+                        </div>
+                        <input type="checkbox" id="setting-profile-views-enabled" onchange="toggleProfileViewsVisibility(this.checked)" class="custom-checkbox shrink-0" checked>
                     </div>
                     <button onclick="closeSettingsModal(); openPrivacyPolicy();" class="w-full flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold">
                         <span>Politique de Confidentialité & CGU Play Store</span>
@@ -3313,20 +3384,22 @@
             }
             if (!vData) return;
 
-            const sTitle = vData.soundTitle || `Son original - @${vData.username}`;
-            const sAuthor = vData.soundAuthor || vData.username;
+            await hydrateUserProfilesMap([vData.userId]);
+            const resolvedCreator = getResolvedProfileIdentity(vData.userId, vData.username, vData.isVerified, vData.userPhotoURL, vData.userEmail);
+            const sTitle = vData.soundTitle || `Son original - @${resolvedCreator.username}`;
+            const sAuthor = vData.soundAuthor || resolvedCreator.username;
             const sAudioUrl = vData.soundUrl || vData.url;
             currentSoundSheetData = {
                 soundTitle: sTitle,
                 soundAuthor: sAuthor,
                 audioUrl: sAudioUrl,
-                photoURL: vData.userPhotoURL || "",
+                photoURL: resolvedCreator.photoURL || vData.userPhotoURL || "",
                 sourceVideoId: docId
             };
 
             document.getElementById('sound-sheet-title').innerText = `♫ ${sTitle}`;
-            document.getElementById('sound-sheet-author').innerText = `Créé par @${sAuthor}`;
-            document.getElementById('sound-sheet-disc').innerHTML = getAvatarHTML(vData.userPhotoURL, "w-full h-full object-cover");
+            document.getElementById('sound-sheet-author').innerHTML = `Créé par @${escapeHtml(String(sAuthor).replace(/^@+/, ''))}${getBadgeHtml(resolvedCreator.isVerified)}`;
+            document.getElementById('sound-sheet-disc').innerHTML = getAvatarHTML(resolvedCreator.photoURL, "w-full h-full object-cover");
             document.getElementById('sound-sheet-modal').classList.add('open');
 
             // Load all videos using this sound
@@ -3343,9 +3416,11 @@
                         matches.push({ id: d.id, data: item });
                     }
                 });
+                await hydrateUserProfilesMap(matches.map(m => m.data.userId));
                 document.getElementById('sound-sheet-count').innerText = `${matches.length} vidéo(s) utilisent ce son`;
                 grid.innerHTML = "";
                 matches.forEach(({ id, data: vid }) => {
+                    const pInfo = getResolvedProfileIdentity(vid.userId, vid.username, vid.isVerified, vid.userPhotoURL, vid.userEmail);
                     const div = document.createElement('div');
                     div.className = "bg-[#0c1222] aspect-[3/4] relative rounded-xl overflow-hidden border border-white/10 cursor-pointer group";
                     div.onclick = () => { closeSoundSheet(); openFullVideo(id); };
@@ -3354,7 +3429,7 @@
                         <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent"></div>
                         <div class="absolute bottom-1.5 left-2 right-2 flex items-center justify-between text-[10px] font-bold text-white">
                             <span class="flex items-center gap-1"><i data-lucide="play" class="w-3 h-3 fill-white"></i> ${formatCount(vid.views)}</span>
-                            <span class="truncate max-w-[55px]">@${escapeHtml(vid.username)}</span>
+                            <span class="truncate max-w-[75px] flex items-center">@${escapeHtml(pInfo.username)}${getBadgeHtml(pInfo.isVerified)}</span>
                         </div>`;
                     grid.appendChild(div);
                 });
@@ -3615,6 +3690,8 @@
             document.getElementById('setting-cache-limit').value = appSettings.cacheLimitMB;
             document.getElementById('setting-cache-limit-label').innerText = appSettings.cacheLimitMB + ' Mo';
             document.getElementById('setting-start-muted').checked = appSettings.startMuted;
+            const pvCheck = document.getElementById('setting-profile-views-enabled');
+            if (pvCheck) pvCheck.checked = isProfileViewsEnabledForCurrentUser();
             refreshCacheStatsUI();
             document.getElementById('settings-modal').classList.add('open');
         };
@@ -4157,9 +4234,21 @@
                 if (rx.test(combined)) {
                     return {
                         isClean: false,
-                        category: 'NUDITÉ & CONTENU ADULTE (+18)',
-                        severity: 'critical',
-                        reason: "Détection de termes ou références explicites à la nudité / contenu pour adultes (+18). La nudité est strictement interdite sur R-Videos."
+                        category: 'NUDITÉ TOTALE & CONTENU EXPLICITE (+18)',
+                        severity: 'extreme',
+                        isTotalNudityOrExtreme: true,
+                        reason: "Détection de nudité totale / contenu sexuel explicite (+18). Cette faute très grave est formellement interdite sur R-Videos."
+                    };
+                }
+            }
+            for (const rx of RSHIELD_RULES.violenceHateKeywords) {
+                if (rx.test(combined)) {
+                    return {
+                        isClean: false,
+                        category: 'VIOLENCE EXTRÊME OU CONTENU ILLÉGAL GRAVE',
+                        severity: 'extreme',
+                        isTotalNudityOrExtreme: true,
+                        reason: "Détection de contenu criminel ou violence extrême. Cette faute très grave est formellement interdite."
                     };
                 }
             }
@@ -4168,22 +4257,13 @@
                     return {
                         isClean: false,
                         category: 'ARNAQUE, FRAUDE & PUBLICITÉ TROMPEUSE',
-                        severity: 'critical',
-                        reason: "Détection d'une tentative d'arnaque financière, promesse de gain frauduleux ou lien trompeur. Les arnaques sont formellement interdites."
+                        severity: 'sanction_24h',
+                        isTotalNudityOrExtreme: false,
+                        reason: "Détection d'une tentative d'arnaque financière, promesse de gain frauduleux ou lien trompeur. La sanction est levée après 24h ou dès suppression de la vidéo en cause."
                     };
                 }
             }
-            for (const rx of RSHIELD_RULES.violenceHateKeywords) {
-                if (rx.test(combined)) {
-                    return {
-                        isClean: false,
-                        category: 'VIOLENCE EXTRÊME OU CONTENU ILLÉGAL',
-                        severity: 'critical',
-                        reason: "Détection de propos violents, dangereux ou illégaux contraires à la sécurité de la communauté."
-                    };
-                }
-            }
-            return { isClean: true, category: 'CONFORME', severity: 'none', reason: '' };
+            return { isClean: true, category: 'CONFORME', severity: 'none', isTotalNudityOrExtreme: false, reason: '' };
         }
 
         // Cryptographic SHA-256 / Byte Fingerprint for Authenticity & Duplicate/Stolen Video Detection
@@ -4275,9 +4355,11 @@
                     if (photoPrev && !photoPrev.classList.contains('hidden') && photoPrev.naturalWidth > 0) {
                         ctx.drawImage(photoPrev, 0, 0, sampleW, sampleH);
                         const stats = analyzeCurrentCanvasFrame();
-                        const nudityFlag = (stats.centerSkinRatio > 0.76 && stats.skinRatio > 0.68);
+                        const totalNudityFlag = (stats.centerSkinRatio > 0.86 && stats.skinRatio > 0.78);
+                        const partialNudityFlag = !totalNudityFlag && (stats.centerSkinRatio > 0.76 && stats.skinRatio > 0.68);
                         resolve({
-                            nuditySuspected: nudityFlag,
+                            totalNuditySuspected: totalNudityFlag,
+                            nuditySuspected: totalNudityFlag || partialNudityFlag,
                             isBlankOrFakeVideo: false,
                             skinRatio: stats.skinRatio,
                             authenticityBaseScore: isCamRecording ? 100 : 94
@@ -4288,10 +4370,12 @@
                     if (videoPrev && videoPrev.readyState >= 2 && videoPrev.videoWidth > 0) {
                         ctx.drawImage(videoPrev, 0, 0, sampleW, sampleH);
                         const stats = analyzeCurrentCanvasFrame();
-                        const nudityFlag = (stats.centerSkinRatio > 0.78 && stats.skinRatio > 0.70);
+                        const totalNudityFlag = (stats.centerSkinRatio > 0.88 && stats.skinRatio > 0.80);
+                        const partialNudityFlag = !totalNudityFlag && (stats.centerSkinRatio > 0.78 && stats.skinRatio > 0.70);
                         const blankFakeFlag = (stats.darkRatio > 0.985 && stats.textureScore < 1.2 && !isCamRecording);
                         resolve({
-                            nuditySuspected: nudityFlag,
+                            totalNuditySuspected: totalNudityFlag,
+                            nuditySuspected: totalNudityFlag || partialNudityFlag,
                             isBlankOrFakeVideo: blankFakeFlag,
                             skinRatio: stats.skinRatio,
                             authenticityBaseScore: isCamRecording ? 100 : (blankFakeFlag ? 30 : 92)
@@ -4300,13 +4384,14 @@
                     }
 
                     resolve({
+                        totalNuditySuspected: false,
                         nuditySuspected: false,
                         isBlankOrFakeVideo: false,
                         skinRatio: 0,
                         authenticityBaseScore: isCamRecording ? 100 : 90
                     });
                 } catch (e) {
-                    resolve({ nuditySuspected: false, isBlankOrFakeVideo: false, skinRatio: 0, authenticityBaseScore: 90 });
+                    resolve({ totalNuditySuspected: false, nuditySuspected: false, isBlankOrFakeVideo: false, skinRatio: 0, authenticityBaseScore: 90 });
                 }
             });
         }
@@ -4320,6 +4405,7 @@
                     passed: false,
                     fypEligible: false,
                     blockUploadCompletely: true,
+                    isTotalNudityOrExtreme: !!textAudit.isTotalNudityOrExtreme,
                     category: textAudit.category,
                     reason: textAudit.reason,
                     authenticityScore: 15,
@@ -4350,9 +4436,10 @@
                 return {
                     passed: false,
                     fypEligible: false,
-                    blockUploadCompletely: false, // Allows private/profile storage if desired, OR blocks Pour Toi & warns user!
+                    blockUploadCompletely: false,
+                    isTotalNudityOrExtreme: false,
                     category: 'AUTHENTICITÉ NON RESPECTÉE (VIDÉO DUPLIQUÉE / REPOSTÉE)',
-                    reason: `Cette vidéo possède la même empreinte numérique qu'une publication existante (@${duplicateFound.username || 'createur'}). Les vidéos copiées, non authentiques ou republiées en spam sont exclues du flux « Pour toi ».`,
+                    reason: `Cette vidéo possède la même empreinte numérique qu'une publication existante (@${duplicateFound.username || 'createur'}). Elle est exclue du « Pour toi ». Supprimez cette vidéo pour lever la sanction immédiatement, sinon elle se lèvera automatiquement après 24h.`,
                     authenticityScore: 25,
                     mediaHash: fp.hash
                 };
@@ -4361,12 +4448,16 @@
             // 3. Visual Frame Analysis (Nudity Skin-Cluster & Fake/Blank Video Check)
             const visualAudit = await analyzeMediaVisualSafetyAndAuthenticity(fileObj);
             if (visualAudit.nuditySuspected) {
+                const isTotal = !!visualAudit.totalNuditySuspected;
                 return {
                     passed: false,
                     fypEligible: false,
                     blockUploadCompletely: true,
-                    category: 'NUDITÉ VISUELLE DÉTECTÉE PAR R-SHIELD AI',
-                    reason: "L'analyse d'image R-Shield AI a détecté un taux critique d'exposition corporelle / nudité sur les images de la vidéo. Ce contenu ne peut pas aller dans le « Pour toi ».",
+                    isTotalNudityOrExtreme: isTotal,
+                    category: isTotal ? 'NUDITÉ TOTALE DÉTECTÉE PAR R-SHIELD AI' : 'EXPOSITION CORPORELLE NON CONFORME',
+                    reason: isTotal
+                        ? "L'analyse R-Shield AI a détecté une vidéo de nudité totale (faute très grave). Ce contenu entraîne le blocage définitif du compte."
+                        : "L'analyse d'image R-Shield AI a détecté une exposition corporelle non conforme aux normes. La sanction se lève automatiquement après 24h.",
                     authenticityScore: 10,
                     mediaHash: fp.hash
                 };
@@ -4377,8 +4468,9 @@
                     passed: false,
                     fypEligible: false,
                     blockUploadCompletely: false,
+                    isTotalNudityOrExtreme: false,
                     category: 'VIDÉO NON AUTHENTIQUE (ÉCRAN NOIR / SPAM)',
-                    reason: "Votre vidéo semble vide ou composée uniquement d'un écran noir sans contenu authentique. Elle ne peut pas être diffusée dans le « Pour toi ».",
+                    reason: "Votre vidéo semble vide ou composée uniquement d'un écran noir sans contenu authentique. Supprimez cette vidéo pour lever la sanction immédiatement, sinon elle se lèvera automatiquement après 24h.",
                     authenticityScore: 30,
                     mediaHash: fp.hash
                 };
@@ -4388,6 +4480,7 @@
                 passed: true,
                 fypEligible: true,
                 blockUploadCompletely: false,
+                isTotalNudityOrExtreme: false,
                 category: 'AUTHENTIQUE & CONFORME',
                 reason: '',
                 authenticityScore: visualAudit.authenticityBaseScore || 94,
@@ -4397,15 +4490,97 @@
             };
         }
 
-        // Progressive Sanction & Strike Enforcement Engine (1/3 Warning -> 2/3 Shadowban & Restriction -> 3/3 Account Ban)
+        const SANCTION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 heures
+
+        function isCurrentAccountVipProtected() {
+            const email = (auth.currentUser?.email || currentUserData?.email || '').toLowerCase().trim();
+            return email === VIP_EMAIL.toLowerCase();
+        }
+
+        async function clearUserSanctionState(uid = null, notifyToast = false) {
+            const targetUid = uid || auth.currentUser?.uid;
+            if (targetUid) {
+                safeSetStorage(`rv_strikes_${targetUid}`, '0');
+                safeSetStorage(`rv_sanction_until_${targetUid}`, '0');
+            }
+            if (currentUserData && (!uid || uid === auth.currentUser?.uid)) {
+                currentUserData.strikes = 0;
+                currentUserData.fypShadowban = false;
+                currentUserData.sanctionUntil = 0;
+                currentUserData.sanctionVideoIds = [];
+                if (isCurrentAccountVipProtected() || !currentUserData.permanentBanGrave) {
+                    currentUserData.isBanned = false;
+                }
+            }
+            if (targetUid) {
+                await updateDoc(doc(db, "users", targetUid), {
+                    strikes: 0,
+                    fypShadowban: false,
+                    sanctionUntil: 0,
+                    sanctionVideoIds: []
+                }).catch(() => {});
+            }
+            refreshStudioRShieldBarUI();
+            if (notifyToast) {
+                showToast("Votre sanction a été levée ! Votre compte est de nouveau éligible au « Pour toi » ✅", "success");
+            }
+        }
+
         function getUserStrikeState() {
             const uid = auth.currentUser?.uid || 'guest';
+            if (isCurrentAccountVipProtected()) {
+                return { strikes: 0, shadowbanned: false, banned: false, sanctionUntil: 0, remainingHours: 0 };
+            }
+
+            const now = Date.now();
+            const localSanctionUntil = parseInt(safeGetStorage(`rv_sanction_until_${uid}`, '0'), 10) || 0;
+            const fsSanctionUntil = Number(currentUserData?.sanctionUntil || 0);
+            const sanctionUntil = Math.max(localSanctionUntil, fsSanctionUntil);
+
+            const isPermanentGraveBan = !!(currentUserData?.isBanned && currentUserData?.permanentBanGrave);
+
+            // Auto-lift temporary sanction after 24 hours
+            if (!isPermanentGraveBan && sanctionUntil > 0 && now >= sanctionUntil) {
+                safeSetStorage(`rv_strikes_${uid}`, '0');
+                safeSetStorage(`rv_sanction_until_${uid}`, '0');
+                if (currentUserData) {
+                    currentUserData.strikes = 0;
+                    currentUserData.fypShadowban = false;
+                    currentUserData.sanctionUntil = 0;
+                    currentUserData.sanctionVideoIds = [];
+                    currentUserData.isBanned = false;
+                }
+                if (auth.currentUser?.uid) {
+                    updateDoc(doc(db, "users", auth.currentUser.uid), {
+                        strikes: 0,
+                        fypShadowban: false,
+                        sanctionUntil: 0,
+                        sanctionVideoIds: [],
+                        isBanned: false
+                    }).catch(() => {});
+                }
+                return { strikes: 0, shadowbanned: false, banned: false, sanctionUntil: 0, remainingHours: 0 };
+            }
+
             const localStrikes = parseInt(safeGetStorage(`rv_strikes_${uid}`, '0'), 10) || 0;
             const fsStrikes = Number(currentUserData?.strikes || 0);
-            const strikes = Math.max(localStrikes, fsStrikes);
-            const shadowbanned = !!(currentUserData?.fypShadowban || strikes >= 2);
-            const banned = !!(currentUserData?.isBanned || strikes >= 3);
-            return { strikes, shadowbanned, banned };
+            let strikes = Math.max(localStrikes, fsStrikes);
+
+            // If user had legacy strikes without a 24h timestamp, initialize a 24h window so it expires after 24h
+            if (strikes > 0 && sanctionUntil === 0 && !isPermanentGraveBan && uid !== 'guest') {
+                const newUntil = now + SANCTION_DURATION_MS;
+                safeSetStorage(`rv_sanction_until_${uid}`, String(newUntil));
+                if (currentUserData) currentUserData.sanctionUntil = newUntil;
+            }
+
+            const activeSanction = strikes > 0 && (sanctionUntil === 0 || now < sanctionUntil);
+            if (!activeSanction && !isPermanentGraveBan) {
+                strikes = 0;
+            }
+            const remainingHours = sanctionUntil > now ? Math.max(1, Math.ceil((sanctionUntil - now) / (3600 * 1000))) : 24;
+            const shadowbanned = !!(activeSanction && (currentUserData?.fypShadowban || strikes >= 1));
+            const banned = isPermanentGraveBan;
+            return { strikes, shadowbanned, banned, sanctionUntil, remainingHours };
         }
 
         function refreshStudioRShieldBarUI() {
@@ -4425,74 +4600,104 @@
                 textEl.className = "text-rose-200 font-bold truncate";
                 textEl.innerText = `⚠️ Alerte R-Shield : ${liveCheck.category}`;
                 pillEl.className = "shrink-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-600 text-white";
-                pillEl.innerText = "Pour Toi : Refusé 🚫";
+                pillEl.innerText = "Publication Bloquée 🚫";
                 return;
             }
 
-            if (state.strikes === 0) {
+            if (state.strikes === 0 && !state.shadowbanned) {
                 bar.className = "mt-1 px-3 py-2 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between text-[11px]";
                 textEl.className = "text-emerald-200 font-semibold truncate";
                 textEl.innerText = "R-Shield AI : Authenticité, Anti-Nudité & Anti-Arnaque vérifiés";
                 pillEl.className = "shrink-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
                 pillEl.innerText = "Pour Toi : Éligible ✓";
-            } else if (state.strikes === 1) {
+            } else {
                 bar.className = "mt-1 px-3 py-2 rounded-2xl bg-amber-950/50 border border-amber-500/40 flex items-center justify-between text-[11px]";
                 textEl.className = "text-amber-200 font-semibold truncate";
-                textEl.innerText = "Compte sous surveillance (1 avertissement actif) — Respectez les règles";
+                textEl.innerText = `Sanction temporaire active (levée auto dans ${state.remainingHours || 24}h ou en supprimant la vidéo en cause)`;
                 pillEl.className = "shrink-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40";
-                pillEl.innerText = "Strike 1/3 ⚠️";
-            } else {
-                bar.className = "mt-1 px-3 py-2 rounded-2xl bg-rose-950/60 border border-rose-500/50 flex items-center justify-between text-[11px]";
-                textEl.className = "text-rose-200 font-bold truncate";
-                textEl.innerText = "Compte sanctionné (Shadowban Pour Toi actif) — Dernier avertissement";
-                pillEl.className = "shrink-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-600 text-white";
-                pillEl.innerText = `Strike ${state.strikes}/3 🚫`;
+                pillEl.innerText = `Sanction ${state.remainingHours || 24}h ⚠️`;
             }
         }
 
-        async function applyUserModerationStrike(auditResult) {
+        async function applyUserModerationStrike(auditResult, offendingVideoId = null) {
             const uid = auth.currentUser?.uid;
+
+            // Protected account handling: block only the non-compliant publication, never sanction or ban the account
+            if (isCurrentAccountVipProtected()) {
+                const badgeEl = document.getElementById('mod-modal-strike-badge');
+                const titleEl = document.getElementById('mod-modal-title');
+                const reasonEl = document.getElementById('mod-modal-reason-title');
+                const descEl = document.getElementById('mod-modal-desc');
+                const fypEl = document.getElementById('mod-modal-fyp-status');
+                const authScoreEl = document.getElementById('mod-modal-auth-score');
+                const sanctionEl = document.getElementById('mod-modal-sanction-level');
+                const footerEl = document.getElementById('mod-modal-footer-warn');
+
+                if (badgeEl) badgeEl.innerText = "PUBLICATION BLOQUÉE";
+                if (titleEl) titleEl.innerText = "Publication non autorisée";
+                if (reasonEl) reasonEl.innerText = `Motif : ${auditResult.category}`;
+                if (descEl) descEl.innerText = auditResult.reason || "Cette vidéo ne respecte pas les normes communautaires et sa publication a été bloquée.";
+                if (fypEl) fypEl.innerText = "🚫 Publication bloquée";
+                if (authScoreEl) authScoreEl.innerText = `${auditResult.authenticityScore || 15}/100 (Non conforme)`;
+                if (sanctionEl) sanctionEl.innerText = "Aucune sanction sur le compte";
+                if (footerEl) footerEl.innerText = "Veuillez modifier ou remplacer cette vidéo pour pouvoir la publier.";
+
+                document.getElementById('moderation-warning-modal').classList.add('open');
+                refreshStudioRShieldBarUI();
+                if (window.lucide) lucide.createIcons();
+                return { newStrikes: 0, isBannedNow: false, blockedOnly: true };
+            }
+
             const currentState = getUserStrikeState();
+            const isGraveFault = !!auditResult.isTotalNudityOrExtreme;
             const newStrikes = currentState.strikes + 1;
+            const sanctionUntil = Date.now() + SANCTION_DURATION_MS;
 
             if (uid) {
                 safeSetStorage(`rv_strikes_${uid}`, String(newStrikes));
+                safeSetStorage(`rv_sanction_until_${uid}`, String(sanctionUntil));
             }
             if (!currentUserData) currentUserData = {};
             currentUserData.strikes = newStrikes;
+            currentUserData.fypShadowban = true;
+            currentUserData.sanctionUntil = sanctionUntil;
 
-            let sanctionTitle = "Vidéo exclue du « Pour toi »";
-            let sanctionLevelText = `Strike ${newStrikes}/3 (Avertissement Officiel)`;
-            let footerWarnText = "⚠️ Attention : Si vous continuez à enfreindre les règles, votre compte sera exclu du « Pour toi » puis banni définitivement.";
+            const existingSanctionVids = Array.isArray(currentUserData.sanctionVideoIds) ? [...currentUserData.sanctionVideoIds] : [];
+            if (offendingVideoId && !existingSanctionVids.includes(offendingVideoId)) {
+                existingSanctionVids.push(offendingVideoId);
+            }
+            currentUserData.sanctionVideoIds = existingSanctionVids;
+
+            let sanctionTitle = "Sanction temporaire (24h)";
+            let sanctionLevelText = "Restriction temporaire (24h) — Levée si la vidéo est supprimée";
+            let footerWarnText = "💡 Info : La sanction se lève automatiquement après 24h, ou immédiatement dès que vous supprimez la vidéo qui a causé la sanction.";
 
             const updatePayload = {
                 strikes: newStrikes,
+                fypShadowban: true,
+                sanctionUntil: sanctionUntil,
+                sanctionVideoIds: existingSanctionVids,
                 lastViolationReason: auditResult.category,
                 lastViolationAt: serverTimestamp()
             };
 
-            if (newStrikes === 2) {
-                currentUserData.fypShadowban = true;
-                updatePayload.fypShadowban = true;
-                sanctionTitle = "Sanction Sévère : Compte Exclu du « Pour toi »";
-                sanctionLevelText = "Strike 2/3 (Shadowban Global & Restriction)";
-                footerWarnText = "🚨 DERNIER AVERTISSEMENT : Toutes vos vidéos sont désormais exclues du « Pour toi ». Une seule récidive entraînera la suspension définitive de votre compte !";
-            } else if (newStrikes >= 3) {
-                currentUserData.fypShadowban = true;
+            if (isGraveFault) {
                 currentUserData.isBanned = true;
-                updatePayload.fypShadowban = true;
+                currentUserData.permanentBanGrave = true;
                 updatePayload.isBanned = true;
-                sanctionTitle = "COMPTE SUSPENDU & SANCTIONNÉ (3/3)";
-                sanctionLevelText = "Strike 3/3 (Suspension & Bannissement du Compte)";
-                footerWarnText = "⛔ Votre compte a atteint 3 infractions graves (nudité, arnaque ou contenu illicite) et a été suspendu par R-Shield AI.";
+                updatePayload.permanentBanGrave = true;
+                sanctionTitle = "COMPTE BLOQUÉ DÉFINITIVEMENT (FAUTE TRÈS GRAVE)";
+                sanctionLevelText = "Bannissement définitif (Nudité totale / Faute très grave)";
+                footerWarnText = "⛔ Votre compte a été bloqué définitivement suite à une faute très grave (nudité totale ou contenu criminel).";
             }
 
             if (uid) {
                 await updateDoc(doc(db, "users", uid), updatePayload).catch(() => {});
-                // Send official warning notification to user's Inbox
                 await addDoc(collection(db, "users", uid, "notifications"), {
                     type: 'report',
-                    text: `[R-Shield AI • Strike ${newStrikes}/3] Publication bloquée du "Pour toi" (${auditResult.category}). ${newStrikes >= 2 ? 'Votre compte est désormais sous restriction sévère.' : 'Attention : toute récidive entraînera de lourdes sanctions.'}`,
+                    text: isGraveFault
+                        ? `[R-Shield AI] Compte bloqué définitivement pour faute très grave (${auditResult.category}).`
+                        : `[R-Shield AI • Sanction 24h] Publication restreinte (${auditResult.category}). La sanction sera levée automatiquement après 24h ou dès la suppression de la vidéo en cause.`,
                     fromUid: uid,
                     fromUsername: "Sécurité_R_Videos",
                     fromPhoto: "",
@@ -4511,7 +4716,7 @@
             const sanctionEl = document.getElementById('mod-modal-sanction-level');
             const footerEl = document.getElementById('mod-modal-footer-warn');
 
-            if (badgeEl) badgeEl.innerText = newStrikes >= 3 ? `SANCTION MAXIMALE (${newStrikes}/3)` : `AVERTISSEMENT ${newStrikes} / 3`;
+            if (badgeEl) badgeEl.innerText = isGraveFault ? "BLOCAGE DÉFINITIF" : "SANCTION TEMPORAIRE (24H)";
             if (titleEl) titleEl.innerText = sanctionTitle;
             if (reasonEl) reasonEl.innerText = `Motif : ${auditResult.category}`;
             if (descEl) descEl.innerText = auditResult.reason;
@@ -4524,15 +4729,15 @@
             refreshStudioRShieldBarUI();
             if (window.lucide) lucide.createIcons();
 
-            return { newStrikes, isBannedNow: newStrikes >= 3 };
+            return { newStrikes, isBannedNow: isGraveFault };
         }
 
         window.closeModerationWarningModal = async () => {
             closeModal('moderation-warning-modal');
             const state = getUserStrikeState();
-            if (state.banned) {
+            if (state.banned && !isCurrentAccountVipProtected()) {
                 closeStudioModal();
-                showToast("Compte suspendu pour violations répétées des règles R-Videos.", "error");
+                showToast("Compte bloqué définitivement suite à une faute très grave.", "error");
                 await signOut(auth).catch(() => {});
             }
         };
@@ -4639,6 +4844,60 @@
         function getBadgeHtml(isVerified) {
             if (!isVerified) return '';
             return `<svg class="w-4 h-4 ml-1 inline-block align-middle shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.5 12.5C22.5 14.08 21.625 15.45 20.352 16.1C20.372 16.27 20.384 16.44 20.384 16.614C20.384 18.824 18.676 20.614 16.566 20.614C16.096 20.614 15.646 20.528 15.231 20.365C14.61 21.698 13.304 22.614 11.792 22.614C10.28 22.614 8.974 21.698 8.353 20.365C7.938 20.528 7.488 20.614 7.018 20.614C4.908 20.614 3.2 18.824 3.2 16.614C3.2 16.44 3.212 16.27 3.232 16.1C1.959 15.45 1.084 14.08 1.084 12.5C1.084 10.92 1.959 9.55 3.232 8.9C3.212 8.73 3.2 8.56 3.2 8.386C3.2 6.176 4.908 4.386 7.018 4.386C7.488 4.386 7.938 4.472 8.353 4.635C8.974 3.302 10.28 2.386 11.792 2.386C13.304 2.386 14.61 3.302 15.231 4.635C15.646 4.472 16.096 4.386 16.566 4.386C18.676 4.386 20.384 6.176 20.384 8.386C20.384 8.56 20.372 8.73 20.352 8.9C21.625 9.55 22.5 10.92 22.5 12.5Z" fill="#20D5EC"/><path d="M10.09 17.1L5.39 12.4L6.8 10.99L10.09 14.28L17.19 7.18005L18.6 8.59005L10.09 17.1Z" fill="white"/></svg>`;
+        }
+
+        const userProfileCache = new Map();
+
+        function getResolvedProfileIdentity(uid, fallbackUsername = "utilisateur", fallbackVerified = false, fallbackPhoto = "", fallbackEmail = "") {
+            if (auth.currentUser && uid === auth.currentUser.uid && currentUserData) {
+                const isCert = !!(currentUserData.isVerified || (currentUserData.email || auth.currentUser.email || '').toLowerCase().trim() === VIP_EMAIL.toLowerCase());
+                const info = {
+                    username: currentUserData.username || fallbackUsername || "utilisateur",
+                    isVerified: isCert,
+                    photoURL: currentUserData.photoURL || fallbackPhoto || ""
+                };
+                userProfileCache.set(uid, info);
+                return info;
+            }
+            if (uid && userProfileCache.has(uid)) {
+                const cached = userProfileCache.get(uid);
+                return {
+                    username: cached.username || fallbackUsername || "utilisateur",
+                    isVerified: !!(cached.isVerified || fallbackVerified || (fallbackEmail || '').toLowerCase().trim() === VIP_EMAIL.toLowerCase()),
+                    photoURL: cached.photoURL || fallbackPhoto || ""
+                };
+            }
+            const isCertFallback = !!(fallbackVerified || (fallbackEmail || '').toLowerCase().trim() === VIP_EMAIL.toLowerCase());
+            return {
+                username: fallbackUsername || "utilisateur",
+                isVerified: isCertFallback,
+                photoURL: fallbackPhoto || ""
+            };
+        }
+
+        async function hydrateUserProfilesMap(uids) {
+            if (!Array.isArray(uids) || uids.length === 0) return;
+            const uniqueUids = Array.from(new Set(uids.filter(u => u && !isVirtualBotIdOrUser(u) && !userProfileCache.has(u))));
+            if (uniqueUids.length === 0) return;
+            await Promise.all(uniqueUids.map(async (uId) => {
+                try {
+                    const snap = await getDoc(doc(db, "users", uId));
+                    if (snap.exists()) {
+                        const d = snap.data();
+                        const isCert = !!(d.isVerified || (d.email || '').toLowerCase().trim() === VIP_EMAIL.toLowerCase());
+                        userProfileCache.set(uId, {
+                            username: d.username || "utilisateur",
+                            isVerified: isCert,
+                            photoURL: d.photoURL || ""
+                        });
+                    }
+                } catch (e) {}
+            }));
+        }
+
+        function formatProfileHandleHtml(username, isVerified = false) {
+            const clean = String(username || "utilisateur").replace(/^@+/, "");
+            return `@${escapeHtml(clean)}${getBadgeHtml(isVerified)}`;
         }
 
         function getAvatarHTML(photoURL, sizeClass = "w-full h-full") {
@@ -4858,7 +5117,7 @@
                     if (data.blockedBy && data.blockedBy.includes(auth.currentUser.uid)) return; 
                     if (data.blockedUsers && data.blockedUsers.includes(auth.currentUser.uid)) return;
                 }
-                await addDoc(collection(db, "users", targetUid, "notifications"), { type, text, fromUid: auth.currentUser.uid, fromUsername: currentUserData.username, fromPhoto: currentUserData.photoURL, createdAt: serverTimestamp(), read: false });
+                await addDoc(collection(db, "users", targetUid, "notifications"), { type, text, fromUid: auth.currentUser.uid, fromUsername: currentUserData.username, fromPhoto: currentUserData.photoURL, fromVerified: !!(currentUserData.isVerified || currentUserData.email === VIP_EMAIL), createdAt: serverTimestamp(), read: false });
             } catch(e) { console.log("Notif error:", e); }
         }
 
@@ -4927,10 +5186,38 @@
         window.confirmDeleteVideo = (docId) => { 
             window.confirmAction("Supprimer la vidéo ?", async () => {
                 try {
+                    const vData = profileVideosData[docId] || null;
+                    let wasSanctionedVideo = false;
+                    if (vData && (vData.causedSanction === true || vData.fypEligible === false || vData.moderationStatus === 'restricted_no_fyp' || (vData.reportCount || 0) >= 1)) {
+                        wasSanctionedVideo = true;
+                    }
+                    if (currentUserData && Array.isArray(currentUserData.sanctionVideoIds) && currentUserData.sanctionVideoIds.includes(docId)) {
+                        wasSanctionedVideo = true;
+                    }
+
                     await deleteDoc(doc(db, "videos", docId));
+                    delete profileVideosData[docId];
                     const card = document.querySelector(`.video-card[data-id="${docId}"]`);
                     if (card) card.remove();
-                    showToast("Vidéo supprimée", "success");
+
+                    // Check if user had an active temporary sanction that should be lifted upon deleting the offending video
+                    const authorUid = vData?.userId || auth.currentUser?.uid;
+                    const state = getUserStrikeState();
+                    if (authorUid && (wasSanctionedVideo || state.strikes > 0 || state.shadowbanned)) {
+                        let remainingFlagged = 0;
+                        for (const [remId, remVid] of Object.entries(profileVideosData)) {
+                            if (remId !== docId && remVid && remVid.userId === authorUid && (remVid.causedSanction === true || remVid.moderationStatus === 'restricted_no_fyp' || remVid.fypEligible === false)) {
+                                remainingFlagged++;
+                            }
+                        }
+                        if (wasSanctionedVideo || remainingFlagged === 0) {
+                            await clearUserSanctionState(authorUid, true);
+                        } else {
+                            showToast("Vidéo supprimée", "success");
+                        }
+                    } else {
+                        showToast("Vidéo supprimée", "success");
+                    }
                     if(document.getElementById('profile-screen').classList.contains('active')) renderProfile(currentUserData, true);
                 } catch(e) { showToast("Erreur: " + e.message, "error"); }
             });
@@ -5206,12 +5493,46 @@
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if(userDoc.exists()) {
                     currentUserData = userDoc.data();
-                    if (currentUserData.isBanned) {
-                        showToast("Votre compte a été suspendu pour non-respect des règles.", "error");
-                        await signOut(auth);
-                        return;
+                    const isVipUser = (user.email || currentUserData.email || '').toLowerCase().trim() === VIP_EMAIL.toLowerCase();
+                    if (isVipUser) {
+                        currentUserData.isVerified = true;
+                        if (currentUserData.isBanned || currentUserData.fypShadowban || (currentUserData.strikes || 0) > 0) {
+                            currentUserData.isBanned = false;
+                            currentUserData.permanentBanGrave = false;
+                            currentUserData.fypShadowban = false;
+                            currentUserData.strikes = 0;
+                            updateDoc(doc(db, "users", user.uid), {
+                                isVerified: true,
+                                isBanned: false,
+                                permanentBanGrave: false,
+                                fypShadowban: false,
+                                strikes: 0
+                            }).catch(() => {});
+                        }
+                    } else if (currentUserData.isBanned) {
+                        const sanctionEnd = Number(currentUserData.sanctionUntil || 0);
+                        const isGravePermanent = !!currentUserData.permanentBanGrave;
+                        if (!isGravePermanent && sanctionEnd > 0 && Date.now() >= sanctionEnd) {
+                            await clearUserSanctionState(user.uid, false);
+                        } else if (isGravePermanent) {
+                            showToast("Votre compte a été bloqué définitivement suite à une faute très grave.", "error");
+                            await signOut(auth);
+                            return;
+                        } else {
+                            // Legacy non-grave ban converts to 24h temporary sanction
+                            const newUntil = sanctionEnd > Date.now() ? sanctionEnd : (Date.now() + SANCTION_DURATION_MS);
+                            currentUserData.isBanned = false;
+                            currentUserData.fypShadowban = true;
+                            currentUserData.sanctionUntil = newUntil;
+                            updateDoc(doc(db, "users", user.uid), {
+                                isBanned: false,
+                                fypShadowban: true,
+                                sanctionUntil: newUntil
+                            }).catch(() => {});
+                        }
                     }
-                    if(currentUserData && currentUserData.email === VIP_EMAIL) currentUserData.isVerified = true;
+                    // Also trigger 24h auto-expiration check on login
+                    getUserStrikeState();
                 }
                 
                 requestNotificationPermission();
@@ -5345,8 +5666,19 @@
             try { 
                 const tRef = doc(db, "users", uid); 
                 const mRef = doc(db, "users", auth.currentUser.uid); 
-                await updateDoc(tRef, {followers:arrayUnion(auth.currentUser.uid)}); 
-                await updateDoc(mRef, {following:arrayUnion(uid)}); 
+                await updateDoc(tRef, {
+                    followers: arrayUnion(auth.currentUser.uid),
+                    recentFollowers: arrayUnion({
+                        uid: auth.currentUser.uid,
+                        username: currentUserData?.username || "Utilisateur",
+                        photoURL: currentUserData?.photoURL || "",
+                        isVerified: !!(currentUserData?.isVerified || currentUserData?.email === VIP_EMAIL),
+                        ts: Date.now()
+                    })
+                }); 
+                await updateDoc(mRef, {
+                    following: arrayUnion(uid)
+                }); 
                 if(currentUserData.following) currentUserData.following.push(uid); 
                 else currentUserData.following = [uid]; 
                 sendNotification(uid, "follow", "a commencé à vous suivre"); 
@@ -5420,15 +5752,28 @@
                     authorId = vData.userId;
                     const newRepCount = (vData.reportCount || 0) + 1;
                     const isCriticalReason = /nudit|inappropri|choquant|arnaque|spam|haineux/i.test(reason);
+                    const triggersSanction = (isCriticalReason || newRepCount >= 2);
                     await updateDoc(doc(db, "videos", docId), {
                         reportCount: increment(1),
-                        fypEligible: (isCriticalReason || newRepCount >= 2) ? false : (vData.fypEligible !== false),
-                        moderationStatus: (isCriticalReason || newRepCount >= 2) ? 'restricted_no_fyp' : (vData.moderationStatus || 'approved')
+                        causedSanction: triggersSanction ? true : (vData.causedSanction || false),
+                        fypEligible: triggersSanction ? false : (vData.fypEligible !== false),
+                        moderationStatus: triggersSanction ? 'restricted_no_fyp' : (vData.moderationStatus || 'approved')
                     }).catch(() => {});
-                    if (authorId && isCriticalReason) {
+                    if (authorId && triggersSanction) {
+                        const authorSnap = await getDoc(doc(db, "users", authorId)).catch(() => null);
+                        const authorEmail = (authorSnap && authorSnap.exists() ? (authorSnap.data().email || '') : '').toLowerCase().trim();
+                        if (authorEmail !== VIP_EMAIL.toLowerCase()) {
+                            const until24h = Date.now() + SANCTION_DURATION_MS;
+                            await updateDoc(doc(db, "users", authorId), {
+                                strikes: increment(1),
+                                fypShadowban: true,
+                                sanctionUntil: until24h,
+                                sanctionVideoIds: arrayUnion(docId)
+                            }).catch(() => {});
+                        }
                         await addDoc(collection(db, "users", authorId, "notifications"), {
                             type: 'report',
-                            text: `[Alerte Modération R-Shield] Une de vos vidéos a été signalée pour "${escapeHtml(selectVal)}" et retirée du flux "Pour toi". En cas de récidive, votre compte sera sanctionné.`,
+                            text: `[Alerte Modération R-Shield] Une de vos vidéos a été signalée pour "${escapeHtml(selectVal)}" et retirée du flux "Pour toi". Supprimez cette vidéo pour lever la sanction immédiatement, sinon elle se lèvera automatiquement après 24h.`,
                             fromUid: auth.currentUser.uid,
                             fromUsername: "Sécurité_R_Videos",
                             fromPhoto: "",
@@ -5470,7 +5815,12 @@
         window.toggleBan = (targetUid) => {
             window.confirmAction("Bannir cet utilisateur ?", async () => {
                 try {
-                    await updateDoc(doc(db, "users", targetUid), { isBanned: true });
+                    const targetSnap = await getDoc(doc(db, "users", targetUid));
+                    if (targetSnap.exists() && (targetSnap.data().email || '').toLowerCase().trim() === VIP_EMAIL.toLowerCase()) {
+                        showToast("Impossible d'appliquer cette action sur ce compte.", "info");
+                        return;
+                    }
+                    await updateDoc(doc(db, "users", targetUid), { isBanned: true, permanentBanGrave: true });
                     showToast("L'utilisateur a été banni.", "success");
                     if (currentProfileUid === targetUid) viewUserProfile(targetUid);
                 } catch(e) { showToast("Erreur bannissement: " + e.message, "error"); }
@@ -5563,25 +5913,33 @@
                     videos.sort((a, b) => calculateViralScore(b) - calculateViralScore(a));
                     videos = diversifyForYouFeed(videos);
                 }
+
+                await hydrateUserProfilesMap(videos.map(v => v.userId));
                 
                 videos.forEach((data) => {
                     const docId = data.id;
+                    const authorIdentity = getResolvedProfileIdentity(data.userId, data.username, data.isVerified, data.userPhotoURL, data.userEmail);
+                    data.username = authorIdentity.username;
+                    data.isVerified = authorIdentity.isVerified;
+                    data.userPhotoURL = authorIdentity.photoURL || data.userPhotoURL;
+                    profileVideosData[docId] = data;
+
                     const iLiked = isGuestMode ? false : data.likedBy?.includes(auth.currentUser.uid);
                     const iFav = isGuestMode ? false : data.favorites?.includes(auth.currentUser.uid);
                     const iReposted = isGuestMode ? false : data.repostedBy?.includes(auth.currentUser.uid);
                     const trimStart = data.trimStart || 0;
                     const trimEnd = data.trimEnd || 0;
                     const optimizedUrl = getOptimizedVideoUrl(data.url, 480, trimStart, trimEnd);
-                    const badge = getBadgeHtml(data.isVerified);
+                    const badge = getBadgeHtml(authorIdentity.isVerified);
                     
                     const safeDesc = formatDescription(escapeHtml(data.description));
-                    const safeUsername = escapeHtml(data.username);
+                    const safeUsername = escapeHtml(String(authorIdentity.username || 'utilisateur').replace(/^@+/, ''));
                     const allowDL = (data.allowDownloads !== false); 
                     const isMe = isGuestMode ? false : data.userId === auth.currentUser.uid;
                     const isFollowing = isGuestMode ? false : (currentUserData.following && currentUserData.following.includes(data.userId));
                     const dateStr = formatDateStamp(data.createdAt);
                     const isPinned = !!data.isPinned;
-                    const soundLabel = escapeHtml(data.soundTitle || `Son original - ${data.username}`);
+                    const soundLabel = escapeHtml(data.soundTitle || `Son original - @${authorIdentity.username}`);
 
                     const fitMode = data.aspectMode || appSettings.aspectMode || 'contain';
                     const fitClass = fitMode === 'cover' ? 'object-cover' : 'object-contain';
@@ -5681,7 +6039,7 @@
 
                             <!-- Bold Creator Handle + Edit button if owner -->
                             <div class="flex items-center gap-2 pointer-events-auto mt-0.5">
-                                <h3 class="font-extrabold font-display text-[16px] text-white text-shadow cursor-pointer flex items-center" onclick="viewUserProfile('${data.userId}')">${safeUsername}${badge}</h3>
+                                <h3 class="font-extrabold font-display text-[16px] text-white text-shadow cursor-pointer flex items-center" onclick="viewUserProfile('${data.userId}')">@${safeUsername}${badge}</h3>
                                 ${isMe ? `<button onclick="openEditVideoModal('${docId}')" class="text-[10px] px-2 py-0.5 rounded bg-white/15 text-cyan-300 font-bold hover:bg-white/25">Modifier</button>` : ''}
                             </div>
 
@@ -7162,12 +7520,13 @@
             };
 
             try {
-                // Check if user is already banned due to repeated violations
+                // Check if user is permanently banned for a very grave fault
                 const strikeState = getUserStrikeState();
-                if (strikeState.banned) {
+                if (strikeState.banned && !isCurrentAccountVipProtected()) {
                     await applyUserModerationStrike({
-                        category: 'COMPTE SUSPENDU POUR RÉCIDIVE (3/3)',
-                        reason: "Votre compte a été suspendu suite à des violations répétées des règles d'authenticité et de sécurité. Vous ne pouvez plus publier.",
+                        category: 'COMPTE BLOQUÉ DÉFINITIVEMENT (FAUTE TRÈS GRAVE)',
+                        isTotalNudityOrExtreme: true,
+                        reason: "Votre compte a été bloqué définitivement suite à une faute très grave (nudité totale ou contenu illicite grave).",
                         authenticityScore: 0
                     });
                     return;
@@ -7182,21 +7541,28 @@
                 const audit = await runRShieldFullAudit(f, desc, studioEditState.overlayText || '', soundTitle);
 
                 if (!audit.passed) {
-                    document.getElementById('upload-status').innerText = "🚫 Publication bloquée du « Pour toi » par R-Shield AI";
-                    const strikeOutcome = await applyUserModerationStrike(audit);
-
-                    // If it's a critical violation (Nudity, Scam, Violence) or user reached 2+ strikes, block publication completely
-                    if (audit.blockUploadCompletely || strikeOutcome.newStrikes >= 2) {
+                    // Protected VIP account: simply block the publication without sanctioning or banning the account
+                    if (isCurrentAccountVipProtected()) {
+                        document.getElementById('upload-status').innerText = "🚫 Publication bloquée par R-Shield AI";
+                        await applyUserModerationStrike(audit);
                         return;
                     }
-                    // Otherwise (e.g. 1st time duplicate/non-authentic video), publish as restricted (excluded from Pour Toi)
+
+                    document.getElementById('upload-status').innerText = "🚫 Publication signalée par R-Shield AI";
+                    if (audit.blockUploadCompletely || audit.isTotalNudityOrExtreme) {
+                        await applyUserModerationStrike(audit);
+                        return;
+                    }
                 }
 
                 const isFypAllowed = audit.passed && audit.fypEligible && !strikeState.shadowbanned;
+                const causedSanctionFlag = !audit.passed;
                 document.getElementById('upload-status').innerText = "Téléversement et rendu R-Studio en cours...";
                 const url = await uploadToCloudinary(f);
-                await addDoc(collection(db, "videos"), { 
+                const isUserCertif = !!(currentUserData.isVerified || currentUserData.email === VIP_EMAIL);
+                const newVideoRef = await addDoc(collection(db, "videos"), { 
                     userId: auth.currentUser.uid, 
+                    userEmail: currentUserData.email || auth.currentUser.email || "",
                     username: currentUserData.username, 
                     userPhotoURL: currentUserData.photoURL||"", 
                     url, 
@@ -7208,12 +7574,13 @@
                     views: 0, 
                     completions: 0,
                     rewatches: 0,
-                    isVerified: currentUserData.isVerified || false, 
+                    isVerified: isUserCertif, 
                     createdAt: serverTimestamp(), 
                     trimStart: trimStart, 
                     trimEnd: trimEnd,
                     visibility: isFypAllowed ? visibility : (visibility === 'public' ? 'followers' : visibility),
                     fypEligible: isFypAllowed,
+                    causedSanction: causedSanctionFlag,
                     moderationStatus: isFypAllowed ? 'approved' : 'restricted_no_fyp',
                     authenticityScore: audit.authenticityScore || 94,
                     recordedWithRCam: !!audit.recordedWithRCam,
@@ -7222,7 +7589,7 @@
                     copyrightAttested: true,
                     licenseType: 'R-Videos Original Creator License',
                     appPackageId: 'com.ralphnyame.rvideos',
-                    authorShadowbanned: !!strikeState.shadowbanned,
+                    authorShadowbanned: !!(strikeState.shadowbanned || causedSanctionFlag),
                     aspectMode: aspectMode,
                     soundTitle: escapeHtml(soundTitle),
                     soundAuthor: escapeHtml(soundAuthor),
@@ -7235,6 +7602,10 @@
                     allowDownloads: allowDownloads,
                     allowDuet: allowDuet
                 });
+
+                if (causedSanctionFlag) {
+                    await applyUserModerationStrike(audit, newVideoRef.id);
+                }
                 window.deleteVideoFile();
                 window.clearSelectedUploadSound();
                 window.resetStudioColorGrading();
@@ -7442,7 +7813,18 @@
                     el.querySelector('svg')?.classList.remove('text-white'); 
                     setTimeout(()=>el.querySelector('svg')?.classList.remove('like-animation'),380); 
                     if (countSpan) countSpan.innerText = formatCount(vData.likes);
-                    await updateDoc(ref, { likes: vData.likes, likedBy: arrayUnion(uid) }); 
+                    const likeEntry = {
+                        uid: uid,
+                        username: currentUserData?.username || "Utilisateur",
+                        photoURL: currentUserData?.photoURL || "",
+                        isVerified: !!(currentUserData?.isVerified || currentUserData?.email === VIP_EMAIL),
+                        videoId: docId,
+                        ts: Date.now()
+                    };
+                    await updateDoc(ref, { likes: vData.likes, likedBy: arrayUnion(uid), recentLikers: arrayUnion(likeEntry) }); 
+                    if (authorId) {
+                        updateDoc(doc(db, "users", authorId), { recentLikesReceived: arrayUnion(likeEntry) }).catch(() => {});
+                    }
                     if (markUserInteractionOnce('like_boost', docId)) {
                         sendNotification(authorId, "like", "a aimé votre vidéo"); 
                         await updateUserPreferences(tags);
@@ -7726,7 +8108,7 @@
                 try { commentsUnsubscribe(); } catch (e) {}
                 commentsUnsubscribe = null;
             }
-            commentsUnsubscribe = onSnapshot(query(collection(db, `videos/${id}/comments`), orderBy("createdAt", "asc")), (snap) => { 
+            commentsUnsubscribe = onSnapshot(query(collection(db, `videos/${id}/comments`), orderBy("createdAt", "asc")), async (snap) => { 
                 let allComments = [];
                 snap.forEach(d => {
                     const cData = d.data();
@@ -7734,6 +8116,7 @@
                         allComments.push({ id: d.id, ...cData });
                     }
                 });
+                await hydrateUserProfilesMap(allComments.map(c => c.userId));
 
                 const byId = new Map();
                 allComments.forEach(c => byId.set(c.id, c));
@@ -7794,6 +8177,10 @@
                 };
 
                 topLevelComments.forEach(c => { 
+                    const cIdentity = getResolvedProfileIdentity(c.userId, c.username, c.isVerified, c.userPhotoURL, c.email);
+                    c.username = cIdentity.username;
+                    c.userPhotoURL = cIdentity.photoURL || c.userPhotoURL;
+                    const cBadge = getBadgeHtml(cIdentity.isVerified);
                     const isLiked = c.likedBy?.includes(myUid); 
                     const isMyComment = c.userId === myUid;
                     const isVideoOwner = currentVideoAuthorId === myUid;
@@ -7808,6 +8195,10 @@
                     if (childReplies.length > 0) {
                         repliesHtml = `<div class="mt-2.5 pl-3 sm:pl-4 border-l-2 border-[#ff2a5f]/40 space-y-2">`;
                         childReplies.forEach(rep => {
+                            const repIdentity = getResolvedProfileIdentity(rep.userId, rep.username, rep.isVerified, rep.userPhotoURL, rep.email);
+                            rep.username = repIdentity.username;
+                            rep.userPhotoURL = repIdentity.photoURL || rep.userPhotoURL;
+                            const repBadge = getBadgeHtml(repIdentity.isVerified);
                             const repLiked = rep.likedBy?.includes(myUid);
                             const repIsMine = rep.userId === myUid;
                             const repCanDelete = repIsMine || isVideoOwner;
@@ -7826,7 +8217,7 @@
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center justify-between gap-2">
                                         <div class="text-[11px] font-bold text-gray-200 cursor-pointer truncate flex items-center" onclick="window.viewUserProfile('${rep.userId}'); window.closeComments()">
-                                            <span>@${escapeHtml(rep.username)}</span>${replyTargetTag}
+                                            <span>@${escapeHtml(rep.username)}</span>${repBadge}${replyTargetTag}
                                         </div>
                                         <span class="text-[9px] text-gray-500 shrink-0">${repDateStr}${rep.isEdited ? ' • modifié' : ''}</span>
                                     </div>
@@ -7856,8 +8247,8 @@
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center justify-between gap-2">
-                                    <div class="text-xs font-bold text-gray-200 cursor-pointer truncate" onclick="window.viewUserProfile('${c.userId}'); window.closeComments()">
-                                        @${escapeHtml(c.username)}
+                                    <div class="text-xs font-bold text-gray-200 cursor-pointer truncate flex items-center" onclick="window.viewUserProfile('${c.userId}'); window.closeComments()">
+                                        <span>@${escapeHtml(c.username)}</span>${cBadge}
                                         ${c.isPinned ? `<span class="ml-1 text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">📌 Épinglé</span>` : ''}
                                     </div>
                                     <span class="text-[9px] text-gray-500 shrink-0">${dateStr}${c.isEdited ? ' • modifié' : ''}</span>
@@ -7959,6 +8350,7 @@
                 userId: auth.currentUser.uid,
                 username: currentUserData.username,
                 userPhotoURL: currentUserData.photoURL || "",
+                isVerified: !!(currentUserData.isVerified || currentUserData.email === VIP_EMAIL),
                 likes: 0,
                 likedBy: [],
                 isPinned: false,
@@ -8028,16 +8420,22 @@
         function loadActivities() {
             const list = document.getElementById('inbox-content');
             list.innerHTML = "<div class='text-center text-xs text-gray-500 mt-8'>Chargement des activités...</div>";
-            inboxUnsubscribe = onSnapshot(query(collection(db, "users", auth.currentUser.uid, "notifications"), orderBy("createdAt", "desc"), limit(30)), (snap) => {
+            inboxUnsubscribe = onSnapshot(query(collection(db, "users", auth.currentUser.uid, "notifications"), orderBy("createdAt", "desc"), limit(30)), async (snap) => {
                 if(snap.empty) return list.innerHTML = "<div class='text-center text-gray-500 text-xs mt-10'>Aucune activité récente.</div>";
-                let html = "";
+                let notifs = [];
                 snap.forEach(d => {
                     const n = d.data();
                     if (isVirtualBotIdOrUser(n.fromUid, '', n.isBot)) {
                         deleteDoc(doc(db, "users", auth.currentUser.uid, "notifications", d.id)).catch(() => {});
                         return;
                     }
-                    if(!n.read) updateDoc(doc(db, "users", auth.currentUser.uid, "notifications", d.id), {read: true}).catch(()=>{});
+                    notifs.push({ id: d.id, ...n });
+                });
+                await hydrateUserProfilesMap(notifs.map(n => n.fromUid));
+                let html = "";
+                notifs.forEach(n => {
+                    if(!n.read) updateDoc(doc(db, "users", auth.currentUser.uid, "notifications", n.id), {read: true}).catch(()=>{});
+                    const senderIdentity = getResolvedProfileIdentity(n.fromUid, n.fromUsername, n.fromVerified, n.fromPhoto);
                     let icon = "bell"; let color = "text-yellow-400";
                     if(n.type === 'like') { icon = "heart"; color = "text-[#ff2a5f]"; }
                     if(n.type === 'follow') { icon = "user-plus"; color = "text-cyan-400"; }
@@ -8050,14 +8448,14 @@
                     html += `
                     <div onclick="viewUserProfile('${n.fromUid}')" class="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.03] border border-white/5 cursor-pointer hover:bg-white/[0.06] transition">
                         <div class="relative w-11 h-11 shrink-0">
-                            ${getAvatarHTML(n.fromPhoto, "w-full h-full")}
+                            ${getAvatarHTML(senderIdentity.photoURL || n.fromPhoto, "w-full h-full")}
                             <div class="absolute -bottom-1 -right-1 bg-[#05070e] rounded-full p-1 border border-white/10"><i data-lucide="${icon}" class="w-3 h-3 ${color}"></i></div>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-xs leading-snug text-gray-200"><span class="font-bold text-white">@${escapeHtml(n.fromUsername)}</span> ${escapeHtml(n.text)}</p>
+                            <p class="text-xs leading-snug text-gray-200"><span class="font-bold text-white inline-flex items-center">@${escapeHtml(senderIdentity.username)}${getBadgeHtml(senderIdentity.isVerified)}</span> ${escapeHtml(n.text)}</p>
                             <span class="text-[10px] text-gray-500 mt-0.5 block">${dateStr}</span>
                         </div>
-                        <button onclick="deleteNotificationItem('${d.id}', event)" class="p-1.5 text-gray-500 hover:text-rose-400" title="Supprimer">
+                        <button onclick="deleteNotificationItem('${n.id}', event)" class="p-1.5 text-gray-500 hover:text-rose-400" title="Supprimer">
                             <i data-lucide="x" class="w-4 h-4"></i>
                         </button>
                     </div>`;
@@ -8071,7 +8469,7 @@
             const list = document.getElementById('inbox-content');
             list.innerHTML = "<div class='text-center text-xs text-gray-500 mt-8'>Chargement des messages...</div>";
             const q = query(collection(db, "chats"), where("participants", "array-contains", auth.currentUser.uid));
-            inboxUnsubscribe = onSnapshot(q, (snap) => {
+            inboxUnsubscribe = onSnapshot(q, async (snap) => {
                 if(snap.empty) return list.innerHTML = "<div class='text-center text-gray-500 text-xs mt-10'>Aucune conversation active.</div>";
                 let chats = [];
                 snap.forEach(d => chats.push({id: d.id, ...d.data()}));
@@ -8079,6 +8477,8 @@
                     if ((b.isPinned ? 1 : 0) !== (a.isPinned ? 1 : 0)) return (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0);
                     return (b.lastUpdated?.seconds || 0) - (a.lastUpdated?.seconds || 0);
                 });
+                const otherUids = chats.map(c => c.participants.find(p => p !== auth.currentUser.uid)).filter(Boolean);
+                await hydrateUserProfilesMap(otherUids);
                 let html = "";
                 chats.forEach(c => {
                     const oId = c.participants.find(p => p !== auth.currentUser.uid);
@@ -8086,13 +8486,16 @@
                     const unread = (c.unreadCounts && c.unreadCounts[auth.currentUser.uid]) || 0;
                     const dateStr = formatDateStamp(c.lastUpdated);
                     if(oId && c.names) {
+                        const peerIdentity = getResolvedProfileIdentity(oId, c.names[oId], false, c.photos ? c.photos[oId] : "");
+                        const safePeerNameJs = escapeJsSingleQuotedAttr(peerIdentity.username);
+                        const safePeerPhotoJs = escapeJsSingleQuotedAttr(peerIdentity.photoURL);
                         html += `
                         <div class="flex items-center gap-3 p-3 rounded-2xl ${c.isPinned ? 'bg-amber-500/10 border-amber-500/30' : 'bg-white/[0.03] border-white/5'} border hover:bg-white/[0.06] transition relative">
-                            <div onclick="startChatWith('${oId}', '${c.names[oId]}', '${c.photos[oId]}')" class="w-12 h-12 flex-shrink-0 cursor-pointer">${getAvatarHTML(c.photos[oId], "w-full h-full")}</div>
-                            <div onclick="startChatWith('${oId}', '${c.names[oId]}', '${c.photos[oId]}')" class="flex-1 min-w-0 cursor-pointer">
+                            <div onclick="startChatWith('${oId}', '${safePeerNameJs}', '${safePeerPhotoJs}')" class="w-12 h-12 flex-shrink-0 cursor-pointer">${getAvatarHTML(peerIdentity.photoURL, "w-full h-full")}</div>
+                            <div onclick="startChatWith('${oId}', '${safePeerNameJs}', '${safePeerPhotoJs}')" class="flex-1 min-w-0 cursor-pointer">
                                 <div class="flex justify-between items-center">
                                     <div class="font-bold text-sm truncate flex items-center gap-1">
-                                        @${escapeHtml(c.names[oId])}
+                                        <span>@${escapeHtml(peerIdentity.username)}</span>${getBadgeHtml(peerIdentity.isVerified)}
                                         ${c.isPinned ? `<i data-lucide="pin" class="w-3 h-3 text-amber-400"></i>` : ''}
                                     </div>
                                     <span class="text-[10px] text-gray-500">${dateStr}</span>
@@ -8120,7 +8523,24 @@
 
         window.deleteConversation = (chatId) => { window.confirmAction("Supprimer la conversation ?", async () => { await deleteDoc(doc(db, "chats", chatId)); showToast("Conversation supprimée", "info"); }); };
         window.startChat = () => { if(currentProfileUid) startChatWith(currentProfileUid, document.getElementById('profile-handle').innerText.substring(1), document.getElementById('profile-avatar-container').querySelector('img')?.src || ""); };
-        window.startChatWith = async (uid, name, photo) => { currentChatReceiver = uid; document.getElementById('chat-username').innerText = name; document.getElementById('chat-avatar').innerHTML = getAvatarHTML(photo, "w-full h-full"); const ids = [auth.currentUser.uid, uid].sort(); currentChatId = ids[0] + "_" + ids[1]; document.getElementById('chat-screen').classList.add('open'); loadMessages(currentChatId); const cref = doc(db, "chats", currentChatId); const updateMap = {}; updateMap[`unreadCounts.${auth.currentUser.uid}`] = 0; await updateDoc(cref, updateMap).catch(()=>{}); };
+        window.startChatWith = async (uid, name, photo) => {
+            currentChatReceiver = uid;
+            await hydrateUserProfilesMap([uid]);
+            const peerIdentity = getResolvedProfileIdentity(uid, name, false, photo);
+            const cleanHandle = String(peerIdentity.username || name || "utilisateur").replace(/^@+/, "");
+            document.getElementById('chat-username').innerText = "@" + cleanHandle;
+            const chatBadgeEl = document.getElementById('chat-badge-container');
+            if (chatBadgeEl) chatBadgeEl.innerHTML = getBadgeHtml(peerIdentity.isVerified);
+            document.getElementById('chat-avatar').innerHTML = getAvatarHTML(peerIdentity.photoURL || photo, "w-full h-full");
+            const ids = [auth.currentUser.uid, uid].sort();
+            currentChatId = ids[0] + "_" + ids[1];
+            document.getElementById('chat-screen').classList.add('open');
+            loadMessages(currentChatId);
+            const cref = doc(db, "chats", currentChatId);
+            const updateMap = {};
+            updateMap[`unreadCounts.${auth.currentUser.uid}`] = 0;
+            await updateDoc(cref, updateMap).catch(()=>{});
+        };
         window.closeChat = () => document.getElementById('chat-screen').classList.remove('open');
 
         function loadMessages(cId) {
@@ -8208,6 +8628,12 @@
             // Pause any background feed video first so audio never overlaps
             stopMasterAudio(); document.querySelectorAll('video').forEach(v => v.pause());
 
+            await hydrateUserProfilesMap([data.userId]);
+            const authorIdentity = getResolvedProfileIdentity(data.userId, data.username, data.isVerified, data.userPhotoURL, data.userEmail);
+            data.username = authorIdentity.username;
+            data.isVerified = authorIdentity.isVerified;
+            data.userPhotoURL = authorIdentity.photoURL || data.userPhotoURL;
+
             const overlay = document.getElementById('fullscreen-video-overlay'); 
             const container = document.getElementById('fullscreen-video-container'); 
             const iLiked = data.likedBy?.includes(auth.currentUser?.uid); 
@@ -8215,11 +8641,11 @@
             const iReposted = data.repostedBy?.includes(auth.currentUser?.uid);
             const rawUrl = getOptimizedVideoUrl(data.url, 720, data.trimStart || 0, data.trimEnd || 0);
             const cachedUrl = await getCachedVideoBlobUrl(rawUrl);
-            const badge = getBadgeHtml(data.isVerified);
+            const badge = getBadgeHtml(authorIdentity.isVerified);
             const fitMode = data.aspectMode || appSettings.aspectMode || 'contain';
             const fitClass = fitMode === 'cover' ? 'object-cover' : 'object-contain';
             const dateStr = formatDateStamp(data.createdAt);
-            const soundLabel = escapeHtml(data.soundTitle || `Son original - ${data.username}`);
+            const soundLabel = escapeHtml(data.soundTitle || `Son original - @${authorIdentity.username}`);
 
             const html = `
             <div class="video-card w-full h-full relative bg-black flex items-center justify-center" data-id="${id}" data-src="${rawUrl}" data-raw-url="${escapeHtml(data.url || '')}" data-muted-video="${(data.studioConfig?.keepOriginalAudio === false || data.muted === true || data.hasAudio === false) ? 'true' : 'false'}" data-in-view="true">
@@ -8263,7 +8689,7 @@
                         <i data-lucide="repeat-2" class="w-3.5 h-3.5"></i>
                         <span>${iReposted ? 'Republié pour tes followers ✓' : 'Republier pour tes followers'}</span>
                     </button>
-                    <h3 class="font-extrabold font-display text-[16px] text-white text-shadow flex items-center pointer-events-auto">${escapeHtml(data.username)}${badge}</h3>
+                    <h3 class="font-extrabold font-display text-[16px] text-white text-shadow flex items-center pointer-events-auto cursor-pointer" onclick="viewUserProfile('${data.userId}'); closeFullVideo()">@${escapeHtml(String(data.username || 'utilisateur').replace(/^@+/, ''))}${badge}</h3>
                     <p class="video-desc-text text-[13px] text-white/95 text-shadow line-clamp-3 pointer-events-auto">${formatDescription(escapeHtml(data.description))}</p>
                     <div onclick="openSoundSheet('${id}', event)" class="flex items-center gap-2 text-xs font-semibold text-white/95 pointer-events-auto cursor-pointer hover:text-cyan-300 transition text-shadow">
                         <i data-lucide="music" class="w-3.5 h-3.5 shrink-0"></i>
@@ -8291,12 +8717,26 @@
             document.getElementById('fullscreen-video-container').innerHTML = "";
         };
 
-        window.openMyProfile = () => { 
+        window.openMyProfile = async () => { 
             if(!checkAuth()) return; 
+            try {
+                const freshSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+                if (freshSnap.exists()) currentUserData = freshSnap.data();
+            } catch (e) {}
             renderProfile(currentUserData, true); 
             navigateTo('profile'); 
         };
-        window.viewUserProfile = async (uid) => { if(!auth.currentUser) return; if(uid === auth.currentUser.uid) return openMyProfile(); const snap = await getDoc(doc(db, "users", uid)); if(snap.exists()) { renderProfile(snap.data(), false); navigateTo('profile'); } };
+        window.viewUserProfile = async (uid) => {
+            if(!auth.currentUser) { checkAuth(); return; }
+            if(uid === auth.currentUser.uid) return openMyProfile();
+            const snap = await getDoc(doc(db, "users", uid));
+            if(snap.exists()) {
+                const targetData = { uid: uid, ...snap.data() };
+                await recordProfileVisitIfVisible(uid, targetData);
+                renderProfile(targetData, false);
+                navigateTo('profile');
+            }
+        };
 
         window.searchUsers = async (term) => { 
             const trendingContainer = document.getElementById('trending-container');
@@ -8324,9 +8764,12 @@
             let html = ""; 
             snap.forEach(doc => { 
                 const u = doc.data(); 
-                if (isVirtualBotIdOrUser(u.uid || doc.id, u.email, u.isBot)) return;
-                const badge = getBadgeHtml(u.isVerified); 
-                html += `<div onclick="viewUserProfile('${u.uid}')" class="flex items-center justify-between p-3 bg-white/[0.04] border border-white/10 rounded-2xl cursor-pointer hover:bg-white/[0.08] transition"><div class="flex items-center gap-3"><div class="w-11 h-11">${getAvatarHTML(u.photoURL, "w-full h-full")}</div><div><div class="font-bold text-sm flex items-center">@${escapeHtml(u.username)} ${badge}</div><div class="text-xs text-gray-400 truncate max-w-[200px]">${escapeHtml(u.bio || 'Créateur R-Videos')}</div></div></div><i data-lucide="chevron-right" class="w-4 h-4 text-gray-500"></i></div>`; 
+                const targetUid = u.uid || doc.id;
+                if (isVirtualBotIdOrUser(targetUid, u.email, u.isBot)) return;
+                const isCert = !!(u.isVerified || (u.email || '').toLowerCase().trim() === VIP_EMAIL.toLowerCase());
+                userProfileCache.set(targetUid, { username: u.username || "utilisateur", isVerified: isCert, photoURL: u.photoURL || "" });
+                const badge = getBadgeHtml(isCert); 
+                html += `<div onclick="viewUserProfile('${targetUid}')" class="flex items-center justify-between p-3 bg-white/[0.04] border border-white/10 rounded-2xl cursor-pointer hover:bg-white/[0.08] transition"><div class="flex items-center gap-3"><div class="w-11 h-11">${getAvatarHTML(u.photoURL, "w-full h-full")}</div><div><div class="font-bold text-sm flex items-center">@${escapeHtml(u.username)}${badge}</div><div class="text-xs text-gray-400 truncate max-w-[200px]">${escapeHtml(u.bio || 'Créateur R-Videos')}</div></div></div><i data-lucide="chevron-right" class="w-4 h-4 text-gray-500"></i></div>`; 
             }); 
             searchResultsContainer.innerHTML = html; 
             lucide.createIcons(); 
@@ -8354,6 +8797,9 @@
                     if (!descLower.includes(tagFilter)) return;
                 }
                 count++;
+                const pIdentity = getResolvedProfileIdentity(v.userId, v.username, v.isVerified, v.userPhotoURL, v.userEmail);
+                v.username = pIdentity.username;
+                v.isVerified = pIdentity.isVerified;
                 const dateStr = formatDateStamp(v.createdAt);
                 const div = document.createElement('div');
                 div.className = "bg-[#0c1222] aspect-[3/4] relative rounded-xl overflow-hidden border border-white/10 group cursor-pointer";
@@ -8367,7 +8813,7 @@
                     </div>
                     <div class="absolute bottom-1.5 left-2 right-2 flex items-center justify-between text-[10px] font-bold text-white drop-shadow-md">
                         <span class="flex items-center gap-1"><i data-lucide="heart" class="w-3 h-3 fill-[#ff2a5f] text-[#ff2a5f]"></i> ${formatCount(v.likes)}</span>
-                        <span class="text-gray-300 truncate max-w-[55px]">@${escapeHtml(v.username)}</span>
+                        <span class="text-gray-200 truncate max-w-[80px] flex items-center">@${escapeHtml(pIdentity.username)}${getBadgeHtml(pIdentity.isVerified)}</span>
                     </div>`;
                 grid.appendChild(div);
             });
@@ -8393,6 +8839,7 @@
                    profileVideosData[d.id] = v; 
                    cachedTrendingVideos.push({ id: d.id, data: v });
                 });
+                await hydrateUserProfilesMap(cachedTrendingVideos.map(item => item.data.userId));
                 renderTrendingGrid('all');
             } catch (e) {
                 console.error(e);
@@ -8400,8 +8847,443 @@
             }
         };
 
+        // ============================================================================
+        // SYSTÈME DE PROFIL INTERACTIF (MAX 10 RÉCENTS : LIKES, ABONNÉS, ABONNEMENTS, VISITEURS + MODE INVISIBLE)
+        // ============================================================================
+        const PROFILE_RECENT_LIMIT = 10;
+        let currentProfileViewedData = null;
+        let currentProfileVideoLikers = [];
+        let activeProfileSocialTab = 'likes';
+
+        function isProfileViewsEnabledForCurrentUser() {
+            const uid = auth.currentUser?.uid || 'guest';
+            const localPref = safeGetStorage(`rv_profile_views_enabled_${uid}`, null);
+            if (localPref !== null) return localPref !== 'false';
+            if (currentUserData && typeof currentUserData.profileViewsEnabled === 'boolean') {
+                return currentUserData.profileViewsEnabled;
+            }
+            return true;
+        }
+
+        window.toggleProfileViewsVisibility = async (enabled) => {
+            if (!checkAuth()) return;
+            const isEnabled = !!enabled;
+            const uid = auth.currentUser.uid;
+            safeSetStorage(`rv_profile_views_enabled_${uid}`, String(isEnabled));
+            if (currentUserData) currentUserData.profileViewsEnabled = isEnabled;
+
+            const cb1 = document.getElementById('ps-ghost-toggle-checkbox');
+            if (cb1) cb1.checked = isEnabled;
+            const cb2 = document.getElementById('setting-profile-views-enabled');
+            if (cb2) cb2.checked = isEnabled;
+
+            updateProfileGhostStatusUI();
+
+            try {
+                await updateDoc(doc(db, "users", uid), { profileViewsEnabled: isEnabled });
+            } catch (e) {}
+
+            showToast(
+                isEnabled
+                    ? "Mode visible activé : tu peux voir qui visite ton profil 👁️"
+                    : "Mode invisible activé : tu es invisible lorsque tu visites d'autres profils 👻",
+                "info"
+            );
+
+            if (document.getElementById('profile-social-modal')?.classList.contains('open') && activeProfileSocialTab === 'views') {
+                renderProfileSocialTabContent('views');
+            }
+        };
+
+        function updateProfileGhostStatusUI() {
+            const isEnabled = isProfileViewsEnabledForCurrentUser();
+            const pill = document.getElementById('ps-ghost-status-pill');
+            const icon = document.getElementById('ps-ghost-icon');
+            const badgeIcon = document.getElementById('profile-views-ghost-badge');
+            const cb1 = document.getElementById('ps-ghost-toggle-checkbox');
+            const cb2 = document.getElementById('setting-profile-views-enabled');
+            if (cb1) cb1.checked = isEnabled;
+            if (cb2) cb2.checked = isEnabled;
+
+            if (pill) {
+                if (isEnabled) {
+                    pill.className = "text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-extrabold";
+                    pill.innerText = "Visible 👁️";
+                } else {
+                    pill.className = "text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-extrabold";
+                    pill.innerText = "Invisible 👻";
+                }
+            }
+            if (icon) {
+                icon.setAttribute('data-lucide', isEnabled ? 'eye' : 'eye-off');
+            }
+            if (badgeIcon) {
+                badgeIcon.setAttribute('data-lucide', isEnabled ? 'eye' : 'eye-off');
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function recordProfileVisitIfVisible(targetUid, targetData = null) {
+            if (!auth.currentUser || !targetUid || targetUid === auth.currentUser.uid) return;
+            // If current user disabled profile views (Invisible Mode), do NOT record their visit!
+            if (!isProfileViewsEnabledForCurrentUser()) return;
+            // If target user disabled profile views on their profile, do not record
+            if (targetData && targetData.profileViewsEnabled === false) return;
+
+            try {
+                const visitorEntry = {
+                    uid: auth.currentUser.uid,
+                    username: currentUserData?.username || auth.currentUser.displayName || "Utilisateur",
+                    photoURL: currentUserData?.photoURL || "",
+                    isVerified: !!(currentUserData?.isVerified || currentUserData?.email === VIP_EMAIL),
+                    ts: Date.now()
+                };
+
+                let existingViewers = Array.isArray(targetData?.profileViewers) ? [...targetData.profileViewers] : [];
+                existingViewers = existingViewers.filter(v => v && v.uid && v.uid !== auth.currentUser.uid && !isVirtualBotIdOrUser(v.uid));
+                existingViewers.unshift(visitorEntry);
+                // Strictly cap stored profile viewers list to the 10 most recent people
+                existingViewers = existingViewers.slice(0, PROFILE_RECENT_LIMIT);
+
+                if (targetData) targetData.profileViewers = existingViewers;
+                await updateDoc(doc(db, "users", targetUid), {
+                    profileViewers: existingViewers
+                });
+            } catch (e) {}
+        }
+
+        function getDeduplicatedRecentViewers(userData) {
+            if (!userData || !Array.isArray(userData.profileViewers)) return [];
+            const seen = new Set();
+            const sorted = [...userData.profileViewers]
+                .filter(v => v && v.uid && !isVirtualBotIdOrUser(v.uid))
+                .sort((a, b) => (Number(b.ts) || 0) - (Number(a.ts) || 0));
+            const unique = [];
+            for (const item of sorted) {
+                if (!seen.has(item.uid)) {
+                    seen.add(item.uid);
+                    unique.push(item);
+                }
+                if (unique.length >= PROFILE_RECENT_LIMIT) break;
+            }
+            return unique;
+        }
+
+        window.openProfileSocialModal = (tab = 'likes') => {
+            if (!checkAuth()) return;
+            const modal = document.getElementById('profile-social-modal');
+            if (!modal) return;
+            modal.classList.add('open');
+            updateProfileGhostStatusUI();
+            switchProfileSocialTab(tab);
+        };
+
+        window.closeProfileSocialModal = () => {
+            const modal = document.getElementById('profile-social-modal');
+            if (modal) modal.classList.remove('open');
+        };
+
+        window.switchProfileSocialTab = (tab) => {
+            activeProfileSocialTab = tab;
+            const tabs = ['likes', 'followers', 'following', 'views'];
+            tabs.forEach(t => {
+                const btn = document.getElementById('ps-tab-' + t);
+                if (!btn) return;
+                if (t === tab) {
+                    btn.className = "py-2 px-1 rounded-xl text-[11px] font-extrabold transition flex items-center justify-center gap-1 bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white shadow-md";
+                } else {
+                    btn.className = "py-2 px-1 rounded-xl text-[11px] font-bold transition flex items-center justify-center gap-1 text-gray-400 hover:text-white bg-white/5";
+                }
+            });
+
+            const ghostBar = document.getElementById('ps-ghost-mode-bar');
+            if (ghostBar) {
+                if (tab === 'views') {
+                    ghostBar.classList.remove('hidden');
+                    ghostBar.classList.add('flex');
+                } else {
+                    ghostBar.classList.add('hidden');
+                    ghostBar.classList.remove('flex');
+                }
+            }
+
+            const titleEl = document.getElementById('profile-social-title');
+            const handleStr = currentProfileViewedData?.username ? `@${currentProfileViewedData.username}` : '';
+            if (titleEl) {
+                if (tab === 'likes') titleEl.innerText = `Qui a liké ${handleStr} (10 récents)`;
+                else if (tab === 'followers') titleEl.innerText = `Abonnés de ${handleStr} (10 récents)`;
+                else if (tab === 'following') titleEl.innerText = `Abonnements de ${handleStr} (10 récents)`;
+                else if (tab === 'views') titleEl.innerText = `Qui a regardé le profil ${handleStr} (10 récents)`;
+            }
+
+            renderProfileSocialTabContent(tab);
+        };
+
+        async function fetchRecentUsersByUids(uidList) {
+            if (!Array.isArray(uidList) || uidList.length === 0) return [];
+            const cleanReversed = [];
+            const seen = new Set();
+            for (let i = uidList.length - 1; i >= 0; i--) {
+                const u = uidList[i];
+                if (u && !isVirtualBotIdOrUser(u) && !seen.has(u)) {
+                    seen.add(u);
+                    cleanReversed.push(u);
+                }
+                if (cleanReversed.length >= PROFILE_RECENT_LIMIT) break;
+            }
+            const results = await Promise.all(cleanReversed.map(async (uId) => {
+                try {
+                    const s = await getDoc(doc(db, "users", uId));
+                    if (s.exists()) {
+                        const d = s.data();
+                        if (isVirtualBotIdOrUser(uId, d.email, d.isBot)) return null;
+                        return {
+                            uid: uId,
+                            username: d.username || "Utilisateur",
+                            photoURL: d.photoURL || "",
+                            bio: d.bio || "",
+                            isVerified: !!(d.isVerified || d.email === VIP_EMAIL)
+                        };
+                    }
+                } catch (e) {}
+                return null;
+            }));
+            return results.filter(Boolean).slice(0, PROFILE_RECENT_LIMIT);
+        }
+
+        function buildSocialUserRowHTML(person, subLabel = '') {
+            const pUid = person.uid;
+            const isMe = auth.currentUser && pUid === auth.currentUser.uid;
+            const amIFollowing = !!(currentUserData && Array.isArray(currentUserData.following) && currentUserData.following.includes(pUid));
+            const badge = getBadgeHtml(person.isVerified);
+            const subtitle = subLabel || (person.ts ? formatDateStamp(new Date(person.ts)) : (person.bio ? escapeHtml(person.bio) : 'Membre R-Videos'));
+
+            const followBtnHtml = !isMe ? `
+                <button onclick="toggleFollowFromSocialModal('${pUid}', this, event)" class="px-3.5 py-1.5 rounded-xl text-[11px] font-extrabold transition shrink-0 ${amIFollowing ? 'bg-white/15 text-white border border-white/20' : 'bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white shadow-md shadow-rose-600/25'}">
+                    ${amIFollowing ? "Abonné ✓" : "S'abonner"}
+                </button>` : `<span class="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-white/10 text-cyan-300 shrink-0">Toi</span>`;
+
+            return `
+            <div onclick="closeProfileSocialModal(); viewUserProfile('${pUid}')" class="flex items-center justify-between gap-3 p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 cursor-pointer transition">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-11 h-11 rounded-full overflow-hidden bg-slate-800 shrink-0 border border-white/15">
+                        ${getAvatarHTML(person.photoURL, "w-full h-full object-cover")}
+                    </div>
+                    <div class="min-w-0">
+                        <div class="font-bold text-xs md:text-sm text-white flex items-center truncate">
+                            <span class="truncate">@${escapeHtml(person.username || 'utilisateur')}</span>
+                            ${badge}
+                        </div>
+                        <div class="text-[10px] text-gray-400 truncate mt-0.5">${subtitle}</div>
+                    </div>
+                </div>
+                ${followBtnHtml}
+            </div>`;
+        }
+
+        window.toggleFollowFromSocialModal = async (targetUid, btnEl, ev) => {
+            if (ev) ev.stopPropagation();
+            if (!checkAuth() || !targetUid || targetUid === auth.currentUser.uid) return;
+            const myUid = auth.currentUser.uid;
+            const tRef = doc(db, "users", targetUid);
+            const mRef = doc(db, "users", myUid);
+            const currentlyFollowing = !!(currentUserData && Array.isArray(currentUserData.following) && currentUserData.following.includes(targetUid));
+
+            btnEl.disabled = true;
+            try {
+                if (currentlyFollowing) {
+                    await updateDoc(tRef, { followers: arrayRemove(myUid) });
+                    await updateDoc(mRef, { following: arrayRemove(targetUid) });
+                    if (currentUserData && Array.isArray(currentUserData.following)) {
+                        currentUserData.following = currentUserData.following.filter(id => id !== targetUid);
+                    }
+                    if (currentProfileViewedData) {
+                        if (currentProfileViewedData.uid === myUid && Array.isArray(currentProfileViewedData.following)) {
+                            currentProfileViewedData.following = currentProfileViewedData.following.filter(id => id !== targetUid);
+                            document.getElementById('profile-following').innerText = formatCount(currentProfileViewedData.following.length);
+                        } else if (currentProfileViewedData.uid === targetUid && Array.isArray(currentProfileViewedData.followers)) {
+                            currentProfileViewedData.followers = currentProfileViewedData.followers.filter(id => id !== myUid);
+                            document.getElementById('profile-followers').innerText = formatCount(currentProfileViewedData.followers.length);
+                        }
+                    }
+                    btnEl.innerText = "S'abonner";
+                    btnEl.className = "px-3.5 py-1.5 rounded-xl text-[11px] font-extrabold transition shrink-0 bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white shadow-md shadow-rose-600/25";
+                    showToast("Abonnement retiré", "info");
+                } else {
+                    const followerEntry = {
+                        uid: myUid,
+                        username: currentUserData?.username || "Utilisateur",
+                        photoURL: currentUserData?.photoURL || "",
+                        isVerified: !!(currentUserData?.isVerified || currentUserData?.email === VIP_EMAIL),
+                        ts: Date.now()
+                    };
+                    await updateDoc(tRef, {
+                        followers: arrayUnion(myUid),
+                        recentFollowers: arrayUnion(followerEntry)
+                    });
+                    await updateDoc(mRef, { following: arrayUnion(targetUid) });
+                    if (!currentUserData.following) currentUserData.following = [];
+                    if (!currentUserData.following.includes(targetUid)) currentUserData.following.push(targetUid);
+
+                    if (currentProfileViewedData) {
+                        if (currentProfileViewedData.uid === myUid) {
+                            if (!Array.isArray(currentProfileViewedData.following)) currentProfileViewedData.following = [];
+                            if (!currentProfileViewedData.following.includes(targetUid)) currentProfileViewedData.following.push(targetUid);
+                            document.getElementById('profile-following').innerText = formatCount(currentProfileViewedData.following.length);
+                        } else if (currentProfileViewedData.uid === targetUid) {
+                            if (!Array.isArray(currentProfileViewedData.followers)) currentProfileViewedData.followers = [];
+                            if (!currentProfileViewedData.followers.includes(myUid)) currentProfileViewedData.followers.push(myUid);
+                            document.getElementById('profile-followers').innerText = formatCount(currentProfileViewedData.followers.length);
+                        }
+                    }
+                    btnEl.innerText = "Abonné ✓";
+                    btnEl.className = "px-3.5 py-1.5 rounded-xl text-[11px] font-extrabold transition shrink-0 bg-white/15 text-white border border-white/20";
+                    sendNotification(targetUid, "follow", "a commencé à vous suivre");
+                    showToast("Abonné avec succès ! ✓", "success");
+                }
+            } catch (e) {
+                showToast("Erreur: " + e.message, "error");
+            } finally {
+                btnEl.disabled = false;
+            }
+        };
+
+        async function renderProfileSocialTabContent(tab) {
+            const listEl = document.getElementById('profile-social-list');
+            if (!listEl) return;
+            listEl.innerHTML = "<div class='text-center text-xs text-gray-400 py-8'>Chargement des 10 personnes les plus récentes...</div>";
+
+            if (!currentProfileViewedData) {
+                listEl.innerHTML = "<div class='text-center text-xs text-gray-500 py-8'>Aucune donnée disponible.</div>";
+                return;
+            }
+
+            try {
+                if (tab === 'followers') {
+                    const followersUids = Array.isArray(currentProfileViewedData.followers)
+                        ? currentProfileViewedData.followers.filter(id => !isVirtualBotIdOrUser(id))
+                        : [];
+                    const users = await fetchRecentUsersByUids(followersUids);
+                    if (users.length === 0) {
+                        listEl.innerHTML = "<div class='text-center text-xs text-gray-500 py-10'>Aucun abonné pour le moment.</div>";
+                        return;
+                    }
+                    listEl.innerHTML = users.map(u => buildSocialUserRowHTML(u, "Abonné à ce profil")).join('');
+                } else if (tab === 'following') {
+                    const followingUids = Array.isArray(currentProfileViewedData.following)
+                        ? currentProfileViewedData.following.filter(id => !isVirtualBotIdOrUser(id))
+                        : [];
+                    const users = await fetchRecentUsersByUids(followingUids);
+                    if (users.length === 0) {
+                        listEl.innerHTML = "<div class='text-center text-xs text-gray-500 py-10'>Aucun abonnement pour le moment.</div>";
+                        return;
+                    }
+                    listEl.innerHTML = users.map(u => buildSocialUserRowHTML(u, "Suivi par ce profil")).join('');
+                } else if (tab === 'likes') {
+                    // Combine recentLikesReceived + recentLikers from videos + unique likedBy UIDs (limited to 10 most recent)
+                    const combinedMap = new Map();
+                    if (Array.isArray(currentProfileViewedData.recentLikesReceived)) {
+                        const sortedRec = [...currentProfileViewedData.recentLikesReceived].sort((a, b) => (b.ts || 0) - (a.ts || 0));
+                        sortedRec.forEach(entry => {
+                            if (entry && entry.uid && !isVirtualBotIdOrUser(entry.uid) && !combinedMap.has(entry.uid)) {
+                                combinedMap.set(entry.uid, entry);
+                            }
+                        });
+                    }
+                    for (const uid of currentProfileVideoLikers) {
+                        if (combinedMap.size >= PROFILE_RECENT_LIMIT) break;
+                        if (uid && !isVirtualBotIdOrUser(uid) && !combinedMap.has(uid)) {
+                            combinedMap.set(uid, { uid, needsFetch: true });
+                        }
+                    }
+                    const finalLikers = [];
+                    const entries = Array.from(combinedMap.values()).slice(0, PROFILE_RECENT_LIMIT);
+                    const hydrated = await Promise.all(entries.map(async (item) => {
+                        try {
+                            const s = await getDoc(doc(db, "users", item.uid));
+                            if (s.exists()) {
+                                const d = s.data();
+                                if (isVirtualBotIdOrUser(item.uid, d.email, d.isBot)) return null;
+                                return {
+                                    uid: item.uid,
+                                    username: d.username || item.username || "Utilisateur",
+                                    photoURL: d.photoURL || item.photoURL || "",
+                                    isVerified: !!(d.isVerified || d.email === VIP_EMAIL),
+                                    ts: item.ts || null
+                                };
+                            }
+                        } catch (e) {}
+                        return item.username ? item : null;
+                    }));
+                    hydrated.filter(Boolean).slice(0, PROFILE_RECENT_LIMIT).forEach(u => finalLikers.push(u));
+
+                    if (finalLikers.length === 0) {
+                        listEl.innerHTML = "<div class='text-center text-xs text-gray-500 py-10'>Aucune mention J'aime reçue récemment.</div>";
+                        return;
+                    }
+                    listEl.innerHTML = finalLikers.map(u => buildSocialUserRowHTML(u, "❤️ A aimé les vidéos de ce profil")).join('');
+                } else if (tab === 'views') {
+                    // Check if current user has disabled profile views (Invisible Mode)
+                    if (!isProfileViewsEnabledForCurrentUser()) {
+                        listEl.innerHTML = `
+                        <div class="text-center p-6 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3 my-4">
+                            <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mx-auto">
+                                <i data-lucide="eye-off" class="w-6 h-6 text-amber-300"></i>
+                            </div>
+                            <h4 class="text-xs font-extrabold text-white">Mode Invisible activé 👻</h4>
+                            <p class="text-[11px] text-gray-400 leading-relaxed">
+                                Tu as désactivé l'historique des visites de profil. Tes visites sur les autres profils sont 100% invisibles. Réactive l'option ci-dessus pour voir qui a regardé ce profil.
+                            </p>
+                            <button onclick="toggleProfileViewsVisibility(true)" class="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-extrabold shadow-lg">
+                                Réactiver les visites de profil
+                            </button>
+                        </div>`;
+                        if (window.lucide) lucide.createIcons();
+                        return;
+                    }
+                    if (currentProfileViewedData.profileViewsEnabled === false && currentProfileViewedData.uid !== auth.currentUser?.uid) {
+                        listEl.innerHTML = "<div class='text-center text-xs text-gray-500 py-10'>Cet utilisateur a masqué l'historique des visites de son profil.</div>";
+                        return;
+                    }
+                    const rawViewers = getDeduplicatedRecentViewers(currentProfileViewedData);
+                    if (rawViewers.length === 0) {
+                        listEl.innerHTML = "<div class='text-center text-xs text-gray-500 py-10'>Aucun visiteur récent sur ce profil.</div>";
+                        return;
+                    }
+                    // Hydrate latest profile info for up to 10 most recent visitors
+                    const hydratedViewers = await Promise.all(rawViewers.slice(0, PROFILE_RECENT_LIMIT).map(async (vItem) => {
+                        try {
+                            const s = await getDoc(doc(db, "users", vItem.uid));
+                            if (s.exists()) {
+                                const d = s.data();
+                                if (isVirtualBotIdOrUser(vItem.uid, d.email, d.isBot)) return null;
+                                return {
+                                    uid: vItem.uid,
+                                    username: d.username || vItem.username || "Utilisateur",
+                                    photoURL: d.photoURL || vItem.photoURL || "",
+                                    isVerified: !!(d.isVerified || d.email === VIP_EMAIL),
+                                    ts: vItem.ts
+                                };
+                            }
+                        } catch (e) {}
+                        return vItem;
+                    }));
+                    const validViewers = hydratedViewers.filter(Boolean).slice(0, PROFILE_RECENT_LIMIT);
+                    listEl.innerHTML = validViewers.map(u => {
+                        const whenStr = u.ts ? `A consulté le profil • ${formatDateStamp(new Date(u.ts))}` : "A consulté le profil récemment";
+                        return buildSocialUserRowHTML(u, whenStr);
+                    }).join('');
+                }
+                if (window.lucide) lucide.createIcons();
+            } catch (err) {
+                listEl.innerHTML = "<div class='text-center text-xs text-rose-400 py-8'>Impossible de charger la liste.</div>";
+            }
+        }
+
         async function renderProfile(data, isMe) { 
             currentProfileUid = data.uid;
+            currentProfileViewedData = data;
+            currentProfileVideoLikers = [];
             document.getElementById('profile-handle').textContent = "@" + data.username;
             document.getElementById('profile-bio').textContent = data.bio || "Pas de bio";
             document.getElementById('profile-avatar-container').innerHTML = getAvatarHTML(data.photoURL, "w-full h-full"); 
@@ -8409,14 +9291,26 @@
             if (joinedEl) {
                 joinedEl.innerHTML = `<i data-lucide="calendar" class="w-3 h-3 text-cyan-400"></i> Membre • ${formatDateStamp(data.createdAt)}`;
             }
-            const isCertif = data.isVerified || (data.email === VIP_EMAIL);
+            const isCertif = !!(data.isVerified || (data.email || '').toLowerCase().trim() === VIP_EMAIL.toLowerCase());
+            if (data.uid) {
+                userProfileCache.set(data.uid, { username: data.username || "utilisateur", isVerified: isCertif, photoURL: data.photoURL || "" });
+            }
             document.getElementById('profile-badge-container').innerHTML = getBadgeHtml(isCertif); 
             document.getElementById('my-profile-actions').classList.toggle('hidden', !isMe);
             document.getElementById('other-profile-actions').classList.toggle('hidden', isMe);
             const realFollowersList = Array.isArray(data.followers) ? data.followers.filter(fUid => !isVirtualBotIdOrUser(fUid)) : [];
+            const realFollowingList = Array.isArray(data.following) ? data.following.filter(fUid => !isVirtualBotIdOrUser(fUid)) : [];
             document.getElementById('profile-followers').innerText = formatCount(realFollowersList.length);
-            document.getElementById('profile-following').innerText = formatCount(data.following ? data.following.length : 0);
+            document.getElementById('profile-following').innerText = formatCount(realFollowingList.length);
             document.getElementById('profile-likes').innerText = formatCount((data.likes || 0)); 
+
+            const recentVisitors = getDeduplicatedRecentViewers(data);
+            const viewsCountEl = document.getElementById('profile-views-count');
+            if (viewsCountEl) {
+                viewsCountEl.innerText = isProfileViewsEnabledForCurrentUser() ? formatCount(recentVisitors.length) : "Off";
+            }
+            updateProfileGhostStatusUI();
+
             const adminContainer = document.getElementById('admin-actions');
             adminContainer.classList.add('hidden'); adminContainer.innerHTML = '';
             if(!isMe) { 
@@ -8425,7 +9319,7 @@
                 const blockBtn = document.getElementById('btn-block');
                 if (isBlocked) { blockBtn.innerHTML = '<i data-lucide="shield" class="w-4 h-4"></i>'; blockBtn.classList.add('bg-rose-900', 'text-white'); blockBtn.classList.remove('text-rose-400'); } else { blockBtn.innerHTML = '<i data-lucide="shield-off" class="w-4 h-4"></i>'; blockBtn.classList.remove('bg-rose-900', 'text-white'); blockBtn.classList.add('text-rose-400'); }
                 
-                if (currentUserData.email === VIP_EMAIL) {
+                if (currentUserData.email === VIP_EMAIL && (data.email || '').toLowerCase().trim() !== VIP_EMAIL.toLowerCase()) {
                     adminContainer.classList.remove('hidden');
                     adminContainer.innerHTML = `<button onclick="toggleBan('${data.uid}')" class="w-full bg-rose-950 hover:bg-rose-900 text-rose-200 font-bold py-2.5 rounded-xl mt-2 border border-rose-500/40 uppercase tracking-widest text-[11px]">⚠️ Bannir cet utilisateur</button>`;
                 }
@@ -8434,9 +9328,18 @@
             profileVideosData = {}; let likes = 0; const snap = await getDocs(query(collection(db, "videos"), orderBy("createdAt", "desc"))); 
             grid.innerHTML = "";
             let items = [];
+            const likerUidSet = new Set();
             snap.forEach(d => { 
                 const v = d.data();
-                if (v.userId === data.uid) likes += (v.likes || 0);
+                if (v.userId === data.uid) {
+                    likes += getRealLikesCount(v);
+                    if (Array.isArray(v.likedBy)) {
+                        for (let i = v.likedBy.length - 1; i >= 0; i--) {
+                            const lUid = v.likedBy[i];
+                            if (lUid && !isVirtualBotIdOrUser(lUid)) likerUidSet.add(lUid);
+                        }
+                    }
+                }
                 let shouldShow = false;
                 if (currentProfileTab === 'videos') { if (v.userId === data.uid) shouldShow = true; }
                 else if (currentProfileTab === 'favs') { if (v.favorites && v.favorites.includes(data.uid)) shouldShow = true; }
@@ -8445,6 +9348,7 @@
                     items.push({ id: d.id, data: v });
                 }
             });
+            currentProfileVideoLikers = Array.from(likerUidSet).slice(0, PROFILE_RECENT_LIMIT);
             items.sort((a, b) => (b.data.isPinned ? 1 : 0) - (a.data.isPinned ? 1 : 0));
 
             items.forEach(({ id, data: v }) => {
@@ -8482,9 +9386,57 @@
                 : "flex-1 bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-rose-600/25";
         }
 
-        window.toggleFollow = async () => { if (!currentProfileUid || !auth.currentUser) return; const tRef = doc(db, "users", currentProfileUid); const mRef = doc(db, "users", auth.currentUser.uid); const snap = await getDoc(tRef); const isF = snap.data().followers?.includes(auth.currentUser.uid); const btn = document.getElementById('btn-follow'); const cnt = document.getElementById('profile-followers'); let n = parseInt(cnt.innerText); if (isF) { await updateDoc(tRef, {followers:arrayRemove(auth.currentUser.uid)}); await updateDoc(mRef, {following:arrayRemove(currentProfileUid)}); updateFollowButtonUI(btn, false); if(!isNaN(n)) cnt.innerText = Math.max(0, n-1); } else { await updateDoc(tRef, {followers:arrayUnion(auth.currentUser.uid)}); await updateDoc(mRef, {following:arrayUnion(currentProfileUid)}); updateFollowButtonUI(btn, true); if(!isNaN(n)) cnt.innerText = n+1; sendNotification(currentProfileUid, "follow", "a commencé à vous suivre"); } };
+        window.toggleFollow = async () => { if (!currentProfileUid || !auth.currentUser) return; const tRef = doc(db, "users", currentProfileUid); const mRef = doc(db, "users", auth.currentUser.uid); const snap = await getDoc(tRef); const isF = snap.data().followers?.includes(auth.currentUser.uid); const btn = document.getElementById('btn-follow'); const cnt = document.getElementById('profile-followers'); let n = parseInt(cnt.innerText); if (isF) { await updateDoc(tRef, {followers:arrayRemove(auth.currentUser.uid)}); await updateDoc(mRef, {following:arrayRemove(currentProfileUid)}); if (currentUserData && Array.isArray(currentUserData.following)) currentUserData.following = currentUserData.following.filter(id => id !== currentProfileUid); if (currentProfileViewedData && Array.isArray(currentProfileViewedData.followers)) currentProfileViewedData.followers = currentProfileViewedData.followers.filter(id => id !== auth.currentUser.uid); updateFollowButtonUI(btn, false); if(!isNaN(n)) cnt.innerText = Math.max(0, n-1); } else { await updateDoc(tRef, {followers:arrayUnion(auth.currentUser.uid), recentFollowers: arrayUnion({ uid: auth.currentUser.uid, username: currentUserData?.username || "Utilisateur", photoURL: currentUserData?.photoURL || "", isVerified: !!(currentUserData?.isVerified || currentUserData?.email === VIP_EMAIL), ts: Date.now() })}); await updateDoc(mRef, {following:arrayUnion(currentProfileUid)}); if (currentUserData) { if (!Array.isArray(currentUserData.following)) currentUserData.following = []; if (!currentUserData.following.includes(currentProfileUid)) currentUserData.following.push(currentProfileUid); } if (currentProfileViewedData) { if (!Array.isArray(currentProfileViewedData.followers)) currentProfileViewedData.followers = []; if (!currentProfileViewedData.followers.includes(auth.currentUser.uid)) currentProfileViewedData.followers.push(auth.currentUser.uid); } updateFollowButtonUI(btn, true); if(!isNaN(n)) cnt.innerText = n+1; sendNotification(currentProfileUid, "follow", "a commencé à vous suivre"); } };
         window.openEditProfile = () => { document.getElementById('edit-username').value = currentUserData.username; document.getElementById('edit-bio').value = currentUserData.bio; document.getElementById('edit-modal').classList.add('open'); };
-        window.saveProfileChanges = async () => { const btn = document.getElementById('btn-save-profile'); const originalText = btn.innerText; btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`; btn.disabled = true; try { const file = document.getElementById('edit-file-input').files[0]; let url = currentUserData.photoURL; if(file) url = await uploadToCloudinary(file); await updateDoc(doc(db, "users", auth.currentUser.uid), { username: escapeHtml(document.getElementById('edit-username').value), bio: escapeHtml(document.getElementById('edit-bio').value), photoURL: url }); currentUserData = (await getDoc(doc(db, "users", auth.currentUser.uid))).data(); if(file) { const vidSnap = await getDocs(query(collection(db, "videos"), where("userId", "==", auth.currentUser.uid))); vidSnap.forEach(async (v) => { await updateDoc(doc(db, "videos", v.id), { userPhotoURL: url }); }); } window.closeModal('edit-modal'); renderProfile(currentUserData, true); showToast("Profil mis à jour !", "success"); } catch(e) { showToast("Erreur: " + e.message, "error"); } finally { btn.innerHTML = originalText; btn.disabled = false; } };
+        window.saveProfileChanges = async () => {
+            const btn = document.getElementById('btn-save-profile');
+            const originalText = btn.innerText;
+            btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`;
+            btn.disabled = true;
+            try {
+                const file = document.getElementById('edit-file-input').files[0];
+                let url = currentUserData.photoURL;
+                if (file) url = await uploadToCloudinary(file);
+                const newUsername = escapeHtml(document.getElementById('edit-username').value.trim().replace(/^@+/, '')) || currentUserData.username;
+                const newBio = escapeHtml(document.getElementById('edit-bio').value);
+                const isCert = !!(currentUserData.isVerified || (currentUserData.email || auth.currentUser.email || '').toLowerCase().trim() === VIP_EMAIL.toLowerCase());
+                await updateDoc(doc(db, "users", auth.currentUser.uid), {
+                    username: newUsername,
+                    bio: newBio,
+                    photoURL: url,
+                    isVerified: isCert
+                });
+                currentUserData = (await getDoc(doc(db, "users", auth.currentUser.uid))).data();
+                currentUserData.isVerified = isCert;
+                userProfileCache.set(auth.currentUser.uid, {
+                    username: newUsername,
+                    isVerified: isCert,
+                    photoURL: url || ""
+                });
+                // Sync username, photoURL, and isVerified across all user's videos so feed & everywhere match the profile
+                const vidSnap = await getDocs(query(collection(db, "videos"), where("userId", "==", auth.currentUser.uid)));
+                vidSnap.forEach((v) => {
+                    updateDoc(doc(db, "videos", v.id), {
+                        username: newUsername,
+                        userPhotoURL: url || "",
+                        isVerified: isCert
+                    }).catch(() => {});
+                    if (profileVideosData[v.id]) {
+                        profileVideosData[v.id].username = newUsername;
+                        profileVideosData[v.id].userPhotoURL = url || "";
+                        profileVideosData[v.id].isVerified = isCert;
+                    }
+                });
+                window.closeModal('edit-modal');
+                renderProfile(currentUserData, true);
+                showToast("Profil mis à jour !", "success");
+            } catch(e) {
+                showToast("Erreur: " + e.message, "error");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        };
 
         async function refreshCurrentScreen() {
             if (!auth.currentUser) { loadFeed(); return; }
