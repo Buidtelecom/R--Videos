@@ -2651,7 +2651,9 @@
         let lastVisibleDoc = null;
         let isFetchingMore = false;
         let isFirstLoad = true;
-        const BATCH_SIZE = 5;
+        let hasMoreFeedVideos = true;
+        const renderedFeedVideoIds = new Set();
+        const BATCH_SIZE = 8;
 
         // Safe Storage Helpers
         function safeGetStorage(key, fallback = null) {
@@ -2748,6 +2750,62 @@
 
         let isCachingInProgress = false;
         let pendingCacheTimer = null;
+        let currentCacheAbortController = null;
+        const audioMemoryBlobUrls = new Map();
+        const audioPreloadInFlight = new Map();
+        const MAX_AUDIO_BLOB_CACHE = 24;
+
+        function cancelBackgroundVideoCache() {
+            if (pendingCacheTimer) {
+                clearTimeout(pendingCacheTimer);
+                pendingCacheTimer = null;
+            }
+            if (currentCacheAbortController) {
+                try { currentCacheAbortController.abort(); } catch (e) {}
+                currentCacheAbortController = null;
+            }
+            isCachingInProgress = false;
+        }
+
+        function storeAudioBlobInMemory(audioUrl, blob) {
+            if (!audioUrl || !blob || blob.size === 0) return null;
+            if (audioMemoryBlobUrls.has(audioUrl)) return audioMemoryBlobUrls.get(audioUrl);
+            while (audioMemoryBlobUrls.size >= MAX_AUDIO_BLOB_CACHE) {
+                const oldestKey = audioMemoryBlobUrls.keys().next().value;
+                if (!oldestKey) break;
+                const oldBlobUrl = audioMemoryBlobUrls.get(oldestKey);
+                if (oldBlobUrl && (!rvMasterAudio || rvMasterAudio.src !== oldBlobUrl)) {
+                    try { URL.revokeObjectURL(oldBlobUrl); } catch (e) {}
+                }
+                audioMemoryBlobUrls.delete(oldestKey);
+            }
+            const blobUrl = URL.createObjectURL(blob);
+            audioMemoryBlobUrls.set(audioUrl, blobUrl);
+            return blobUrl;
+        }
+
+        function preloadAudioUrlIntoMemory(audioUrl) {
+            if (!audioUrl || audioUrl.startsWith("blob:")) return Promise.resolve(audioUrl);
+            if (audioMemoryBlobUrls.has(audioUrl)) return Promise.resolve(audioMemoryBlobUrls.get(audioUrl));
+            if (audioPreloadInFlight.has(audioUrl)) return audioPreloadInFlight.get(audioUrl);
+
+            const p = fetch(audioUrl, { mode: "cors" })
+                .then(resp => {
+                    if (!resp.ok) throw new Error("Audio preload HTTP " + resp.status);
+                    return resp.blob();
+                })
+                .then(blob => {
+                    audioPreloadInFlight.delete(audioUrl);
+                    return storeAudioBlobInMemory(audioUrl, blob) || audioUrl;
+                })
+                .catch(() => {
+                    audioPreloadInFlight.delete(audioUrl);
+                    return audioUrl;
+                });
+
+            audioPreloadInFlight.set(audioUrl, p);
+            return p;
+        }
 
         // Pure lookup: NEVER starts a competing fetch() while the active video is streaming!
         async function getCachedVideoBlobUrl(url, triggerBackgroundCache = false) {
@@ -2805,8 +2863,9 @@
         async function cacheVideoInBackground(url) {
             if (!url || !appSettings.cacheEnabled || memoryBlobUrls.has(url) || isCachingInProgress) return;
             isCachingInProgress = true;
+            currentCacheAbortController = new AbortController();
             try {
-                const resp = await fetch(url, { mode: "cors", priority: "low" });
+                const resp = await fetch(url, { mode: "cors", priority: "low", signal: currentCacheAbortController.signal });
                 if (!resp.ok) return;
                 const blob = await resp.blob();
                 if (!blob || blob.size === 0) return;
@@ -2877,8 +2936,11 @@
 
         window.clearVideoCacheNow = async () => {
             try {
+                cancelBackgroundVideoCache();
                 memoryBlobUrls.forEach(bUrl => URL.revokeObjectURL(bUrl));
                 memoryBlobUrls.clear();
+                audioMemoryBlobUrls.forEach(aUrl => URL.revokeObjectURL(aUrl));
+                audioMemoryBlobUrls.clear();
                 const idb = await openCacheDB();
                 await new Promise((res) => {
                     const tx = idb.transaction(VIDEO_CACHE_STORE, "readwrite");
@@ -2955,20 +3017,15 @@
             pf.style.transform = `scaleX(${clamped})`;
         }
 
-        function getLightweightAudioUrl(v, cardEl) {
+        function getRawAudioUrlsForCard(v, cardEl) {
             const rawOriginal = (cardEl && cardEl.getAttribute("data-raw-url")) || "";
-            const rawSrc = (cardEl && cardEl.getAttribute("data-src")) || v.currentSrc || v.src || v.getAttribute("src") || "";
+            const rawSrc = (cardEl && cardEl.getAttribute("data-src")) || (v && (v.currentSrc || v.src || v.getAttribute("src"))) || "";
             const baseSource = rawOriginal || rawSrc;
-            if (!baseSource) return { primary: "", fallback: "" };
-            if (memoryBlobUrls.has(baseSource)) {
-                const b = memoryBlobUrls.get(baseSource);
-                return { primary: b, fallback: b };
-            }
+            if (!baseSource) return { networkPrimary: "", fallback: "" };
             if (baseSource.startsWith("blob:")) {
-                return { primary: baseSource, fallback: baseSource };
+                return { networkPrimary: baseSource, fallback: baseSource };
             }
             if (baseSource.includes("cloudinary.com") && baseSource.includes("/upload/")) {
-                // Ultra-lightweight MP3 (~50KB) buffers in <60ms and caches immediately
                 const trimStart = parseFloat((cardEl && cardEl.getAttribute("data-trim-start")) || "0") || 0;
                 const trimEnd = parseFloat((cardEl && cardEl.getAttribute("data-trim-end")) || "0") || 0;
                 let audioTrans = "f_mp3,q_auto:low";
@@ -2979,9 +3036,101 @@
                 const mp3Url = baseSource
                     .replace("/upload/", `/upload/${audioTrans}/`)
                     .replace(/\.(mp4|webm|mov|mkv|avi)(\?.*)?$/i, ".mp3$2");
-                return { primary: mp3Url, fallback: baseSource };
+                return { networkPrimary: mp3Url, fallback: baseSource };
             }
-            return { primary: baseSource, fallback: baseSource };
+            return { networkPrimary: baseSource, fallback: baseSource };
+        }
+
+        function getLightweightAudioUrl(v, cardEl) {
+            const { networkPrimary, fallback } = getRawAudioUrlsForCard(v, cardEl);
+            if (!networkPrimary) return { primary: "", fallback: "", networkPrimary: "" };
+            if (audioMemoryBlobUrls.has(networkPrimary)) {
+                return { primary: audioMemoryBlobUrls.get(networkPrimary), fallback: fallback, networkPrimary: networkPrimary };
+            }
+            if (fallback && audioMemoryBlobUrls.has(fallback)) {
+                return { primary: audioMemoryBlobUrls.get(fallback), fallback: fallback, networkPrimary: networkPrimary };
+            }
+            return { primary: networkPrimary, fallback: fallback, networkPrimary: networkPrimary };
+        }
+
+        // Proactively preloads audio into RAM (Blob URL) and next video frames for TikTok-like zero-latency scrolling
+        function prewarmUpcomingFeedMedia(referenceCard = null) {
+            const container = document.getElementById("feed-container");
+            if (!container) return;
+            const cards = Array.from(container.querySelectorAll(".video-card"));
+            if (cards.length === 0) return;
+
+            let activeIdx = referenceCard ? cards.indexOf(referenceCard) : -1;
+            if (activeIdx === -1 && activePlayingVideo) {
+                const activeCard = activePlayingVideo.closest(".video-card");
+                if (activeCard) activeIdx = cards.indexOf(activeCard);
+            }
+            if (activeIdx === -1) activeIdx = 0;
+
+            // 1. Pre-cache lightweight audio MP3 blobs for current + next 3 cards + previous 1 card
+            const audioTargets = [activeIdx, activeIdx + 1, activeIdx + 2, activeIdx + 3, activeIdx - 1];
+            audioTargets.forEach((idx, order) => {
+                if (idx < 0 || idx >= cards.length) return;
+                const c = cards[idx];
+                if (!c || c.getAttribute("data-muted-video") === "true") return;
+                const { networkPrimary } = getRawAudioUrlsForCard(c.querySelector("video"), c);
+                if (networkPrimary && !networkPrimary.startsWith("blob:") && !audioMemoryBlobUrls.has(networkPrimary)) {
+                    setTimeout(() => {
+                        preloadAudioUrlIntoMemory(networkPrimary);
+                    }, order * 60);
+                }
+            });
+
+            // 2. Pre-warm next card's <video> stream so swiping down is instant
+            if (appSettings.preloadNext && activeIdx + 1 < cards.length) {
+                const nextCard = cards[activeIdx + 1];
+                const nextVideo = nextCard ? nextCard.querySelector("video") : null;
+                const nextSrc = nextCard ? nextCard.getAttribute("data-src") : null;
+                if (nextVideo && nextSrc && !nextVideo.getAttribute("src")) {
+                    const resolvedNext = memoryBlobUrls.get(nextSrc) || nextSrc;
+                    nextVideo.preload = "auto";
+                    nextVideo.muted = true;
+                    nextVideo.src = resolvedNext;
+                    nextVideo.load();
+                }
+            }
+        }
+
+        // Strict TikTok 3-Player Sliding Window Pool: releases HTTP connections & hardware decoders on distant cards
+        function manageFeedMediaWindow(activeCard) {
+            const container = document.getElementById("feed-container");
+            if (!container || !activeCard) return;
+            const cards = Array.from(container.querySelectorAll(".video-card"));
+            const activeIdx = cards.indexOf(activeCard);
+            if (activeIdx === -1) return;
+
+            cards.forEach((c, idx) => {
+                if (c === activeCard) return;
+                const vid = c.querySelector("video");
+                if (!vid) return;
+                const dist = idx - activeIdx;
+                // Keep only [activeIdx - 1, activeIdx, activeIdx + 1] loaded; unload all other <video> elements!
+                if (dist < -1 || dist > 1) {
+                    if (!vid.paused) vid.pause();
+                    if (vid.getAttribute("src") || vid.currentSrc) {
+                        vid.removeAttribute("src");
+                        vid.preload = "none";
+                        vid.dataset.decoderPrimed = "false";
+                        vid.dataset.launchComplete = "false";
+                        try { vid.load(); } catch (e) {}
+                    }
+                } else if (dist === -1) {
+                    if (!vid.paused) vid.pause();
+                    vid.preload = "metadata";
+                }
+            });
+
+            prewarmUpcomingFeedMedia(activeCard);
+
+            // Trigger seamless infinite scroll pagination 3 videos before reaching the end of the loaded list
+            if (activeIdx >= cards.length - 3 && !isFetchingMore && hasMoreFeedVideos && lastVisibleDoc) {
+                subscribeToFeed(lastVisibleDoc);
+            }
         }
 
         function isCardAudioUnavailable(v, cardEl) {
@@ -3034,11 +3183,27 @@
                 updateTopMuteButtonUI(true);
                 return;
             }
+            // If audio is still loading from network, wait for canplay instead of prematurely marking as muted!
+            if (rvMasterAudio && rvMasterAudio.readyState < 3 && !rvMasterAudio.error) {
+                rvMasterAudio.addEventListener("canplay", function onVerifyWhenReady() {
+                    if (v !== activePlayingVideo || isGlobalMuted) return;
+                    if (rvMasterAudio.paused && !v.paused) {
+                        try { rvMasterAudio.currentTime = v.currentTime || 0; } catch (e) {}
+                        rvMasterAudio.playbackRate = currentPlaybackRate;
+                        rvMasterAudio.play().then(() => {
+                            rvMasterAudio.dataset.autoplayBlocked = "false";
+                            updateTopMuteButtonUI(false);
+                            setTimeout(() => alignMasterAudioToVideoOnce(v), 90);
+                        }).catch(() => {});
+                    }
+                }, { once: true });
+                return;
+            }
             if (!rvMasterAudio || rvMasterAudio.paused || rvMasterAudio.muted || rvMasterAudio.volume === 0) {
                 updateTopMuteButtonUI(true);
                 return;
             }
-            if (rvMasterAudio.currentTime >= 0.25 && typeof rvMasterAudio.webkitAudioDecodedByteCount === "number" && rvMasterAudio.webkitAudioDecodedByteCount === 0) {
+            if (rvMasterAudio.currentTime >= 0.35 && typeof rvMasterAudio.webkitAudioDecodedByteCount === "number" && rvMasterAudio.webkitAudioDecodedByteCount === 0 && rvMasterAudio.src && !rvMasterAudio.src.endsWith(".mp3") && !rvMasterAudio.src.startsWith("blob:")) {
                 rvMasterAudio.dataset.noAudioTrack = "true";
                 rvMasterAudio.pause();
                 if (cardEl) cardEl.setAttribute("data-muted-video", "true");
@@ -3071,6 +3236,9 @@
                             if (activePlayingVideo && !activePlayingVideo.paused && !isGlobalMuted) {
                                 try { rvMasterAudio.currentTime = activePlayingVideo.currentTime || 0; } catch (e) {}
                                 rvMasterAudio.play().then(() => {
+                                    rvMasterAudio.dataset.autoplayBlocked = "false";
+                                    updateTopMuteButtonUI(false);
+                                    setTimeout(() => alignMasterAudioToVideoOnce(activePlayingVideo), 90);
                                     setTimeout(() => verifyAudioActiveOrAutoMute(activePlayingVideo, cardEl), 320);
                                 }).catch(() => {
                                     rvMasterAudio.dataset.autoplayBlocked = "true";
@@ -3107,11 +3275,16 @@
                 return;
             }
             const trackKey = (cardEl && cardEl.getAttribute("data-id")) || (cardEl && cardEl.getAttribute("data-src")) || v.getAttribute("src") || "";
-            const { primary, fallback } = getLightweightAudioUrl(v, cardEl);
+            const { primary, fallback, networkPrimary } = getLightweightAudioUrl(v, cardEl);
             if (!primary) {
                 rvMasterAudio.dataset.noAudioTrack = "true";
                 updateTopMuteButtonUI(true);
                 return;
+            }
+
+            // Also cache this audio track in memory for instant future loops/re-visits
+            if (networkPrimary && !networkPrimary.startsWith("blob:") && !audioMemoryBlobUrls.has(networkPrimary)) {
+                preloadAudioUrlIntoMemory(networkPrimary);
             }
 
             rvMasterAudio.loop = false;
@@ -3131,7 +3304,13 @@
                 rvMasterAudio.load();
             } else if (resetToZero) {
                 if (!rvMasterAudio.paused) rvMasterAudio.pause();
-                try { rvMasterAudio.currentTime = 0; } catch (e) {}
+                // Upgrade to cached blob URL if it finished caching since last bind
+                if (networkPrimary && audioMemoryBlobUrls.has(networkPrimary) && rvMasterAudio.src !== audioMemoryBlobUrls.get(networkPrimary)) {
+                    rvMasterAudio.src = audioMemoryBlobUrls.get(networkPrimary);
+                    rvMasterAudio.load();
+                } else {
+                    try { rvMasterAudio.currentTime = 0; } catch (e) {}
+                }
             }
         }
 
@@ -3189,36 +3368,31 @@
                 if (v === activePlayingVideo && v.dataset.launchComplete === "true" && !isGlobalMuted && rvMasterAudio && rvMasterAudio.dataset.noAudioTrack !== "true") {
                     if (rvMasterAudio.paused) {
                         rvMasterAudio.dataset.pausedForNetBuffer = "false";
-                        try { rvMasterAudio.currentTime = v.currentTime || 0; } catch (e) {}
-                        rvMasterAudio.playbackRate = currentPlaybackRate;
-                        rvMasterAudio.play().then(() => {
-                            setTimeout(() => alignMasterAudioToVideoOnce(v), 120);
-                        }).catch(() => {});
+                        const startAudioNow = () => {
+                            if (v !== activePlayingVideo || v.paused || isGlobalMuted) return;
+                            try { rvMasterAudio.currentTime = v.currentTime || 0; } catch (e) {}
+                            rvMasterAudio.playbackRate = currentPlaybackRate;
+                            rvMasterAudio.play().then(() => {
+                                rvMasterAudio.dataset.autoplayBlocked = "false";
+                                updateTopMuteButtonUI(false);
+                                setTimeout(() => alignMasterAudioToVideoOnce(v), 100);
+                            }).catch(() => {});
+                        };
+                        if (rvMasterAudio.readyState >= 2) {
+                            startAudioNow();
+                        } else {
+                            rvMasterAudio.addEventListener("canplay", startAudioNow, { once: true });
+                        }
                     } else {
                         alignMasterAudioToVideoOnce(v);
                     }
                 }
             });
 
-            // Pre-warm next card's video AND audio in the background once active video has buffered
+            // Pre-warm upcoming cards' video AND audio in the background once active video has buffered
             v.addEventListener("canplaythrough", () => {
                 if (v !== activePlayingVideo || !appSettings.preloadNext || !cardEl) return;
-                const nextCard = cardEl.nextElementSibling;
-                if (!nextCard) return;
-                const nextVideo = nextCard.querySelector("video");
-                const nextSrc = nextCard.getAttribute("data-src");
-                if (nextVideo && nextSrc && !nextVideo.getAttribute("src")) {
-                    const resolvedNext = memoryBlobUrls.get(nextSrc) || nextSrc;
-                    nextVideo.preload = "auto";
-                    nextVideo.muted = true;
-                    nextVideo.src = resolvedNext;
-                    nextVideo.load();
-                }
-                const { primary: nextAudioUrl } = getLightweightAudioUrl(nextVideo || {}, nextCard);
-                if (nextAudioUrl && !nextAudioUrl.startsWith("blob:") && !prewarmedAudioUrls.has(nextAudioUrl)) {
-                    prewarmedAudioUrls.add(nextAudioUrl);
-                    fetch(nextAudioUrl, { mode: "cors", priority: "low" }).catch(() => {});
-                }
+                prewarmUpcomingFeedMedia(cardEl);
             });
         }
 
@@ -3267,6 +3441,7 @@
             if (!v) return;
             try {
                 stopMasterAudio();
+                cancelBackgroundVideoCache();
                 configureHardwareVideoElement(v, cardEl);
 
                 // Pause all other videos so only 1 hardware decoder is active
@@ -3297,27 +3472,45 @@
 
                 activePlayingVideo = v;
 
+                // Helper to start or catch-up audio in perfect sync with active video
+                const startOrCatchUpMasterAudio = () => {
+                    if (activePlayingVideo !== v || v.paused || isGlobalMuted) return;
+                    if (!rvMasterAudio || rvMasterAudio.dataset.noAudioTrack === "true" || isCardAudioUnavailable(v, cardEl)) {
+                        updateTopMuteButtonUI(true);
+                        return;
+                    }
+                    const launchAudioNow = () => {
+                        if (activePlayingVideo !== v || v.paused || isGlobalMuted) return;
+                        try { rvMasterAudio.currentTime = v.currentTime || 0; } catch (e) {}
+                        rvMasterAudio.playbackRate = currentPlaybackRate;
+                        rvMasterAudio.volume = 0.85;
+                        rvMasterAudio.play().then(() => {
+                            rvMasterAudio.dataset.autoplayBlocked = "false";
+                            updateTopMuteButtonUI(false);
+                            setTimeout(() => alignMasterAudioToVideoOnce(v), 100);
+                            setTimeout(() => verifyAudioActiveOrAutoMute(v, cardEl), 340);
+                        }).catch(() => {
+                            if (rvMasterAudio.readyState < 2) {
+                                rvMasterAudio.addEventListener("canplay", launchAudioNow, { once: true });
+                            } else {
+                                rvMasterAudio.dataset.autoplayBlocked = "true";
+                                updateTopMuteButtonUI(true);
+                            }
+                        });
+                    };
+                    if (rvMasterAudio.readyState >= 2) {
+                        launchAudioNow();
+                    } else {
+                        rvMasterAudio.addEventListener("canplay", launchAudioNow, { once: true });
+                    }
+                };
+
                 // Case 1: Resuming from a manual tap-pause mid-video (do not reset to 0)
                 if (!restartFromZero) {
                     prepareMasterAudioTrack(v, cardEl, false);
                     v.dataset.launchComplete = "true";
                     v.play().then(() => {
-                        if (activePlayingVideo === v && !isGlobalMuted && rvMasterAudio && rvMasterAudio.dataset.noAudioTrack !== "true" && !isCardAudioUnavailable(v, cardEl)) {
-                            try { rvMasterAudio.currentTime = v.currentTime || 0; } catch (e) {}
-                            rvMasterAudio.playbackRate = currentPlaybackRate;
-                            rvMasterAudio.volume = 0.85;
-                            rvMasterAudio.play().then(() => {
-                                rvMasterAudio.dataset.autoplayBlocked = "false";
-                                updateTopMuteButtonUI(false);
-                                setTimeout(() => alignMasterAudioToVideoOnce(v), 100);
-                                setTimeout(() => verifyAudioActiveOrAutoMute(v, cardEl), 340);
-                            }).catch(() => {
-                                rvMasterAudio.dataset.autoplayBlocked = "true";
-                                updateTopMuteButtonUI(true);
-                            });
-                        } else {
-                            updateTopMuteButtonUI(true);
-                        }
+                        startOrCatchUpMasterAudio();
                     }).catch(() => {});
                     return;
                 }
@@ -3344,7 +3537,7 @@
                         updateTopMuteButtonUI(true);
                         v.play().catch(() => {});
                     };
-                    if (v.readyState >= 3) startMutedOnly();
+                    if (v.readyState >= 2) startMutedOnly();
                     else v.addEventListener("canplay", startMutedOnly, { once: true });
                     return;
                 }
@@ -3373,27 +3566,14 @@
                         rvMasterAudio.volume = 0.85;
                     }
                     v.play().then(() => {
-                        if (activePlayingVideo === v && !isGlobalMuted && rvMasterAudio && rvMasterAudio.dataset.noAudioTrack !== "true" && !isCardAudioUnavailable(v, cardEl)) {
-                            rvMasterAudio.play().then(() => {
-                                rvMasterAudio.dataset.autoplayBlocked = "false";
-                                updateTopMuteButtonUI(false);
-                                // One-time post-start check after AudioTrack wakes up (never touches <video>!)
-                                setTimeout(() => alignMasterAudioToVideoOnce(v), 110);
-                                setTimeout(() => verifyAudioActiveOrAutoMute(v, cardEl), 340);
-                            }).catch(() => {
-                                rvMasterAudio.dataset.autoplayBlocked = "true";
-                                updateTopMuteButtonUI(true);
-                            });
-                        } else {
-                            updateTopMuteButtonUI(true);
-                        }
+                        startOrCatchUpMasterAudio();
                     }).catch(() => {});
                 };
 
                 const checkBothReadyToLaunch = () => {
                     if (launchedTogether || activePlayingVideo !== v) return;
-                    const videoReady = v.readyState >= 3;
-                    const audioReady = !rvMasterAudio || rvMasterAudio.dataset.noAudioTrack === "true" || rvMasterAudio.readyState >= 3;
+                    const videoReady = v.readyState >= 2;
+                    const audioReady = !rvMasterAudio || rvMasterAudio.dataset.noAudioTrack === "true" || rvMasterAudio.readyState >= 2;
 
                     // If video is ready before audio, prime the hardware MediaCodec decoder for 1 frame and hold at 0.00s
                     if (videoReady && !audioReady && !warmingDecoder && v.dataset.decoderPrimed !== "true") {
@@ -3406,7 +3586,7 @@
                                 v.dataset.decoderPrimed = "true";
                             }
                             warmingDecoder = false;
-                            if (!launchedTogether && (!rvMasterAudio || rvMasterAudio.readyState >= 3)) {
+                            if (!launchedTogether && (!rvMasterAudio || rvMasterAudio.readyState >= 2)) {
                                 executeWarmSimultaneousLaunch();
                             }
                         }).catch(() => { warmingDecoder = false; });
@@ -3418,12 +3598,14 @@
                     }
                 };
 
-                if (v.readyState >= 3 && (!rvMasterAudio || rvMasterAudio.dataset.noAudioTrack === "true" || rvMasterAudio.readyState >= 3)) {
+                if (v.readyState >= 2 && (!rvMasterAudio || rvMasterAudio.dataset.noAudioTrack === "true" || rvMasterAudio.readyState >= 2)) {
                     executeWarmSimultaneousLaunch();
                 } else {
+                    v.addEventListener("loadeddata", checkBothReadyToLaunch, { once: true });
                     v.addEventListener("canplay", checkBothReadyToLaunch, { once: true });
                     v.addEventListener("canplaythrough", checkBothReadyToLaunch, { once: true });
                     if (rvMasterAudio) {
+                        rvMasterAudio.addEventListener("loadeddata", checkBothReadyToLaunch, { once: true });
                         rvMasterAudio.addEventListener("canplay", checkBothReadyToLaunch, { once: true });
                         rvMasterAudio.addEventListener("canplaythrough", checkBothReadyToLaunch, { once: true });
                     }
@@ -3433,7 +3615,7 @@
                         } else if (!launchedTogether && activePlayingVideo === v) {
                             v.addEventListener("canplay", executeWarmSimultaneousLaunch, { once: true });
                         }
-                    }, 380);
+                    }, 900);
                 }
             } catch (err) {}
         }
@@ -5900,25 +6082,27 @@
             lastVisibleDoc = null;
             isFetchingMore = false;
             isFirstLoad = true;
+            hasMoreFeedVideos = true;
+            renderedFeedVideoIds.clear();
             
             container.innerHTML = '<div id="loading-feed" class="flex flex-col items-center justify-center h-full text-gray-400 gap-3"><div class="animate-spin rounded-full h-9 w-9 border-2 border-[#ff2a5f] border-t-transparent"></div><span class="text-xs font-medium tracking-wider uppercase text-gray-500">Chargement...</span></div>';
             subscribeToFeed(null);
             container.onscroll = () => {
                 const { scrollTop, scrollHeight, clientHeight } = container;
-                if (scrollTop + clientHeight >= scrollHeight - 250) {
+                if (hasMoreFeedVideos && !isFetchingMore && lastVisibleDoc && (scrollTop + clientHeight >= scrollHeight - Math.max(clientHeight * 3, 600))) {
                     subscribeToFeed(lastVisibleDoc);
                 }
             };
         }
 
         async function subscribeToFeed(startAfterDoc) {
-            if (isFetchingMore) return;
+            if (isFetchingMore || (!hasMoreFeedVideos && startAfterDoc)) return;
             isFetchingMore = true;
             const container = document.getElementById('feed-container');
             
             let q;
             if (currentFeedMode === 'foryou') {
-                const fetchSize = 12; 
+                const fetchSize = 15; 
                 q = query(collection(db, "videos"), orderBy("createdAt", "desc"), limit(fetchSize));
                 if (startAfterDoc) {
                     q = query(collection(db, "videos"), orderBy("createdAt", "desc"), startAfter(startAfterDoc), limit(fetchSize));
@@ -5935,6 +6119,7 @@
                 const loader = document.getElementById('loading-feed');
                 if(loader) loader.remove();
                 if(snapshot.empty) {
+                    hasMoreFeedVideos = false;
                     isFetchingMore = false; 
                     if (container.children.length === 0) { 
                         container.innerHTML = '<div class="h-full flex flex-col items-center justify-center text-gray-400 gap-2"><i data-lucide="film" class="w-10 h-10 text-gray-600"></i><span class="text-sm font-semibold">Aucune vidéo disponible</span></div>'; 
@@ -5946,6 +6131,7 @@
 
                 let videos = [];
                 snapshot.forEach(doc => {
+                    if (renderedFeedVideoIds.has(doc.id)) return;
                     const data = doc.data();
                     profileVideosData[doc.id] = data;
                     videos.push({ id: doc.id, ...data });
@@ -5984,6 +6170,7 @@
                 
                 videos.forEach((data) => {
                     const docId = data.id;
+                    renderedFeedVideoIds.add(docId);
                     const authorIdentity = getResolvedProfileIdentity(data.userId, data.username, data.isVerified, data.userPhotoURL, data.userEmail);
                     data.username = authorIdentity.username;
                     data.isVerified = authorIdentity.isVerified;
@@ -6206,6 +6393,7 @@
                 isFetchingMore = false; 
                 lucide.createIcons();
                 if (!videoObserver) handleVideoPlayback();
+                prewarmUpcomingFeedMedia();
             } catch(e) {
                 console.error("Erreur chargement feed:", e);
                 isFetchingMore = false;
@@ -7801,6 +7989,7 @@
                             v.load();
                         }
 
+                        manageFeedMediaWindow(card);
                         playVideoSynchronized(v, card, true);
 
                         const nextCard = card.nextElementSibling;
@@ -7824,17 +8013,6 @@
                             try { v.currentTime = 0; } catch (e) {}
                         }
                         setProgressBarRatio(progressFill, 0);
-
-                        const container = document.getElementById('feed-container');
-                        if (container) {
-                            const children = Array.from(container.children);
-                            const myIndex = children.indexOf(card);
-                            const visibleIndex = Math.round(container.scrollTop / (container.clientHeight || 1));
-                            if (myIndex !== -1 && Math.abs(myIndex - visibleIndex) > 1) {
-                                v.removeAttribute('src');
-                                v.load();
-                            }
-                        }
                     } 
                 }); 
             }, options); 
