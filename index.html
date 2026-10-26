@@ -1198,6 +1198,109 @@
             border-right: 5px solid transparent;
             border-bottom: 5px solid rgba(255, 42, 95, 0.96);
         }
+
+        /* ============================================================================
+           ULTRA-FLUID SCROLLING & LIGHTWEIGHT WINDOW ENGINE (ALL HIGH-QUANTITY ZONES)
+           ============================================================================ */
+        .overflow-y-auto,
+        .overflow-y-scroll,
+        #feed-container,
+        #discover-screen,
+        #inbox-content,
+        #profile-screen,
+        #profile-social-list,
+        #sound-videos-grid,
+        #chat-messages,
+        #comments-list,
+        #studio-real-sounds-list,
+        #studio-editor-drawer > .overflow-y-auto,
+        #studio-post-stage,
+        #settings-modal > .overflow-y-auto,
+        #options-modal > .overflow-y-auto,
+        #first-time-lang-grid,
+        #privacy-modal .overflow-y-auto {
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior-y: contain !important;
+            touch-action: pan-y !important;
+            scroll-behavior: auto;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            will-change: scroll-position;
+        }
+
+        .overflow-x-auto,
+        .studio-tab-dock,
+        #studio-lens-carousel,
+        #studio-segments-bar,
+        #comment-saved-stickers-grid {
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior-x: contain !important;
+            touch-action: pan-x !important;
+            scroll-behavior: auto;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+
+        /* Feather-Light Windows, Modals, Bottom Sheets & Drawers (Zero GPU Blur Lag) */
+        .bottom-sheet,
+        .modal-overlay,
+        .full-screen-modal,
+        #studio-editor-drawer,
+        #studio-post-stage,
+        #comments-sheet,
+        #sound-sheet-modal,
+        #profile-social-modal,
+        #options-modal,
+        #settings-modal,
+        #discover-screen .glass-panel,
+        #inbox-screen .glass-panel,
+        #profile-screen .glass-panel,
+        #studio-editor-drawer .glass-panel,
+        #studio-post-stage .glass-panel,
+        #settings-modal .glass-panel {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+
+        .bottom-sheet {
+            background: #0b101e !important;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.65) !important;
+        }
+        .modal-overlay {
+            background: rgba(3, 6, 12, 0.86) !important;
+        }
+        #studio-editor-drawer {
+            background: #080c18 !important;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.75) !important;
+        }
+        .glass-panel {
+            background: #0e1528;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+
+        /* CSS Content-Visibility Virtualization for High-Quantity Lists & Grids */
+        #comments-list > div,
+        #inbox-content > div,
+        #chat-messages > div,
+        #profile-social-list > div,
+        #studio-real-sounds-list > div,
+        #search-results > div,
+        #first-time-lang-grid > button {
+            content-visibility: auto;
+            contain-intrinsic-size: auto 72px;
+        }
+
+        #trending-grid > div,
+        #profile-videos-grid > div,
+        #sound-videos-grid > div {
+            content-visibility: auto;
+            contain-intrinsic-size: auto 210px;
+            contain: layout style paint;
+        }
     </style>
 </head>
 <body class="relative overflow-hidden bg-black">
@@ -2546,7 +2649,7 @@
                             </div>
 
                             <!-- Scrollable Drawer Body -->
-                            <div class="overflow-y-auto no-scrollbar space-y-2.5 pr-0.5 pb-2">
+                            <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain no-scrollbar space-y-2.5 pr-0.5 pb-4">
                                 <!-- TAB 1: DÉCOUPAGE, CADENCE, ROTATION & PROPORTIONS -->
                                 <div id="studio-tab-cut" class="studio-panel-section active space-y-2.5">
                                     <!-- Modern Visual Filmstrip Trimmer & Segment Splitter -->
@@ -2776,7 +2879,7 @@
                                         </div>
 
                                         <!-- Real Sounds List extracted from other users' videos in the app -->
-                                        <div id="studio-real-sounds-list" class="max-h-48 overflow-y-auto no-scrollbar space-y-1.5 pr-0.5">
+                                        <div id="studio-real-sounds-list" class="max-h-60 overflow-y-auto overscroll-contain no-scrollbar space-y-1.5 pr-0.5">
                                             <div class="text-center text-[11px] text-gray-400 py-4">Chargement des musiques des publications...</div>
                                         </div>
 
@@ -4299,7 +4402,7 @@
                     div.className = "bg-[#0c1222] aspect-[3/4] relative rounded-xl overflow-hidden border border-white/10 cursor-pointer group";
                     div.onclick = () => { closeSoundSheet(); openFullVideo(id); };
                     div.innerHTML = `
-                        <img src="${getVideoThumbnail(vid.url)}" class="w-full h-full object-cover group-hover:scale-105 transition">
+                        <img src="${getVideoThumbnail(vid.url)}" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent"></div>
                         <div class="absolute bottom-1.5 left-2 right-2 flex items-center justify-between text-[10px] font-bold text-white">
                             <span class="flex items-center gap-1"><i data-lucide="play" class="w-3 h-3 fill-white"></i> ${formatCount(vid.views)}</span>
@@ -5935,7 +6038,7 @@
         function getAvatarHTML(photoURL, sizeClass = "w-full h-full") {
             if (photoURL && photoURL.length > 5) {
                 const optimizedUrl = photoURL.includes('cloudinary') ? photoURL.replace('/upload/', '/upload/w_100,c_fill,q_auto:eco,f_auto/') : photoURL;
-                return `<img src="${optimizedUrl}" class="${sizeClass} rounded-full object-cover">`;
+                return `<img src="${optimizedUrl}" loading="lazy" decoding="async" class="${sizeClass} rounded-full object-cover">`;
             }
             return `<div class="${sizeClass} rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center"><i data-lucide="user" class="text-gray-300 w-1/2 h-1/2"></i></div>`;
         }
@@ -8245,13 +8348,13 @@
                 return;
             }
 
-            container.innerHTML = filtered.slice(0, 30).map((item) => {
+            container.innerHTML = filtered.slice(0, 250).map((item) => {
                 const isPlaying = (studioSoundPlayingId === item.id && studioSoundPreviewAudioEl && !studioSoundPreviewAudioEl.paused);
                 const isSelected = !!(selectedSoundForUpload && (selectedSoundForUpload.sourceVideoId === item.sourceVideoId || selectedSoundForUpload.soundTitle === item.soundTitle));
                 const safeIdJs = escapeJsSingleQuotedAttr(item.id);
                 const coverImg = item.thumbUrl || item.photoURL;
                 const thumbHtml = coverImg
-                    ? `<img src="${escapeHtml(coverImg)}" class="w-full h-full object-cover">`
+                    ? `<img src="${escapeHtml(coverImg)}" loading="lazy" decoding="async" class="w-full h-full object-cover">`
                     : `<i data-lucide="music" class="w-4 h-4 text-cyan-400"></i>`;
                 const descSnippet = item.description
                     ? `<span class="text-[10px] text-gray-400 truncate block">${escapeHtml(item.description)}</span>`
@@ -9857,7 +9960,7 @@
                         body += `<div class="text-xs text-gray-100 mt-1 break-words leading-relaxed">${escapeHtml(c.text)}</div>`;
                     }
                     if (c.stickerUrl) {
-                        body += `<div class="mt-1.5"><img src="${escapeHtml(c.stickerUrl)}" alt="Sticker photo" class="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-2xl border-2 border-white/15 shadow-lg bg-black/30 cursor-pointer hover:scale-105 transition" onclick="openCommentStickerLightbox('${escapeHtml(c.stickerUrl)}')"></div>`;
+                        body += `<div class="mt-1.5"><img src="${escapeHtml(c.stickerUrl)}" loading="lazy" decoding="async" alt="Sticker photo" class="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-2xl border-2 border-white/15 shadow-lg bg-black/30 cursor-pointer hover:scale-105 transition" onclick="openCommentStickerLightbox('${escapeHtml(c.stickerUrl)}')"></div>`;
                     }
                     return body;
                 };
@@ -10475,7 +10578,7 @@
 
                     const thumbHtml = thumbUrl ? `
                         <div onclick="event.stopPropagation(); ${vId ? `openFullVideo('${safeVidIdJs}')` : `viewUserProfile('${n.fromUid}')`}" class="relative w-12 h-16 rounded-xl overflow-hidden bg-[#0c1222] border border-white/15 shrink-0 shadow-md group cursor-pointer" title="Voir la publication">
-                            <img src="${escapeHtml(thumbUrl)}" alt="Miniature" class="w-full h-full object-cover group-hover:scale-110 transition duration-200">
+                            <img src="${escapeHtml(thumbUrl)}" loading="lazy" decoding="async" alt="Miniature" class="w-full h-full object-cover group-hover:scale-110 transition duration-200">
                             <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
                                 <i data-lucide="play" class="w-3.5 h-3.5 text-white fill-white opacity-90 drop-shadow"></i>
                             </div>
@@ -10882,7 +10985,7 @@
                 div.className = "bg-[#0c1222] aspect-[3/4] relative rounded-xl overflow-hidden border border-white/10 group cursor-pointer";
                 div.onclick = () => openFullVideo(id);
                 div.innerHTML = `
-                    <img src="${getVideoThumbnail(v.url)}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                    <img src="${getVideoThumbnail(v.url)}" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30"></div>
                     <div class="absolute top-1.5 left-1.5 right-1.5 flex justify-between items-center">
                         ${count <= 3 ? `<span class="bg-[#ff2a5f] text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded">#${count}</span>` : '<span></span>'}
@@ -11636,7 +11739,7 @@
                 const div = document.createElement('div');
                 div.className = "bg-[#0c1222] aspect-[3/4] relative rounded-xl overflow-hidden border border-white/10 group cursor-pointer";
                 div.onclick = () => openFullVideo(id);
-                div.innerHTML = `${pinnedBadge}${controlsOverlay}<img src="${getVideoThumbnail(v.url)}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300"><div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div><div class="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between text-[9px] font-bold text-white drop-shadow-md"><span class="flex items-center gap-0.5"><i data-lucide="play" class="w-2.5 h-2.5 fill-white"></i> ${formatCount(v.views)}</span><span class="text-gray-300 text-[8px]">${dateStr}</span></div>`;
+                div.innerHTML = `${pinnedBadge}${controlsOverlay}<img src="${getVideoThumbnail(v.url)}" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition duration-300"><div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div><div class="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between text-[9px] font-bold text-white drop-shadow-md"><span class="flex items-center gap-0.5"><i data-lucide="play" class="w-2.5 h-2.5 fill-white"></i> ${formatCount(v.views)}</span><span class="text-gray-300 text-[8px]">${dateStr}</span></div>`;
                 grid.appendChild(div);
             });
 
@@ -11787,7 +11890,98 @@
                 safeSetStorage('rv_legacy_bots_purged_v1', 'true');
             } catch (e) {}
         }
-        (function() { let startY = 0; let currentY = 0; let isPulling = false; const threshold = 120; const loader = document.getElementById('ptr-loader'); const spinner = document.getElementById('ptr-spinner'); const arrow = document.getElementById('ptr-arrow'); document.addEventListener('touchstart', (e) => { const activeScreen = document.querySelector('.screen.active'); if (!activeScreen) return; let scrollContainer = activeScreen.querySelector('.overflow-y-scroll, .overflow-y-auto'); if (!scrollContainer) scrollContainer = activeScreen; if (scrollContainer.scrollTop <= 0) { startY = e.touches[0].clientY; currentY = startY; isPulling = true; } else { isPulling = false; } }, { passive: true }); document.addEventListener('touchmove', (e) => { if (!isPulling) return; currentY = e.touches[0].clientY; const diff = currentY - startY; if (diff > 0) { const translateVal = Math.min(diff * 0.4, 150); loader.style.transform = `translateY(${translateVal - 64}px)`; if (translateVal > 60) { arrow.style.transform = "rotate(180deg)"; } else { arrow.style.transform = "rotate(0deg)"; } } }, { passive: true }); document.addEventListener('touchend', (e) => { if (!isPulling) return; isPulling = false; const diff = currentY - startY; if (diff > threshold) { loader.style.transform = `translateY(20px)`; arrow.classList.add('hidden'); spinner.classList.remove('hidden'); refreshCurrentScreen().then(() => { setTimeout(() => { loader.style.transform = ''; arrow.classList.remove('hidden'); arrow.style.transform = "rotate(0deg)"; spinner.classList.add('hidden'); }, 800); }); } else { loader.style.transform = ''; } }); })();
+        (function() {
+            let startY = 0;
+            let currentY = 0;
+            let isPulling = false;
+            const threshold = 120;
+            const loader = document.getElementById('ptr-loader');
+            const spinner = document.getElementById('ptr-spinner');
+            const arrow = document.getElementById('ptr-arrow');
+
+            function isAnyOverlayOrModalOpen() {
+                if (document.querySelector('.modal-overlay.open, .bottom-sheet.open, .full-screen-modal.open')) return true;
+                const fullVid = document.getElementById('fullscreen-video-overlay');
+                if (fullVid && !fullVid.classList.contains('hidden')) return true;
+                const firstLang = document.getElementById('first-time-lang-modal');
+                if (firstLang && !firstLang.classList.contains('hidden')) return true;
+                return false;
+            }
+
+            document.addEventListener('touchstart', (e) => {
+                if (isAnyOverlayOrModalOpen()) {
+                    isPulling = false;
+                    return;
+                }
+                if (e.target && e.target.closest('.overflow-x-auto, #studio-editor-drawer, #studio-real-sounds-list, #comments-sheet, #sound-sheet-modal, #profile-social-modal, #options-modal, #settings-modal, #chat-screen')) {
+                    isPulling = false;
+                    return;
+                }
+                const activeScreen = document.querySelector('.screen.active');
+                if (!activeScreen) return;
+                let scrollContainer = activeScreen.querySelector('.overflow-y-scroll, .overflow-y-auto');
+                if (!scrollContainer) scrollContainer = activeScreen;
+                if (scrollContainer.scrollTop <= 0) {
+                    startY = e.touches[0].clientY;
+                    currentY = startY;
+                    isPulling = true;
+                } else {
+                    isPulling = false;
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchmove', (e) => {
+                if (!isPulling) return;
+                currentY = e.touches[0].clientY;
+                const diff = currentY - startY;
+                if (diff > 0) {
+                    const translateVal = Math.min(diff * 0.4, 150);
+                    loader.style.transform = `translateY(${translateVal - 64}px)`;
+                    if (translateVal > 60) {
+                        arrow.style.transform = "rotate(180deg)";
+                    } else {
+                        arrow.style.transform = "rotate(0deg)";
+                    }
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchend', () => {
+                if (!isPulling) return;
+                isPulling = false;
+                const diff = currentY - startY;
+                if (diff > threshold) {
+                    loader.style.transform = `translateY(20px)`;
+                    arrow.classList.add('hidden');
+                    spinner.classList.remove('hidden');
+                    refreshCurrentScreen().then(() => {
+                        setTimeout(() => {
+                            loader.style.transform = '';
+                            arrow.classList.remove('hidden');
+                            arrow.style.transform = "rotate(0deg)";
+                            spinner.classList.add('hidden');
+                        }, 800);
+                    });
+                } else {
+                    loader.style.transform = '';
+                }
+            }, { passive: true });
+
+            // Isolate nested scrollable containers (e.g., #studio-real-sounds-list inside #studio-editor-drawer)
+            // so touch and wheel scrolling inside inner lists never fights parent drawers or modals
+            document.addEventListener('touchmove', (e) => {
+                const nestedList = e.target && e.target.closest ? e.target.closest('#studio-real-sounds-list, #comments-list, #profile-social-list, #sound-videos-grid, #chat-messages, #first-time-lang-grid') : null;
+                if (nestedList && nestedList.scrollHeight > nestedList.clientHeight) {
+                    e.stopPropagation();
+                }
+            }, { passive: true });
+
+            document.addEventListener('wheel', (e) => {
+                const nestedList = e.target && e.target.closest ? e.target.closest('#studio-real-sounds-list, #comments-list, #profile-social-list, #sound-videos-grid, #chat-messages, #first-time-lang-grid') : null;
+                if (nestedList && nestedList.scrollHeight > nestedList.clientHeight) {
+                    e.stopPropagation();
+                }
+            }, { passive: true });
+        })();
         
         // --- TRANSLATIONS ---
         const translations = {
