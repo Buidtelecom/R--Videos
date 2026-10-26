@@ -810,6 +810,91 @@
         }
         .rec-pulse-ring { animation: recPulse 1.1s ease-in-out infinite; }
 
+        /* Snapchat-Style Fullscreen Capture & Studio UI + 2-Stage Post Zone */
+        .snap-right-rail-btn {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 9999px;
+            transition: transform 0.16s ease, opacity 0.16s ease;
+            user-select: none;
+        }
+        .snap-right-rail-btn:active {
+            transform: scale(0.9);
+        }
+        .snap-right-rail-label {
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 0 10px rgba(0, 0, 0, 0.65);
+            white-space: nowrap;
+        }
+        .snap-right-rail-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.85));
+            transition: all 0.18s ease;
+        }
+        .snap-right-rail-btn.tool-active .snap-right-rail-icon {
+            background: rgba(255, 42, 95, 0.88);
+            color: #ffffff;
+            box-shadow: 0 0 14px rgba(255, 42, 95, 0.7);
+        }
+        .snap-right-rail-btn.tool-active .snap-right-rail-label {
+            color: #fda4af;
+        }
+        .snap-lens-circle {
+            width: 48px;
+            height: 48px;
+            border-radius: 9999px;
+            flex-shrink: 0;
+            border: 2.5px solid rgba(255, 255, 255, 0.45);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 800;
+            color: #ffffff;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+        .snap-lens-circle.active {
+            border-color: #ffffff;
+            border-width: 3px;
+            transform: scale(1.12);
+            box-shadow: 0 0 18px rgba(255, 255, 255, 0.75);
+        }
+        .studio-night-boost {
+            filter: brightness(1.38) contrast(1.12) saturate(1.18) !important;
+        }
+        #studio-editor-drawer {
+            transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease;
+        }
+        #studio-editor-drawer.drawer-closed {
+            transform: translateY(105%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        #studio-editor-drawer.drawer-open {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
         /* Fullscreen Live Camera Mode */
         #upload-preview-area.camera-fullscreen-active {
             position: fixed !important;
@@ -1062,6 +1147,57 @@
             text-decoration: line-through;
             opacity: 0.7;
         }
+        @keyframes rvPourToiBlink {
+            0%, 100% {
+                color: #ffffff;
+                text-shadow: 0 0 12px rgba(255, 42, 95, 0.95), 0 0 24px rgba(255, 42, 95, 0.65);
+                transform: scale(1);
+            }
+            50% {
+                color: #ff2a5f;
+                text-shadow: 0 0 18px rgba(6, 182, 212, 0.95), 0 0 32px rgba(255, 42, 95, 1);
+                transform: scale(1.1);
+            }
+        }
+        .pourtoi-blink-alert {
+            animation: rvPourToiBlink 0.9s ease-in-out infinite !important;
+            border-bottom-color: #ff2a5f !important;
+        }
+        @keyframes rvPourToiHintBounce {
+            0%, 100% { transform: translate(-50%, 0); }
+            50% { transform: translate(-50%, 4px); }
+        }
+        .pourtoi-last-video-hint {
+            position: absolute;
+            top: calc(100% + 9px);
+            left: 50%;
+            transform: translate(-50%, 0);
+            white-space: nowrap;
+            background: linear-gradient(135deg, rgba(255, 42, 95, 0.96) 0%, rgba(225, 29, 72, 0.96) 100%);
+            color: #ffffff;
+            font-size: 10.5px;
+            font-weight: 800;
+            padding: 5px 11px;
+            border-radius: 9999px;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: 0 8px 22px rgba(255, 42, 95, 0.55);
+            cursor: pointer;
+            z-index: 45;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            animation: rvPourToiHintBounce 1.15s ease-in-out infinite;
+        }
+        .pourtoi-last-video-hint::before {
+            content: "";
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 5px solid rgba(255, 42, 95, 0.96);
+        }
     </style>
 </head>
 <body class="relative overflow-hidden bg-black">
@@ -1294,9 +1430,14 @@
                 </div>
 
                 <!-- Center: Clean Transparent "Suivis | Pour toi" with crisp white underline -->
-                <div class="flex items-center gap-5 pointer-events-auto">
+                <div class="flex items-center gap-5 pointer-events-auto relative">
                     <span id="tab-following" class="text-[15px] font-bold text-white/65 pb-1.5 border-b-2 border-transparent cursor-pointer transition-all text-shadow" onclick="switchFeed('following')" data-i18n="tab_following">Suivis</span>
-                    <span id="tab-foryou" class="text-[15px] font-extrabold text-white pb-1.5 border-b-[3px] border-white cursor-pointer transition-all text-shadow" onclick="switchFeed('foryou')" data-i18n="tab_foryou">Pour toi</span>
+                    <div class="relative inline-flex flex-col items-center">
+                        <span id="tab-foryou" class="text-[15px] font-extrabold text-white pb-1.5 border-b-[3px] border-white cursor-pointer transition-all text-shadow" onclick="switchFeed('foryou')" data-i18n="tab_foryou">Pour toi</span>
+                        <div id="pourtoi-last-video-hint" onclick="switchFeed('foryou')" class="hidden pourtoi-last-video-hint">
+                            <span>✨ Clique pour voir de nouvelles pubs</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Right: Theme (Clair/Sombre), Settings & Search Icons -->
@@ -2008,84 +2149,57 @@
             </div>
         </div>
 
-        <!-- R-STUDIO CREATOR PRO MODAL (CAMERA + FULL PRE-PUBLISH VIDEO EDITOR) -->
-        <div id="upload-modal" class="modal-overlay">
-            <div class="bg-[#070b16] border border-white/10 w-full h-full max-w-3xl mx-auto p-3.5 md:p-5 flex flex-col overflow-y-auto no-scrollbar shadow-2xl md:rounded-3xl md:h-[94vh]">
-                <!-- Top Studio Bar -->
-                <div class="flex justify-between items-center mb-2.5">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-9 h-9 rounded-xl rv-brand-logo-icon shadow-lg shadow-[#e43d35]/30 border border-[#ec514c]/35 shrink-0"></div>
-                        <div>
-                            <h3 class="text-sm md:text-base font-extrabold font-display tracking-tight" data-i18n="upload_title">Nouvelle Publication</h3>
-                            <span class="text-[10px] text-cyan-400 font-semibold block">R-Studio Pro • Caméra &amp; Montage Créatif</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="saveStudioDraft()" class="glass-pill px-2.5 py-1.5 rounded-xl text-[11px] font-bold text-amber-300 flex items-center gap-1 hover:bg-white/10 transition" title="Sauvegarder un brouillon">
-                            <i data-lucide="bookmark-plus" class="w-3.5 h-3.5"></i> Brouillon
-                        </button>
-                        <button onclick="closeStudioModal()" class="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/15 flex items-center justify-center text-gray-300 hover:text-white transition">
-                            <i data-lucide="x" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                </div>
+        <!-- R-STUDIO CREATOR PRO MODAL (STAGE 1: SNAPCHAT-STYLE CAMERA & EDITOR | STAGE 2: ZONE DE POSTE) -->
+        <div id="upload-modal" class="modal-overlay !p-0">
+            <div class="bg-black w-full h-full max-w-3xl mx-auto flex flex-col relative overflow-hidden shadow-2xl md:rounded-3xl md:h-[96vh] md:border md:border-white/15">
 
-                <!-- 3-Way Source Switcher: Galerie | Caméra Live R-Cam | Caméra Native Téléphone -->
-                <div class="studio-mode-seg mb-2.5">
-                    <button id="studio-mode-gallery-btn" onclick="switchStudioSourceMode('gallery')" class="studio-mode-btn active">
-                        <i data-lucide="folder-video" class="w-3.5 h-3.5"></i> Galerie / Éditeur
-                    </button>
-                    <button id="studio-mode-livecam-btn" onclick="switchStudioSourceMode('camera')" class="studio-mode-btn">
-                        <i data-lucide="video" class="w-3.5 h-3.5"></i> Caméra Live
-                    </button>
-                    <button id="studio-mode-nativecam-btn" onclick="triggerNativePhoneCamera()" class="studio-mode-btn">
-                        <i data-lucide="smartphone" class="w-3.5 h-3.5"></i> Appareil Photo HD
-                    </button>
-                </div>
-                <!-- Hidden Native Phone Camera Input -->
+                <!-- Hidden Native Phone Camera Input & Legacy Mode Buttons (preserved for full compatibility) -->
                 <input type="file" id="native-camera-file-input" accept="video/*" capture="environment" class="hidden" onchange="previewVideoUpload(this)">
-
-                <!-- Selected / Reused Sound Banner in Upload Modal -->
-                <div id="upload-selected-sound-bar" class="hidden mb-2.5 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-[#ff2a5f]/20 via-purple-500/20 to-cyan-500/20 border border-cyan-400/40 items-center justify-between">
-                    <div class="flex items-center gap-2 min-w-0">
-                        <i data-lucide="disc" class="w-4 h-4 text-cyan-400 animate-spin-slow shrink-0"></i>
-                        <div class="truncate">
-                            <span class="text-[10px] uppercase tracking-wider text-cyan-300 font-bold block">Son réutilisé attaché</span>
-                            <span id="upload-selected-sound-name" class="text-xs font-extrabold text-white truncate block">Son original</span>
-                        </div>
-                    </div>
-                    <button onclick="clearSelectedUploadSound()" class="text-xs text-rose-300 hover:text-white font-bold px-2 py-1 rounded-lg bg-black/40">Retirer</button>
+                <div class="hidden" aria-hidden="true">
+                    <button id="studio-mode-gallery-btn" onclick="switchStudioSourceMode('gallery')" class="studio-mode-btn active">Galerie / Éditeur</button>
+                    <button id="studio-mode-livecam-btn" onclick="switchStudioSourceMode('camera')" class="studio-mode-btn">Caméra Live</button>
+                    <button id="studio-mode-nativecam-btn" onclick="triggerNativePhoneCamera()" class="studio-mode-btn">Appareil Photo HD</button>
+                    <button type="button" onclick="openStudioDrawerTab('cut')">Éditeur</button>
+                    <button type="button" onclick="cycleCameraMaxDuration()">⏱️ 60s</button>
+                    <button type="button" onclick="cycleCameraCountdown()">⏳ 0s</button>
+                    <button type="button" onclick="selectStudioFilterPreset('vfx-cyber', null)">Cyber 💜</button>
+                    <button type="button" onclick="selectStudioFilterPreset('vfx-bw', null)">N&amp;B 🖤</button>
                 </div>
 
-                <div class="flex-1 flex flex-col gap-2.5">
-                    <!-- MAIN INTERACTIVE STAGE (Preview + Live Camera + Draggable Text/Stickers + Controls) -->
-                    <div class="border-2 border-dashed border-white/15 hover:border-[#ff2a5f]/60 transition rounded-3xl h-72 md:h-80 flex flex-col items-center justify-center relative bg-black overflow-hidden shadow-2xl" id="upload-preview-area">
-                        <!-- Empty State Prompt -->
-                        <div id="studio-empty-prompt" class="flex flex-col items-center justify-center text-center p-4 pointer-events-none z-10">
-                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#ff2a5f]/20 to-cyan-400/20 border border-white/15 flex items-center justify-center mb-2.5 shadow-xl">
-                                <i data-lucide="upload-cloud" class="w-7 h-7 text-[#ff2a5f]"></i>
+                <!-- =========================================================================
+                     STAGE 1: SNAPCHAT-INSPIRED CAPTURE & CREATIVE EDITING ZONE
+                     ========================================================================= -->
+                <div id="studio-capture-stage" class="relative w-full h-full flex-1 flex flex-col bg-black overflow-hidden select-none">
+
+                    <!-- MAIN FULL-SCREEN VIEWPORT (Live Camera / Imported Video / Captured Photo) -->
+                    <div id="upload-preview-area" class="relative flex-1 w-full h-full bg-[#0b0e17] overflow-hidden flex items-center justify-center">
+
+                        <!-- Ambient Subtle Viewfinder Background when camera is idle and no file is loaded -->
+                        <div id="studio-empty-prompt" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 pointer-events-none z-10 bg-gradient-to-b from-[#131926]/80 via-[#090c14]/60 to-black/90">
+                            <div class="w-16 h-16 rounded-full bg-white/5 border border-white/15 flex items-center justify-center mb-3 shadow-2xl backdrop-blur-md">
+                                <i data-lucide="camera" class="w-7 h-7 text-white/80"></i>
                             </div>
-                            <p class="text-white text-xs font-extrabold" data-i18n="select_video">Sélectionner une vidéo</p>
-                            <span class="text-[10px] text-gray-400 mt-1">Ou clique sur « Caméra Live » en haut pour te filmer directement</span>
+                            <p class="text-white/90 text-xs font-extrabold tracking-wide" data-i18n="select_video">Sélectionner une vidéo</p>
+                            <span class="text-[11px] text-gray-400 mt-1 max-w-[230px]">Touche « Souvenirs » en bas pour importer de la galerie ou le cercle blanc pour filmer</span>
                         </div>
 
-                        <!-- File Input for Gallery -->
-                        <input type="file" id="video-file-input" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer z-10" onchange="previewVideoUpload(this)">
+                        <!-- Hidden File Input for Gallery / Souvenirs -->
+                        <input type="file" id="video-file-input" accept="video/*" class="hidden" onchange="previewVideoUpload(this)">
 
                         <!-- Recorded / Imported Video Preview -->
-                        <video id="video-preview" class="absolute inset-0 w-full h-full object-contain bg-black hidden" loop playsinline></video>
+                        <video id="video-preview" class="absolute inset-0 w-full h-full object-contain bg-black hidden z-11" loop playsinline onclick="toggleStudioPreviewPlay()"></video>
 
                         <!-- Captured Live Photo Preview -->
                         <img id="studio-photo-preview" class="absolute inset-0 w-full h-full object-contain bg-black hidden z-12" alt="Photo capturée">
 
-                        <!-- Live Camera Stream Element (Full Screen when Camera is active) -->
-                        <video id="studio-camera-live-video" class="absolute inset-0 w-full h-full object-cover bg-black hidden" autoplay muted playsinline></video>
+                        <!-- Live Camera Stream Element -->
+                        <video id="studio-camera-live-video" class="absolute inset-0 w-full h-full object-cover bg-black hidden z-11" autoplay muted playsinline></video>
 
                         <!-- Camera Shutter White Flash Overlay -->
                         <div id="studio-shutter-flash" class="hidden absolute inset-0 bg-white pointer-events-none z-50"></div>
 
                         <!-- Video / Camera Loading Announcement Overlay -->
-                        <div id="studio-media-loading-overlay" class="hidden absolute inset-0 bg-[#05070e]/92 backdrop-blur-md z-40 flex-col items-center justify-center p-6 text-center pointer-events-none">
+                        <div id="studio-media-loading-overlay" class="hidden absolute inset-0 bg-[#05070e]/90 backdrop-blur-md z-40 flex-col items-center justify-center p-6 text-center pointer-events-none">
                             <div class="w-14 h-14 rounded-2xl bg-[#4b0908]/90 border border-[#ec514c]/50 flex items-center justify-center mb-3 shadow-[0_8px_28px_rgba(228,61,53,0.45)]">
                                 <div class="w-7 h-7 border-[3px] border-[#ec514c] border-t-transparent rounded-full animate-spin"></div>
                             </div>
@@ -2101,400 +2215,671 @@
                         <div id="studio-live-text-overlay" class="hidden absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 z-25 cursor-move select-none text-center max-w-[88%] px-3 py-1.5 studio-text-banner-glass text-white text-sm" title="Glisser pour déplacer le texte"></div>
 
                         <!-- Interactive Live Sticker Overlay on Video/Photo -->
-                        <div id="studio-live-sticker-overlay" class="hidden absolute right-6 top-8 z-25 cursor-move select-none text-4xl drop-shadow-xl" title="Glisser pour déplacer le sticker"></div>
+                        <div id="studio-live-sticker-overlay" class="hidden absolute right-16 top-20 z-25 cursor-move select-none text-4xl drop-shadow-xl" title="Glisser pour déplacer le sticker"></div>
 
                         <!-- Giant Countdown Timer Overlay (3.. 2.. 1..) -->
                         <div id="studio-countdown-overlay" class="hidden absolute inset-0 bg-black/55 backdrop-blur-sm z-40 items-center justify-center">
                             <span id="studio-countdown-number" class="text-7xl font-black font-display text-white drop-shadow-[0_0_30px_rgba(255,42,95,0.9)] animate-ping">3</span>
                         </div>
 
-                        <!-- FULLSCREEN LIVE CAMERA HUD OVERLAY (Active when in Camera Mode) -->
-                        <div id="studio-camera-hud" class="hidden absolute inset-0 z-30 flex-col justify-between p-4 md:p-6 pointer-events-none">
-                            <!-- Top Fullscreen Camera Bar: Back to Editor, REC indicator, Timer & Controls -->
-                            <div class="flex flex-col gap-2.5 pointer-events-auto pt-1">
-                                <div class="flex items-center justify-between">
-                                    <button onclick="switchStudioSourceMode('gallery')" class="glass-pill px-3.5 py-2 rounded-2xl flex items-center gap-1.5 text-xs font-extrabold text-white shadow-lg active:scale-95 transition">
-                                        <i data-lucide="chevron-left" class="w-4 h-4 text-cyan-400"></i> Éditeur
+                        <!-- ===============================================================
+                             TOP FLOATING BAR (Matches Reference Image: Avatar + Search | Bell + Add/Post + Flip)
+                             =============================================================== -->
+                        <div id="studio-camera-hud" class="absolute top-0 inset-x-0 z-30 pt-3.5 px-3.5 pb-2 flex flex-col gap-2 pointer-events-none bg-gradient-to-b from-black/65 via-black/20 to-transparent">
+                            <div class="flex items-center justify-between pointer-events-auto">
+                                <!-- Top-Left: User Avatar Silhouette + Search/Tools + Close -->
+                                <div class="flex items-center gap-2.5">
+                                    <button type="button" onclick="closeStudioModal()" class="w-9 h-9 rounded-full bg-[#10b981]/25 border border-[#10b981]/50 flex items-center justify-center text-[#34d399] shadow-lg active:scale-90 transition overflow-hidden" id="studio-top-avatar-btn" title="Fermer / Profil">
+                                        <i data-lucide="user" class="w-5 h-5 fill-current"></i>
                                     </button>
-
-                                    <div class="glass-pill px-3.5 py-1.5 rounded-full flex items-center gap-2 text-xs font-extrabold text-white shadow-lg">
-                                        <span id="studio-rec-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                                        <span id="studio-rec-timer">00:00</span>
-                                        <span class="text-gray-300 text-[10px]">/ <span id="studio-rec-max-label">60s</span></span>
-                                    </div>
-
-                                    <div class="flex items-center gap-1.5">
-                                        <button onclick="cycleCameraMaxDuration()" class="glass-pill px-2.5 py-1.5 rounded-xl text-[10px] font-bold text-cyan-300 hover:bg-white/15" id="studio-cam-dur-btn" title="Durée max">⏱️ 60s</button>
-                                        <button onclick="cycleCameraCountdown()" class="glass-pill px-2.5 py-1.5 rounded-xl text-[10px] font-bold text-amber-300 hover:bg-white/15" id="studio-cam-delay-btn" title="Retardateur">⏳ 0s</button>
-                                    </div>
+                                    <button type="button" onclick="openStudioDrawerTab('audio')" class="w-9 h-9 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-md flex items-center justify-center text-white drop-shadow active:scale-90 transition" title="Rechercher un son ou effet">
+                                        <i data-lucide="search" class="w-5 h-5 stroke-[2.4]"></i>
+                                    </button>
+                                    <button type="button" onclick="closeStudioModal()" class="w-8 h-8 rounded-full bg-black/40 hover:bg-black/65 border border-white/15 flex items-center justify-center text-white/90 active:scale-90 transition" title="Fermer">
+                                        <i data-lucide="x" class="w-4 h-4"></i>
+                                    </button>
                                 </div>
 
-                                <!-- Recording Progress Bar -->
-                                <div class="w-full h-1.5 bg-white/15 rounded-full overflow-hidden">
-                                    <div id="studio-rec-progress-bar" class="h-full w-0 bg-gradient-to-r from-[#ff2a5f] via-purple-500 to-cyan-400 transition-all duration-150"></div>
+                                <!-- Top-Center: Live Recording Timer Pill -->
+                                <div class="glass-pill px-3 py-1 rounded-full flex items-center gap-1.5 text-[11px] font-extrabold text-white shadow-lg">
+                                    <span id="studio-rec-dot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                                    <span id="studio-rec-timer">00:00</span>
+                                    <span class="text-gray-300 text-[10px]">/ <span id="studio-rec-max-label">60s</span></span>
+                                </div>
+
+                                <!-- Top-Right: Bell (Brouillon) + User-Plus with Badge (Tags/Infos) + Flip Camera -->
+                                <div class="flex items-center gap-3">
+                                    <button type="button" onclick="saveStudioDraft()" class="relative w-9 h-9 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-md flex items-center justify-center text-white drop-shadow active:scale-90 transition" title="Sauvegarder un brouillon">
+                                        <i data-lucide="bell" class="w-5 h-5 stroke-[2.2]"></i>
+                                    </button>
+                                    <button type="button" onclick="goToStudioPostStage()" class="relative w-9 h-9 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-md flex items-center justify-center text-white drop-shadow active:scale-90 transition" title="Taguer un ami &amp; Zone de poste">
+                                        <i data-lucide="user-plus" class="w-5 h-5 stroke-[2.2]"></i>
+                                        <span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ff2a5f] text-white text-[10px] font-black flex items-center justify-center border border-black shadow">7</span>
+                                    </button>
+                                    <button type="button" onclick="switchStudioCameraFacing()" class="w-9 h-9 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-md flex items-center justify-center text-white drop-shadow active:scale-90 transition" title="Inverser Caméra Avant / Arrière">
+                                        <i data-lucide="refresh-cw" class="w-5 h-5 stroke-[2.2]"></i>
+                                    </button>
                                 </div>
                             </div>
 
-                            <!-- Bottom Fullscreen Orbital Camera Controls (Video Recording + Live Photo Capture) -->
-                            <div class="flex flex-col gap-3 pointer-events-auto pb-2 max-w-xl mx-auto w-full">
-                                <!-- Live Fullscreen Filter Selector Row -->
-                                <div class="flex items-center justify-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-                                    <button onclick="selectStudioFilterPreset('vfx-none', null)" class="px-2.5 py-1 rounded-full bg-black/55 border border-white/15 text-[10px] font-bold text-white shrink-0">Normal</button>
-                                    <button onclick="selectStudioFilterPreset('vfx-vivid', null)" class="px-2.5 py-1 rounded-full bg-black/55 border border-white/15 text-[10px] font-bold text-amber-300 shrink-0">Éclatant ✨</button>
-                                    <button onclick="selectStudioFilterPreset('vfx-cinema', null)" class="px-2.5 py-1 rounded-full bg-black/55 border border-white/15 text-[10px] font-bold text-cyan-300 shrink-0">Cinéma 🎬</button>
-                                    <button onclick="selectStudioFilterPreset('vfx-cyber', null)" class="px-2.5 py-1 rounded-full bg-black/55 border border-white/15 text-[10px] font-bold text-purple-300 shrink-0">Cyber 💜</button>
-                                    <button onclick="selectStudioFilterPreset('vfx-sun237', null)" class="px-2.5 py-1 rounded-full bg-black/55 border border-white/15 text-[10px] font-bold text-rose-300 shrink-0">Soleil 237 🌅</button>
-                                    <button onclick="selectStudioFilterPreset('vfx-bw', null)" class="px-2.5 py-1 rounded-full bg-black/55 border border-white/15 text-[10px] font-bold text-gray-300 shrink-0">N&amp;B 🖤</button>
-                                </div>
+                            <!-- Recording Progress Bar -->
+                            <div class="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                                <div id="studio-rec-progress-bar" class="h-full w-0 bg-gradient-to-r from-[#ff2a5f] via-purple-500 to-cyan-400 transition-all duration-150"></div>
+                            </div>
 
-                                <!-- Quick Camera Speed Row -->
-                                <div class="flex items-center justify-center gap-1.5">
-                                    <button onclick="setStudioSpeed(0.5)" class="cam-spd-btn px-2.5 py-1 rounded-lg bg-black/60 border border-white/15 text-[10px] font-bold text-gray-300">0.5x</button>
-                                    <button onclick="setStudioSpeed(1)" class="cam-spd-btn px-2.5 py-1 rounded-lg bg-[#ff2a5f] text-[10px] font-bold text-white">1x</button>
-                                    <button onclick="setStudioSpeed(1.5)" class="cam-spd-btn px-2.5 py-1 rounded-lg bg-black/60 border border-white/15 text-[10px] font-bold text-gray-300">1.5x</button>
-                                    <button onclick="setStudioSpeed(2)" class="cam-spd-btn px-2.5 py-1 rounded-lg bg-black/60 border border-white/15 text-[10px] font-bold text-gray-300">2x</button>
-                                </div>
-
-                                <!-- Main Fullscreen Camera Action Dock: Flip/Mirror | FILMER + PHOTO | Flash/Grid -->
-                                <div class="glass-panel px-3.5 py-3 rounded-3xl flex items-center justify-between shadow-2xl">
-                                    <div class="flex items-center gap-1.5">
-                                        <button onclick="switchStudioCameraFacing()" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition" title="Inverser Caméra Avant / Arrière">
-                                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                                        </button>
-                                        <button onclick="toggleStudioCameraMirror()" id="studio-cam-mirror-btn" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-cyan-300 transition" title="Mode Miroir">
-                                            <i data-lucide="flip-horizontal" class="w-4 h-4"></i>
-                                        </button>
-                                    </div>
-
-                                    <!-- Dual Capture Pod: Video Recording + Live Photo Capture -->
-                                    <div class="flex items-center gap-2">
-                                        <button id="studio-rec-trigger-btn" onclick="toggleStudioCameraRecording()" class="px-5 py-3 rounded-2xl bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white font-extrabold text-xs flex items-center gap-2 shadow-lg shadow-rose-600/40 active:scale-95 transition">
-                                            <span id="studio-rec-btn-icon" class="w-3 h-3 rounded-full bg-white"></span>
-                                            <span id="studio-rec-btn-text">Filmer</span>
-                                        </button>
-                                        <button id="studio-photo-trigger-btn" onclick="captureStudioLivePhoto()" class="px-4 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-lg shadow-cyan-500/40 active:scale-95 transition" title="Prendre une photo en direct">
-                                            <i data-lucide="camera" class="w-4 h-4"></i>
-                                            <span>Photo</span>
-                                        </button>
-                                    </div>
-
-                                    <div class="flex items-center gap-1.5">
-                                        <button onclick="toggleStudioRingLight()" id="studio-cam-light-btn" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-amber-300 transition" title="Anneau Lumineux Selfie (Flash Écran)">
-                                            <i data-lucide="sun" class="w-4 h-4"></i>
-                                        </button>
-                                        <button onclick="toggleStudioFramingGrid()" id="studio-cam-grid-btn" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-gray-300 transition" title="Grille de cadrage">
-                                            <i data-lucide="grid" class="w-4 h-4"></i>
-                                        </button>
+                            <!-- Selected / Reused Sound Banner (when a sound is attached) -->
+                            <div id="upload-selected-sound-bar" class="hidden pointer-events-auto px-3 py-1.5 rounded-2xl bg-black/70 backdrop-blur-md border border-cyan-400/40 items-center justify-between shadow-lg">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <i data-lucide="disc" class="w-4 h-4 text-cyan-400 animate-spin-slow shrink-0"></i>
+                                    <div class="truncate">
+                                        <span class="text-[9px] uppercase tracking-wider text-cyan-300 font-bold block">Son réutilisé attaché</span>
+                                        <span id="upload-selected-sound-name" class="text-xs font-extrabold text-white truncate block">Son original</span>
                                     </div>
                                 </div>
+                                <button type="button" onclick="clearSelectedUploadSound()" class="text-[11px] text-rose-300 hover:text-white font-bold px-2 py-0.5 rounded-lg bg-white/10">Retirer</button>
                             </div>
                         </div>
 
-                        <!-- VIDEO / PHOTO PREVIEW OVERLAY BAR (Active when a video or photo is loaded) -->
-                        <div id="video-controls-overlay" class="absolute bottom-2 left-0 w-full px-3 hidden flex-col gap-1.5 z-20">
-                            <div class="flex justify-between items-center">
-                                <div class="flex items-center gap-1.5">
-                                    <button onclick="changeVideoFile()" class="glass-pill text-white text-[11px] px-2.5 py-1 rounded-lg flex items-center gap-1 font-semibold"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Changer</button>
-                                    <button onclick="toggleStudioPreviewPlay()" id="studio-play-toggle-btn" class="glass-pill text-emerald-300 text-[11px] px-2.5 py-1 rounded-lg flex items-center gap-1 font-bold"><i data-lucide="play" class="w-3 h-3"></i> Lecture</button>
-                                    <button onclick="downloadCapturedStudioPhoto()" id="studio-save-photo-btn" class="hidden glass-pill text-amber-300 text-[11px] px-2.5 py-1 rounded-lg items-center gap-1 font-bold"><i data-lucide="download" class="w-3 h-3"></i> Enregistrer Photo</button>
-                                </div>
-                                <span id="upload-detected-ratio" class="glass-pill text-cyan-300 text-[10px] px-2.5 py-1 rounded-lg font-bold">Format Auto</span>
-                                <button onclick="deleteVideoFile()" class="bg-rose-950/90 text-rose-200 text-[11px] px-2.5 py-1 rounded-lg flex items-center gap-1 border border-rose-500/40 font-semibold"><i data-lucide="trash-2" class="w-3 h-3"></i> Supprimer</button>
-                            </div>
-                        </div>
-                    </div>
+                        <!-- ===============================================================
+                             RIGHT VERTICAL LABELED TOOL RAIL (Exact Match to Screenshot!)
+                             Flash | Sons | Nuit | Mode HD | Multi Snap | Retardateur | Mode réalisateur | Repères | ^
+                             =============================================================== -->
+                        <div class="absolute right-2.5 top-16 z-30 flex flex-col items-end gap-2 pointer-events-auto max-h-[62%] overflow-y-auto no-scrollbar py-1 pr-0.5">
+                            <!-- 1. Flash -->
+                            <button type="button" id="studio-cam-light-btn" onclick="toggleStudioRingLight()" class="snap-right-rail-btn" title="Anneau Lumineux Selfie (Flash Écran)">
+                                <span class="snap-right-rail-label">Flash</span>
+                                <span class="snap-right-rail-icon"><i data-lucide="zap-off" class="w-5 h-5 stroke-[2.2]"></i></span>
+                            </button>
 
-                    <!-- R-STUDIO 5-TAB CREATIVE WORKBENCH DOCK -->
-                    <div class="studio-tab-dock no-scrollbar">
-                        <button onclick="switchStudioEditTab('cut', this)" class="studio-tab-pill active">
-                            <i data-lucide="scissors" class="w-3.5 h-3.5 text-cyan-400"></i> 1. Découpage &amp; Format
-                        </button>
-                        <button onclick="switchStudioEditTab('color', this)" class="studio-tab-pill">
-                            <i data-lucide="palette" class="w-3.5 h-3.5 text-[#ff2a5f]"></i> 2. Filtres &amp; Couleurs
-                        </button>
-                        <button onclick="switchStudioEditTab('overlay', this)" class="studio-tab-pill">
-                            <i data-lucide="type" class="w-3.5 h-3.5 text-amber-400"></i> 3. Texte &amp; Stickers
-                        </button>
-                        <button onclick="switchStudioEditTab('audio', this)" class="studio-tab-pill">
-                            <i data-lucide="music" class="w-3.5 h-3.5 text-purple-400"></i> 4. Son &amp; Mixage
-                        </button>
-                        <button onclick="switchStudioEditTab('publish', this)" class="studio-tab-pill">
-                            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-400"></i> 5. Infos &amp; Options
-                        </button>
-                    </div>
+                            <!-- 2. Sons -->
+                            <button type="button" id="rail-btn-audio" onclick="openStudioDrawerTab('audio')" class="snap-right-rail-btn" title="Ajouter un son ou une musique">
+                                <span class="snap-right-rail-label">Sons</span>
+                                <span class="snap-right-rail-icon"><i data-lucide="music" class="w-5 h-5 stroke-[2.2]"></i></span>
+                            </button>
 
-                    <!-- TAB 1: DÉCOUPAGE, CADENCE, ROTATION & PROPORTIONS -->
-                    <div id="studio-tab-cut" class="studio-panel-section active space-y-2.5">
-                        <!-- Modern Visual Filmstrip Trimmer & Segment Splitter -->
-                        <div class="glass-panel p-3 rounded-2xl space-y-2.5">
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="font-bold text-white flex items-center gap-1.5">
-                                    <i data-lucide="scissors" class="w-3.5 h-3.5 text-[#ec514c]"></i>
-                                    <span>Rognage &amp; Découpage Moderne</span>
+                            <!-- 3. Nuit -->
+                            <button type="button" id="studio-night-btn" onclick="toggleStudioNightMode()" class="snap-right-rail-btn" title="Mode Nuit (Boost basse lumière)">
+                                <span class="snap-right-rail-label">Nuit</span>
+                                <span class="snap-right-rail-icon"><i data-lucide="moon" class="w-5 h-5 stroke-[2.2]"></i></span>
+                            </button>
+
+                            <!-- 4. Mode HD -->
+                            <button type="button" id="studio-hd-btn" onclick="toggleStudioHdMode()" class="snap-right-rail-btn tool-active" title="Mode HD 1080p &amp; Proportions">
+                                <span class="snap-right-rail-label">Mode HD</span>
+                                <span class="snap-right-rail-icon">
+                                    <span class="px-1.5 py-0.5 rounded border-2 border-white text-[9px] font-black leading-none tracking-tighter">HD</span>
                                 </span>
-                                <div class="flex items-center gap-1.5">
-                                    <span id="trim-range-readout" class="text-[10px] font-mono font-bold text-gray-300 bg-white/5 px-2 py-0.5 rounded-md">00:00.0 - 00:00.0</span>
-                                    <span id="trim-duration-display" class="text-[#ec514c] font-extrabold bg-[#ec514c]/15 border border-[#ec514c]/30 px-2 py-0.5 rounded-md">0s</span>
-                                </div>
-                            </div>
+                            </button>
 
-                            <!-- Hidden inputs preserved for compatibility -->
-                            <input type="hidden" id="trim-start" value="0" onchange="updateTrimPreview()">
-                            <input type="hidden" id="trim-end" value="30" onchange="updateTrimPreview()">
-                            <div class="hidden" aria-hidden="true">
-                                <button type="button" onclick="nudgeStudioTrim('start', -0.5)">-0.5s</button>
-                                <button type="button" onclick="nudgeStudioTrim('start', 0.5)">+0.5s</button>
-                            </div>
+                            <!-- 5. Multi Snap (Découpage & Segments) -->
+                            <button type="button" id="rail-btn-cut" onclick="openStudioDrawerTab('cut')" class="snap-right-rail-btn" title="Découpage, Rognage &amp; Multi-Segments">
+                                <span class="snap-right-rail-label">Multi Snap</span>
+                                <span class="snap-right-rail-icon"><i data-lucide="layers" class="w-5 h-5 stroke-[2.2]"></i></span>
+                            </button>
 
-                            <!-- Interactive Filmstrip Timeline with Left/Right Drag Handles & Playhead -->
-                            <div id="studio-filmstrip-track" class="studio-filmstrip-wrapper">
-                                <div id="studio-filmstrip-frames" class="studio-filmstrip-frames"></div>
-                                <div id="studio-deleted-segments-layer" class="absolute inset-0 pointer-events-none"></div>
-                                <div id="studio-split-markers-layer" class="absolute inset-0 pointer-events-none"></div>
-                                <div id="trim-mask-left" class="studio-trim-mask" style="left:0%;width:0%;"></div>
-                                <div id="trim-mask-right" class="studio-trim-mask" style="right:0%;width:0%;"></div>
-                                <div id="trim-selection-box" class="studio-trim-selection" style="left:0%;right:0%;"></div>
-                                <div id="trim-handle-left" class="studio-trim-handle left" style="left:0%;" title="Glisser pour rogner le début"></div>
-                                <div id="trim-handle-right" class="studio-trim-handle right" style="right:0%;" title="Glisser pour rogner la fin"></div>
-                                <div id="trim-playhead-line" class="studio-playhead-line" style="left:0%;"></div>
-                            </div>
+                            <!-- 6. Retardateur -->
+                            <button type="button" id="studio-cam-delay-btn" onclick="cycleCameraCountdown()" class="snap-right-rail-btn" title="Retardateur (0s / 3s / 10s)">
+                                <span class="snap-right-rail-label" id="studio-cam-delay-label">Retardateur</span>
+                                <span class="snap-right-rail-icon"><i data-lucide="timer" class="w-5 h-5 stroke-[2.2]"></i></span>
+                            </button>
 
-                            <!-- Interactive Segments Chips Row (Appears when video is loaded or split) -->
-                            <div id="studio-segments-bar" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5"></div>
+                            <!-- 7. Mode réalisateur (Full Editor Drawer: Filtres, Couleurs, Vitesse, Texte) -->
+                            <button type="button" id="rail-btn-director" onclick="openStudioDrawerTab('color')" class="snap-right-rail-btn" title="Mode réalisateur (Filtres, Couleurs, Texte, Vitesse)">
+                                <span class="snap-right-rail-label">Mode réalisateur</span>
+                                <span class="snap-right-rail-icon"><i data-lucide="video" class="w-5 h-5 stroke-[2.2]"></i></span>
+                            </button>
 
-                            <!-- Split & Delete Segment Action Bar -->
-                            <div class="flex items-center justify-between gap-2 pt-1 border-t border-white/10">
-                                <button type="button" onclick="splitStudioVideoAtPlayhead()" class="flex-1 py-2 px-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white text-[11px] font-bold flex items-center justify-center gap-1.5 active:scale-95 transition">
-                                    <i data-lucide="scissors" class="w-3.5 h-3.5 text-cyan-400"></i>
-                                    <span>Scinder au curseur</span>
+                            <!-- 8. Repères (Framing Grid) -->
+                            <button type="button" id="studio-cam-grid-btn" onclick="toggleStudioFramingGrid()" class="snap-right-rail-btn" title="Grille de cadrage">
+                                <span class="snap-right-rail-label">Repères</span>
+                                <span class="snap-right-rail-icon"><i data-lucide="grid" class="w-5 h-5 stroke-[2.2]"></i></span>
+                            </button>
+
+                            <!-- Expandable Extra Studio Tools (Texte/Stickers, Miroir, Rotation, Durée) -->
+                            <div id="studio-rail-extra-tools" class="hidden flex-col items-end gap-2">
+                                <button type="button" id="rail-btn-overlay" onclick="openStudioDrawerTab('overlay')" class="snap-right-rail-btn" title="Texte &amp; Stickers sur la vidéo">
+                                    <span class="snap-right-rail-label">Texte &amp; Stickers</span>
+                                    <span class="snap-right-rail-icon"><i data-lucide="type" class="w-5 h-5 stroke-[2.2]"></i></span>
                                 </button>
-                                <button type="button" onclick="deleteSelectedStudioSegment()" class="flex-1 py-2 px-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-200 text-[11px] font-bold flex items-center justify-center gap-1.5 active:scale-95 transition">
-                                    <i data-lucide="trash-2" class="w-3.5 h-3.5 text-[#ec514c]"></i>
-                                    <span>Supprimer la partie</span>
+                                <button type="button" id="studio-cam-mirror-btn" onclick="toggleStudioCameraMirror()" class="snap-right-rail-btn" title="Mode Miroir">
+                                    <span class="snap-right-rail-label">Miroir</span>
+                                    <span class="snap-right-rail-icon"><i data-lucide="flip-horizontal" class="w-5 h-5 stroke-[2.2]"></i></span>
                                 </button>
-                                <button type="button" onclick="resetStudioTrimAndCuts()" class="py-2 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 text-[11px] font-semibold flex items-center justify-center gap-1 active:scale-95 transition" title="Réinitialiser le découpage">
-                                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                                <button type="button" onclick="rotateStudioPreview()" class="snap-right-rail-btn" title="Pivoter de 90°">
+                                    <span class="snap-right-rail-label">Rotation</span>
+                                    <span class="snap-right-rail-icon"><i data-lucide="rotate-cw" class="w-5 h-5 stroke-[2.2]"></i></span>
+                                </button>
+                                <button type="button" id="studio-cam-dur-btn" onclick="cycleCameraMaxDuration()" class="snap-right-rail-btn" title="Durée max">
+                                    <span class="snap-right-rail-label" id="studio-cam-dur-label">Durée 60s</span>
+                                    <span class="snap-right-rail-icon"><i data-lucide="clock" class="w-5 h-5 stroke-[2.2]"></i></span>
+                                </button>
+                            </div>
+
+                            <!-- Chevron Expand / Collapse Button -->
+                            <button type="button" onclick="toggleStudioRightRailExpand()" class="snap-right-rail-btn mt-0.5" title="Plus d'outils">
+                                <span class="snap-right-rail-icon bg-black/25"><i id="studio-rail-chevron-icon" data-lucide="chevron-up" class="w-5 h-5 stroke-[2.5]"></i></span>
+                            </button>
+                        </div>
+
+                        <!-- ===============================================================
+                             LOADED VIDEO / PHOTO FLOATING QUICK CONTROLS BAR
+                             (Appears when a video or photo is loaded, with "Suivant : Zone de poste ➔")
+                             =============================================================== -->
+                        <div id="video-controls-overlay" class="hidden absolute top-16 left-3 z-30 flex-col gap-2 pointer-events-auto max-w-[68%]">
+                            <div class="flex flex-wrap items-center gap-1.5 bg-black/65 backdrop-blur-md p-1.5 rounded-2xl border border-white/15 shadow-xl">
+                                <button type="button" onclick="toggleStudioPreviewPlay()" id="studio-play-toggle-btn" class="glass-pill text-emerald-300 text-[11px] px-2.5 py-1 rounded-xl flex items-center gap-1 font-bold">
+                                    <i data-lucide="play" class="w-3 h-3"></i> Lecture
+                                </button>
+                                <button type="button" onclick="openStudioDrawerTab('cut')" class="glass-pill text-cyan-300 text-[11px] px-2.5 py-1 rounded-xl flex items-center gap-1 font-bold">
+                                    <i data-lucide="scissors" class="w-3 h-3"></i> Couper
+                                </button>
+                                <button type="button" onclick="changeVideoFile()" class="glass-pill text-white text-[11px] px-2.5 py-1 rounded-xl flex items-center gap-1 font-semibold">
+                                    <i data-lucide="refresh-cw" class="w-3 h-3"></i> Changer
+                                </button>
+                                <button type="button" onclick="downloadCapturedStudioPhoto()" id="studio-save-photo-btn" class="hidden glass-pill text-amber-300 text-[11px] px-2.5 py-1 rounded-xl items-center gap-1 font-bold">
+                                    <i data-lucide="download" class="w-3 h-3"></i> Enregistrer Photo
+                                </button>
+                                <button type="button" onclick="deleteVideoFile()" class="bg-rose-950/90 text-rose-200 text-[11px] px-2 py-1 rounded-xl flex items-center gap-1 border border-rose-500/40 font-semibold" title="Supprimer">
+                                    <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span id="upload-detected-ratio" class="glass-pill text-cyan-300 text-[10px] px-2.5 py-0.5 rounded-lg font-bold">Format Auto</span>
+                                <button type="button" onclick="goToStudioPostStage()" class="px-3 py-1 rounded-xl bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white text-[11px] font-extrabold shadow-lg shadow-rose-600/40 flex items-center gap-1 active:scale-95 transition">
+                                    <span>Zone de poste</span>
+                                    <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Speed, Rotation, Mirror & Aspect Ratio -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            <div class="glass-panel p-2.5 rounded-2xl flex items-center justify-between">
-                                <div>
-                                    <div class="text-xs font-bold text-white">Proportions dans l'application</div>
-                                    <div class="text-[10px] text-gray-400">Format original ou plein écran 9:16</div>
-                                </div>
-                                <select id="video-aspect-mode" onchange="updateUploadPreviewFit(this.value)" class="bg-[#162038] border border-white/15 text-white text-xs font-semibold rounded-xl px-2.5 py-1.5 outline-none">
-                                    <option value="contain">Proportions d'origine (Fidèle)</option>
-                                    <option value="cover">Plein écran 9:16 (Remplir)</option>
-                                </select>
+                        <!-- ===============================================================
+                             BOTTOM CAPTURE, SOUVENIRS, IA & LENS CAROUSEL HUD
+                             (Exact match to 1000011831_87ba16.jpg!)
+                             =============================================================== -->
+                        <div class="absolute bottom-0 inset-x-0 z-30 flex flex-col justify-end pointer-events-none bg-gradient-to-t from-black/90 via-black/45 to-transparent pt-8 pb-2 px-3">
+
+                            <!-- Expand / Aspect Ratio Diagonal Arrows Icon right above the shutter circle -->
+                            <div class="flex items-center justify-center mb-2 pointer-events-auto relative">
+                                <button type="button" onclick="toggleStudioPreviewAspectQuick()" class="w-8 h-8 rounded-full bg-black/40 hover:bg-black/65 border border-white/15 flex items-center justify-center text-white shadow-md active:scale-90 transition" title="Proportions d'origine / Plein écran 9:16">
+                                    <i data-lucide="maximize-2" class="w-4 h-4"></i>
+                                </button>
                             </div>
 
-                            <div class="glass-panel p-2.5 rounded-2xl flex items-center justify-between">
-                                <span class="text-xs font-bold text-white">Géométrie &amp; Cadence</span>
-                                <div class="flex items-center gap-1.5">
-                                    <button onclick="rotateStudioPreview()" class="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-[11px] font-bold text-cyan-300 flex items-center gap-1" title="Pivoter de 90°">
-                                        <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i> <span id="studio-rot-label">0°</span>
+                            <!-- Main Shutter Row: [IA] [Souvenirs]  ( O SHUTTER )  [Lens 1] [Lens 2] [Lens 3] [Lens 4] -->
+                            <div class="flex items-center justify-center gap-3.5 pointer-events-auto pb-2">
+
+                                <!-- Left Group: IA + Souvenirs (Gallery) -->
+                                <div class="flex items-center gap-4 shrink-0">
+                                    <!-- IA Button (Opens AI / Smart Filters & Text Overlay Drawer) -->
+                                    <button type="button" onclick="openStudioDrawerTab('overlay')" class="flex flex-col items-center gap-0.5 group active:scale-90 transition" title="Éditeur IA, Texte &amp; Stickers">
+                                        <div class="relative w-10 h-10 flex items-center justify-center">
+                                            <span class="text-[22px] font-black tracking-tight text-white font-display leading-none drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">Ai</span>
+                                            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-white absolute -top-0.5 -right-1 drop-shadow"></i>
+                                        </div>
+                                        <span class="text-[10px] font-bold text-white/95 drop-shadow">IA</span>
                                     </button>
-                                    <button onclick="toggleStudioCameraMirror()" class="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-[11px] font-bold text-purple-300 flex items-center gap-1" title="Miroir horizontal">
-                                        <i data-lucide="flip-horizontal" class="w-3.5 h-3.5"></i> Miroir
+
+                                    <!-- Souvenirs Button (Opens Gallery Video Picker) -->
+                                    <button type="button" onclick="changeVideoFile()" class="flex flex-col items-center gap-0.5 group active:scale-90 transition" title="Importer une vidéo depuis la galerie (Souvenirs)">
+                                        <div class="relative w-10 h-10 rounded-xl flex items-center justify-center">
+                                            <i data-lucide="images" class="w-7 h-7 text-white stroke-[2.2] drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]"></i>
+                                            <span class="w-2.5 h-2.5 rounded-full bg-[#ff2a5f] border border-black absolute top-0.5 right-0.5 shadow"></span>
+                                        </div>
+                                        <span class="text-[10px] font-bold text-white/95 drop-shadow">Souvenirs</span>
                                     </button>
-                                    <select id="studio-speed-select" onchange="setStudioSpeed(this.value)" class="bg-[#162038] border border-white/15 text-white text-[11px] font-bold rounded-xl px-2 py-1.5 outline-none">
-                                        <option value="0.5">0.5x</option>
-                                        <option value="0.75">0.75x</option>
-                                        <option value="1" selected>1.0x</option>
-                                        <option value="1.25">1.25x</option>
-                                        <option value="1.5">1.5x</option>
-                                        <option value="2">2.0x</option>
-                                    </select>
+                                </div>
+
+                                <!-- Center: Iconic Large White Ring Shutter Button -->
+                                <div class="relative flex flex-col items-center shrink-0 mx-1">
+                                    <button type="button" id="studio-main-shutter-btn" onclick="handleStudioMainShutterClick()" class="w-[78px] h-[78px] rounded-full border-[5.5px] border-white bg-white/10 hover:bg-white/15 active:scale-90 transition flex items-center justify-center shadow-[0_0_25px_rgba(0,0,0,0.85)]">
+                                        <span id="studio-shutter-inner" class="w-[60px] h-[60px] rounded-full bg-transparent transition-all duration-200 flex items-center justify-center">
+                                            <span id="studio-rec-btn-icon" class="w-3 h-3 rounded-full bg-transparent"></span>
+                                            <span id="studio-rec-btn-text" class="sr-only">Filmer</span>
+                                        </span>
+                                    </button>
+                                </div>
+
+                                <!-- Right Group: Scrollable Circular Filter / Lens Carousel (Matches the 4 circles on the right in screenshot!) -->
+                                <div class="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-1 max-w-[165px] sm:max-w-[230px]">
+                                    <div onclick="selectStudioLensCircle('vfx-vivid', this)" class="snap-lens-circle" style="background: radial-gradient(circle at 30% 30%, #0ea5e9, #15803d 70%, #052e16);" title="Filtre Éclatant">
+                                        <span>✨</span>
+                                        <span class="text-[8px]">Éclat</span>
+                                    </div>
+                                    <div onclick="selectStudioLensCircle('vfx-cinema', this)" class="snap-lens-circle" style="background: radial-gradient(circle at 30% 30%, #1d4ed8, #1e293b 70%, #090d16);" title="Filtre Cinéma">
+                                        <span>🎬</span>
+                                        <span class="text-[8px]">Cinéma</span>
+                                    </div>
+                                    <div onclick="selectStudioLensCircle('vfx-sun237', this)" class="snap-lens-circle" style="background: radial-gradient(circle at 30% 30%, #f59e0b, #b45309 65%, #14532d);" title="Filtre Soleil 237">
+                                        <span>🌴</span>
+                                        <span class="text-[8px]">237</span>
+                                    </div>
+                                    <div onclick="selectStudioLensCircle('vfx-cyber', this)" class="snap-lens-circle" style="background: radial-gradient(circle at 30% 30%, #ec4899, #7c3aed 65%, #0f172a);" title="Filtre Cyber Néon">
+                                        <span>💜</span>
+                                        <span class="text-[8px]">Cyber</span>
+                                    </div>
+                                    <div onclick="selectStudioLensCircle('vfx-vhs', this)" class="snap-lens-circle" style="background: radial-gradient(circle at 30% 30%, #ef4444, #475569 70%, #0f172a);" title="Filtre Rétro VHS">
+                                        <span>📼</span>
+                                        <span class="text-[8px]">VHS</span>
+                                    </div>
+                                    <div onclick="selectStudioLensCircle('vfx-arctic', this)" class="snap-lens-circle" style="background: radial-gradient(circle at 30% 30%, #38bdf8, #0369a1 70%, #082f49);" title="Filtre Arctique">
+                                        <span>❄️</span>
+                                        <span class="text-[8px]">Glace</span>
+                                    </div>
+                                    <div onclick="selectStudioLensCircle('vfx-bw', this)" class="snap-lens-circle" style="background: radial-gradient(circle at 30% 30%, #9ca3af, #374151 70%, #111827);" title="Filtre Noir &amp; Blanc">
+                                        <span>🖤</span>
+                                        <span class="text-[8px]">N&amp;B</span>
+                                    </div>
+                                    <div onclick="selectStudioLensCircle('vfx-none', this)" class="snap-lens-circle active" style="background: radial-gradient(circle at 30% 30%, #334155, #0f172a);" title="Normal">
+                                        <span>⚡</span>
+                                        <span class="text-[8px]">Normal</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mini Quick Capture Mode Bar (Filmer Vidéo | Prendre Photo | Appareil HD | Vitesse) -->
+                            <div class="flex items-center justify-center gap-2 pointer-events-auto pb-1">
+                                <button type="button" id="studio-rec-trigger-btn" onclick="setStudioCaptureSubMode('video')" class="px-3 py-1 rounded-full bg-white/15 border border-white/25 text-white font-extrabold text-[10px] flex items-center gap-1 transition">
+                                    <i data-lucide="video" class="w-3 h-3 text-[#ff2a5f]"></i>
+                                    <span>Vidéo</span>
+                                </button>
+                                <button type="button" id="studio-photo-trigger-btn" onclick="captureStudioLivePhoto()" class="px-3 py-1 rounded-full bg-black/50 hover:bg-white/15 border border-white/15 text-gray-200 font-bold text-[10px] flex items-center gap-1 transition" title="Prendre une photo en direct">
+                                    <i data-lucide="camera" class="w-3 h-3 text-cyan-400"></i>
+                                    <span>Photo</span>
+                                </button>
+                                <button type="button" onclick="triggerNativePhoneCamera()" class="px-3 py-1 rounded-full bg-black/50 hover:bg-white/15 border border-white/15 text-gray-200 font-bold text-[10px] flex items-center gap-1 transition" title="Appareil Photo HD">
+                                    <i data-lucide="smartphone" class="w-3 h-3 text-amber-400"></i>
+                                    <span>Caméra HD</span>
+                                </button>
+                                <div class="hidden sm:flex items-center gap-1">
+                                    <button type="button" onclick="setStudioSpeed(0.5)" class="cam-spd-btn px-2 py-0.5 rounded-lg bg-black/60 border border-white/15 text-[10px] font-bold text-gray-300">0.5x</button>
+                                    <button type="button" onclick="setStudioSpeed(1)" class="cam-spd-btn px-2 py-0.5 rounded-lg bg-[#ff2a5f] text-[10px] font-bold text-white">1x</button>
+                                    <button type="button" onclick="setStudioSpeed(1.5)" class="cam-spd-btn px-2 py-0.5 rounded-lg bg-black/60 border border-white/15 text-[10px] font-bold text-gray-300">1.5x</button>
+                                    <button type="button" onclick="setStudioSpeed(2)" class="cam-spd-btn px-2 py-0.5 rounded-lg bg-black/60 border border-white/15 text-[10px] font-bold text-gray-300">2x</button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Cover / Thumbnail Scrubber -->
-                        <div class="glass-panel p-2.5 rounded-2xl">
-                            <div class="flex justify-between items-center mb-1">
-                                <label class="text-[11px] text-gray-300 font-semibold">Couverture (Miniature)</label>
-                                <span id="studio-cover-time-badge" class="text-[10px] text-amber-300 font-bold">0.0s</span>
+                        <!-- ===============================================================
+                             SLIDE-UP CREATIVE EDITING DRAWER (Contains all 4 Editing Tabs:
+                             1. Découpage & Format | 2. Filtres & Couleurs | 3. Texte & Stickers | 4. Son & Mixage)
+                             =============================================================== -->
+                        <div id="studio-editor-drawer" class="drawer-closed absolute inset-x-0 bottom-0 z-40 bg-[#080c18]/95 backdrop-blur-2xl border-t border-white/15 rounded-t-3xl p-3.5 max-h-[78%] flex flex-col shadow-[0_-16px_48px_rgba(0,0,0,0.85)]">
+                            <!-- Drawer Handle & Header -->
+                            <div class="flex items-center justify-between pb-2 mb-2 border-b border-white/10">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-[#ff2a5f]"></span>
+                                    <span class="text-xs font-extrabold font-display text-white">Outils de Montage R-Studio</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" onclick="closeStudioEditorDrawer(); goToStudioPostStage();" class="px-3 py-1 rounded-xl bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white text-[11px] font-extrabold flex items-center gap-1 shadow">
+                                        <span>Zone de poste</span>
+                                        <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                    </button>
+                                    <button type="button" onclick="closeStudioEditorDrawer()" class="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold flex items-center gap-1">
+                                        <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> OK
+                                    </button>
+                                </div>
                             </div>
-                            <input type="range" id="cover-slider" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" min="0" value="0" step="0.1">
+
+                            <!-- R-STUDIO 4-TAB CREATIVE WORKBENCH DOCK -->
+                            <div class="studio-tab-dock no-scrollbar mb-2.5 shrink-0">
+                                <button type="button" id="dock-pill-cut" onclick="switchStudioEditTab('cut', this)" class="studio-tab-pill active">
+                                    <i data-lucide="scissors" class="w-3.5 h-3.5 text-cyan-400"></i> 1. Découpage &amp; Format
+                                </button>
+                                <button type="button" id="dock-pill-color" onclick="switchStudioEditTab('color', this)" class="studio-tab-pill">
+                                    <i data-lucide="palette" class="w-3.5 h-3.5 text-[#ff2a5f]"></i> 2. Filtres &amp; Couleurs
+                                </button>
+                                <button type="button" id="dock-pill-overlay" onclick="switchStudioEditTab('overlay', this)" class="studio-tab-pill">
+                                    <i data-lucide="type" class="w-3.5 h-3.5 text-amber-400"></i> 3. Texte &amp; Stickers
+                                </button>
+                                <button type="button" id="dock-pill-audio" onclick="switchStudioEditTab('audio', this)" class="studio-tab-pill">
+                                    <i data-lucide="music" class="w-3.5 h-3.5 text-purple-400"></i> 4. Son &amp; Mixage
+                                </button>
+                                <button type="button" onclick="closeStudioEditorDrawer(); goToStudioPostStage();" class="studio-tab-pill">
+                                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-400"></i> 5. Infos &amp; Options
+                                </button>
+                            </div>
+
+                            <!-- Scrollable Drawer Body -->
+                            <div class="overflow-y-auto no-scrollbar space-y-2.5 pr-0.5 pb-2">
+                                <!-- TAB 1: DÉCOUPAGE, CADENCE, ROTATION & PROPORTIONS -->
+                                <div id="studio-tab-cut" class="studio-panel-section active space-y-2.5">
+                                    <!-- Modern Visual Filmstrip Trimmer & Segment Splitter -->
+                                    <div class="glass-panel p-3 rounded-2xl space-y-2.5">
+                                        <div class="flex items-center justify-between text-xs">
+                                            <span class="font-bold text-white flex items-center gap-1.5">
+                                                <i data-lucide="scissors" class="w-3.5 h-3.5 text-[#ec514c]"></i>
+                                                <span>Rognage &amp; Découpage Moderne</span>
+                                            </span>
+                                            <div class="flex items-center gap-1.5">
+                                                <span id="trim-range-readout" class="text-[10px] font-mono font-bold text-gray-300 bg-white/5 px-2 py-0.5 rounded-md">00:00.0 - 00:00.0</span>
+                                                <span id="trim-duration-display" class="text-[#ec514c] font-extrabold bg-[#ec514c]/15 border border-[#ec514c]/30 px-2 py-0.5 rounded-md">0s</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Hidden inputs preserved for compatibility -->
+                                        <input type="hidden" id="trim-start" value="0" onchange="updateTrimPreview()">
+                                        <input type="hidden" id="trim-end" value="30" onchange="updateTrimPreview()">
+                                        <div class="hidden" aria-hidden="true">
+                                            <button type="button" onclick="nudgeStudioTrim('start', -0.5)">-0.5s</button>
+                                            <button type="button" onclick="nudgeStudioTrim('start', 0.5)">+0.5s</button>
+                                        </div>
+
+                                        <!-- Interactive Filmstrip Timeline with Left/Right Drag Handles & Playhead -->
+                                        <div id="studio-filmstrip-track" class="studio-filmstrip-wrapper">
+                                            <div id="studio-filmstrip-frames" class="studio-filmstrip-frames"></div>
+                                            <div id="studio-deleted-segments-layer" class="absolute inset-0 pointer-events-none"></div>
+                                            <div id="studio-split-markers-layer" class="absolute inset-0 pointer-events-none"></div>
+                                            <div id="trim-mask-left" class="studio-trim-mask" style="left:0%;width:0%;"></div>
+                                            <div id="trim-mask-right" class="studio-trim-mask" style="right:0%;width:0%;"></div>
+                                            <div id="trim-selection-box" class="studio-trim-selection" style="left:0%;right:0%;"></div>
+                                            <div id="trim-handle-left" class="studio-trim-handle left" style="left:0%;" title="Glisser pour rogner le début"></div>
+                                            <div id="trim-handle-right" class="studio-trim-handle right" style="right:0%;" title="Glisser pour rogner la fin"></div>
+                                            <div id="trim-playhead-line" class="studio-playhead-line" style="left:0%;"></div>
+                                        </div>
+
+                                        <!-- Interactive Segments Chips Row -->
+                                        <div id="studio-segments-bar" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5"></div>
+
+                                        <!-- Split & Delete Segment Action Bar -->
+                                        <div class="flex items-center justify-between gap-2 pt-1 border-t border-white/10">
+                                            <button type="button" onclick="splitStudioVideoAtPlayhead()" class="flex-1 py-2 px-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white text-[11px] font-bold flex items-center justify-center gap-1.5 active:scale-95 transition">
+                                                <i data-lucide="scissors" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                                <span>Scinder au curseur</span>
+                                            </button>
+                                            <button type="button" onclick="deleteSelectedStudioSegment()" class="flex-1 py-2 px-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-200 text-[11px] font-bold flex items-center justify-center gap-1.5 active:scale-95 transition">
+                                                <i data-lucide="trash-2" class="w-3.5 h-3.5 text-[#ec514c]"></i>
+                                                <span>Supprimer la partie</span>
+                                            </button>
+                                            <button type="button" onclick="resetStudioTrimAndCuts()" class="py-2 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 text-[11px] font-semibold flex items-center justify-center gap-1 active:scale-95 transition" title="Réinitialiser le découpage">
+                                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Speed, Rotation, Mirror & Aspect Ratio -->
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        <div class="glass-panel p-2.5 rounded-2xl flex items-center justify-between">
+                                            <div>
+                                                <div class="text-xs font-bold text-white">Proportions dans l'application</div>
+                                                <div class="text-[10px] text-gray-400">Format original ou plein écran 9:16</div>
+                                            </div>
+                                            <select id="video-aspect-mode" onchange="updateUploadPreviewFit(this.value)" class="bg-[#162038] border border-white/15 text-white text-xs font-semibold rounded-xl px-2.5 py-1.5 outline-none">
+                                                <option value="contain">Proportions d'origine (Fidèle)</option>
+                                                <option value="cover">Plein écran 9:16 (Remplir)</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="glass-panel p-2.5 rounded-2xl flex items-center justify-between">
+                                            <span class="text-xs font-bold text-white">Géométrie &amp; Cadence</span>
+                                            <div class="flex items-center gap-1.5">
+                                                <button type="button" onclick="rotateStudioPreview()" class="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-[11px] font-bold text-cyan-300 flex items-center gap-1" title="Pivoter de 90°">
+                                                    <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i> <span id="studio-rot-label">0°</span>
+                                                </button>
+                                                <button type="button" onclick="toggleStudioCameraMirror()" class="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-[11px] font-bold text-purple-300 flex items-center gap-1" title="Miroir horizontal">
+                                                    <i data-lucide="flip-horizontal" class="w-3.5 h-3.5"></i> Miroir
+                                                </button>
+                                                <select id="studio-speed-select" onchange="setStudioSpeed(this.value)" class="bg-[#162038] border border-white/15 text-white text-[11px] font-bold rounded-xl px-2 py-1.5 outline-none">
+                                                    <option value="0.5">0.5x</option>
+                                                    <option value="0.75">0.75x</option>
+                                                    <option value="1" selected>1.0x</option>
+                                                    <option value="1.25">1.25x</option>
+                                                    <option value="1.5">1.5x</option>
+                                                    <option value="2">2.0x</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Cover / Thumbnail Scrubber -->
+                                    <div class="glass-panel p-2.5 rounded-2xl">
+                                        <div class="flex justify-between items-center mb-1">
+                                            <label class="text-[11px] text-gray-300 font-semibold">Couverture (Miniature)</label>
+                                            <span id="studio-cover-time-badge" class="text-[10px] text-amber-300 font-bold">0.0s</span>
+                                        </div>
+                                        <input type="range" id="cover-slider" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer" min="0" value="0" step="0.1">
+                                    </div>
+                                </div>
+
+                                <!-- TAB 2: FILTRES & ÉTALONNAGE COULEUR PRO -->
+                                <div id="studio-tab-color" class="studio-panel-section space-y-2.5">
+                                    <div class="glass-panel p-3 rounded-2xl space-y-2.5">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-xs font-bold text-white">Filtres Cinématiques R-Studio</span>
+                                            <button type="button" onclick="resetStudioColorGrading()" class="text-[10px] text-rose-400 font-bold hover:underline">Réinitialiser</button>
+                                        </div>
+                                        <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                                            <button type="button" onclick="selectStudioFilterPreset('vfx-none', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-[#ff2a5f] text-white">Normal</button>
+                                            <button type="button" onclick="selectStudioFilterPreset('vfx-vivid', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Éclatant ✨</button>
+                                            <button type="button" onclick="selectStudioFilterPreset('vfx-cinema', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Cinéma 🎬</button>
+                                            <button type="button" onclick="selectStudioFilterPreset('vfx-cyber', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Cyber Néon 💜</button>
+                                            <button type="button" onclick="selectStudioFilterPreset('vfx-sun237', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Soleil 237 🌅</button>
+                                            <button type="button" onclick="selectStudioFilterPreset('vfx-vhs', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Rétro VHS 📼</button>
+                                            <button type="button" onclick="selectStudioFilterPreset('vfx-arctic', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Arctique ❄️</button>
+                                            <button type="button" onclick="selectStudioFilterPreset('vfx-bw', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Noir &amp; Blanc 🖤</button>
+                                        </div>
+
+                                        <!-- Fine-tuning Color Sliders -->
+                                        <div class="grid grid-cols-2 gap-3 pt-1">
+                                            <div>
+                                                <div class="flex justify-between text-[10px] text-gray-300 mb-1"><span>Luminosité</span><span id="lbl-studio-bright">100%</span></div>
+                                                <input type="range" id="studio-bright-slider" min="60" max="150" value="100" oninput="updateStudioColorSliders()">
+                                            </div>
+                                            <div>
+                                                <div class="flex justify-between text-[10px] text-gray-300 mb-1"><span>Contraste</span><span id="lbl-studio-contrast">100%</span></div>
+                                                <input type="range" id="studio-contrast-slider" min="60" max="160" value="100" oninput="updateStudioColorSliders()">
+                                            </div>
+                                            <div>
+                                                <div class="flex justify-between text-[10px] text-gray-300 mb-1"><span>Saturation</span><span id="lbl-studio-sat">100%</span></div>
+                                                <input type="range" id="studio-sat-slider" min="0" max="200" value="100" oninput="updateStudioColorSliders()">
+                                            </div>
+                                            <div>
+                                                <div class="flex justify-between text-[10px] text-gray-300 mb-1"><span>Teinte (Hue)</span><span id="lbl-studio-hue">0°</span></div>
+                                                <input type="range" id="studio-hue-slider" min="-180" max="180" value="0" oninput="updateStudioColorSliders()">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- TAB 3: TEXTE SUR LA VIDÉO & STICKERS INTERACTIFS -->
+                                <div id="studio-tab-overlay" class="studio-panel-section space-y-2.5">
+                                    <div class="glass-panel p-3 rounded-2xl space-y-2.5">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-xs font-bold text-white">Texte incrusté sur la vidéo</span>
+                                            <span class="text-[10px] text-cyan-400">Glisse le texte sur l'écran pour le placer</span>
+                                        </div>
+                                        <input type="text" id="studio-overlay-text-input" placeholder="Écris un titre ou sous-titre à afficher sur la vidéo..." class="auth-input text-xs py-2" oninput="updateStudioOverlayPreview()">
+
+                                        <div class="flex flex-wrap items-center justify-between gap-2">
+                                            <div class="flex items-center gap-1.5">
+                                                <button type="button" onclick="setStudioTextStyle('glass')" class="px-2.5 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-white">Bulle Glass</button>
+                                                <button type="button" onclick="setStudioTextStyle('neon')" class="px-2.5 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-cyan-300">Néon</button>
+                                                <button type="button" onclick="setStudioTextStyle('cinema')" class="px-2.5 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-amber-300">Cinéma</button>
+                                                <button type="button" onclick="setStudioTextStyle('impact')" class="px-2.5 py-1 rounded-lg bg-[#ff2a5f] text-[10px] font-bold text-white">Impact</button>
+                                            </div>
+                                            <div class="flex items-center gap-1.5">
+                                                <button type="button" onclick="setStudioTextColor('#ffffff')" class="w-5 h-5 rounded-full bg-white border border-gray-500"></button>
+                                                <button type="button" onclick="setStudioTextColor('#ff2a5f')" class="w-5 h-5 rounded-full bg-[#ff2a5f]"></button>
+                                                <button type="button" onclick="setStudioTextColor('#06b6d4')" class="w-5 h-5 rounded-full bg-cyan-400"></button>
+                                                <button type="button" onclick="setStudioTextColor('#facc15')" class="w-5 h-5 rounded-full bg-yellow-400"></button>
+                                                <button type="button" onclick="setStudioTextColor('#10b981')" class="w-5 h-5 rounded-full bg-emerald-400"></button>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center justify-between pt-1 border-t border-white/10">
+                                            <span class="text-[11px] text-gray-300 font-semibold">Position rapide :</span>
+                                            <div class="flex gap-1.5">
+                                                <button type="button" onclick="setStudioTextPosition('top')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-gray-300">Haut ⬆️</button>
+                                                <button type="button" onclick="setStudioTextPosition('center')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-gray-300">Centre 🎯</button>
+                                                <button type="button" onclick="setStudioTextPosition('bottom')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-gray-300">Bas ⬇️</button>
+                                            </div>
+                                        </div>
+
+                                        <div class="pt-1 border-t border-white/10">
+                                            <div class="flex justify-between items-center mb-1.5">
+                                                <span class="text-[11px] text-gray-300 font-semibold">Ajouter un Sticker animé sur la vidéo</span>
+                                                <button type="button" onclick="setStudioSticker('')" class="text-[10px] text-rose-400 font-bold">Aucun</button>
+                                            </div>
+                                            <div class="flex gap-2.5 overflow-x-auto no-scrollbar py-1 text-xl">
+                                                <button type="button" onclick="setStudioSticker('🔥')" class="hover:scale-125 transition">🔥</button>
+                                                <button type="button" onclick="setStudioSticker('🇨🇲')" class="hover:scale-125 transition">🇨🇲</button>
+                                                <button type="button" onclick="setStudioSticker('😂')" class="hover:scale-125 transition">😂</button>
+                                                <button type="button" onclick="setStudioSticker('💯')" class="hover:scale-125 transition">💯</button>
+                                                <button type="button" onclick="setStudioSticker('✨')" class="hover:scale-125 transition">✨</button>
+                                                <button type="button" onclick="setStudioSticker('👑')" class="hover:scale-125 transition">👑</button>
+                                                <button type="button" onclick="setStudioSticker('❤️')" class="hover:scale-125 transition">❤️</button>
+                                                <button type="button" onclick="setStudioSticker('🚀')" class="hover:scale-125 transition">🚀</button>
+                                                <button type="button" onclick="setStudioSticker('🎵')" class="hover:scale-125 transition">🎵</button>
+                                                <button type="button" onclick="setStudioSticker('⚡')" class="hover:scale-125 transition">⚡</button>
+                                                <button type="button" onclick="setStudioSticker('💎')" class="hover:scale-125 transition">💎</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- TAB 4: SON, AMBIANCES & MIXAGE AUDIO -->
+                                <div id="studio-tab-audio" class="studio-panel-section space-y-2.5">
+                                    <div class="glass-panel p-3 rounded-2xl space-y-2.5">
+                                        <span class="text-xs font-bold text-white block">Titre du son ou musique associée</span>
+                                        <div class="relative">
+                                            <i data-lucide="music" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-cyan-400"></i>
+                                            <input type="text" id="video-sound-title" placeholder="Titre du son (ex: Son original ou titre musical)" class="auth-input pl-8 text-xs py-2">
+                                        </div>
+
+                                        <div>
+                                            <span class="text-[10px] text-gray-400 font-semibold block mb-1.5">Sons &amp; Ambiances Populaires en 1 clic :</span>
+                                            <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                                                <button type="button" onclick="pickQuickStudioSound('Afrobeat 237 Vibe 🇨🇲')" class="shrink-0 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-cyan-300">🎵 Afrobeat 237 Vibe</button>
+                                                <button type="button" onclick="pickQuickStudioSound('Makossa & Bikutsi Remix 🔥')" class="shrink-0 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-amber-300">💃 Makossa &amp; Bikutsi</button>
+                                                <button type="button" onclick="pickQuickStudioSound('Trap Bass Boost ⚡')" class="shrink-0 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-purple-300">🔥 Trap Bass Boost</button>
+                                                <button type="button" onclick="pickQuickStudioSound('Humour Africain 😂')" class="shrink-0 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-rose-300">😂 Humour Viral</button>
+                                                <button type="button" onclick="pickQuickStudioSound('Lo-Fi Chill Night ✨')" class="shrink-0 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-emerald-300">✨ Lo-Fi Chill</button>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center justify-between pt-2 border-t border-white/10">
+                                            <div>
+                                                <span class="text-xs font-bold text-white block">Conserver le son original de la vidéo</span>
+                                                <span class="text-[10px] text-gray-400">Désactive si tu veux publier ta vidéo en mode muet</span>
+                                            </div>
+                                            <input type="checkbox" id="studio-keep-original-audio" class="custom-checkbox" checked>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- TAB 2: FILTRES & ÉTALONNAGE COULEUR PRO -->
-                    <div id="studio-tab-color" class="studio-panel-section space-y-2.5">
-                        <div class="glass-panel p-3 rounded-2xl space-y-2.5">
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs font-bold text-white">Filtres Cinématiques R-Studio</span>
-                                <button onclick="resetStudioColorGrading()" class="text-[10px] text-rose-400 font-bold hover:underline">Réinitialiser</button>
-                            </div>
-                            <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                                <button onclick="selectStudioFilterPreset('vfx-none', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-[#ff2a5f] text-white">Normal</button>
-                                <button onclick="selectStudioFilterPreset('vfx-vivid', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Éclatant ✨</button>
-                                <button onclick="selectStudioFilterPreset('vfx-cinema', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Cinéma 🎬</button>
-                                <button onclick="selectStudioFilterPreset('vfx-cyber', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Cyber Néon 💜</button>
-                                <button onclick="selectStudioFilterPreset('vfx-sun237', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Soleil 237 🌅</button>
-                                <button onclick="selectStudioFilterPreset('vfx-vhs', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Rétro VHS 📼</button>
-                                <button onclick="selectStudioFilterPreset('vfx-arctic', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Arctique ❄️</button>
-                                <button onclick="selectStudioFilterPreset('vfx-bw', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Noir &amp; Blanc 🖤</button>
-                            </div>
-
-                            <!-- Fine-tuning Color Sliders -->
-                            <div class="grid grid-cols-2 gap-3 pt-1">
-                                <div>
-                                    <div class="flex justify-between text-[10px] text-gray-300 mb-1"><span>Luminosité</span><span id="lbl-studio-bright">100%</span></div>
-                                    <input type="range" id="studio-bright-slider" min="60" max="150" value="100" oninput="updateStudioColorSliders()">
-                                </div>
-                                <div>
-                                    <div class="flex justify-between text-[10px] text-gray-300 mb-1"><span>Contraste</span><span id="lbl-studio-contrast">100%</span></div>
-                                    <input type="range" id="studio-contrast-slider" min="60" max="160" value="100" oninput="updateStudioColorSliders()">
-                                </div>
-                                <div>
-                                    <div class="flex justify-between text-[10px] text-gray-300 mb-1"><span>Saturation</span><span id="lbl-studio-sat">100%</span></div>
-                                    <input type="range" id="studio-sat-slider" min="0" max="200" value="100" oninput="updateStudioColorSliders()">
-                                </div>
-                                <div>
-                                    <div class="flex justify-between text-[10px] text-gray-300 mb-1"><span>Teinte (Hue)</span><span id="lbl-studio-hue">0°</span></div>
-                                    <input type="range" id="studio-hue-slider" min="-180" max="180" value="0" oninput="updateStudioColorSliders()">
-                                </div>
-                            </div>
-                        </div>
+                    <!-- ===============================================================
+                         BOTTOM SNAPCHAT-STYLE 5-ICON BAR (Matches Screenshot Bottom Bar!)
+                         [📍 Lieu]  [💬 Texte]  [😊 Filtres/Effets]  [✂️ Découpage]  [▶️ Zone de Poste]
+                         =============================================================== -->
+                    <div class="h-13 bg-[#090c14] border-t border-white/10 px-4 py-2 flex items-center justify-around z-30 shrink-0">
+                        <button type="button" onclick="goToStudioPostStage('location')" class="p-2 text-gray-300 hover:text-white active:scale-90 transition" title="Ajouter un lieu">
+                            <i data-lucide="map-pin" class="w-5 h-5"></i>
+                        </button>
+                        <button type="button" onclick="openStudioDrawerTab('overlay')" class="p-2 text-gray-300 hover:text-white active:scale-90 transition" title="Texte &amp; Légende sur la vidéo">
+                            <i data-lucide="message-square" class="w-5 h-5"></i>
+                        </button>
+                        <button type="button" onclick="openStudioDrawerTab('color')" class="p-2 text-white hover:text-[#ff2a5f] active:scale-90 transition" title="Filtres, Couleurs &amp; Stickers">
+                            <i data-lucide="smile-plus" class="w-6 h-6"></i>
+                        </button>
+                        <button type="button" onclick="openStudioDrawerTab('cut')" class="relative p-2 text-gray-300 hover:text-white active:scale-90 transition" title="Rognage &amp; Découpage Moderne">
+                            <i data-lucide="users" class="w-5 h-5"></i>
+                            <span class="w-2 h-2 rounded-full bg-[#ff2a5f] absolute top-1.5 right-1.5"></span>
+                        </button>
+                        <button type="button" id="btn-go-to-post-stage" onclick="goToStudioPostStage()" class="relative px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white flex items-center gap-1.5 active:scale-90 transition" title="Passer à la Zone de Poste">
+                            <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+                            <span class="text-[11px] font-extrabold">Poste</span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-[#ff2a5f] absolute -top-0.5 -right-0.5 border border-black"></span>
+                        </button>
                     </div>
+                </div>
 
-                    <!-- TAB 3: TEXTE SUR LA VIDÉO & STICKERS INTERACTIFS -->
-                    <div id="studio-tab-overlay" class="studio-panel-section space-y-2.5">
-                        <div class="glass-panel p-3 rounded-2xl space-y-2.5">
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs font-bold text-white">Texte incrusté sur la vidéo</span>
-                                <span class="text-[10px] text-cyan-400">Glisse le texte sur l'écran pour le placer</span>
-                            </div>
-                            <input type="text" id="studio-overlay-text-input" placeholder="Écris un titre ou sous-titre à afficher sur la vidéo..." class="auth-input text-xs py-2" oninput="updateStudioOverlayPreview()">
-
-                            <div class="flex flex-wrap items-center justify-between gap-2">
-                                <!-- Text Banner Style -->
-                                <div class="flex items-center gap-1.5">
-                                    <button onclick="setStudioTextStyle('glass')" class="px-2.5 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-white">Bulle Glass</button>
-                                    <button onclick="setStudioTextStyle('neon')" class="px-2.5 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-cyan-300">Néon</button>
-                                    <button onclick="setStudioTextStyle('cinema')" class="px-2.5 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-amber-300">Cinéma</button>
-                                    <button onclick="setStudioTextStyle('impact')" class="px-2.5 py-1 rounded-lg bg-[#ff2a5f] text-[10px] font-bold text-white">Impact</button>
-                                </div>
-                                <!-- Text Color Swatches -->
-                                <div class="flex items-center gap-1.5">
-                                    <button onclick="setStudioTextColor('#ffffff')" class="w-5 h-5 rounded-full bg-white border border-gray-500"></button>
-                                    <button onclick="setStudioTextColor('#ff2a5f')" class="w-5 h-5 rounded-full bg-[#ff2a5f]"></button>
-                                    <button onclick="setStudioTextColor('#06b6d4')" class="w-5 h-5 rounded-full bg-cyan-400"></button>
-                                    <button onclick="setStudioTextColor('#facc15')" class="w-5 h-5 rounded-full bg-yellow-400"></button>
-                                    <button onclick="setStudioTextColor('#10b981')" class="w-5 h-5 rounded-full bg-emerald-400"></button>
-                                </div>
-                            </div>
-
-                            <!-- Text Vertical Position Presets -->
-                            <div class="flex items-center justify-between pt-1 border-t border-white/10">
-                                <span class="text-[11px] text-gray-300 font-semibold">Position rapide :</span>
-                                <div class="flex gap-1.5">
-                                    <button onclick="setStudioTextPosition('top')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-gray-300">Haut ⬆️</button>
-                                    <button onclick="setStudioTextPosition('center')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-gray-300">Centre 🎯</button>
-                                    <button onclick="setStudioTextPosition('bottom')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-gray-300">Bas ⬇️</button>
-                                </div>
-                            </div>
-
-                            <!-- Stickers & Emojis -->
-                            <div class="pt-1 border-t border-white/10">
-                                <div class="flex justify-between items-center mb-1.5">
-                                    <span class="text-[11px] text-gray-300 font-semibold">Ajouter un Sticker animé sur la vidéo</span>
-                                    <button onclick="setStudioSticker('')" class="text-[10px] text-rose-400 font-bold">Aucun</button>
-                                </div>
-                                <div class="flex gap-2.5 overflow-x-auto no-scrollbar py-1 text-xl">
-                                    <button onclick="setStudioSticker('🔥')" class="hover:scale-125 transition">🔥</button>
-                                    <button onclick="setStudioSticker('🇨🇲')" class="hover:scale-125 transition">🇨🇲</button>
-                                    <button onclick="setStudioSticker('😂')" class="hover:scale-125 transition">😂</button>
-                                    <button onclick="setStudioSticker('💯')" class="hover:scale-125 transition">💯</button>
-                                    <button onclick="setStudioSticker('✨')" class="hover:scale-125 transition">✨</button>
-                                    <button onclick="setStudioSticker('👑')" class="hover:scale-125 transition">👑</button>
-                                    <button onclick="setStudioSticker('❤️')" class="hover:scale-125 transition">❤️</button>
-                                    <button onclick="setStudioSticker('🚀')" class="hover:scale-125 transition">🚀</button>
-                                    <button onclick="setStudioSticker('🎵')" class="hover:scale-125 transition">🎵</button>
-                                    <button onclick="setStudioSticker('⚡')" class="hover:scale-125 transition">⚡</button>
-                                    <button onclick="setStudioSticker('💎')" class="hover:scale-125 transition">💎</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- TAB 4: SON, AMBIANCES & MIXAGE AUDIO -->
-                    <div id="studio-tab-audio" class="studio-panel-section space-y-2.5">
-                        <div class="glass-panel p-3 rounded-2xl space-y-2.5">
-                            <span class="text-xs font-bold text-white block">Titre du son ou musique associée</span>
-                            <div class="relative">
-                                <i data-lucide="music" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-cyan-400"></i>
-                                <input type="text" id="video-sound-title" placeholder="Titre du son (ex: Son original ou titre musical)" class="auth-input pl-8 text-xs py-2">
-                            </div>
-
-                            <!-- Quick Sound Presets -->
+                <!-- =========================================================================
+                     STAGE 2: LA ZONE DE POSTE (DEDICATED POST & PUBLISH SCREEN)
+                     ========================================================================= -->
+                <div id="studio-post-stage" class="hidden w-full h-full flex-1 flex-col bg-[#070b16] p-4 md:p-6 overflow-y-auto no-scrollbar z-40">
+                    <!-- Top Post Zone Header -->
+                    <div class="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
+                        <div class="flex items-center gap-2.5">
+                            <button type="button" onclick="backToStudioCaptureStage()" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/15 flex items-center justify-center text-white active:scale-90 transition" title="Retour à la caméra et au montage">
+                                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                            </button>
                             <div>
-                                <span class="text-[10px] text-gray-400 font-semibold block mb-1.5">Sons &amp; Ambiances Populaires en 1 clic :</span>
-                                <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
-                                    <button onclick="pickQuickStudioSound('Afrobeat 237 Vibe 🇨🇲')" class="shrink-0 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-cyan-300">🎵 Afrobeat 237 Vibe</button>
-                                    <button onclick="pickQuickStudioSound('Makossa & Bikutsi Remix 🔥')" class="shrink-0 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-amber-300">💃 Makossa &amp; Bikutsi</button>
-                                    <button onclick="pickQuickStudioSound('Trap Bass Boost ⚡')" class="shrink-0 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-purple-300">🔥 Trap Bass Boost</button>
-                                    <button onclick="pickQuickStudioSound('Humour Africain 😂')" class="shrink-0 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-rose-300">😂 Humour Viral</button>
-                                    <button onclick="pickQuickStudioSound('Lo-Fi Chill Night ✨')" class="shrink-0 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-[11px] font-semibold text-emerald-300">✨ Lo-Fi Chill</button>
-                                </div>
-                            </div>
-
-                            <!-- Original Video Audio Control -->
-                            <div class="flex items-center justify-between pt-2 border-t border-white/10">
-                                <div>
-                                    <span class="text-xs font-bold text-white block">Conserver le son original de la vidéo</span>
-                                    <span class="text-[10px] text-gray-400">Désactive si tu veux publier ta vidéo en mode muet</span>
-                                </div>
-                                <input type="checkbox" id="studio-keep-original-audio" class="custom-checkbox" checked>
+                                <h3 class="text-sm md:text-base font-extrabold font-display tracking-tight text-white" data-i18n="upload_title">Nouvelle Publication</h3>
+                                <span class="text-[10px] text-cyan-400 font-semibold block">Zone de Poste • Légende, Visibilité &amp; Publication</span>
                             </div>
                         </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="saveStudioDraft()" class="glass-pill px-3 py-1.5 rounded-xl text-[11px] font-bold text-amber-300 flex items-center gap-1 hover:bg-white/10 transition" title="Sauvegarder un brouillon">
+                                <i data-lucide="bookmark-plus" class="w-3.5 h-3.5"></i> Brouillon
+                            </button>
+                            <button type="button" onclick="closeStudioModal()" class="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/15 flex items-center justify-center text-gray-300 hover:text-white transition">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Media Summary & Return-to-Edit Banner -->
+                    <div class="glass-panel p-3 rounded-2xl mb-3 flex items-center justify-between gap-3 border border-white/10">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-12 h-14 rounded-xl bg-gradient-to-tr from-[#ff2a5f]/30 to-cyan-500/30 border border-white/20 flex items-center justify-center shrink-0">
+                                <i data-lucide="film" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <div id="post-stage-media-status" class="text-xs font-extrabold text-white truncate">Média prêt à être publié</div>
+                                <div id="post-stage-edits-summary" class="text-[10px] text-cyan-300 truncate mt-0.5">Montage R-Studio appliqué • Prêt pour le flux</div>
+                            </div>
+                        </div>
+                        <button type="button" onclick="backToStudioCaptureStage()" class="shrink-0 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white text-[11px] font-bold flex items-center gap-1.5 active:scale-95 transition">
+                            <i data-lucide="sliders" class="w-3.5 h-3.5 text-cyan-400"></i>
+                            <span>Modifier</span>
+                        </button>
                     </div>
 
                     <!-- TAB 5: DESCRIPTION, HASHTAGS, LIEU & CONFIDENTIALITÉ -->
-                    <div id="studio-tab-publish" class="studio-panel-section space-y-2.5">
-                        <textarea id="video-desc" placeholder="Décris ta vidéo... #Hashtags @Amis" class="auth-input h-16 resize-none text-xs" data-i18n-placeholder="desc_placeholder"></textarea>
+                    <div id="studio-tab-publish" class="flex-1 space-y-3">
+                        <textarea id="video-desc" placeholder="Décris ta vidéo... #Hashtags @Amis" class="auth-input h-20 resize-none text-xs" data-i18n-placeholder="desc_placeholder"></textarea>
 
                         <!-- Quick Viral Hashtags -->
                         <div class="flex gap-1.5 overflow-x-auto no-scrollbar">
-                            <button onclick="appendUploadHashtag('#PourToi')" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-cyan-300">#PourToi</button>
-                            <button onclick="appendUploadHashtag('#Cameroun237')" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-emerald-300">#Cameroun237</button>
-                            <button onclick="appendUploadHashtag('#Humour')" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-amber-300">#Humour</button>
-                            <button onclick="appendUploadHashtag('#Musique')" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-purple-300">#Musique</button>
-                            <button onclick="appendUploadHashtag('#Danse')" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-rose-300">#Danse</button>
-                            <button onclick="appendUploadHashtag('#RVideosTalent2026')" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-white">#RVideosTalent2026</button>
+                            <button type="button" onclick="appendUploadHashtag('#PourToi')" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-cyan-300">#PourToi</button>
+                            <button type="button" onclick="appendUploadHashtag('#Cameroun237')" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-emerald-300">#Cameroun237</button>
+                            <button type="button" onclick="appendUploadHashtag('#Humour')" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-amber-300">#Humour</button>
+                            <button type="button" onclick="appendUploadHashtag('#Musique')" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-purple-300">#Musique</button>
+                            <button type="button" onclick="appendUploadHashtag('#Danse')" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-rose-300">#Danse</button>
+                            <button type="button" onclick="appendUploadHashtag('#RVideosTalent2026')" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-white">#RVideosTalent2026</button>
                         </div>
 
                         <div class="grid grid-cols-2 gap-2">
                             <div class="relative">
                                 <i data-lucide="map-pin" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400"></i>
-                                <input type="text" id="video-location" placeholder="Ajouter un lieu" class="auth-input pl-8 text-xs py-2">
+                                <input type="text" id="video-location" placeholder="Ajouter un lieu" class="auth-input pl-8 text-xs py-2.5">
                             </div>
                             <div class="relative">
                                 <i data-lucide="users" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400"></i>
-                                <input type="text" id="video-tags" placeholder="Tag (@ami)" class="auth-input pl-8 text-xs py-2">
+                                <input type="text" id="video-tags" placeholder="Tag (@ami)" class="auth-input pl-8 text-xs py-2.5">
                             </div>
                         </div>
 
                         <!-- Quick City Chips -->
                         <div class="flex gap-1.5 overflow-x-auto no-scrollbar">
-                            <button onclick="document.getElementById('video-location').value='Douala, Cameroun 🇨🇲'" class="shrink-0 px-2 py-0.5 rounded bg-white/5 text-[10px] text-gray-300">📍 Douala 🇨🇲</button>
-                            <button onclick="document.getElementById('video-location').value='Yaoundé, Cameroun 🇨🇲'" class="shrink-0 px-2 py-0.5 rounded bg-white/5 text-[10px] text-gray-300">📍 Yaoundé 🇨🇲</button>
-                            <button onclick="document.getElementById('video-location').value='Abidjan, Côte dIvoire 🇨🇮'" class="shrink-0 px-2 py-0.5 rounded bg-white/5 text-[10px] text-gray-300">📍 Abidjan 🇨🇮</button>
-                            <button onclick="document.getElementById('video-location').value='Paris, France 🇫🇷'" class="shrink-0 px-2 py-0.5 rounded bg-white/5 text-[10px] text-gray-300">📍 Paris 🇫🇷</button>
+                            <button type="button" onclick="document.getElementById('video-location').value='Douala, Cameroun 🇨🇲'" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] text-gray-300">📍 Douala 🇨🇲</button>
+                            <button type="button" onclick="document.getElementById('video-location').value='Yaoundé, Cameroun 🇨🇲'" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] text-gray-300">📍 Yaoundé 🇨🇲</button>
+                            <button type="button" onclick="document.getElementById('video-location').value='Abidjan, Côte dIvoire 🇨🇮'" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] text-gray-300">📍 Abidjan 🇨🇮</button>
+                            <button type="button" onclick="document.getElementById('video-location').value='Paris, France 🇫🇷'" class="shrink-0 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] text-gray-300">📍 Paris 🇫🇷</button>
                         </div>
 
                         <div>
-                            <select id="video-visibility" class="auth-input bg-[#0c1222] text-xs py-2 font-medium">
+                            <select id="video-visibility" class="auth-input bg-[#0c1222] text-xs py-2.5 font-medium">
                                 <option value="public">🌍 Public (Tout le monde)</option>
                                 <option value="followers">👥 Abonnés uniquement</option>
                                 <option value="private">🔒 Privé (Moi seul)</option>
                             </select>
                         </div>
-                        <div class="glass-panel p-2.5 rounded-xl space-y-1.5">
+
+                        <div class="glass-panel p-3 rounded-2xl space-y-2">
                             <div class="flex items-center justify-between">
                                 <span class="text-xs text-gray-300">Autoriser les commentaires</span>
                                 <input type="checkbox" id="opt-comments" class="custom-checkbox" checked>
@@ -2507,23 +2892,24 @@
                                 <span class="text-xs text-gray-300">Autoriser la réutilisation du son / Duos</span>
                                 <input type="checkbox" id="opt-duet" class="custom-checkbox" checked>
                             </div>
-                            <div class="flex items-center justify-between pt-1.5 border-t border-white/10">
+                            <div class="flex items-center justify-between pt-2 border-t border-white/10">
                                 <span class="text-[11px] text-emerald-300 font-semibold">Je certifie que cette vidéo est originale et sans plagiat (Droits d'auteur)</span>
                                 <input type="checkbox" id="opt-copyright-cert" class="custom-checkbox" checked>
                             </div>
                         </div>
                     </div>
-                </div>
-                <!-- R-SHIELD AI PRE-PUBLISH AUTHENTICITY & SAFETY BAR -->
-                <div id="rshield-studio-bar" class="mt-1 px-3 py-2 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between text-[11px]">
-                    <div class="flex items-center gap-2 min-w-0">
-                        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400 shrink-0" id="rshield-studio-icon"></i>
-                        <span id="rshield-studio-text" class="text-emerald-200 font-semibold truncate">R-Shield AI : Contrôle Authenticité, Anti-Nudité &amp; Anti-Arnaque actif</span>
+
+                    <!-- R-SHIELD AI PRE-PUBLISH AUTHENTICITY & SAFETY BAR -->
+                    <div id="rshield-studio-bar" class="mt-3 px-3.5 py-2.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between text-[11px]">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400 shrink-0" id="rshield-studio-icon"></i>
+                            <span id="rshield-studio-text" class="text-emerald-200 font-semibold truncate">R-Shield AI : Contrôle Authenticité, Anti-Nudité &amp; Anti-Arnaque actif</span>
+                        </div>
+                        <span id="rshield-account-strike-pill" class="shrink-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Pour Toi : Éligible ✓</span>
                     </div>
-                    <span id="rshield-account-strike-pill" class="shrink-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Pour Toi : Éligible ✓</span>
+                    <div id="upload-status" class="text-xs text-center text-cyan-400 h-4 mt-1.5 font-medium"></div>
+                    <button type="button" onclick="uploadVideo()" id="btn-publish" class="w-full bg-gradient-to-r from-[#ff2a5f] via-rose-600 to-purple-600 hover:opacity-95 text-white font-extrabold py-3.5 rounded-2xl mt-1.5 flex justify-center items-center gap-2 shadow-lg shadow-rose-600/30 active:scale-95 transition" data-i18n="publish_btn">Publier</button>
                 </div>
-                <div id="upload-status" class="text-xs text-center text-cyan-400 h-4 mt-1 font-medium"></div>
-                <button onclick="uploadVideo()" id="btn-publish" class="w-full bg-gradient-to-r from-[#ff2a5f] via-rose-600 to-purple-600 hover:opacity-95 text-white font-extrabold py-3 rounded-2xl mt-1 flex justify-center items-center gap-2 shadow-lg shadow-rose-600/30" data-i18n="publish_btn">Publier</button>
             </div>
         </div>
 
@@ -2745,7 +3131,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, deleteUser, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs, onSnapshot, query, orderBy, serverTimestamp, updateDoc, limit, arrayUnion, arrayRemove, increment, where, deleteDoc, writeBatch, startAfter } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs, getCountFromServer, onSnapshot, query, orderBy, serverTimestamp, updateDoc, limit, arrayUnion, arrayRemove, increment, where, deleteDoc, writeBatch, startAfter } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         const firebaseConfig = { apiKey: "AIzaSyCfiExPZwsF53-Ix3cCeIa3tq1MJ5359RU", authDomain: "nanofinance-9192a.firebaseapp.com", projectId: "nanofinance-9192a", storageBucket: "nanofinance-9192a.firebasestorage.app", messagingSenderId: "376434082116", appId: "1:376434082116:web:838ef702670608bc959711", measurementId: "G-9455DCWCNL" };
         
@@ -2779,6 +3165,48 @@
         let hasMoreFeedVideos = true;
         const renderedFeedVideoIds = new Set();
         const BATCH_SIZE = 8;
+        const STRICT_NO_REPEAT_VIDEO_THRESHOLD = 1000;
+        let cachedTotalAppVideosCount = 0;
+        let lastAppVideoCountCheckAt = 0;
+
+        async function getTotalAppVideosCount() {
+            const now = Date.now();
+            const knownLocalCount = Object.keys(profileVideosData).length;
+            if (cachedTotalAppVideosCount > 0 && (now - lastAppVideoCountCheckAt < 60000)) {
+                return Math.max(cachedTotalAppVideosCount, knownLocalCount);
+            }
+            try {
+                const countSnap = await getCountFromServer(collection(db, "videos"));
+                const serverCount = Number(countSnap?.data()?.count || 0);
+                if (serverCount > 0) {
+                    cachedTotalAppVideosCount = serverCount;
+                    lastAppVideoCountCheckAt = now;
+                }
+            } catch (e) {}
+            return Math.max(cachedTotalAppVideosCount, knownLocalCount);
+        }
+
+        function isStrictUnseenDiscoveryActive() {
+            const totalKnown = Math.max(cachedTotalAppVideosCount, Object.keys(profileVideosData).length);
+            return totalKnown > STRICT_NO_REPEAT_VIDEO_THRESHOLD;
+        }
+
+        function recycleFeedForContinuousViewing() {
+            if (isFetchingMore) return;
+            const container = document.getElementById("feed-container");
+            if (!container) return;
+            const cards = container.querySelectorAll(".video-card");
+            if (cards.length === 0) return;
+            const lastCardId = cards[cards.length - 1]?.getAttribute("data-id") || null;
+            const knownCount = Object.keys(profileVideosData).length;
+            renderedFeedVideoIds.clear();
+            if (lastCardId && knownCount > 1) {
+                renderedFeedVideoIds.add(lastCardId);
+            }
+            lastVisibleDoc = null;
+            hasMoreFeedVideos = true;
+            subscribeToFeed(null, true);
+        }
 
         // Safe Storage Helpers
         function safeGetStorage(key, fallback = null) {
@@ -3256,8 +3684,12 @@
             prewarmUpcomingFeedMedia(activeCard);
 
             // Trigger seamless infinite scroll pagination 3 videos before reaching the end of the loaded list
-            if (activeIdx >= cards.length - 3 && !isFetchingMore && hasMoreFeedVideos && lastVisibleDoc) {
-                subscribeToFeed(lastVisibleDoc);
+            if (activeIdx >= cards.length - 3 && !isFetchingMore) {
+                if (hasMoreFeedVideos && lastVisibleDoc) {
+                    subscribeToFeed(lastVisibleDoc);
+                } else if (!hasMoreFeedVideos && activeIdx >= cards.length - 2) {
+                    recycleFeedForContinuousViewing();
+                }
             }
         }
 
@@ -4530,6 +4962,54 @@
             return true;
         }
 
+        function hasUserAlreadySeenVideo(video) {
+            if (!video) return false;
+            const vidId = video.id;
+            if (!vidId) return false;
+            const uid = auth.currentUser?.uid || null;
+            if (viewedVideos.has(vidId) || hasUserInteractedOnce('view', vidId)) return true;
+            if ((sessionSeenFeedCount.get(vidId) || 0) > 0) return true;
+            if (uid && Array.isArray(video.viewedBy) && video.viewedBy.includes(uid)) return true;
+            return false;
+        }
+
+        function setLastVideoPourToiBlink(shouldBlink) {
+            const tabForyou = document.getElementById('tab-foryou');
+            const hintEl = document.getElementById('pourtoi-last-video-hint');
+            if (!tabForyou || !hintEl) return;
+            if (shouldBlink) {
+                tabForyou.classList.add('pourtoi-blink-alert');
+                hintEl.classList.remove('hidden');
+            } else {
+                tabForyou.classList.remove('pourtoi-blink-alert');
+                hintEl.classList.add('hidden');
+            }
+        }
+
+        function checkAndTriggerLastVideoPourToiAlert(activeCard = null) {
+            const container = document.getElementById('feed-container');
+            if (!container) {
+                setLastVideoPourToiBlink(false);
+                return;
+            }
+            const cards = Array.from(container.querySelectorAll('.video-card'));
+            if (cards.length === 0) {
+                setLastVideoPourToiBlink(false);
+                return;
+            }
+            let targetCard = activeCard;
+            if (!targetCard && activePlayingVideo) {
+                targetCard = activePlayingVideo.closest('.video-card');
+            }
+            const idx = targetCard ? cards.indexOf(targetCard) : -1;
+            const isAtLastCard = (idx !== -1 && idx === cards.length - 1);
+            if (isAtLastCard && (!hasMoreFeedVideos || !lastVisibleDoc)) {
+                setLastVideoPourToiBlink(true);
+            } else {
+                setLastVideoPourToiBlink(false);
+            }
+        }
+
         function calculateViralScore(video) {
             // 1. Strict Trust & Safety Gate: Non-compliant videos NEVER enter "Pour toi"
             if (!isVideoEligibleForPourToi(video)) {
@@ -4538,59 +5018,88 @@
 
             let score = 100;
 
-            // 2. R-Videos DeepRank Multi-Layer Engagement Weights
-            const likes = Number(video.likes || 0);
+            // 2. R-Videos DeepRank Multi-Layer Engagement & Merit Weights
+            const likes = getRealLikesCount(video);
             const comments = Number(video.commentCount || 0);
-            const views = Math.max(1, Number(video.views || 0));
-            const favs = Number(video.favorites ? video.favorites.length : 0);
-            const reposts = Number(video.reposts || 0);
+            const rawViews = Number(video.views || 0);
+            const views = Math.max(1, rawViews);
+            const favs = getRealFavoritesCount(video);
+            const reposts = getRealRepostsCount(video);
+            const shares = getRealSharesCount(video);
             const completions = Number(video.completions || 0);
             const rewatches = Number(video.rewatches || 0);
 
-            const rawEngagement =
-                (rewatches * 38) +
-                (completions * 26) +
-                (reposts * 25) +
-                (favs * 20) +
-                (comments * 15) +
-                (likes * 8) +
-                (views * 0.45);
+            const totalPositiveInteractions = likes + comments + favs + reposts + shares + completions + rewatches;
 
-            // Engagement Velocity / Retention Multiplier (Rewards high-converting videos even with few views)
-            const engagementRate = (likes + comments * 2.2 + favs * 3 + reposts * 3.5 + completions * 3 + rewatches * 4) / Math.max(views, 6);
-            const velocityMultiplier = Math.min(3.2, 1.0 + Math.log1p(engagementRate * 5));
+            const rawEngagement =
+                (rewatches * 42) +
+                (completions * 30) +
+                (reposts * 28) +
+                (shares * 24) +
+                (favs * 22) +
+                (comments * 18) +
+                (likes * 10) +
+                (rawViews * 0.45);
+
+            // Engagement Velocity / Conversion Rate (Places deserving high-retention videos at the top)
+            const weightedSignals = likes + (comments * 2.4) + (favs * 3.0) + (reposts * 3.5) + (shares * 3.0) + (completions * 3.2) + (rewatches * 4.5);
+            const engagementRate = weightedSignals / Math.max(views, 4);
+            const velocityMultiplier = Math.min(3.8, 1.0 + Math.log1p(engagementRate * 6));
             score += rawEngagement * velocityMultiplier;
 
             // 3. Authenticity & Original Creation Boost (R-Shield Verified & R-Cam Live)
             const authScore = Number(video.authenticityScore ?? 92);
             if (video.recordedWithRCam) {
-                score += 650; // Filmed directly with the app's fullscreen camera = 100% original creation
+                score += 450; // Filmed directly with the app's fullscreen camera = 100% original creation
             }
             if (authScore >= 90) {
-                score += 320;
+                score += 250;
             } else if (authScore < 65) {
                 score -= 1200; // Low-authenticity / borderline reposted content penalized
             }
 
-            // 4. Cold-Start Discovery Pool (R-Videos DeepRank Batch Testing for Fresh Authentic Videos)
+            // 4. Fair Initial Test Window ("Petit Test") & Performance Evaluation
+            // - Brand new / low-impression videos (< 15 views, <= 48h) get a fair initial test boost to be seen at the top on refresh.
+            // - If during its test (views >= 5) the video generates positive engagement (likes, comments, completions, etc.), it is pushed even higher!
+            // - If the video has already been tested (views >= 8) and failed to interest users (very low engagement rate or skipped), it is pushed down to the bottom.
             let ageHours = 12;
             if (video.createdAt) {
                 const createdMs = video.createdAt.toMillis ? video.createdAt.toMillis() : (video.createdAt.seconds ? video.createdAt.seconds * 1000 : Date.now());
-                ageHours = Math.max(0.1, (Date.now() - createdMs) / 3600000);
-            }
-            if (ageHours <= 24 && views < 40 && authScore >= 85) {
-                score += 580 * Math.max(0.3, 1 - (ageHours / 24)); // Fresh video test boost in "Pour toi"
+                ageHours = Math.max(0.05, (Date.now() - createdMs) / 3600000);
             }
 
-            // Time-Decay Gravity (keeps feed dynamic while preserving viral hits)
-            const timeDecay = 1 / Math.pow(1 + (ageHours / 72), 0.35);
+            const isSkippedByMe = !!(video.id && userInterestGraph.skippedVideos && userInterestGraph.skippedVideos[video.id]);
+
+            if (rawViews < 8 && ageHours <= 48 && authScore >= 80 && !isSkippedByMe) {
+                // Phase 1: Initial "Petit Test" — Give every new creator's video a fair chance at the top of the feed
+                const freshnessFactor = Math.max(0.45, 1 - (ageHours / 48));
+                score += 1350 * freshnessFactor;
+                if (totalPositiveInteractions > 0) {
+                    // Already getting reactions during its initial test -> push it even further!
+                    score += 850 + (engagementRate * 600);
+                }
+            } else if (rawViews >= 8 && rawViews <= 40 && ageHours <= 72 && authScore >= 80) {
+                // Phase 2: Evaluation of the "Petit Test"
+                if (engagementRate >= 0.18 && !isSkippedByMe) {
+                    // Passed the test with strong interest -> propel higher so more users see it!
+                    score += 1450 * Math.min(2.2, 1 + engagementRate);
+                } else if (totalPositiveInteractions === 0 || engagementRate < 0.05) {
+                    // Did not interest users during its test -> leave at the bottom
+                    score -= 2200;
+                }
+            } else if (rawViews > 40 && (totalPositiveInteractions === 0 || engagementRate < 0.04)) {
+                // Tested broadly with no interest -> keep at the bottom
+                score -= 2600;
+            }
+
+            // Time-Decay Gravity (keeps feed dynamic while letting meritorious videos stay high)
+            const timeDecay = 1 / Math.pow(1 + (ageHours / 72), 0.32);
             score = score * timeDecay;
 
             // 5. Deep Personalized User Interest Graph Matching (Tags, Keywords, Creator, Sound, Location)
             const videoTags = [...extractTags(video.description), ...extractKeywordsFromText(video.description)];
             let affinityBonus = 0;
 
-            // Firestore preferences + Local real-time Interest Graph
             const combinedTags = { ...(currentUserData?.preferences || {}), ...(userInterestGraph.tags || {}) };
             videoTags.forEach(tag => {
                 if (combinedTags[tag]) {
@@ -4609,43 +5118,72 @@
                 const lKey = String(video.location).toLowerCase().trim();
                 if (userInterestGraph.locations[lKey]) affinityBonus += userInterestGraph.locations[lKey] * 40;
             }
-            // Local / Regional 237 Discovery Affinity
             if (video.location && /cameroun|douala|yaound/i.test(video.location)) {
                 affinityBonus += 140;
             }
 
             score += affinityBonus;
 
-            // 6. Verified & Pinned Signals
-            if (video.isPinned) score += 1200;
-            if (video.isVerified) score += 1800;
+            // 6. Fair Creator Distribution (Benefits everyone based on merit, not just status)
+            if (video.isPinned) score += 350;
+            if (video.isVerified) score += 280;
 
-            // 7. Session Novelty & Skip Penalties (Don't repeat skipped or already watched videos at the top)
+            // 7. Skip & Already-Seen Adjustments (Prioritize unseen discovery while keeping feed rich when <= 1000 videos)
             if (video.id) {
-                if (userInterestGraph.skippedVideos && userInterestGraph.skippedVideos[video.id]) {
-                    score -= 1500;
+                if (isSkippedByMe) {
+                    score -= 3500;
                 }
+                const alreadySeen = hasUserAlreadySeenVideo(video);
                 const seenTimes = sessionSeenFeedCount.get(video.id) || 0;
-                if (seenTimes > 0) {
-                    score -= seenTimes * 650;
+                if (!alreadySeen) {
+                    score += 950;
+                } else if (isStrictUnseenDiscoveryActive()) {
+                    score -= Math.max(1, seenTimes) * 1800;
+                } else if (seenTimes > 0) {
+                    score -= Math.min(seenTimes * 160, 640);
                 }
             }
 
-            // Controlled exploration jitter (R-Videos DeepRank 10% exploration bucket)
-            score += Math.random() * 85;
+            // Controlled exploration jitter so everyone gets fair exposure
+            score += Math.random() * 95;
             return score;
         }
 
-        // R-Videos DeepRank Creator Diversity Interleaving: prevents showing 2+ consecutive videos from the exact same author
+        // R-Videos DeepRank Creator Diversity & Fairness Interleaving:
+        // Ensures every creator gets exposure (no creator monopolizes consecutive slots) while keeping the most deserving & test-promoted videos high
         function diversifyForYouFeed(sortedVideos) {
             if (!sortedVideos || sortedVideos.length <= 2) return sortedVideos;
             const result = [];
             const pool = [...sortedVideos];
+            const authorImpressionCount = new Map();
+
             while (pool.length > 0) {
                 const lastAuthor = result.length > 0 ? result[result.length - 1].userId : null;
-                let pickIdx = pool.findIndex(v => v.userId !== lastAuthor);
-                if (pickIdx === -1) pickIdx = 0;
-                result.push(pool.splice(pickIdx, 1)[0]);
+                // Prefer a creator different from the immediately preceding video AND with fewer appearances so far
+                let bestIdx = -1;
+                let bestAdjustedScore = -Infinity;
+
+                for (let i = 0; i < pool.length; i++) {
+                    const candidate = pool[i];
+                    const authorId = candidate.userId || '';
+                    if (authorId && authorId === lastAuthor && pool.some(v => v.userId !== lastAuthor)) {
+                        continue;
+                    }
+                    const alreadyShownForAuthor = authorImpressionCount.get(authorId) || 0;
+                    // Rank position bonus + fairness penalty if this creator already has multiple videos in the current batch
+                    const rankScore = (pool.length - i) * 120 - (alreadyShownForAuthor * 260);
+                    if (rankScore > bestAdjustedScore) {
+                        bestAdjustedScore = rankScore;
+                        bestIdx = i;
+                    }
+                }
+
+                if (bestIdx === -1) bestIdx = 0;
+                const chosen = pool.splice(bestIdx, 1)[0];
+                if (chosen && chosen.userId) {
+                    authorImpressionCount.set(chosen.userId, (authorImpressionCount.get(chosen.userId) || 0) + 1);
+                }
+                result.push(chosen);
             }
             return result;
         }
@@ -6172,7 +6710,7 @@
             if (!auth.currentUser || !docId) return;
             if (!markUserInteractionOnce('bump', docId)) return;
             const ref = doc(db, "videos", docId);
-            await updateDoc(ref, { createdAt: serverTimestamp() }).catch(e => console.log(e));
+            await updateDoc(ref, { lastEngagedAt: serverTimestamp() }).catch(e => console.log(e));
         };
         
         window.toggleFollowFromFeed = async (uid, btn, e) => {
@@ -6349,6 +6887,7 @@
 
         function loadFeed() {
             const container = document.getElementById('feed-container');
+            setLastVideoPourToiBlink(false);
             feedUnsubscribes.forEach(unsub => unsub());
             feedUnsubscribes = [];
             lastVisibleDoc = null;
@@ -6361,42 +6900,53 @@
             subscribeToFeed(null);
             container.onscroll = () => {
                 const { scrollTop, scrollHeight, clientHeight } = container;
-                if (hasMoreFeedVideos && !isFetchingMore && lastVisibleDoc && (scrollTop + clientHeight >= scrollHeight - Math.max(clientHeight * 3, 600))) {
-                    subscribeToFeed(lastVisibleDoc);
+                if (!isFetchingMore && (scrollTop + clientHeight >= scrollHeight - Math.max(clientHeight * 3, 600))) {
+                    if (hasMoreFeedVideos && lastVisibleDoc) {
+                        subscribeToFeed(lastVisibleDoc);
+                    } else if (!hasMoreFeedVideos && (scrollTop + clientHeight >= scrollHeight - Math.max(clientHeight * 1.5, 300))) {
+                        recycleFeedForContinuousViewing();
+                    }
                 }
+                checkAndTriggerLastVideoPourToiAlert();
             };
         }
 
-        async function subscribeToFeed(startAfterDoc) {
-            if (isFetchingMore || (!hasMoreFeedVideos && startAfterDoc)) return;
+        async function subscribeToFeed(startAfterDoc, allowSeenFallback = false) {
+            if (isFetchingMore || (!hasMoreFeedVideos && startAfterDoc && !allowSeenFallback)) return;
             isFetchingMore = true;
             const container = document.getElementById('feed-container');
             
-            let q;
-            if (currentFeedMode === 'foryou') {
-                const fetchSize = 15; 
-                q = query(collection(db, "videos"), orderBy("createdAt", "desc"), limit(fetchSize));
-                if (startAfterDoc) {
-                    q = query(collection(db, "videos"), orderBy("createdAt", "desc"), startAfter(startAfterDoc), limit(fetchSize));
-                }
-            } else {
-                q = query(collection(db, "videos"), orderBy("createdAt", "desc"), limit(BATCH_SIZE));
-                if (startAfterDoc) {
-                    q = query(collection(db, "videos"), orderBy("createdAt", "desc"), startAfter(startAfterDoc), limit(BATCH_SIZE));
-                }
+            const totalVideosInApp = await getTotalAppVideosCount();
+            const strictNoRepeatMode = (totalVideosInApp > STRICT_NO_REPEAT_VIDEO_THRESHOLD);
+
+            const fetchSize = (currentFeedMode === 'foryou') ? 25 : BATCH_SIZE;
+            let q = query(collection(db, "videos"), orderBy("createdAt", "desc"), limit(fetchSize));
+            if (startAfterDoc) {
+                q = query(collection(db, "videos"), orderBy("createdAt", "desc"), startAfter(startAfterDoc), limit(fetchSize));
             }
             try {
                 const snapshot = await getDocs(q);
                 
                 const loader = document.getElementById('loading-feed');
                 if(loader) loader.remove();
+                if (snapshot.docs.length < fetchSize) {
+                    hasMoreFeedVideos = false;
+                }
                 if(snapshot.empty) {
                     hasMoreFeedVideos = false;
                     isFetchingMore = false; 
-                    if (container.children.length === 0) { 
+                    if (container.querySelectorAll('.video-card').length === 0) {
+                        if (!allowSeenFallback) {
+                            renderedFeedVideoIds.clear();
+                            lastVisibleDoc = null;
+                            hasMoreFeedVideos = true;
+                            await subscribeToFeed(null, true);
+                            return;
+                        }
                         container.innerHTML = '<div class="h-full flex flex-col items-center justify-center text-gray-400 gap-2"><i data-lucide="film" class="w-10 h-10 text-gray-600"></i><span class="text-sm font-semibold">Aucune vidéo disponible</span></div>'; 
                         lucide.createIcons();
                     }
+                    checkAndTriggerLastVideoPourToiAlert();
                     return;
                 }
                 if (!snapshot.empty) lastVisibleDoc = snapshot.docs[snapshot.docs.length - 1];
@@ -6434,8 +6984,64 @@
                 
                 if (currentFeedMode === 'foryou') {
                     videos = videos.filter(v => isVideoEligibleForPourToi(v));
-                    videos.sort((a, b) => calculateViralScore(b) - calculateViralScore(a));
-                    videos = diversifyForYouFeed(videos);
+                }
+
+                // Rule: Do NOT hide already-seen videos unless the app has strictly more than 1000 videos (> 1000).
+                // Furthermore, the user must NEVER remain without videos to watch in the application.
+                const unseenVideos = videos.filter(v => !hasUserAlreadySeenVideo(v));
+                const existingCardsCount = container.querySelectorAll('.video-card').length;
+
+                if (strictNoRepeatMode && !allowSeenFallback) {
+                    // App has > 1000 videos: prioritize strict unseen discovery so the user never sees a video twice
+                    if (unseenVideos.length > 0) {
+                        videos = unseenVideos;
+                    } else if (hasMoreFeedVideos && lastVisibleDoc) {
+                        // Fetch next page in Firestore to project user further into unseen videos
+                        isFetchingMore = false;
+                        await subscribeToFeed(lastVisibleDoc, false);
+                        return;
+                    } else {
+                        // All 1000+ videos have been seen: seamlessly fall back so the user never stops watching
+                        isFetchingMore = false;
+                        renderedFeedVideoIds.clear();
+                        lastVisibleDoc = null;
+                        hasMoreFeedVideos = true;
+                        await subscribeToFeed(null, true);
+                        return;
+                    }
+                } else {
+                    // App has <= 1000 videos (or fallback mode is active):
+                    // Keep ALL eligible videos (both unseen and seen) so the user always has videos to watch.
+                    if (videos.length === 0) {
+                        if (hasMoreFeedVideos && lastVisibleDoc) {
+                            isFetchingMore = false;
+                            await subscribeToFeed(lastVisibleDoc, allowSeenFallback);
+                            return;
+                        } else if (existingCardsCount === 0 && !allowSeenFallback) {
+                            isFetchingMore = false;
+                            renderedFeedVideoIds.clear();
+                            lastVisibleDoc = null;
+                            hasMoreFeedVideos = true;
+                            await subscribeToFeed(null, true);
+                            return;
+                        }
+                    }
+                }
+
+                if (currentFeedMode === 'foryou') {
+                    videos.sort((a, b) => {
+                        const aUnseen = !hasUserAlreadySeenVideo(a);
+                        const bUnseen = !hasUserAlreadySeenVideo(b);
+                        if (aUnseen !== bUnseen) return aUnseen ? -1 : 1;
+                        return calculateViralScore(b) - calculateViralScore(a);
+                    });
+                    // Diversify unseen and seen groups separately when <= 1000 videos so unseen videos always stay first
+                    const unseenSorted = videos.filter(v => !hasUserAlreadySeenVideo(v));
+                    const seenSorted = videos.filter(v => hasUserAlreadySeenVideo(v));
+                    videos = [
+                        ...diversifyForYouFeed(unseenSorted),
+                        ...diversifyForYouFeed(seenSorted)
+                    ];
                 }
 
                 await hydrateUserProfilesMap(videos.map(v => v.userId));
@@ -6666,6 +7272,10 @@
                 lucide.createIcons();
                 if (!videoObserver) handleVideoPlayback();
                 prewarmUpcomingFeedMedia();
+                checkAndTriggerLastVideoPourToiAlert();
+                if (container.querySelectorAll('.video-card').length < 4 && hasMoreFeedVideos && lastVisibleDoc) {
+                    subscribeToFeed(lastVisibleDoc, allowSeenFallback);
+                }
             } catch(e) {
                 console.error("Erreur chargement feed:", e);
                 isFetchingMore = false;
@@ -6780,10 +7390,9 @@
                 camVid.srcObject = null;
                 camVid.classList.add('hidden');
             }
-            const hud = document.getElementById('studio-camera-hud');
-            if (hud) {
-                hud.classList.add('hidden');
-                hud.classList.remove('flex');
+            const shutterInner = document.getElementById('studio-shutter-inner');
+            if (shutterInner) {
+                shutterInner.className = "w-[60px] h-[60px] rounded-full bg-transparent transition-all duration-200 flex items-center justify-center";
             }
         }
 
@@ -7037,9 +7646,9 @@
         window.cycleCameraMaxDuration = () => {
             const options = [15, 60, 120];
             studioMaxDurationSec = options[(options.indexOf(studioMaxDurationSec) + 1) % options.length];
-            const btn = document.getElementById('studio-cam-dur-btn');
+            const durLbl = document.getElementById('studio-cam-dur-label');
             const lbl = document.getElementById('studio-rec-max-label');
-            if (btn) btn.innerText = `⏱️ ${studioMaxDurationSec}s`;
+            if (durLbl) durLbl.innerText = `Durée ${studioMaxDurationSec}s`;
             if (lbl) lbl.innerText = `${studioMaxDurationSec}s`;
             showToast(`Durée max d'enregistrement : ${studioMaxDurationSec}s`, "info");
         };
@@ -7048,21 +7657,28 @@
             const delays = [0, 3, 10];
             studioCountdownSec = delays[(delays.indexOf(studioCountdownSec) + 1) % delays.length];
             const btn = document.getElementById('studio-cam-delay-btn');
-            if (btn) btn.innerText = `⏳ ${studioCountdownSec}s`;
+            const dLbl = document.getElementById('studio-cam-delay-label');
+            if (dLbl) dLbl.innerText = studioCountdownSec > 0 ? `Retardateur (${studioCountdownSec}s)` : 'Retardateur';
+            if (btn) btn.classList.toggle('tool-active', studioCountdownSec > 0);
             showToast(studioCountdownSec === 0 ? "Retardateur désactivé" : `Retardateur : ${studioCountdownSec} secondes`, "info");
         };
 
         window.toggleStudioRingLight = () => {
             const ring = document.getElementById('studio-ring-light-overlay');
             if (!ring) return;
-            const active = ring.classList.toggle('hidden');
-            showToast(!active ? "Anneau lumineux Selfie activé 💡" : "Anneau lumineux désactivé", "info");
+            const isHidden = ring.classList.toggle('hidden');
+            const btn = document.getElementById('studio-cam-light-btn');
+            if (btn) btn.classList.toggle('tool-active', !isHidden);
+            showToast(!isHidden ? "Flash / Anneau lumineux activé ⚡" : "Flash désactivé", "info");
         };
 
         window.toggleStudioFramingGrid = () => {
             const grid = document.getElementById('studio-grid-overlay');
             if (!grid) return;
-            grid.classList.toggle('hidden');
+            const isHidden = grid.classList.toggle('hidden');
+            const btn = document.getElementById('studio-cam-grid-btn');
+            if (btn) btn.classList.toggle('tool-active', !isHidden);
+            showToast(!isHidden ? "Repères de cadrage activés ⊞" : "Repères masqués", "info");
         };
 
         window.toggleStudioCameraRecording = () => {
@@ -7145,7 +7761,11 @@
 
             if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-[#ff2a5f] rec-pulse-ring";
             if (btnTxt) btnTxt.innerText = "Arrêter";
-            if (btnIcon) btnIcon.className = "w-3 h-3 rounded-sm bg-white";
+            if (btnIcon) btnIcon.className = "w-5 h-5 rounded-md bg-white";
+            const shutterInner = document.getElementById('studio-shutter-inner');
+            if (shutterInner) {
+                shutterInner.className = "w-[54px] h-[54px] rounded-full bg-[#ff2a5f] rec-pulse-ring transition-all duration-200 flex items-center justify-center shadow-[0_0_20px_#ff2a5f]";
+            }
 
             if (studioRecTimerInterval) clearInterval(studioRecTimerInterval);
             studioRecTimerInterval = setInterval(() => {
@@ -7172,9 +7792,13 @@
             const dot = document.getElementById('studio-rec-dot');
             const btnTxt = document.getElementById('studio-rec-btn-text');
             const btnIcon = document.getElementById('studio-rec-btn-icon');
-            if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-gray-400";
+            if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400";
             if (btnTxt) btnTxt.innerText = "Filmer";
-            if (btnIcon) btnIcon.className = "w-3 h-3 rounded-full bg-white";
+            if (btnIcon) btnIcon.className = "w-3 h-3 rounded-full bg-transparent";
+            const shutterInner = document.getElementById('studio-shutter-inner');
+            if (shutterInner) {
+                shutterInner.className = "w-[60px] h-[60px] rounded-full bg-transparent transition-all duration-200 flex items-center justify-center";
+            }
 
             if (studioMediaRecorder && studioMediaRecorder.state !== 'inactive') {
                 try { studioMediaRecorder.stop(); } catch (e) {}
@@ -7456,11 +8080,180 @@
             v.classList.toggle('object-cover', mode === 'cover');
         };
 
+        let studioNightModeActive = false;
+        let studioHdModeActive = true;
+        let studioCaptureSubMode = 'video';
+
+        window.openStudioDrawerTab = (tabId) => {
+            const drawer = document.getElementById('studio-editor-drawer');
+            if (drawer) {
+                drawer.classList.remove('drawer-closed');
+                drawer.classList.add('drawer-open');
+            }
+            const pill = document.getElementById('dock-pill-' + tabId);
+            window.switchStudioEditTab(tabId, pill);
+            if (window.lucide) lucide.createIcons();
+        };
+
+        window.closeStudioEditorDrawer = () => {
+            const drawer = document.getElementById('studio-editor-drawer');
+            if (drawer) {
+                drawer.classList.remove('drawer-open');
+                drawer.classList.add('drawer-closed');
+            }
+        };
+
+        window.toggleStudioRightRailExpand = () => {
+            const extra = document.getElementById('studio-rail-extra-tools');
+            const icon = document.getElementById('studio-rail-chevron-icon');
+            if (!extra) return;
+            const isHidden = extra.classList.contains('hidden');
+            if (isHidden) {
+                extra.classList.remove('hidden');
+                extra.classList.add('flex');
+                if (icon) icon.setAttribute('data-lucide', 'chevron-down');
+            } else {
+                extra.classList.add('hidden');
+                extra.classList.remove('flex');
+                if (icon) icon.setAttribute('data-lucide', 'chevron-up');
+            }
+            if (window.lucide) lucide.createIcons();
+        };
+
+        window.toggleStudioNightMode = () => {
+            studioNightModeActive = !studioNightModeActive;
+            const btn = document.getElementById('studio-night-btn');
+            if (btn) btn.classList.toggle('tool-active', studioNightModeActive);
+            studioEditState.brightness = studioNightModeActive ? 132 : 100;
+            studioEditState.contrast = studioNightModeActive ? 112 : 100;
+            const bSlider = document.getElementById('studio-bright-slider');
+            const cSlider = document.getElementById('studio-contrast-slider');
+            if (bSlider) bSlider.value = studioEditState.brightness;
+            if (cSlider) cSlider.value = studioEditState.contrast;
+            const lb = document.getElementById('lbl-studio-bright'); if (lb) lb.innerText = studioEditState.brightness + '%';
+            const lc = document.getElementById('lbl-studio-contrast'); if (lc) lc.innerText = studioEditState.contrast + '%';
+            applyStudioVisualTransformAndFilter();
+            showToast(studioNightModeActive ? "Mode Nuit activé 🌙" : "Mode Nuit désactivé", "info");
+        };
+
+        window.toggleStudioHdMode = () => {
+            studioHdModeActive = !studioHdModeActive;
+            const btn = document.getElementById('studio-hd-btn');
+            if (btn) btn.classList.toggle('tool-active', studioHdModeActive);
+            showToast(studioHdModeActive ? "Qualité Mode HD 1080p activée ✨" : "Mode Standard activé", "info");
+        };
+
+        window.toggleStudioPreviewAspectQuick = () => {
+            const sel = document.getElementById('video-aspect-mode');
+            const nextMode = (sel && sel.value === 'contain') ? 'cover' : 'contain';
+            if (sel) sel.value = nextMode;
+            window.updateUploadPreviewFit(nextMode);
+            showToast(nextMode === 'cover' ? "Aperçu Plein Écran 9:16 activé 📱" : "Proportions d'origine activées 🎬", "info");
+        };
+
+        window.selectStudioLensCircle = (presetCls, circleEl) => {
+            document.querySelectorAll('.snap-lens-circle').forEach(c => c.classList.remove('active'));
+            if (circleEl) circleEl.classList.add('active');
+            window.selectStudioFilterPreset(presetCls, null);
+        };
+
+        window.setStudioCaptureSubMode = (subMode) => {
+            studioCaptureSubMode = subMode === 'photo' ? 'photo' : 'video';
+            showToast(studioCaptureSubMode === 'photo' ? "Mode Photo activé 📸" : "Mode Vidéo activé 🎥", "info");
+        };
+
+        window.handleStudioMainShutterClick = () => {
+            const prevVid = document.getElementById('video-preview');
+            const hasLoadedVideo = !!(studioSelectedFile || studioRecordedFile || (prevVid && prevVid.getAttribute('src')));
+            if (hasLoadedVideo && !studioIsRecording && (!studioCameraStream || (prevVid && !prevVid.classList.contains('hidden')))) {
+                window.toggleStudioPreviewPlay();
+                return;
+            }
+            if (studioCaptureSubMode === 'photo' && !studioIsRecording) {
+                window.captureStudioLivePhoto();
+            } else {
+                window.toggleStudioCameraRecording();
+            }
+        };
+
+        window.goToStudioPostStage = (focusField = null) => {
+            window.closeStudioEditorDrawer();
+            const capStage = document.getElementById('studio-capture-stage');
+            const postStage = document.getElementById('studio-post-stage');
+            if (capStage) capStage.classList.add('hidden');
+            if (postStage) {
+                postStage.classList.remove('hidden');
+                postStage.classList.add('flex');
+            }
+            const statusEl = document.getElementById('post-stage-media-status');
+            const summaryEl = document.getElementById('post-stage-edits-summary');
+            const f = studioSelectedFile || document.getElementById('video-file-input')?.files[0] || document.getElementById('native-camera-file-input')?.files[0] || studioRecordedFile;
+            if (statusEl) {
+                if (f) {
+                    const netDur = computeNetTrimmedDuration();
+                    statusEl.innerText = `${f.name} • ${netDur.toFixed(1)}s`;
+                } else {
+                    statusEl.innerText = "Aucune vidéo sélectionnée (retournez au studio pour filmer ou importer)";
+                }
+            }
+            if (summaryEl) {
+                const filterName = studioEditState.filterPreset === 'vfx-none' ? 'Filtre Original' : studioEditState.filterPreset.replace('vfx-', 'Filtre ').toUpperCase();
+                const spd = studioEditState.speed || 1;
+                summaryEl.innerText = `${filterName} • Vitesse ${spd}x ${studioEditState.overlayText ? '• Texte ajouté' : ''}`;
+            }
+            refreshStudioRShieldBarUI();
+            if (focusField === 'location') {
+                setTimeout(() => document.getElementById('video-location')?.focus(), 120);
+            } else {
+                setTimeout(() => document.getElementById('video-desc')?.focus(), 120);
+            }
+            if (window.lucide) lucide.createIcons();
+        };
+
+        window.backToStudioCaptureStage = () => {
+            const capStage = document.getElementById('studio-capture-stage');
+            const postStage = document.getElementById('studio-post-stage');
+            if (postStage) {
+                postStage.classList.add('hidden');
+                postStage.classList.remove('flex');
+            }
+            if (capStage) capStage.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+        };
+
+        async function startSilentStudioCameraPreview() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+            try {
+                const camVid = document.getElementById('studio-camera-live-video');
+                const emptyPrompt = document.getElementById('studio-empty-prompt');
+                studioCameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: studioCameraFacing, width: { ideal: 1280 }, height: { ideal: 720 } },
+                    audio: true
+                }).catch(async () => {
+                    return await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: studioCameraFacing },
+                        audio: false
+                    });
+                });
+                if (studioCameraStream && camVid && !studioSelectedFile && !studioRecordedFile) {
+                    camVid.srcObject = studioCameraStream;
+                    camVid.classList.remove('hidden');
+                    if (emptyPrompt) emptyPrompt.classList.add('hidden');
+                    studioEditState.mirrored = (studioCameraFacing === 'user');
+                    applyStudioVisualTransformAndFilter();
+                    await camVid.play().catch(() => {});
+                }
+            } catch (e) {
+                // Keep sleek dark Snapchat-style viewfinder if camera permission is not granted
+            }
+        }
+
         window.openUploadModal = () => {
             if(!checkAuth()) return;
             stopMasterAudio();
             document.querySelectorAll('.video-card video').forEach(v => v.pause());
             stopStudioCameraStream();
+            hideStudioMediaLoading();
 
             studioSelectedFile = null;
             studioRecordedFile = null;
@@ -7476,7 +8269,12 @@
             document.getElementById('video-controls-overlay').classList.remove('flex');
             const emptyPrompt = document.getElementById('studio-empty-prompt');
             if (emptyPrompt) emptyPrompt.classList.remove('hidden');
-            document.getElementById('video-file-input').classList.remove('hidden');
+
+            // Populate user avatar in top-left of studio if available
+            const topAvatarBtn = document.getElementById('studio-top-avatar-btn');
+            if (topAvatarBtn && currentUserData && currentUserData.photoURL) {
+                topAvatarBtn.innerHTML = `<img src="${escapeHtml(currentUserData.photoURL)}" class="w-full h-full object-cover rounded-full">`;
+            }
 
             makeStudioElementDraggable(document.getElementById('studio-live-text-overlay'));
             makeStudioElementDraggable(document.getElementById('studio-live-sticker-overlay'));
@@ -7490,9 +8288,11 @@
                 }
             } catch (e) {}
 
-            window.switchStudioSourceMode('gallery');
+            window.closeStudioEditorDrawer();
+            window.backToStudioCaptureStage();
             refreshStudioRShieldBarUI();
             document.getElementById('upload-modal').classList.add('open');
+            startSilentStudioCameraPreview();
             lucide.createIcons();
         };
 
@@ -7980,7 +8780,7 @@
             if (savePhotoBtn) { savePhotoBtn.classList.add('hidden'); savePhotoBtn.classList.remove('flex'); }
             const v = document.getElementById('video-preview'); v.pause(); v.removeAttribute('src'); v.load(); v.classList.add('hidden');
             document.getElementById('video-file-input').value = "";
-            document.getElementById('video-file-input').classList.remove('hidden');
+            startSilentStudioCameraPreview();
             const natInp = document.getElementById('native-camera-file-input');
             if (natInp) natInp.value = "";
             const controls = document.getElementById('video-controls-overlay'); controls.classList.add('hidden'); controls.classList.remove('flex');
@@ -8262,6 +9062,7 @@
                         }
 
                         manageFeedMediaWindow(card);
+                        checkAndTriggerLastVideoPourToiAlert(card);
                         playVideoSynchronized(v, card, true);
 
                         const nextCard = card.nextElementSibling;
