@@ -247,40 +247,40 @@
             border: 1px solid rgba(255, 255, 255, 0.16);
         }
 
-        /* Reference-Image Transparent Right Reaction Column (Clean, Floating, Drop-Shadow Icons) */
+        /* Reference-Image Transparent Right Reaction Column (Airy, Pro, Floating Icons) */
         .transparent-reaction-rail {
             position: absolute;
-            right: 12px;
-            top: 53%;
-            bottom: 58px;
+            right: 10px;
+            top: auto;
+            bottom: 62px;
             z-index: 25;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-between;
-            gap: 4px;
+            justify-content: flex-end;
+            gap: 7px;
         }
         @media (min-width: 768px) {
             .transparent-reaction-rail {
-                right: 28px;
-                top: 52%;
+                right: 24px;
+                top: auto;
                 bottom: 72px;
-                gap: 8px;
+                gap: 10px;
             }
         }
         .transparent-reaction-rail > div:first-child {
-            margin-bottom: 2px !important;
+            margin-bottom: 3px !important;
         }
         .transparent-reaction-rail > div:first-child > div:first-child {
-            width: 40px !important;
-            height: 40px !important;
+            width: 36px !important;
+            height: 36px !important;
         }
         .transparent-reaction-rail > div:last-child {
-            margin-top: 0 !important;
+            margin-top: 2px !important;
         }
         .transparent-reaction-rail > div:last-child > div:first-child {
-            width: 34px !important;
-            height: 34px !important;
+            width: 31px !important;
+            height: 31px !important;
         }
         .reaction-btn-item {
             display: flex;
@@ -291,60 +291,63 @@
             transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .reaction-btn-item span {
-            font-size: 11px;
-            line-height: 1.1;
+            font-size: 10.5px;
+            line-height: 1.05;
+            font-weight: 600;
         }
         .reaction-btn-item:active { transform: scale(0.84); }
         .action-circle {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             border-radius: 9999px;
             background: transparent;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.18s ease;
-            filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.65));
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
         }
         .action-circle svg {
-            width: 24px !important;
-            height: 24px !important;
+            width: 21px !important;
+            height: 21px !important;
         }
 
-        /* Repost Frosted Pill (Matches "Republier pour tes followers" in user's screenshot - GPU friendly) */
+        /* Repost Frosted Pill (Sleek, Airy & Professional - GPU friendly) */
         .repost-frosted-pill {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 5px 12px;
+            gap: 4px;
+            padding: 2.5px 9px;
             border-radius: 9999px;
-            background: rgba(28, 34, 46, 0.72);
+            background: rgba(15, 23, 42, 0.42);
             border: 1px solid rgba(255, 255, 255, 0.14);
-            color: rgba(255, 255, 255, 0.95);
-            font-size: 11.5px;
+            color: rgba(255, 255, 255, 0.92);
+            font-size: 10px;
             font-weight: 600;
+            letter-spacing: 0.01em;
             cursor: pointer;
-            transition: transform 0.2s ease;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+            transition: transform 0.2s ease, background 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.22);
         }
         .repost-frosted-pill:active { transform: scale(0.95); }
         .repost-frosted-pill.reposted {
-            background: rgba(16, 185, 129, 0.45);
-            border-color: rgba(16, 185, 129, 0.65);
+            background: rgba(16, 185, 129, 0.38);
+            border-color: rgba(16, 185, 129, 0.6);
             color: #a7f3d0;
         }
 
-        /* Creator Tag Chip ("Rock a Robin" style dark translucent tag - GPU friendly) */
+        /* Creator Tag Chip (Refined Micro-Pill - GPU friendly) */
         .creator-tag-chip {
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-            padding: 4px 10px;
-            border-radius: 8px;
-            background: rgba(0, 0, 0, 0.58);
-            color: #ffffff;
-            font-size: 11px;
-            font-weight: 700;
+            gap: 4px;
+            padding: 2.5px 8px;
+            border-radius: 9999px;
+            background: rgba(0, 0, 0, 0.38);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.92);
+            font-size: 10px;
+            font-weight: 600;
         }
 
         /* Strict Inside-Shell Overlays & Modals (Ultra-Fluid Spring Transitions) */
@@ -2191,27 +2194,28 @@
         <!-- MAIN APP SCREENS -->
         <!-- 1. FEED SCREEN (Matches Reference Screenshot Transparent Aesthetic) -->
         <div id="feed-screen" class="screen relative">
-            <!-- Top Transparent Bar: LIVE icon on left, "Suivis | Pour toi" with white underline in center, Search + Settings on right -->
-            <div class="absolute top-0 left-0 w-full z-30 pt-3.5 pb-4 px-4 bg-gradient-to-b from-black/55 via-black/15 to-transparent flex items-center justify-between pointer-events-none">
-                <!-- Left: LIVE / Format & Mute Quick Controls -->
-                <div class="flex items-center gap-2 pointer-events-auto">
-                    <button onclick="triggerRandomSurpriseVideo()" class="w-9 h-9 rounded-full flex items-center justify-center text-white drop-shadow-md active:scale-90 transition" title="Mode Surprise / Live">
-                        <i data-lucide="tv" class="w-5 h-5"></i>
+            <!-- Top Transparent Bar: Balanced, Airy & Professional Layout -->
+            <div class="absolute top-0 left-0 w-full z-30 pt-2.5 pb-3 px-2.5 sm:px-4 bg-gradient-to-b from-black/50 via-black/15 to-transparent flex items-center justify-between gap-1 pointer-events-none">
+                <!-- Left: LIVE / Mute / Format Quick Controls (Compact & Cohesive) -->
+                <div class="flex items-center gap-1 sm:gap-1.5 pointer-events-auto shrink-0">
+                    <button onclick="triggerRandomSurpriseVideo()" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/30 border border-white/10 flex items-center justify-center text-white/95 drop-shadow active:scale-90 transition" title="Mode Surprise / Live">
+                        <i data-lucide="tv" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
                     </button>
-                    <button id="feed-mute-btn" onclick="toggleGlobalMute()" class="w-8 h-8 rounded-full bg-black/50 border border-white/15 flex items-center justify-center text-white active:scale-90 transition" title="Son">
-                        <i id="feed-mute-icon" data-lucide="volume-2" class="w-4 h-4"></i>
+                    <button id="feed-mute-btn" onclick="toggleGlobalMute()" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/35 border border-white/15 flex items-center justify-center text-white active:scale-90 transition" title="Son">
+                        <i id="feed-mute-icon" data-lucide="volume-2" class="w-3.5 h-3.5"></i>
                     </button>
-                    <button id="feed-fit-btn" onclick="toggleFeedFitMode()" class="px-2.5 h-7 rounded-full bg-black/50 border border-white/15 flex items-center gap-1 text-[10px] font-bold text-white/90 active:scale-90 transition" title="Proportions vidéo">
-                        <i data-lucide="maximize-2" class="w-3 h-3 text-cyan-400"></i>
+                    <button id="feed-fit-btn" onclick="toggleFeedFitMode()" class="px-2 h-7 rounded-full bg-black/35 border border-white/15 flex items-center gap-1 text-[9.5px] font-semibold text-white/90 active:scale-90 transition whitespace-nowrap" title="Proportions vidéo">
+                        <i data-lucide="maximize-2" class="w-2.5 h-2.5 text-cyan-400 shrink-0"></i>
                         <span id="feed-fit-label">Original</span>
                     </button>
                 </div>
 
-                <!-- Center: Clean Transparent "Suivis | Pour toi" with crisp white underline -->
-                <div class="flex items-center gap-5 pointer-events-auto relative">
-                    <span id="tab-following" class="text-[15px] font-bold text-white/65 pb-1.5 border-b-2 border-transparent cursor-pointer transition-all text-shadow" onclick="switchFeed('following')" data-i18n="tab_following">Suivis</span>
+                <!-- Center: Crisp Single-Line "Suivis | Pour toi" -->
+                <div class="flex items-center gap-3 sm:gap-5 pointer-events-auto relative shrink-0 mx-auto">
+                    <span id="tab-following" class="whitespace-nowrap text-[13.5px] sm:text-[15px] font-semibold text-white/65 pb-1 border-b-2 border-transparent cursor-pointer transition-all text-shadow tracking-wide" onclick="switchFeed('following')" data-i18n="tab_following">Suivis</span>
+                    <span class="w-[1px] h-3 bg-white/20 rounded-full"></span>
                     <div class="relative inline-flex flex-col items-center">
-                        <span id="tab-foryou" class="text-[15px] font-extrabold text-white pb-1.5 border-b-[3px] border-white cursor-pointer transition-all text-shadow" onclick="switchFeed('foryou')" data-i18n="tab_foryou">Pour toi</span>
+                        <span id="tab-foryou" class="whitespace-nowrap text-[13.5px] sm:text-[15px] font-extrabold text-white pb-1 border-b-[2.5px] border-white cursor-pointer transition-all text-shadow tracking-wide" onclick="switchFeed('foryou')" data-i18n="tab_foryou">Pour toi</span>
                         <div id="pourtoi-last-video-hint" onclick="switchFeed('foryou')" class="hidden pourtoi-last-video-hint">
                             <span>✨ Clique pour voir de nouvelles pubs</span>
                         </div>
@@ -2219,15 +2223,15 @@
                 </div>
 
                 <!-- Right: Theme (Clair/Sombre), Settings & Search Icons -->
-                <div class="flex items-center gap-1.5 pointer-events-auto">
-                    <button id="feed-theme-btn" onclick="toggleThemeMode()" class="w-8 h-8 rounded-full bg-black/45 flex items-center justify-center text-amber-300 active:scale-90 transition" title="Changer de thème (Clair / Sombre)">
-                        <i id="feed-theme-icon" data-lucide="sun" class="w-4 h-4"></i>
+                <div class="flex items-center gap-1 sm:gap-1.5 pointer-events-auto shrink-0">
+                    <button id="feed-theme-btn" onclick="toggleThemeMode()" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/35 border border-white/10 flex items-center justify-center text-amber-300 active:scale-90 transition" title="Changer de thème (Clair / Sombre)">
+                        <i id="feed-theme-icon" data-lucide="sun" class="w-3.5 h-3.5"></i>
                     </button>
-                    <button onclick="openSettingsModal()" class="w-8 h-8 rounded-full bg-black/45 flex items-center justify-center text-white active:scale-90 transition" title="Paramètres">
-                        <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+                    <button onclick="openSettingsModal()" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/35 border border-white/10 flex items-center justify-center text-white active:scale-90 transition" title="Paramètres">
+                        <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
                     </button>
-                    <button onclick="navigateTo('discover')" class="w-8 h-8 rounded-full flex items-center justify-center text-white drop-shadow-md active:scale-90 transition" title="Rechercher">
-                        <i data-lucide="search" class="w-5 h-5 stroke-[2.5]"></i>
+                    <button onclick="navigateTo('discover')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/30 border border-white/10 flex items-center justify-center text-white drop-shadow active:scale-90 transition" title="Rechercher">
+                        <i data-lucide="search" class="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]"></i>
                     </button>
                 </div>
             </div>
@@ -4596,7 +4600,7 @@
             const volPaths = showAsMuted
                 ? '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" x2="16" y1="9" y2="15"/><line x1="16" x2="22" y1="9" y2="15"/>'
                 : '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>';
-            muteBtn.innerHTML = `<svg id="feed-mute-icon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${volPaths}</svg>`;
+            muteBtn.innerHTML = `<svg id="feed-mute-icon" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${volPaths}</svg>`;
             if (showAsMuted) {
                 muteBtn.classList.add("text-[#ec514c]", "border-[#ec514c]/45");
                 muteBtn.classList.remove("text-white", "border-white/15");
@@ -5318,7 +5322,7 @@
             vData.reposts = vData.repostedBy.length;
             profileVideosData[docId] = vData;
 
-            const rawLabel = nextRepostedState ? "Republié pour tes followers ✓" : "Republier pour tes followers";
+            const rawLabel = nextRepostedState ? "Republié ✓" : "Republier";
             const displayLabel = window.translateDynamicPhrase ? window.translateDynamicPhrase(rawLabel) : rawLabel;
             document.querySelectorAll(`.video-card[data-id="${docId}"] .repost-frosted-pill`).forEach(pill => {
                 pill.classList.toggle('reposted', nextRepostedState);
@@ -7662,11 +7666,11 @@
             const tabFollowing = document.getElementById('tab-following');
             const tabForyou = document.getElementById('tab-foryou');
             if (mode === 'following') {
-                tabFollowing.className = "text-[15px] font-extrabold text-white pb-1.5 border-b-[3px] border-white cursor-pointer transition-all text-shadow";
-                tabForyou.className = "text-[15px] font-bold text-white/65 pb-1.5 border-b-2 border-transparent cursor-pointer transition-all text-shadow";
+                tabFollowing.className = "whitespace-nowrap text-[13.5px] sm:text-[15px] font-extrabold text-white pb-1 border-b-[2.5px] border-white cursor-pointer transition-all text-shadow tracking-wide";
+                tabForyou.className = "whitespace-nowrap text-[13.5px] sm:text-[15px] font-semibold text-white/65 pb-1 border-b-2 border-transparent cursor-pointer transition-all text-shadow tracking-wide";
             } else {
-                tabForyou.className = "text-[15px] font-extrabold text-white pb-1.5 border-b-[3px] border-white cursor-pointer transition-all text-shadow";
-                tabFollowing.className = "text-[15px] font-bold text-white/65 pb-1.5 border-b-2 border-transparent cursor-pointer transition-all text-shadow";
+                tabForyou.className = "whitespace-nowrap text-[13.5px] sm:text-[15px] font-extrabold text-white pb-1 border-b-[2.5px] border-white cursor-pointer transition-all text-shadow tracking-wide";
+                tabFollowing.className = "whitespace-nowrap text-[13.5px] sm:text-[15px] font-semibold text-white/65 pb-1 border-b-2 border-transparent cursor-pointer transition-all text-shadow tracking-wide";
             }
             loadFeed();
         };
@@ -8071,94 +8075,95 @@
                             </div>
                         </div>
                         <div class="absolute inset-0 z-10" onclick="togglePlay(this, event, '${docId}', '${data.userId}')" ondblclick="handleDoubleTap(event, '${docId}', '${data.userId}', this)"></div>
-                        <div class="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black/80 via-black/25 to-transparent pointer-events-none"></div>
+                        <div class="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none"></div>
                         
-                        <!-- TRANSPARENT RIGHT REACTION COLUMN (Matches Reference Image) -->
+                        <!-- TRANSPARENT RIGHT REACTION COLUMN (Airy & Professional) -->
                         <div class="transparent-reaction-rail">
                             <!-- Creator Avatar with pink '+' badge -->
-                            <div class="relative mb-2 cursor-pointer" onclick="viewUserProfile('${data.userId}')">
-                                <div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black shadow-lg transition transform hover:scale-105">
+                            <div class="relative mb-1 cursor-pointer" onclick="viewUserProfile('${data.userId}')">
+                                <div class="w-9 h-9 rounded-full border-[1.5px] border-white/90 overflow-hidden bg-black shadow-md transition transform hover:scale-105">
                                     ${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}
                                 </div>
-                                ${!isMe && !isFollowing ? `<button onclick="toggleFollowFromFeed('${data.userId}', this, event)" class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-[#ff2a5f] text-white flex items-center justify-center shadow-md border border-black"><i data-lucide="plus" class="w-3 h-3 stroke-[3]"></i></button>` : ''}
+                                ${!isMe && !isFollowing ? `<button onclick="toggleFollowFromFeed('${data.userId}', this, event)" class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-[#ff2a5f] text-white flex items-center justify-center shadow border border-black"><i data-lucide="plus" class="w-2.5 h-2.5 stroke-[3]"></i></button>` : ''}
                             </div>
 
                             <!-- Heart / Like -->
                             <div class="reaction-btn-item group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${docId}', this, '${data.userId}')">
                                 <div class="action-circle">
-                                    <i data-lucide="heart" class="w-8 h-8 like-icon ${iLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-white fill-white/90'} transition-all"></i>
+                                    <i data-lucide="heart" class="w-6 h-6 like-icon ${iLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-white fill-white/90'} transition-all"></i>
                                 </div>
-                                <span class="text-xs font-bold text-white text-shadow like-count">${formatCount(getRealLikesCount(data))}</span>
+                                <span class="text-[10.5px] font-semibold text-white text-shadow like-count">${formatCount(getRealLikesCount(data))}</span>
                             </div>
 
                             <!-- Comment -->
                             <div class="reaction-btn-item" onclick="openComments('${docId}', ${data.allowComments})">
                                 <div class="action-circle">
-                                    <i data-lucide="message-circle" class="w-8 h-8 text-white fill-white/90"></i>
+                                    <i data-lucide="message-circle" class="w-6 h-6 text-white fill-white/90"></i>
                                 </div>
-                                <span class="text-xs font-bold text-white text-shadow comment-count">${formatCount(data.commentCount)}</span>
+                                <span class="text-[10.5px] font-semibold text-white text-shadow comment-count">${formatCount(data.commentCount)}</span>
                             </div>
 
                             <!-- Bookmark / Favorite -->
                             <div class="reaction-btn-item ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${docId}', this)">
                                 <div class="action-circle">
-                                    <i data-lucide="bookmark" class="w-8 h-8 fav-icon ${iFav ? 'fill-yellow-400 text-yellow-400' : 'text-white fill-white/90'} transition-all"></i>
+                                    <i data-lucide="bookmark" class="w-6 h-6 fav-icon ${iFav ? 'fill-yellow-400 text-yellow-400' : 'text-white fill-white/90'} transition-all"></i>
                                 </div>
-                                <span class="text-xs font-bold text-white text-shadow fav-text">${formatCount(getRealFavoritesCount(data))}</span>
+                                <span class="text-[10.5px] font-semibold text-white text-shadow fav-text">${formatCount(getRealFavoritesCount(data))}</span>
                             </div>
 
                             <!-- Share / More Options -->
                             <div class="reaction-btn-item" onclick="openOptions('${docId}', '${data.url}', '${safeUsername}', ${allowDL}, '${data.userId}', ${isPinned})">
                                 <div class="action-circle">
-                                    <i data-lucide="redo-2" class="w-8 h-8 text-white"></i>
+                                    <i data-lucide="redo-2" class="w-6 h-6 text-white"></i>
                                 </div>
-                                <span class="text-xs font-bold text-white text-shadow share-count">${formatCount(getRealSharesCount(data))}</span>
+                                <span class="text-[10.5px] font-semibold text-white text-shadow share-count">${formatCount(getRealSharesCount(data))}</span>
                             </div>
 
                             <!-- Spinning Music Disc (Opens Sound Reuse Sheet) -->
-                            <div class="mt-1 cursor-pointer" onclick="openSoundSheet('${docId}', event)" title="Réutiliser ce son">
-                                <div class="w-10 h-10 bg-gray-900 rounded-full border-[5px] border-gray-800/90 flex items-center justify-center overflow-hidden shadow-xl animate-spin-slow">
+                            <div class="mt-0.5 cursor-pointer" onclick="openSoundSheet('${docId}', event)" title="Réutiliser ce son">
+                                <div class="w-8 h-8 bg-gray-900 rounded-full border-[3.5px] border-gray-800/90 flex items-center justify-center overflow-hidden shadow-lg animate-spin-slow">
                                     ${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}
                                 </div>
                             </div>
                         </div>
 
-                        <!-- TRANSPARENT BOTTOM-LEFT OVERLAY (Matches Reference Image: Tag chip, Repost pill, Username, Translation, Music) -->
-                        <div class="absolute bottom-16 left-3.5 right-20 z-20 text-left pointer-events-none flex flex-col items-start gap-1.5 max-w-xl">
-                            <!-- Dark Translucent Tag / Location Chip + Quick Fun Emoji Bar -->
-                            <div class="flex items-center gap-2 pointer-events-auto flex-wrap">
-                                ${data.location ? `<div class="creator-tag-chip"><i data-lucide="map-pin" class="w-3 h-3 text-cyan-400"></i> ${escapeHtml(data.location)}</div>` : `<div class="creator-tag-chip">${isPinned ? '📌 Épinglé • ' : ''}${dateStr}</div>`}
-                                <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-black/55 border border-white/10 text-xs">
+                        <!-- TRANSPARENT BOTTOM-LEFT OVERLAY (Airy, Compact & Professional) -->
+                        <div class="absolute bottom-14 left-3 right-14 z-20 text-left pointer-events-none flex flex-col items-start gap-1 max-w-[82%] sm:max-w-lg">
+                            <!-- Compact Meta Row: Location/Date + Quick Emoji Burst -->
+                            <div class="flex items-center gap-1.5 pointer-events-auto flex-wrap">
+                                ${data.location ? `<div class="creator-tag-chip"><i data-lucide="map-pin" class="w-2.5 h-2.5 text-cyan-400"></i> ${escapeHtml(data.location)}</div>` : `<div class="creator-tag-chip">${isPinned ? '📌 Épinglé • ' : ''}${dateStr}</div>`}
+                                <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/38 border border-white/10 text-[10.5px]">
                                     <span onclick="triggerEmojiBurst('${docId}', '🔥', event)" class="cursor-pointer hover:scale-125 transition">🔥</span>
                                     <span onclick="triggerEmojiBurst('${docId}', '😍', event)" class="cursor-pointer hover:scale-125 transition">😍</span>
                                     <span onclick="triggerEmojiBurst('${docId}', '👏', event)" class="cursor-pointer hover:scale-125 transition">👏</span>
                                 </div>
                             </div>
 
-                            <!-- Frosted Pill: "Republier pour tes followers" -->
-                            <button onclick="toggleRepostVideo('${docId}', this, event)" class="repost-frosted-pill pointer-events-auto ${iReposted ? 'reposted' : ''}">
-                                <i data-lucide="repeat-2" class="w-3.5 h-3.5"></i>
-                                <span>${iReposted ? 'Republié pour tes followers ✓' : 'Republier pour tes followers'}</span>
-                            </button>
-
-                            <!-- Bold Creator Handle + Edit button if owner -->
-                            <div class="flex items-center gap-2 pointer-events-auto mt-0.5">
-                                <h3 class="font-extrabold font-display text-[16px] text-white text-shadow cursor-pointer flex items-center" onclick="viewUserProfile('${data.userId}')">@${safeUsername}${badge}</h3>
-                                ${isMe ? `<button onclick="openEditVideoModal('${docId}')" class="text-[10px] px-2 py-0.5 rounded bg-white/15 text-cyan-300 font-bold hover:bg-white/25">Modifier</button>` : ''}
+                            <!-- Tight Repost Pill Stacked Directly Above @username -->
+                            <div class="flex flex-col items-start gap-0.5 pointer-events-auto mt-0.5">
+                                <button onclick="toggleRepostVideo('${docId}', this, event)" class="repost-frosted-pill self-start ${iReposted ? 'reposted' : ''}">
+                                    <i data-lucide="repeat-2" class="w-3 h-3"></i>
+                                    <span>${iReposted ? 'Republié ✓' : 'Republier'}</span>
+                                </button>
+                                <!-- Creator Handle + Inline Translation / Edit -->
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h3 class="font-bold font-display text-[14px] text-white text-shadow cursor-pointer flex items-center tracking-tight" onclick="viewUserProfile('${data.userId}')">@${safeUsername}${badge}</h3>
+                                ${isMe ? `<button onclick="openEditVideoModal('${docId}')" class="text-[9.5px] px-2 py-0.5 rounded-full bg-white/15 text-cyan-300 font-semibold hover:bg-white/25">Modifier</button>` : ''}
+                                    ${safeDesc ? `<button onclick="translateVideoDescription('${docId}', this, event)" class="text-[10px] font-medium text-white/65 hover:text-white underline-offset-2 hover:underline text-shadow">Voir la traduction</button>` : ''}
+                                </div>
                             </div>
 
-                            <!-- Description + "Voir la traduction" -->
+                            <!-- Description -->
                             ${safeDesc ? `
                             <div class="pointer-events-auto">
-                                <p class="video-desc-text text-[13px] leading-snug text-white/95 text-shadow line-clamp-2">${safeDesc}</p>
-                                <button onclick="translateVideoDescription('${docId}', this, event)" class="text-[11px] font-semibold text-white/75 hover:text-white mt-0.5 block text-shadow">Voir la traduction</button>
+                                <p class="video-desc-text text-[12px] leading-snug text-white/90 text-shadow line-clamp-2">${safeDesc}</p>
                             </div>` : ''}
 
                             <!-- Clickable Music / Sound Row ("♫ Contient : ...") -->
-                            <div onclick="openSoundSheet('${docId}', event)" class="flex items-center gap-2 text-xs font-semibold text-white/95 pointer-events-auto cursor-pointer hover:text-cyan-300 transition mt-0.5 text-shadow">
-                                <i data-lucide="music" class="w-3.5 h-3.5 shrink-0"></i>
-                                <span class="truncate max-w-[250px] md:max-w-[380px]">Contient : ${soundLabel}</span>
-                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-white/15 border border-white/20 text-white font-bold shrink-0">Utiliser ce son</span>
+                            <div onclick="openSoundSheet('${docId}', event)" class="flex items-center gap-1.5 text-[11px] font-medium text-white/85 pointer-events-auto cursor-pointer hover:text-cyan-300 transition text-shadow w-full">
+                                <i data-lucide="music" class="w-3 h-3 shrink-0 text-white/80"></i>
+                                <span class="truncate max-w-[185px] sm:max-w-[320px]">Contient : ${soundLabel}</span>
+                                <span class="text-[9.5px] px-2 py-0.5 rounded-full bg-white/12 border border-white/15 text-white/95 font-semibold shrink-0">Utiliser ce son</span>
                             </div>
                         </div>
 
@@ -12643,44 +12648,48 @@
                     </div>
                 </div>
                 <div class="absolute inset-0 z-10" onclick="togglePlay(this, event, '${id}', '${data.userId}')" ondblclick="handleDoubleTap(event, '${id}', '${data.userId}', this)"></div>
-                <div class="absolute inset-x-0 bottom-0 h-60 bg-gradient-to-t from-black/80 via-black/25 to-transparent pointer-events-none"></div>
+                <div class="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none"></div>
                 <div class="transparent-reaction-rail">
-                    <div class="relative mb-2 cursor-pointer" onclick="viewUserProfile('${data.userId}'); closeFullVideo()">
-                        <div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-black">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div>
+                    <div class="relative mb-1 cursor-pointer" onclick="viewUserProfile('${data.userId}'); closeFullVideo()">
+                        <div class="w-9 h-9 rounded-full border-[1.5px] border-white/90 overflow-hidden bg-black">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div>
                     </div>
                     <div class="reaction-btn-item group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${id}', this, '${data.userId}')">
-                        <div class="action-circle"><i data-lucide="heart" class="w-8 h-8 ${iLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-white fill-white/90'}"></i></div>
-                        <span class="text-xs font-bold text-white text-shadow like-count">${formatCount(getRealLikesCount(data))}</span>
+                        <div class="action-circle"><i data-lucide="heart" class="w-6 h-6 ${iLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-white fill-white/90'}"></i></div>
+                        <span class="text-[10.5px] font-semibold text-white text-shadow like-count">${formatCount(getRealLikesCount(data))}</span>
                     </div>
                     <div class="reaction-btn-item" onclick="openComments('${id}')">
-                        <div class="action-circle"><i data-lucide="message-circle" class="w-8 h-8 text-white fill-white/90"></i></div>
-                        <span class="text-xs font-bold text-white text-shadow comment-count">${formatCount(data.commentCount)}</span>
+                        <div class="action-circle"><i data-lucide="message-circle" class="w-6 h-6 text-white fill-white/90"></i></div>
+                        <span class="text-[10.5px] font-semibold text-white text-shadow comment-count">${formatCount(data.commentCount)}</span>
                     </div>
                     <div class="reaction-btn-item ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${id}', this)">
-                        <div class="action-circle"><i data-lucide="bookmark" class="w-8 h-8 ${iFav ? 'fill-yellow-400 text-yellow-400' : 'text-white fill-white/90'}"></i></div>
-                        <span class="text-xs font-bold text-white text-shadow fav-text">${formatCount(getRealFavoritesCount(data))}</span>
+                        <div class="action-circle"><i data-lucide="bookmark" class="w-6 h-6 ${iFav ? 'fill-yellow-400 text-yellow-400' : 'text-white fill-white/90'}"></i></div>
+                        <span class="text-[10.5px] font-semibold text-white text-shadow fav-text">${formatCount(getRealFavoritesCount(data))}</span>
                     </div>
                     <div class="reaction-btn-item" onclick="openOptions('${id}', '${data.url}', '${escapeHtml(data.username)}', ${data.allowDownloads !== false}, '${data.userId}', ${!!data.isPinned})">
-                        <div class="action-circle"><i data-lucide="redo-2" class="w-8 h-8 text-white"></i></div>
-                        <span class="text-xs font-bold text-white text-shadow share-count">${formatCount(getRealSharesCount(data))}</span>
+                        <div class="action-circle"><i data-lucide="redo-2" class="w-6 h-6 text-white"></i></div>
+                        <span class="text-[10.5px] font-semibold text-white text-shadow share-count">${formatCount(getRealSharesCount(data))}</span>
                     </div>
-                    <div class="mt-1 cursor-pointer" onclick="openSoundSheet('${id}', event)">
-                        <div class="w-10 h-10 bg-gray-900 rounded-full border-[5px] border-gray-800/90 flex items-center justify-center overflow-hidden shadow-xl animate-spin-slow">
+                    <div class="mt-0.5 cursor-pointer" onclick="openSoundSheet('${id}', event)">
+                        <div class="w-8 h-8 bg-gray-900 rounded-full border-[3.5px] border-gray-800/90 flex items-center justify-center overflow-hidden shadow-lg animate-spin-slow">
                             ${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}
                         </div>
                     </div>
                 </div>
-                <div class="absolute bottom-12 left-3.5 right-20 z-20 text-left pointer-events-none flex flex-col items-start gap-1.5">
-                    <div class="creator-tag-chip pointer-events-auto">${dateStr}</div>
-                    <button onclick="toggleRepostVideo('${id}', this, event)" class="repost-frosted-pill pointer-events-auto ${iReposted ? 'reposted' : ''}">
-                        <i data-lucide="repeat-2" class="w-3.5 h-3.5"></i>
-                        <span>${iReposted ? 'Republié pour tes followers ✓' : 'Republier pour tes followers'}</span>
-                    </button>
-                    <h3 class="font-extrabold font-display text-[16px] text-white text-shadow flex items-center pointer-events-auto cursor-pointer" onclick="viewUserProfile('${data.userId}'); closeFullVideo()">@${escapeHtml(String(data.username || 'utilisateur').replace(/^@+/, ''))}${badge}</h3>
-                    <p class="video-desc-text text-[13px] text-white/95 text-shadow line-clamp-3 pointer-events-auto">${formatDescription(escapeHtml(data.description))}</p>
-                    <div onclick="openSoundSheet('${id}', event)" class="flex items-center gap-2 text-xs font-semibold text-white/95 pointer-events-auto cursor-pointer hover:text-cyan-300 transition text-shadow">
-                        <i data-lucide="music" class="w-3.5 h-3.5 shrink-0"></i>
-                        <span class="truncate max-w-[240px]">Contient : ${soundLabel}</span>
+                <div class="absolute bottom-12 left-3 right-14 z-20 text-left pointer-events-none flex flex-col items-start gap-1 max-w-[82%] sm:max-w-lg">
+                    <div class="flex items-center gap-1.5 pointer-events-auto flex-wrap">
+                        <div class="creator-tag-chip">${dateStr}</div>
+                    </div>
+                    <div class="flex flex-col items-start gap-0.5 pointer-events-auto mt-0.5">
+                        <button onclick="toggleRepostVideo('${id}', this, event)" class="repost-frosted-pill self-start ${iReposted ? 'reposted' : ''}">
+                            <i data-lucide="repeat-2" class="w-3 h-3"></i>
+                            <span>${iReposted ? 'Republié ✓' : 'Republier'}</span>
+                        </button>
+                        <h3 class="font-bold font-display text-[14px] text-white text-shadow flex items-center cursor-pointer tracking-tight" onclick="viewUserProfile('${data.userId}'); closeFullVideo()">@${escapeHtml(String(data.username || 'utilisateur').replace(/^@+/, ''))}${badge}</h3>
+                    </div>
+                    <p class="video-desc-text text-[12px] leading-snug text-white/90 text-shadow line-clamp-2 pointer-events-auto">${formatDescription(escapeHtml(data.description))}</p>
+                    <div onclick="openSoundSheet('${id}', event)" class="flex items-center gap-1.5 text-[11px] font-medium text-white/85 pointer-events-auto cursor-pointer hover:text-cyan-300 transition text-shadow">
+                        <i data-lucide="music" class="w-3 h-3 shrink-0 text-white/80"></i>
+                        <span class="truncate max-w-[210px]">Contient : ${soundLabel}</span>
                     </div>
                 </div>
             </div>`; 
