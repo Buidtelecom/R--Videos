@@ -1496,6 +1496,8 @@
             #offline-screen,
             #auth-screen,
             #login-prompt-modal,
+            #google-account-chooser-modal,
+            #birthdate-verification-modal,
             #delete-confirm-modal,
             #logout-modal,
             #report-modal,
@@ -1524,6 +1526,8 @@
             #offline-screen,
             #auth-screen,
             #login-prompt-modal,
+            #google-account-chooser-modal,
+            #birthdate-verification-modal,
             #delete-confirm-modal,
             #logout-modal,
             #report-modal,
@@ -1552,6 +1556,8 @@
             #offline-screen,
             #auth-screen,
             #login-prompt-modal,
+            #google-account-chooser-modal,
+            #birthdate-verification-modal,
             #delete-confirm-modal,
             #logout-modal,
             #report-modal,
@@ -1680,6 +1686,8 @@
             #offline-screen,
             #auth-screen,
             #login-prompt-modal,
+            #google-account-chooser-modal,
+            #birthdate-verification-modal,
             #delete-confirm-modal,
             #logout-modal,
             #report-modal,
@@ -1720,6 +1728,8 @@
             #first-time-lang-modal,
             #auth-screen,
             #login-prompt-modal,
+            #google-account-chooser-modal,
+            #birthdate-verification-modal,
             #delete-confirm-modal,
             #logout-modal,
             #report-modal,
@@ -1916,6 +1926,8 @@
             .studio-tab-pill.active,
             #btn-login,
             #btn-register,
+            #btn-confirm-google-chooser,
+            #btn-submit-birthdate,
             #btn-reset-pass,
             #btn-save-profile,
             #btn-confirm-delete,
@@ -1944,6 +1956,8 @@
             .studio-tab-pill.active,
             #btn-login,
             #btn-register,
+            #btn-confirm-google-chooser,
+            #btn-submit-birthdate,
             #btn-reset-pass,
             #btn-save-profile,
             #btn-confirm-delete,
@@ -1976,6 +1990,15 @@
         }
         body.light-theme #studio-empty-prompt .from-\[\#ff2a5f\] svg {
             color: #ffffff !important;
+        }
+        body.light-theme .google-auth-btn {
+            background: #ffffff !important;
+            border: 1.5px solid rgba(15, 23, 42, 0.18) !important;
+            color: #0f172a !important;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08) !important;
+        }
+        body.light-theme .google-auth-btn span {
+            color: #0f172a !important;
         }
     </style>
 </head>
@@ -2135,6 +2158,15 @@
                 
                 <div class="glass-panel p-6 rounded-3xl shadow-2xl">
                     <div id="login-form" class="space-y-3.5">
+                        <button type="button" id="btn-google-login" onclick="openGoogleAccountChooserModal()" class="google-auth-btn w-full bg-white hover:bg-gray-100 text-slate-900 font-extrabold py-3.5 px-4 rounded-xl transition flex justify-center items-center gap-3 h-12 shadow-lg border border-white/20 active:scale-95">
+                            <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                            <span class="text-slate-900 font-extrabold text-xs sm:text-sm" data-i18n="google_login_btn">Se connecter avec Google</span>
+                        </button>
+                        <div class="flex items-center gap-3 py-0.5">
+                            <div class="h-px bg-white/10 flex-1"></div>
+                            <span class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">ou</span>
+                            <div class="h-px bg-white/10 flex-1"></div>
+                        </div>
                         <input type="email" id="login-email" placeholder="Email" class="auth-input" data-i18n-placeholder="email_placeholder">
                         <div class="relative">
                             <input type="password" id="login-pass" placeholder="Mot de passe" class="auth-input pr-10" data-i18n-placeholder="pass_placeholder">
@@ -2148,6 +2180,15 @@
                     </div>
 
                     <div id="register-form" class="space-y-3.5 hidden">
+                        <button type="button" id="btn-google-register" onclick="openGoogleAccountChooserModal()" class="google-auth-btn w-full bg-white hover:bg-gray-100 text-slate-900 font-extrabold py-3.5 px-4 rounded-xl transition flex justify-center items-center gap-3 h-12 shadow-lg border border-white/20 active:scale-95">
+                            <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                            <span class="text-slate-900 font-extrabold text-xs sm:text-sm" data-i18n="google_login_btn">Se connecter avec Google</span>
+                        </button>
+                        <div class="flex items-center gap-3 py-0.5">
+                            <div class="h-px bg-white/10 flex-1"></div>
+                            <span class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">ou</span>
+                            <div class="h-px bg-white/10 flex-1"></div>
+                        </div>
                         <input type="text" id="reg-username" placeholder="Nom d'utilisateur" class="auth-input" data-i18n-placeholder="username_placeholder">
                         <input type="email" id="reg-email" placeholder="Email (Gmail requis)" class="auth-input" data-i18n-placeholder="email_placeholder">
                         <div class="relative">
@@ -2187,6 +2228,119 @@
                 <div class="flex gap-3">
                     <button onclick="closeModal('login-prompt-modal')" class="flex-1 py-2.5 bg-white/10 hover:bg-white/15 text-white rounded-xl font-semibold text-xs transition">Annuler</button>
                     <button onclick="goToAuth()" class="flex-1 py-2.5 bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white rounded-xl font-bold text-xs shadow-lg shadow-rose-600/30 transition">Se connecter</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- GOOGLE ACCOUNT CHOOSER MODAL (TikTok-Style Direct Phone Account Selection — Zero Text Input Form) -->
+        <div id="google-account-chooser-modal" class="modal-overlay z-[122]">
+            <div class="glass-panel w-11/12 max-w-md p-6 rounded-3xl shadow-2xl border border-white/15 text-left relative overflow-hidden">
+                <div class="flex items-center justify-between pb-3.5 mb-3.5 border-b border-white/10">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shadow-md shrink-0 border border-slate-200">
+                            <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-extrabold text-white font-display">Choisir un compte Google</h3>
+                            <p class="text-[11px] text-gray-400">Sélectionnez votre adresse pour continuer sur R-Videos</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="closeGoogleAccountChooserModal()" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center text-gray-400 hover:text-white transition">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Direct Selectable List of Google Accounts Detected on Phone / App (No text input!) -->
+                <div class="space-y-2 mb-4">
+                    <div id="google-saved-accounts-list" class="space-y-2 max-h-64 overflow-y-auto no-scrollbar pr-0.5">
+                        <div class="flex items-center justify-center gap-2 py-6 text-xs text-gray-400">
+                            <div class="w-4 h-4 border-2 border-[#ff2a5f] border-t-transparent rounded-full animate-spin"></div>
+                            <span>Récupération des adresses Google de l'appareil...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <p id="google-chooser-error" class="hidden text-xs text-rose-300 bg-rose-950/60 border border-rose-500/40 p-2.5 rounded-xl font-medium mb-3"></p>
+
+                <div class="flex flex-col gap-2">
+                    <button type="button" id="btn-confirm-google-chooser" onclick="validateSelectedGoogleAccount()" class="w-full bg-gradient-to-r from-[#ff2a5f] to-rose-600 hover:opacity-95 text-white font-extrabold py-3.5 rounded-xl transition flex justify-center items-center gap-2 h-12 shadow-lg shadow-rose-600/30 active:scale-95">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                        <span>Valider et se connecter</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- FIRST-TIME BIRTH DATE VERIFICATION & 12+ AGE GATE MODAL -->
+        <div id="birthdate-verification-modal" class="modal-overlay z-[126]">
+            <div class="glass-panel w-11/12 max-w-md p-6 rounded-3xl shadow-2xl border border-white/15 text-center relative overflow-hidden">
+                <!-- State 1: Birth Date Entry Form (First-time login) -->
+                <div id="birthdate-form-view" class="space-y-4">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#ff2a5f]/20 to-cyan-500/20 border border-[#ff2a5f]/40 flex items-center justify-center mx-auto shadow-lg">
+                        <i data-lucide="calendar-heart" class="w-7 h-7 text-[#ff2a5f]"></i>
+                    </div>
+                    <div>
+                        <span class="inline-block text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 mb-1">Première connexion</span>
+                        <h3 class="text-lg font-extrabold text-white font-display">Quelle est votre date de naissance ?</h3>
+                        <p class="text-xs text-gray-300 mt-1 leading-relaxed">Veuillez renseigner votre date de naissance pour finaliser votre inscription et profiter de l'application.</p>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 text-left">
+                        <div>
+                            <label for="birthdate-day" class="block text-[10px] font-bold text-gray-400 mb-1 uppercase">Jour</label>
+                            <select id="birthdate-day" class="auth-input py-2.5 px-2 text-xs font-bold text-center">
+                                <option value="">Jour</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="birthdate-month" class="block text-[10px] font-bold text-gray-400 mb-1 uppercase">Mois</label>
+                            <select id="birthdate-month" class="auth-input py-2.5 px-2 text-xs font-bold text-center">
+                                <option value="">Mois</option>
+                                <option value="1">Janvier</option>
+                                <option value="2">Février</option>
+                                <option value="3">Mars</option>
+                                <option value="4">Avril</option>
+                                <option value="5">Mai</option>
+                                <option value="6">Juin</option>
+                                <option value="7">Juillet</option>
+                                <option value="8">Août</option>
+                                <option value="9">Septembre</option>
+                                <option value="10">Octobre</option>
+                                <option value="11">Novembre</option>
+                                <option value="12">Décembre</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="birthdate-year" class="block text-[10px] font-bold text-gray-400 mb-1 uppercase">Année</label>
+                            <select id="birthdate-year" class="auth-input py-2.5 px-2 text-xs font-bold text-center">
+                                <option value="">Année</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <p id="birthdate-error-msg" class="hidden text-xs text-rose-300 bg-rose-950/60 border border-rose-500/40 p-2.5 rounded-xl font-medium"></p>
+
+                    <button type="button" id="btn-submit-birthdate" onclick="submitFirstTimeBirthDate()" class="w-full bg-gradient-to-r from-[#ff2a5f] to-rose-600 hover:opacity-95 text-white font-extrabold py-3.5 rounded-xl transition flex justify-center items-center gap-2 h-12 shadow-lg shadow-rose-600/30 active:scale-95">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Valider et profiter de l'application</span>
+                    </button>
+                </div>
+
+                <!-- State 2: Access Blocked (< 12 years old) -->
+                <div id="birthdate-blocked-view" class="hidden space-y-4 py-2">
+                    <div class="w-16 h-16 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center mx-auto shadow-lg">
+                        <i data-lucide="shield-ban" class="w-8 h-8 text-[#ff2a5f]"></i>
+                    </div>
+                    <div>
+                        <span class="inline-block text-[10px] font-black uppercase tracking-wider px-3 py-0.5 rounded-full bg-rose-600 text-white mb-1.5">Accès Bloqué</span>
+                        <h3 class="text-lg font-extrabold text-white font-display">Âge minimum requis : 12 ans</h3>
+                        <p class="text-xs text-gray-200 mt-1.5 leading-relaxed">
+                            Désolé, vous devez avoir au moins <strong>12 ans</strong> pour accéder à R-Videos. Votre accès à l'application est bloqué conformément à nos règles de sécurité.
+                        </p>
+                    </div>
+                    <button type="button" onclick="acknowledgeUnder12Block()" class="w-full py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs transition">
+                        Retourner à l'écran de connexion
+                    </button>
                 </div>
             </div>
         </div>
@@ -3983,14 +4137,43 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, deleteUser, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, deleteUser, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs, getCountFromServer, onSnapshot, query, orderBy, serverTimestamp, updateDoc, limit, arrayUnion, arrayRemove, increment, where, deleteDoc, writeBatch, startAfter } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         const firebaseConfig = { apiKey: "AIzaSyCfiExPZwsF53-Ix3cCeIa3tq1MJ5359RU", authDomain: "nanofinance-9192a.firebaseapp.com", projectId: "nanofinance-9192a", storageBucket: "nanofinance-9192a.firebasestorage.app", messagingSenderId: "376434082116", appId: "1:376434082116:web:838ef702670608bc959711", measurementId: "G-9455DCWCNL" };
         
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
+        const rawAuth = getAuth(app);
         const db = getFirestore(app);
+        let activeCanonicalUid = null;
+        let activeCanonicalEmail = null;
+
+        const auth = new Proxy(rawAuth, {
+            get(target, prop) {
+                if (prop === 'currentUser') {
+                    const realUser = target.currentUser;
+                    if (!realUser) return null;
+                    return new Proxy(realUser, {
+                        get(uTarget, uProp) {
+                            if (uProp === 'uid') {
+                                return activeCanonicalUid || uTarget.uid;
+                            }
+                            if (uProp === 'email') {
+                                const rawEm = activeCanonicalEmail || uTarget.email || '';
+                                return rawEm.replace('+gauth@', '@');
+                            }
+                            if (uProp === 'displayName') {
+                                return (currentUserData && currentUserData.username) || uTarget.displayName;
+                            }
+                            const val = uTarget[uProp];
+                            return typeof val === 'function' ? val.bind(uTarget) : val;
+                        }
+                    });
+                }
+                const val = target[prop];
+                return typeof val === 'function' ? val.bind(target) : val;
+            }
+        });
         
         let currentUserData = null;
         let isGuestMode = true;
@@ -6660,7 +6843,7 @@
             if (state.banned && !isCurrentAccountVipProtected()) {
                 closeStudioModal();
                 showToast("Compte bloqué définitivement suite à une faute très grave.", "error");
-                await signOut(auth).catch(() => {});
+                activeCanonicalUid = null; activeCanonicalEmail = null; await signOut(rawAuth).catch(() => {});
             }
         };
 
@@ -6710,7 +6893,7 @@
             if(!email) { showAuthError("Veuillez entrer votre email."); return; }
             
             try {
-                await sendPasswordResetEmail(auth, email);
+                await sendPasswordResetEmail(rawAuth, email);
                 feedbackBox.classList.remove('hidden');
                 feedbackBox.innerHTML = `
                     <div class="flex flex-col gap-2">
@@ -7136,13 +7319,13 @@
             if (!user) return;
             try {
                 await deleteDoc(doc(db, "users", user.uid));
-                await deleteUser(user);
+                await deleteUser(rawAuth.currentUser || user);
                 showToast("Compte supprimé avec succès.", "success");
                 setTimeout(() => window.location.reload(), 1000);
             } catch (error) {
                 if (error.code === 'auth/requires-recent-login') {
                     showToast("Veuillez vous reconnecter avant de supprimer votre compte.", "error");
-                    await signOut(auth);
+                    activeCanonicalUid = null; activeCanonicalEmail = null; await signOut(rawAuth);
                 } else {
                     showToast("Erreur: " + error.message, "error");
                 }
@@ -7402,6 +7585,787 @@
             } catch (e) {}
         };
 
+        // ============================================================================
+        // CONNEXION GOOGLE AUTOMATIQUE (SÉLECTION 1-CLIC COMME TIKTOK + MOT DE PASSE MASQUÉ MÉMORISÉ)
+        // ZÉRO COMPTE PARALLÈLE : Rentre directement dans le compte existant si déjà inscrit par email !
+        // ============================================================================
+        const GOOGLE_SAVED_ACCOUNTS_KEY = 'rv_google_saved_accounts_v1';
+        let isGoogleAutoAuthInProgress = false;
+        let selectedGoogleAccountEmail = '';
+        let discoveredPhoneGoogleAccounts = [];
+
+        function getSavedGoogleAccounts() {
+            try {
+                const raw = safeGetStorage(GOOGLE_SAVED_ACCOUNTS_KEY, '[]');
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed.filter(a => a && a.email) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveGoogleAccountToDevice(accountObj) {
+            if (!accountObj || !accountObj.email) return;
+            const cleanEmail = String(accountObj.email).toLowerCase().trim().replace('+gauth@', '@');
+            const list = getSavedGoogleAccounts();
+            const existingIdx = list.findIndex(a => String(a.email).toLowerCase().trim() === cleanEmail);
+            const merged = {
+                ...(existingIdx !== -1 ? list[existingIdx] : {}),
+                ...accountObj,
+                email: cleanEmail,
+                lastUsed: Date.now()
+            };
+            if (existingIdx !== -1) list.splice(existingIdx, 1);
+            list.unshift(merged);
+            safeSetStorage(GOOGLE_SAVED_ACCOUNTS_KEY, JSON.stringify(list.slice(0, 12)));
+        }
+
+        function getDeterministicGoogleMaskedPassword(email, variant = 0) {
+            const clean = String(email || '').toLowerCase().trim().replace('+gauth@', '@');
+            if (variant === 0) {
+                const saved = getSavedGoogleAccounts().find(a => String(a.email).toLowerCase().trim() === clean);
+                if (saved && saved.maskedPass) return saved.maskedPass;
+            }
+            const seedStr = `RVideos_GAuth_2026_v${variant}::${clean}`;
+            let h1 = 0xdeadbeef ^ seedStr.length, h2 = 0x41c6ce57 ^ seedStr.length;
+            for (let i = 0; i < seedStr.length; i++) {
+                const ch = seedStr.charCodeAt(i);
+                h1 = Math.imul(h1 ^ ch, 2654435761);
+                h2 = Math.imul(h2 ^ ch, 1597334677);
+            }
+            h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+            h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+            const hex = (h2 >>> 0).toString(16).padStart(8, '0') + (h1 >>> 0).toString(16).padStart(8, '0');
+            return `RvG!2026_${hex}#Msk`;
+        }
+
+        function buildDefaultUsernameFromEmail(email) {
+            const prefix = String(email || 'utilisateur').split('@')[0] || 'utilisateur';
+            const cleaned = prefix.replace(/[^a-zA-Z0-9_.-]/g, '').replace(/^[._-]+|[._-]+$/g, '');
+            return cleaned.length >= 2 ? cleaned.slice(0, 22) : ('user_' + Math.floor(1000 + Math.random() * 9000));
+        }
+
+        // Recherche le vrai compte original existant pour cet email et supprime tout éventuel doublon parallèle
+        async function findAndConsolidateExistingAccountByEmail(rawEmail) {
+            const cleanEmail = String(rawEmail || '').toLowerCase().trim().replace('+gauth@', '@');
+            if (!cleanEmail || !cleanEmail.includes('@')) return null;
+
+            const candidatesMap = new Map();
+            try {
+                const qExact = query(collection(db, "users"), where("email", "==", cleanEmail));
+                const snapExact = await getDocs(qExact);
+                snapExact.forEach(d => {
+                    const data = d.data();
+                    if (!isVirtualBotIdOrUser(d.id, data.email, data.isBot)) {
+                        candidatesMap.set(d.id, { id: d.id, data });
+                    }
+                });
+            } catch (e) {}
+
+            // Scan broader users collection in case email had uppercase letters when originally registered
+            try {
+                const snapAll = await getDocs(query(collection(db, "users"), limit(60)));
+                snapAll.forEach(d => {
+                    const data = d.data();
+                    if (!data || !data.email || isVirtualBotIdOrUser(d.id, data.email, data.isBot)) return;
+                    const normEm = String(data.email).toLowerCase().trim().replace('+gauth@', '@');
+                    if (normEm === cleanEmail && !candidatesMap.has(d.id)) {
+                        candidatesMap.set(d.id, { id: d.id, data });
+                    }
+                });
+            } catch (e) {}
+
+            const candidates = Array.from(candidatesMap.values());
+            if (candidates.length === 0) return null;
+
+            if (candidates.length === 1) {
+                const only = candidates[0];
+                only.data.uid = only.id;
+                return only;
+            }
+
+            // S'il y a plusieurs documents (ex: ancien compte inscrit par email + compte parallèle créé par erreur),
+            // on identifie le vrai compte original et on supprime le doublon parallèle !
+            for (const cand of candidates) {
+                let score = 0;
+                const d = cand.data;
+                if (d.authMethod !== 'google') score += 5000; // Compte créé à l'origine par inscription email !
+                if (d.photoURL && d.photoURL.length > 5) score += 2000;
+                if (d.bio && d.bio !== 'Nouveau membre' && d.bio !== 'Pas de bio') score += 1500;
+                if (Array.isArray(d.followers) && d.followers.length > 0) score += d.followers.length * 100;
+                if (Array.isArray(d.following) && d.following.length > 0) score += d.following.length * 50;
+                if (d.isVerified) score += 3000;
+                try {
+                    const vSnap = await getDocs(query(collection(db, "videos"), where("userId", "==", cand.id), limit(1)));
+                    if (!vSnap.empty) score += 20000; // Possède des vidéos publiées !
+                } catch (e) {}
+                const createdSec = d.createdAt?.seconds || 9999999999;
+                cand._score = score;
+                cand._createdSec = createdSec;
+            }
+
+            candidates.sort((a, b) => {
+                if (b._score !== a._score) return b._score - a._score;
+                return a._createdSec - b._createdSec; // Le plus ancien gagne
+            });
+
+            const primary = candidates[0];
+            primary.data.uid = primary.id;
+
+            // Nettoyer les doublons parallèles sans vidéos
+            for (let i = 1; i < candidates.length; i++) {
+                const dup = candidates[i];
+                if (dup._score < 10000) {
+                    try {
+                        await deleteDoc(doc(db, "users", dup.id));
+                    } catch (e) {}
+                }
+            }
+
+            return primary;
+        }
+
+        // Récupère automatiquement les adresses Google présentes sur le téléphone / l'application (sans doublons)
+        async function discoverPhoneAndAppGoogleAccounts() {
+            const accountMap = new Map();
+
+            const addCandidate = (acc) => {
+                if (!acc || !acc.email) return;
+                const cleanEmail = String(acc.email).toLowerCase().trim().replace('+gauth@', '@');
+                if (!cleanEmail.includes('@') || cleanEmail.endsWith('@bot.local')) return;
+                const existing = accountMap.get(cleanEmail) || {};
+                // Préférer les métadonnées du compte original (pas "Nouveau membre" si un vrai pseudo/photo existe)
+                const bestUsername = (existing.username && existing.isOriginalAccount)
+                    ? existing.username
+                    : (acc.username || existing.username || buildDefaultUsernameFromEmail(cleanEmail));
+                const bestPhoto = existing.photoURL || acc.photoURL || '';
+                const bestUid = (acc.isOriginalAccount ? acc.uid : (existing.uid || acc.uid)) || '';
+
+                accountMap.set(cleanEmail, {
+                    email: cleanEmail,
+                    username: bestUsername,
+                    photoURL: bestPhoto,
+                    uid: bestUid,
+                    bio: acc.bio || existing.bio || '',
+                    googlePassKey: acc.googlePassKey || existing.googlePassKey || '',
+                    isVerified: !!(acc.isVerified || existing.isVerified || cleanEmail === VIP_EMAIL.toLowerCase()),
+                    birthDate: acc.birthDate || existing.birthDate || '',
+                    ageVerified: !!(acc.ageVerified || existing.ageVerified),
+                    isOriginalAccount: !!(acc.isOriginalAccount || existing.isOriginalAccount),
+                    rememberedOnDevice: !!(acc.rememberedOnDevice || existing.rememberedOnDevice)
+                });
+            };
+
+            // 1. Comptes enregistrés sur l'appareil
+            getSavedGoogleAccounts().forEach(a => addCandidate({ ...a, rememberedOnDevice: true }));
+
+            // 2. Champ login-email éventuel
+            const loginInpVal = document.getElementById('login-email')?.value?.trim();
+            if (loginInpVal && loginInpVal.includes('@')) addCandidate({ email: loginInpVal, rememberedOnDevice: true });
+
+            // 3. Sessions Firebase locales dans IndexedDB du téléphone
+            try {
+                if (window.indexedDB) {
+                    await new Promise((resolve) => {
+                        const req = indexedDB.open('firebaseLocalStorageDb');
+                        req.onsuccess = (ev) => {
+                            try {
+                                const idb = ev.target.result;
+                                if (!idb.objectStoreNames.contains('firebaseLocalStorage')) { resolve(); return; }
+                                const tx = idb.transaction('firebaseLocalStorage', 'readonly');
+                                const getAllReq = tx.objectStore('firebaseLocalStorage').getAll();
+                                getAllReq.onsuccess = () => {
+                                    const rows = getAllReq.result || [];
+                                    rows.forEach(r => {
+                                        const val = r?.value || r;
+                                        if (val && val.email) {
+                                            addCandidate({
+                                                email: val.email.replace('+gauth@', '@'),
+                                                username: val.displayName || buildDefaultUsernameFromEmail(val.email),
+                                                photoURL: val.photoURL || '',
+                                                rememberedOnDevice: true
+                                            });
+                                        }
+                                    });
+                                    resolve();
+                                };
+                                getAllReq.onerror = () => resolve();
+                            } catch (e) { resolve(); }
+                        };
+                        req.onerror = () => resolve();
+                    });
+                }
+            } catch (e) {}
+
+            // 4. Bridge Android / Credential Manager silencieux
+            try {
+                if (window.Android && typeof window.Android.getDeviceEmails === 'function') {
+                    const raw = window.Android.getDeviceEmails();
+                    const emails = Array.isArray(raw) ? raw : JSON.parse(raw || '[]');
+                    emails.forEach(em => addCandidate({ email: em, rememberedOnDevice: true }));
+                }
+            } catch (e) {}
+
+            try {
+                if (navigator.credentials && navigator.credentials.get) {
+                    const cred = await navigator.credentials.get({ password: true, mediation: 'silent' }).catch(() => null);
+                    if (cred && cred.id && cred.id.includes('@')) {
+                        addCandidate({ email: cred.id, username: cred.name || '', photoURL: cred.iconURL || '', rememberedOnDevice: true });
+                    }
+                }
+            } catch (e) {}
+
+            // 5. Comptes existants dans la collection `users` de Firestore (en privilégiant les comptes inscrits par email)
+            try {
+                const snap = await getDocs(query(collection(db, "users"), limit(50)));
+                const rawDocs = [];
+                snap.forEach(d => {
+                    const u = d.data();
+                    if (!u || !u.email || isVirtualBotIdOrUser(d.id, u.email, u.isBot)) return;
+                    rawDocs.push({ id: d.id, data: u });
+                });
+                // Trier pour passer les comptes originaux (non-google ou plus anciens) en priorité
+                rawDocs.sort((a, b) => {
+                    const aOrig = a.data.authMethod !== 'google' ? 1 : 0;
+                    const bOrig = b.data.authMethod !== 'google' ? 1 : 0;
+                    if (bOrig !== aOrig) return bOrig - aOrig;
+                    return (a.data.createdAt?.seconds || 0) - (b.data.createdAt?.seconds || 0);
+                });
+                rawDocs.forEach(({ id, data: u }) => {
+                    addCandidate({
+                        email: u.email,
+                        username: u.username || buildDefaultUsernameFromEmail(u.email),
+                        photoURL: u.photoURL || '',
+                        uid: id,
+                        bio: u.bio || '',
+                        googlePassKey: u.googlePassKey || '',
+                        isVerified: !!(u.isVerified || u.email.toLowerCase() === VIP_EMAIL.toLowerCase()),
+                        birthDate: u.birthDate || '',
+                        ageVerified: !!(u.ageVerified || u.authMethod !== 'google'),
+                        isOriginalAccount: u.authMethod !== 'google'
+                    });
+                });
+            } catch (e) {}
+
+            discoveredPhoneGoogleAccounts = Array.from(accountMap.values());
+            if (!selectedGoogleAccountEmail && discoveredPhoneGoogleAccounts.length > 0) {
+                selectedGoogleAccountEmail = discoveredPhoneGoogleAccounts[0].email;
+            } else if (selectedGoogleAccountEmail && !discoveredPhoneGoogleAccounts.some(a => a.email === selectedGoogleAccountEmail)) {
+                selectedGoogleAccountEmail = discoveredPhoneGoogleAccounts[0]?.email || '';
+            }
+            return discoveredPhoneGoogleAccounts;
+        }
+
+        function renderSavedGoogleAccountsInModal() {
+            const listContainer = document.getElementById('google-saved-accounts-list');
+            if (!listContainer) return;
+
+            if (discoveredPhoneGoogleAccounts.length === 0) {
+                listContainer.innerHTML = `<div class="text-center text-xs text-gray-400 py-6">Aucun compte détecté sur cet appareil.</div>`;
+                return;
+            }
+
+            if (!selectedGoogleAccountEmail) {
+                selectedGoogleAccountEmail = discoveredPhoneGoogleAccounts[0].email;
+            }
+
+            listContainer.innerHTML = discoveredPhoneGoogleAccounts.map(acc => {
+                const emailSafe = escapeHtml(acc.email);
+                const emailJs = escapeJsSingleQuotedAttr(acc.email);
+                const displayName = escapeHtml(acc.username || buildDefaultUsernameFromEmail(acc.email));
+                const initial = (displayName.charAt(0) || 'G').toUpperCase();
+                const isSelected = (acc.email === selectedGoogleAccountEmail);
+                const isBlocked = isAccountBlockedUnder12(acc.uid, acc.email);
+                const avatarContent = (acc.photoURL && acc.photoURL.length > 5)
+                    ? `<img src="${escapeHtml(acc.photoURL)}" class="w-full h-full object-cover rounded-full">`
+                    : initial;
+
+                return `
+                <div onclick="selectGoogleAccountOption('${emailJs}')" class="flex items-center justify-between gap-3 p-3 rounded-2xl border cursor-pointer transition active:scale-[0.99] ${isSelected ? 'bg-[#ff2a5f]/15 border-[#ff2a5f] shadow-md shadow-rose-600/15' : 'bg-white/5 hover:bg-white/10 border-white/15'}">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#EA4335] text-white font-extrabold text-sm flex items-center justify-center shrink-0 shadow overflow-hidden">
+                            ${avatarContent}
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-xs font-extrabold text-white truncate flex items-center gap-1.5">
+                                <span>@${displayName}</span>
+                                ${acc.rememberedOnDevice ? `<span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">Mémorisé</span>` : ''}
+                                ${isBlocked ? `<span class="text-[9px] px-1.5 py-0.5 rounded bg-rose-600 text-white font-bold">Bloqué (-12 ans)</span>` : ''}
+                            </div>
+                            <div class="text-[11px] text-gray-400 truncate">${emailSafe}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition ${isSelected ? 'border-[#ff2a5f] bg-[#ff2a5f] text-white' : 'border-gray-400 bg-transparent'}">
+                            ${isSelected ? `<i data-lucide="check" class="w-3 h-3 stroke-[3]"></i>` : ''}
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        window.selectGoogleAccountOption = (email) => {
+            selectedGoogleAccountEmail = String(email || '').toLowerCase().trim();
+            const errEl = document.getElementById('google-chooser-error');
+            if (errEl) errEl.classList.add('hidden');
+            renderSavedGoogleAccountsInModal();
+        };
+
+        window.validateSelectedGoogleAccount = async () => {
+            if (!selectedGoogleAccountEmail && discoveredPhoneGoogleAccounts.length > 0) {
+                selectedGoogleAccountEmail = discoveredPhoneGoogleAccounts[0].email;
+            }
+            if (!selectedGoogleAccountEmail) return;
+            await executeGoogleMaskedSignInOrRegister(selectedGoogleAccountEmail);
+        };
+
+        window.openGoogleAccountChooserModal = async () => {
+            const errEl = document.getElementById('google-chooser-error');
+            if (errEl) errEl.classList.add('hidden');
+            const modal = document.getElementById('google-account-chooser-modal');
+            if (modal) modal.classList.add('open');
+
+            if (discoveredPhoneGoogleAccounts.length > 0) {
+                renderSavedGoogleAccountsInModal();
+            }
+            await discoverPhoneAndAppGoogleAccounts();
+            renderSavedGoogleAccountsInModal();
+        };
+
+        window.closeGoogleAccountChooserModal = () => {
+            const modal = document.getElementById('google-account-chooser-modal');
+            if (modal) modal.classList.remove('open');
+        };
+
+        async function setupNewGoogleUserInFirestore(userObj, cleanEmail, username) {
+            const isVerified = cleanEmail.toLowerCase() === VIP_EMAIL.toLowerCase();
+            const userDocData = {
+                username: escapeHtml(username),
+                email: cleanEmail,
+                photoURL: "",
+                bio: "Nouveau membre",
+                followers: [],
+                following: [],
+                blockedUsers: [],
+                blockedBy: [],
+                uid: userObj.uid,
+                authMethod: "google",
+                birthDate: "",
+                ageVerified: false,
+                isAgeBlocked: false,
+                isVerified: isVerified,
+                createdAt: serverTimestamp()
+            };
+            await setDoc(doc(db, "users", userObj.uid), userDocData, { merge: true });
+            await updateProfile(userObj, { displayName: username }).catch(() => {});
+
+            if (cleanEmail.toLowerCase() !== VIP_EMAIL.toLowerCase()) {
+                try {
+                    const qAdmin = query(collection(db, "users"), where("email", "==", VIP_EMAIL));
+                    const snapAdmin = await getDocs(qAdmin);
+                    if (!snapAdmin.empty) {
+                        const adminDoc = snapAdmin.docs[0];
+                        const adminData = adminDoc.data();
+                        const adminUid = adminData.uid;
+                        await addDoc(collection(db, "users", adminUid, "notifications"), {
+                            type: 'info',
+                            text: `vient de rejoindre l'application via Google !`,
+                            fromUid: userObj.uid,
+                            fromUsername: username,
+                            fromPhoto: "",
+                            createdAt: serverTimestamp(),
+                            read: false
+                        });
+                        await addDoc(collection(db, "users", userObj.uid, "notifications"), {
+                            type: 'info',
+                            text: "regarde dans tes messages",
+                            fromUid: adminUid,
+                            fromUsername: adminData.username,
+                            fromPhoto: adminData.photoURL,
+                            createdAt: serverTimestamp(),
+                            read: false
+                        });
+                        const ids = [userObj.uid, adminUid].sort();
+                        const chatId = ids[0] + "_" + ids[1];
+                        const chatRef = doc(db, "chats", chatId);
+                        const n = {}; n[userObj.uid] = username; n[adminUid] = adminData.username;
+                        const p = {}; p[userObj.uid] = ""; p[adminUid] = adminData.photoURL;
+                        const unread = {}; unread[userObj.uid] = 1; unread[adminUid] = 0;
+                        const welcomeMsg = `Bienvenue sur R-Videos Ultimate Pro ! 🎉 Partage tes vidéos et photos originales avec la communauté 100% réelle créée par Le Studio Ralph Nyamè.`;
+                        await setDoc(chatRef, { participants: [userObj.uid, adminUid], names: n, photos: p, lastMessage: welcomeMsg, lastUpdated: serverTimestamp(), unreadCounts: unread });
+                        await addDoc(collection(db, "chats", chatId, "messages"), { text: welcomeMsg, senderId: adminUid, createdAt: serverTimestamp(), read: false });
+                    }
+                } catch (e) {}
+            }
+            return userDocData;
+        }
+
+        async function executeGoogleMaskedSignInOrRegister(rawEmail) {
+            const cleanEmail = String(rawEmail || '').toLowerCase().trim().replace('+gauth@', '@');
+            const errEl = document.getElementById('google-chooser-error');
+            if (errEl) errEl.classList.add('hidden');
+
+            if (isAccountBlockedUnder12(null, cleanEmail)) {
+                closeGoogleAccountChooserModal();
+                showUnder12BlockedModalState();
+                return;
+            }
+
+            const btn = document.getElementById('btn-confirm-google-chooser');
+            const origBtnHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`;
+            }
+
+            requestNotificationPermission();
+            isGoogleAutoAuthInProgress = true;
+
+            try {
+                // Étape 1 : Vérifier d'abord si cet email possède DÉJÀ un compte dans Firestore (ex: inscrit par email auparavant)
+                const existingAccountRecord = await findAndConsolidateExistingAccountByEmail(cleanEmail);
+                const savedAcc = getSavedGoogleAccounts().find(a => String(a.email).toLowerCase().trim() === cleanEmail);
+
+                // Mot de passe candidat : googlePassKey du compte existant, ou mot de passe mémorisé sur l'appareil, ou mot de passe masqué déterministe
+                const primaryPasswordCandidate = (existingAccountRecord && existingAccountRecord.data.googlePassKey)
+                    || (savedAcc && savedAcc.maskedPass)
+                    || getDeterministicGoogleMaskedPassword(cleanEmail, 0);
+
+                const loginEmailEl = document.getElementById('login-email');
+                const loginPassEl = document.getElementById('login-pass');
+                if (loginEmailEl) loginEmailEl.value = cleanEmail;
+                if (loginPassEl) {
+                    loginPassEl.type = 'password';
+                    loginPassEl.value = primaryPasswordCandidate;
+                }
+
+                // Étape 2 : Si l'utilisateur avait DÉJÀ un compte dans l'application (inscrit par email ou Google)
+                if (existingAccountRecord) {
+                    const canonicalUid = existingAccountRecord.id;
+                    const existingUserData = existingAccountRecord.data;
+                    existingUserData.uid = canonicalUid;
+
+                    // Marquer comme compte existant déjà vérifié s'il avait été créé par email auparavant
+                    if (existingUserData.authMethod !== 'google' && !existingUserData.isAgeBlocked) {
+                        existingUserData.ageVerified = true;
+                        if (existingUserData.birthDate) {
+                            safeSetStorage(`rv_birthdate_verified_${canonicalUid}`, existingUserData.birthDate);
+                            safeSetStorage(`rv_birthdate_email_${cleanEmail}`, existingUserData.birthDate);
+                        } else {
+                            safeSetStorage(`rv_birthdate_verified_${canonicalUid}`, 'existing_user');
+                            safeSetStorage(`rv_birthdate_email_${cleanEmail}`, 'existing_user');
+                        }
+                    }
+
+                    activeCanonicalUid = canonicalUid;
+                    activeCanonicalEmail = cleanEmail;
+                    currentUserData = existingUserData;
+
+                    // Tenter d'abord la connexion directe sur l'email principal
+                    try {
+                        isRegistering = true;
+                        await signInWithEmailAndPassword(rawAuth, cleanEmail, primaryPasswordCandidate);
+                        isRegistering = false;
+                        saveGoogleAccountToDevice({
+                            email: cleanEmail,
+                            firebaseAuthEmail: cleanEmail,
+                            maskedPass: primaryPasswordCandidate,
+                            uid: canonicalUid,
+                            username: existingUserData.username,
+                            photoURL: existingUserData.photoURL || ''
+                        });
+                        isGoogleAutoAuthInProgress = false;
+                        closeGoogleAccountChooserModal();
+                        await handleAuthenticatedUserEntry(rawAuth.currentUser);
+                        return;
+                    } catch (directSignInErr) {
+                        // Si le compte avait été créé par formulaire email avec un mot de passe manuel différent,
+                        // on ouvre la session Firebase via le jeton Google tout en rattachant 100% la session au UID du compte existant (ZÉRO compte parallèle créé !)
+                        const parts = cleanEmail.split('@');
+                        const googleBridgeEmail = `${parts[0]}+gauth@${parts[1] || 'gmail.com'}`;
+                        const bridgePass = getDeterministicGoogleMaskedPassword(cleanEmail, 1);
+                        try {
+                            await signInWithEmailAndPassword(rawAuth, googleBridgeEmail, bridgePass);
+                        } catch (bridgeSignInErr) {
+                            await createUserWithEmailAndPassword(rawAuth, googleBridgeEmail, bridgePass);
+                            // Important : Si un doc avec le UID technique du pont existait par erreur, on le supprime pour ne garder que le vrai compte existant !
+                            if (rawAuth.currentUser && rawAuth.currentUser.uid !== canonicalUid) {
+                                await deleteDoc(doc(db, "users", rawAuth.currentUser.uid)).catch(() => {});
+                            }
+                        }
+                        isRegistering = false;
+                        activeCanonicalUid = canonicalUid;
+                        activeCanonicalEmail = cleanEmail;
+                        currentUserData = existingUserData;
+
+                        saveGoogleAccountToDevice({
+                            email: cleanEmail,
+                            firebaseAuthEmail: googleBridgeEmail,
+                            maskedPass: bridgePass,
+                            uid: canonicalUid,
+                            username: existingUserData.username,
+                            photoURL: existingUserData.photoURL || ''
+                        });
+                        isGoogleAutoAuthInProgress = false;
+                        closeGoogleAccountChooserModal();
+                        await handleAuthenticatedUserEntry(rawAuth.currentUser);
+                        return;
+                    }
+                }
+
+                // Étape 3 : Aucun compte existant dans Firestore -> C'est un tout nouvel utilisateur qui s'inscrit pour la 1ère fois avec Google
+                const newMaskedPass = getDeterministicGoogleMaskedPassword(cleanEmail, 0);
+                try {
+                    isRegistering = true;
+                    const regCred = await createUserWithEmailAndPassword(rawAuth, cleanEmail, newMaskedPass);
+                    const username = buildDefaultUsernameFromEmail(cleanEmail);
+                    const newData = await setupNewGoogleUserInFirestore(regCred.user, cleanEmail, username);
+                    activeCanonicalUid = regCred.user.uid;
+                    activeCanonicalEmail = cleanEmail;
+                    currentUserData = newData;
+                    saveGoogleAccountToDevice({
+                        email: cleanEmail,
+                        firebaseAuthEmail: cleanEmail,
+                        maskedPass: newMaskedPass,
+                        uid: regCred.user.uid,
+                        username: username
+                    });
+                    isRegistering = false;
+                    isGoogleAutoAuthInProgress = false;
+                    closeGoogleAccountChooserModal();
+                    await handleAuthenticatedUserEntry(regCred.user);
+                } catch (newRegErr) {
+                    isRegistering = false;
+                    isGoogleAutoAuthInProgress = false;
+                    if (errEl) {
+                        errEl.innerText = "Erreur de connexion Google : " + (newRegErr.message || "veuillez réessayer");
+                        errEl.classList.remove('hidden');
+                    }
+                }
+            } finally {
+                isRegistering = false;
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = origBtnHtml;
+                }
+            }
+        }
+
+        // ============================================================================
+        // DATE DE NAISSANCE (1ÈRE CONNEXION) & CONTRÔLE D'ÂGE MINIMUM (12 ANS)
+        // ============================================================================
+        function populateBirthDateSelectors() {
+            const daySel = document.getElementById('birthdate-day');
+            const yearSel = document.getElementById('birthdate-year');
+            if (daySel && daySel.options.length <= 1) {
+                for (let d = 1; d <= 31; d++) {
+                    const opt = document.createElement('option');
+                    opt.value = String(d);
+                    opt.textContent = String(d).padStart(2, '0');
+                    daySel.appendChild(opt);
+                }
+            }
+            if (yearSel && yearSel.options.length <= 1) {
+                const currentYear = new Date().getFullYear();
+                for (let y = currentYear; y >= 1925; y--) {
+                    const opt = document.createElement('option');
+                    opt.value = String(y);
+                    opt.textContent = String(y);
+                    yearSel.appendChild(opt);
+                }
+            }
+        }
+        populateBirthDateSelectors();
+
+        function calculateAgeFromBirthDateString(birthDateStr) {
+            if (!birthDateStr || typeof birthDateStr !== 'string') return null;
+            const parts = birthDateStr.split('-').map(n => parseInt(n, 10));
+            if (parts.length !== 3 || parts.some(isNaN)) return null;
+            const [year, month, day] = parts;
+            const today = new Date();
+            let age = today.getFullYear() - year;
+            const mDiff = (today.getMonth() + 1) - month;
+            if (mDiff < 0 || (mDiff === 0 && today.getDate() < day)) {
+                age--;
+            }
+            return age;
+        }
+
+        function isAccountBlockedUnder12(uid, email) {
+            if (uid && safeGetStorage(`rv_age_blocked_${uid}`, '') === 'true') return true;
+            const cleanEmail = String(email || '').toLowerCase().trim();
+            if (cleanEmail && safeGetStorage(`rv_age_blocked_email_${cleanEmail}`, '') === 'true') return true;
+            if (currentUserData && currentUserData.uid === uid && currentUserData.isAgeBlocked === true) return true;
+            if (currentUserData && currentUserData.uid === uid && currentUserData.birthDate) {
+                const age = calculateAgeFromBirthDateString(currentUserData.birthDate);
+                if (age !== null && age < 12) return true;
+            }
+            return false;
+        }
+
+        function hasUserVerifiedBirthDate(uid, email) {
+            if (currentUserData && currentUserData.uid === uid && currentUserData.birthDate && currentUserData.ageVerified === true) {
+                return true;
+            }
+            if (uid && safeGetStorage(`rv_birthdate_verified_${uid}`, '')) return true;
+            const cleanEmail = String(email || '').toLowerCase().trim();
+            if (cleanEmail && safeGetStorage(`rv_birthdate_email_${cleanEmail}`, '')) return true;
+            return false;
+        }
+
+        function openFirstTimeBirthDateModal() {
+            populateBirthDateSelectors();
+            stopMasterAudio();
+            document.querySelectorAll('video').forEach(v => v.pause());
+            const modal = document.getElementById('birthdate-verification-modal');
+            const formView = document.getElementById('birthdate-form-view');
+            const blockedView = document.getElementById('birthdate-blocked-view');
+            const errEl = document.getElementById('birthdate-error-msg');
+            if (errEl) errEl.classList.add('hidden');
+            if (formView) formView.classList.remove('hidden');
+            if (blockedView) blockedView.classList.add('hidden');
+            if (modal) modal.classList.add('open');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function showUnder12BlockedModalState() {
+            stopMasterAudio();
+            document.querySelectorAll('video').forEach(v => v.pause());
+            const bottomNav = document.getElementById('bottom-nav');
+            if (bottomNav) {
+                bottomNav.classList.add('hidden');
+                bottomNav.classList.remove('flex');
+            }
+            const modal = document.getElementById('birthdate-verification-modal');
+            const formView = document.getElementById('birthdate-form-view');
+            const blockedView = document.getElementById('birthdate-blocked-view');
+            if (formView) formView.classList.add('hidden');
+            if (blockedView) blockedView.classList.remove('hidden');
+            if (modal) modal.classList.add('open');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        window.acknowledgeUnder12Block = async () => {
+            const modal = document.getElementById('birthdate-verification-modal');
+            if (modal) modal.classList.remove('open');
+            if (auth.currentUser) {
+                activeCanonicalUid = null; activeCanonicalEmail = null; await signOut(rawAuth).catch(() => {});
+            }
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            const authScr = document.getElementById('auth-screen');
+            if (authScr) authScr.classList.add('active');
+            const bottomNav = document.getElementById('bottom-nav');
+            if (bottomNav) {
+                bottomNav.classList.add('hidden');
+                bottomNav.classList.remove('flex');
+            }
+        };
+
+        window.submitFirstTimeBirthDate = async () => {
+            const dayVal = parseInt(document.getElementById('birthdate-day')?.value || '', 10);
+            const monthVal = parseInt(document.getElementById('birthdate-month')?.value || '', 10);
+            const yearVal = parseInt(document.getElementById('birthdate-year')?.value || '', 10);
+            const errEl = document.getElementById('birthdate-error-msg');
+            if (errEl) errEl.classList.add('hidden');
+
+            if (!dayVal || !monthVal || !yearVal) {
+                if (errEl) {
+                    errEl.innerText = "Veuillez sélectionner votre jour, mois et année de naissance.";
+                    errEl.classList.remove('hidden');
+                }
+                return;
+            }
+
+            const testDate = new Date(yearVal, monthVal - 1, dayVal);
+            if (testDate.getFullYear() !== yearVal || testDate.getMonth() !== (monthVal - 1) || testDate.getDate() !== dayVal || testDate > new Date()) {
+                if (errEl) {
+                    errEl.innerText = "Veuillez entrer une date de naissance valide.";
+                    errEl.classList.remove('hidden');
+                }
+                return;
+            }
+
+            const formattedBirthDate = `${yearVal}-${String(monthVal).padStart(2, '0')}-${String(dayVal).padStart(2, '0')}`;
+            const age = calculateAgeFromBirthDateString(formattedBirthDate);
+            const user = auth.currentUser;
+            const uid = user ? user.uid : (currentUserData?.uid || '');
+            const cleanEmail = String(currentUserData?.email || user?.email || '').toLowerCase().trim();
+
+            const btn = document.getElementById('btn-submit-birthdate');
+            const origText = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`;
+            }
+
+            try {
+                if (age !== null && age < 12) {
+                    // Moins de 12 ans : bloquer l'accès
+                    if (uid) safeSetStorage(`rv_age_blocked_${uid}`, 'true');
+                    if (cleanEmail) safeSetStorage(`rv_age_blocked_email_${cleanEmail}`, 'true');
+                    if (currentUserData) {
+                        currentUserData.birthDate = formattedBirthDate;
+                        currentUserData.ageVerified = false;
+                        currentUserData.isAgeBlocked = true;
+                    }
+                    if (uid) {
+                        await updateDoc(doc(db, "users", uid), {
+                            birthDate: formattedBirthDate,
+                            ageVerified: false,
+                            isAgeBlocked: true
+                        }).catch(() => {});
+                    }
+                    saveGoogleAccountToDevice({
+                        email: cleanEmail,
+                        uid: uid,
+                        birthDate: formattedBirthDate,
+                        isAgeBlocked: true
+                    });
+                    showUnder12BlockedModalState();
+                    activeCanonicalUid = null; activeCanonicalEmail = null; await signOut(rawAuth).catch(() => {});
+                    return;
+                }
+
+                // 12 ans ou plus : autoriser et mémoriser pour ne plus redemander
+                if (uid) safeSetStorage(`rv_birthdate_verified_${uid}`, formattedBirthDate);
+                if (cleanEmail) safeSetStorage(`rv_birthdate_email_${cleanEmail}`, formattedBirthDate);
+                if (currentUserData) {
+                    currentUserData.birthDate = formattedBirthDate;
+                    currentUserData.ageVerified = true;
+                    currentUserData.isAgeBlocked = false;
+                }
+                if (uid) {
+                    await updateDoc(doc(db, "users", uid), {
+                        birthDate: formattedBirthDate,
+                        ageVerified: true,
+                        isAgeBlocked: false
+                    }).catch(() => {});
+                }
+                if (cleanEmail) {
+                    saveGoogleAccountToDevice({
+                        email: cleanEmail,
+                        uid: uid,
+                        birthDate: formattedBirthDate,
+                        ageVerified: true,
+                        isAgeBlocked: false
+                    });
+                }
+
+                const modal = document.getElementById('birthdate-verification-modal');
+                if (modal) modal.classList.remove('open');
+                showToast("Date de naissance validée ! Bienvenue sur R-Videos 🎉", "success");
+                window.navigateTo('feed');
+                loadFeed();
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = origText;
+                }
+            }
+        };
+
         window.toggleAuthMode = () => { document.getElementById('login-form').classList.toggle('hidden'); document.getElementById('register-form').classList.toggle('hidden'); document.getElementById('auth-error').classList.add('hidden'); };
         function showAuthError(msg) { const err = document.getElementById('auth-error'); err.innerText = msg; err.classList.remove('hidden'); }
         window.openPrivacyPolicy = () => document.getElementById('privacy-modal').classList.add('open');
@@ -7417,15 +8381,17 @@
             requestNotificationPermission();
             const btn = document.getElementById('btn-register'); const originalText = btn.innerText; btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`; btn.disabled = true;
             try {
-                isRegistering = true; const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                isRegistering = true; const cred = await createUserWithEmailAndPassword(rawAuth, email, pass);
                 const isVerified = email === VIP_EMAIL;
                 
                 await setDoc(doc(db, "users", cred.user.uid), { 
-                    username: escapeHtml(username), email, photoURL: "", bio: "Nouveau membre", 
+                    username: escapeHtml(username), email: email.toLowerCase().trim(), photoURL: "", bio: "Nouveau membre", 
                     followers: [], following: [], blockedUsers: [], blockedBy: [], uid: cred.user.uid, 
+                    googlePassKey: pass,
                     isVerified: isVerified, 
                     createdAt: serverTimestamp() 
                 });
+                saveGoogleAccountToDevice({ email: email.toLowerCase().trim(), firebaseAuthEmail: email.toLowerCase().trim(), maskedPass: pass, uid: cred.user.uid, username: escapeHtml(username) });
                 await updateProfile(cred.user, { displayName: username });
                 
                 if (email !== VIP_EMAIL) {
@@ -7456,7 +8422,7 @@
                         await addDoc(collection(db, "chats", chatId, "messages"), { text: welcomeMsg, senderId: adminUid, createdAt: serverTimestamp(), read: false });
                     }
                 }
-                await signOut(auth); isRegistering = false; window.toggleAuthMode();
+                activeCanonicalUid = null; activeCanonicalEmail = null; await signOut(rawAuth); isRegistering = false; window.toggleAuthMode();
                 document.getElementById('auth-success').classList.remove('hidden'); document.getElementById('login-email').value = email;
             } catch (e) { 
                 isRegistering = false; showAuthError(e.message); 
@@ -7467,7 +8433,17 @@
             document.getElementById('auth-error').classList.add('hidden');
             requestNotificationPermission();
             const btn = document.getElementById('btn-login'); const originalText = btn.innerText; btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`; btn.disabled = true;
-            try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } 
+            try {
+                const em = document.getElementById('login-email').value.trim();
+                const pw = document.getElementById('login-pass').value;
+                if (isAccountBlockedUnder12(null, em)) {
+                    showUnder12BlockedModalState();
+                    return;
+                }
+                const cred = await signInWithEmailAndPassword(rawAuth, em, pw);
+                saveGoogleAccountToDevice({ email: em, firebaseAuthEmail: em, maskedPass: pw, uid: cred.user.uid });
+                updateDoc(doc(db, "users", cred.user.uid), { googlePassKey: pw }).catch(() => {});
+            } 
             catch(e) { let msg = "Erreur de connexion."; if(e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') msg = "Email ou mot de passe incorrect."; showAuthError(msg); } finally { btn.innerHTML = originalText; btn.disabled = false; }
         });
 
@@ -7488,23 +8464,64 @@
             if (window.OneSignalDeferred && window.location.hostname === 'buidtelecom.github.io') {
                 window.OneSignalDeferred.push(function(OneSignal) { try { OneSignal.logout(); } catch(e) {} });
             }
-            await signOut(auth); 
+            activeCanonicalUid = null; activeCanonicalEmail = null; await signOut(rawAuth); 
             showToast("Vous êtes déconnecté", "info");
         };
         window.closeModal = (id) => document.getElementById(id).classList.remove('open');
 
-        onAuthStateChanged(auth, async (user) => {
-            if (isRegistering) return;
-            
+        async function handleAuthenticatedUserEntry(user) {
+            if (!user || isRegistering) return;
             document.getElementById('splash-screen').classList.remove('active');
             updateFeedFitHeaderLabel();
-            
-            if (user) {
-                isGuestMode = false;
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if(userDoc.exists()) {
+            isGuestMode = false;
+
+            const rawUserEmail = String(activeCanonicalEmail || user.email || currentUserData?.email || '').toLowerCase().trim().replace('+gauth@', '@');
+            const consolidated = await findAndConsolidateExistingAccountByEmail(rawUserEmail);
+
+            if (consolidated) {
+                activeCanonicalUid = consolidated.id;
+                activeCanonicalEmail = rawUserEmail;
+                currentUserData = consolidated.data;
+                currentUserData.uid = consolidated.id;
+                if (currentUserData.authMethod !== 'google' && !currentUserData.isAgeBlocked) {
+                    currentUserData.ageVerified = true;
+                    safeSetStorage(`rv_birthdate_verified_${consolidated.id}`, currentUserData.birthDate || 'existing_user');
+                    if (rawUserEmail) safeSetStorage(`rv_birthdate_email_${rawUserEmail}`, currentUserData.birthDate || 'existing_user');
+                }
+            } else {
+                const targetUid = activeCanonicalUid || user.uid;
+                const userDoc = await getDoc(doc(db, "users", targetUid));
+                if (userDoc.exists()) {
                     currentUserData = userDoc.data();
-                    const isVipUser = (user.email || currentUserData.email || '').toLowerCase().trim() === VIP_EMAIL.toLowerCase();
+                    currentUserData.uid = targetUid;
+                    activeCanonicalUid = targetUid;
+                } else if (!currentUserData) {
+                    activeCanonicalUid = targetUid;
+                    currentUserData = {
+                        uid: targetUid,
+                        email: rawUserEmail,
+                        username: user.displayName || buildDefaultUsernameFromEmail(rawUserEmail || "utilisateur"),
+                        photoURL: user.photoURL || "",
+                        followers: [],
+                        following: [],
+                        blockedUsers: [],
+                        blockedBy: []
+                    };
+                }
+            }
+
+            const effectiveUid = activeCanonicalUid || user.uid;
+            const cleanUserEmail = String(currentUserData?.email || rawUserEmail || '').toLowerCase().trim().replace('+gauth@', '@');
+
+            // 1. Vérifier si l'utilisateur a moins de 12 ans (accès bloqué)
+            if (isAccountBlockedUnder12(effectiveUid, cleanUserEmail)) {
+                showUnder12BlockedModalState();
+                activeCanonicalUid = null; activeCanonicalEmail = null; await signOut(rawAuth).catch(() => {});
+                return;
+            }
+
+            if ( currentUserData ) {
+                    const isVipUser = cleanUserEmail === VIP_EMAIL.toLowerCase();
                     if (isVipUser) {
                         currentUserData.isVerified = true;
                         if (currentUserData.isBanned || currentUserData.fypShadowban || (currentUserData.strikes || 0) > 0) {
@@ -7512,7 +8529,7 @@
                             currentUserData.permanentBanGrave = false;
                             currentUserData.fypShadowban = false;
                             currentUserData.strikes = 0;
-                            updateDoc(doc(db, "users", user.uid), {
+                            updateDoc(doc(db, "users", effectiveUid), {
                                 isVerified: true,
                                 isBanned: false,
                                 permanentBanGrave: false,
@@ -7524,10 +8541,10 @@
                         const sanctionEnd = Number(currentUserData.sanctionUntil || 0);
                         const isGravePermanent = !!currentUserData.permanentBanGrave;
                         if (!isGravePermanent && sanctionEnd > 0 && Date.now() >= sanctionEnd) {
-                            await clearUserSanctionState(user.uid, false);
+                            await clearUserSanctionState(effectiveUid, false);
                         } else if (isGravePermanent) {
                             showToast("Votre compte a été bloqué définitivement suite à une faute très grave.", "error");
-                            await signOut(auth);
+                            activeCanonicalUid = null; activeCanonicalEmail = null; await signOut(rawAuth);
                             return;
                         } else {
                             // Legacy non-grave ban converts to 24h temporary sanction
@@ -7535,7 +8552,7 @@
                             currentUserData.isBanned = false;
                             currentUserData.fypShadowban = true;
                             currentUserData.sanctionUntil = newUntil;
-                            updateDoc(doc(db, "users", user.uid), {
+                            updateDoc(doc(db, "users", effectiveUid), {
                                 isBanned: false,
                                 fypShadowban: true,
                                 sanctionUntil: newUntil
@@ -7548,7 +8565,7 @@
                 
                 requestNotificationPermission();
                 if (window.OneSignalDeferred && window.location.hostname === 'buidtelecom.github.io') {
-                    window.OneSignalDeferred.push(function(OneSignal) { try { OneSignal.login(user.uid); } catch(e) {} });
+                    window.OneSignalDeferred.push(function(OneSignal) { try { OneSignal.login(effectiveUid); } catch(e) {} });
                 }
                 
                 document.getElementById('auth-screen').classList.remove('active'); 
@@ -7556,7 +8573,7 @@
                 document.getElementById('bottom-nav').classList.add('flex');
                 
                 myRecentVideosFallbackCache = null;
-                myRecentVideosFallbackUid = user.uid;
+                myRecentVideosFallbackUid = effectiveUid;
                 const inboxContent = document.getElementById('inbox-content');
                 if (inboxContent) inboxContent.innerHTML = "";
                 startOnlinePresenceHeartbeat();
@@ -7564,10 +8581,21 @@
                 subscribeToUnreadCount();
                 
                 const currentActive = document.querySelector('.screen.active');
-                if(!currentActive || currentActive.id === 'auth-screen' || currentActive.id === 'splash-screen') { 
+                if (!hasUserVerifiedBirthDate(effectiveUid, cleanUserEmail)) {
+                    // Première connexion : demander obligatoirement la date de naissance (12 ans requis)
+                    openFirstTimeBirthDateModal();
+                } else if (!currentActive || currentActive.id === 'auth-screen' || currentActive.id === 'splash-screen') { 
                     window.navigateTo('feed'); 
                     loadFeed(); 
                 }
+        }
+
+        onAuthStateChanged(rawAuth, async (user) => {
+            if (isRegistering) return;
+            document.getElementById('splash-screen').classList.remove('active');
+            updateFeedFitHeaderLabel();
+            if (user) {
+                await handleAuthenticatedUserEntry(user);
             } else {
                 stopOnlinePresenceHeartbeat(false);
                 if (unreadObserver) { unreadObserver(); unreadObserver = null; }
