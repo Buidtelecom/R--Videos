@@ -963,19 +963,46 @@
             z-index: 35 !important;
         }
 
-        /* Fullscreen Live Camera Mode */
-        #upload-preview-area.camera-fullscreen-active {
+        /* Fullscreen Live Camera Mode (100% Full Viewport on Mobile & Desktop) */
+        #upload-preview-area.camera-fullscreen-active,
+        body.light-theme #upload-preview-area.camera-fullscreen-active {
             position: fixed !important;
             inset: 0 !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
             width: 100vw !important;
             height: 100vh !important;
             height: 100dvh !important;
+            max-width: none !important;
             max-height: none !important;
             border-radius: 0 !important;
             border: 0 !important;
-            z-index: 98 !important;
+            z-index: 120 !important;
             margin: 0 !important;
+            padding: 0 !important;
             background: #000000 !important;
+        }
+        #upload-preview-area.camera-fullscreen-active #studio-camera-live-video {
+            position: absolute !important;
+            inset: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+        }
+        #upload-preview-area.camera-fullscreen-active #studio-camera-hud {
+            top: max(14px, env(safe-area-inset-top, 14px)) !important;
+            left: 12px !important;
+            right: 12px !important;
+            z-index: 45 !important;
+        }
+        #upload-preview-area.camera-fullscreen-active #studio-livecam-capture-bar {
+            bottom: max(24px, env(safe-area-inset-bottom, 24px)) !important;
+            z-index: 45 !important;
+        }
+        #upload-preview-area.camera-fullscreen-active #studio-preview-wave-footer {
+            display: none !important;
         }
         @keyframes cameraShutterFlash {
             0% { opacity: 0.95; }
@@ -3589,14 +3616,21 @@
                                 <div id="studio-rec-progress-bar" class="h-full w-0 bg-gradient-to-r from-[#ff2a5f] to-cyan-400 transition-all duration-150"></div>
                             </div>
 
-                            <!-- Selected Sound Floating Pill -->
-                            <div id="upload-selected-sound-bar" class="hidden pointer-events-auto px-3 py-1 rounded-full bg-black/75 border border-amber-400/50 items-center justify-between shadow-lg">
-                                <div class="flex items-center gap-2 min-w-0">
-                                    <i data-lucide="music" class="w-3.5 h-3.5 text-amber-400 shrink-0"></i>
-                                    <span class="text-[9px] uppercase tracking-wider text-amber-300 font-bold shrink-0">Son réutilisé attaché :</span>
-                                    <span id="upload-selected-sound-name" class="text-[11px] font-extrabold text-white truncate">Son original</span>
+                            <!-- Selected Sound Floating Pill (Play/Pause + Trim/Position + Remove) -->
+                            <div id="upload-selected-sound-bar" class="hidden pointer-events-auto px-2.5 py-1 rounded-full bg-black/80 border border-amber-400/60 items-center justify-between gap-1.5 shadow-xl">
+                                <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                                    <button type="button" id="btn-studio-top-sound-play" onclick="toggleStudioSelectedSoundPlay(event)" class="w-6 h-6 rounded-full bg-[#ff2a5f] text-white flex items-center justify-center shrink-0 shadow active:scale-90 transition" title="Écouter / Pause le son choisi">
+                                        <svg class="w-3 h-3 fill-current ml-0.5" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
+                                    </button>
+                                    <div class="min-w-0 flex-1 cursor-pointer" onclick="openStudioDrawerTab('audio')">
+                                        <span id="upload-selected-sound-name" class="text-[10.5px] font-extrabold text-white truncate block">♫ Son attaché</span>
+                                        <span id="upload-selected-sound-meta" class="text-[9px] text-amber-300 font-mono block truncate">0.0s - Fin • Départ 0.0s</span>
+                                    </div>
                                 </div>
-                                <button type="button" onclick="clearSelectedUploadSound()" class="text-[10px] text-rose-300 hover:text-white font-bold px-2 py-0.5 rounded-full bg-white/10 ml-2 shrink-0">Retirer</button>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <button type="button" onclick="openStudioDrawerTab('audio')" class="text-[9.5px] text-cyan-300 font-extrabold px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20 border border-cyan-400/30">✂️ Rogner</button>
+                                    <button type="button" onclick="clearSelectedUploadSound()" class="text-[9.5px] text-rose-300 hover:text-white font-bold px-2 py-0.5 rounded-full bg-white/10">✕</button>
+                                </div>
                             </div>
                         </div>
 
@@ -3712,11 +3746,16 @@
                     <div class="relative bg-[#070a12] px-3 pt-2 pb-2.5 flex flex-col gap-1.5 shrink-0 z-20">
                         <!-- Single-Track Overlay Pills Stack (Strictly 1 track per addition type) -->
                         <div class="space-y-1 pl-12 pr-2">
-                            <!-- 1 Single Audio/Music Track Pill (Yellow/Amber like "Good Time" in reference image) -->
-                            <div class="rv-track-lane" onclick="openStudioDrawerTab('audio')">
-                                <div id="timeline-single-music-pill" class="rv-track-pill-music cursor-pointer" style="width: 75%; margin-left: 12%;">
-                                    <span class="truncate flex items-center gap-1"><i data-lucide="music" class="w-3 h-3 shrink-0"></i> <span id="timeline-music-pill-label">Ajouter un son / Volume</span></span>
-                                    <span id="timeline-music-vol-badge" class="text-[9px] font-black px-1 rounded bg-black/15">100%</span>
+                            <!-- 1 Single Audio/Music Track Pill (Interactive: Play, Trim & Drag to Position on Video) -->
+                            <div id="studio-music-track-lane" class="rv-track-lane relative select-none" onclick="openStudioDrawerTab('audio')" title="Toucher pour rogner l'audio ou glisser pour positionner sur la vidéo">
+                                <div id="timeline-single-music-pill" class="rv-track-pill-music cursor-grab active:cursor-grabbing" style="width: 100%; margin-left: 0%;">
+                                    <span class="truncate flex items-center gap-1">
+                                        <button type="button" id="btn-timeline-music-play" onclick="toggleStudioSelectedSoundPlay(event)" class="w-4 h-4 rounded-full bg-black/25 text-black flex items-center justify-center shrink-0 hover:bg-black/40 text-white" title="Lire / Pause l'audio">
+                                            <svg class="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
+                                        </button>
+                                        <span id="timeline-music-pill-label" class="truncate">Ajouter un son / Volume</span>
+                                    </span>
+                                    <span id="timeline-music-vol-badge" class="text-[9px] font-black px-1 rounded bg-black/15 shrink-0">100%</span>
                                 </div>
                             </div>
                             <!-- 1 Single Text Track Pill (Cyan/Blue like "T Bonjour" in reference image) -->
@@ -3986,8 +4025,83 @@
                                 </div>
                             </div>
 
-                            <!-- TAB 4: PISTE UNIQUE MUSIQUE + CONTRÔLE DES VOLUMES EN DIRECT -->
+                            <!-- TAB 4: PISTE UNIQUE MUSIQUE + ROGNAGE & POSITION AUDIO + CONTRÔLE DES VOLUMES EN DIRECT -->
                             <div id="studio-tab-audio" class="studio-panel-section space-y-2.5">
+                                <!-- Active Chosen Sound Player, Trimmer & Positioner -->
+                                <div id="studio-active-sound-editor-card" class="glass-panel p-3 rounded-2xl space-y-2.5 border border-amber-400/40 bg-amber-500/[0.05]">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <div class="min-w-0 flex-1">
+                                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-300 block">🎵 Son sélectionné dans l'éditeur</span>
+                                            <div id="studio-active-sound-title" class="text-xs font-extrabold text-white truncate">Aucun son externe sélectionné (Son original)</div>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 shrink-0">
+                                            <button type="button" id="btn-studio-drawer-sound-play" onclick="toggleStudioSelectedSoundPlay(event)" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#ff2a5f] to-amber-500 text-white text-[11px] font-extrabold flex items-center gap-1.5 shadow-md active:scale-95 transition">
+                                                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
+                                                <span>Écouter</span>
+                                            </button>
+                                            <input type="file" id="studio-custom-audio-file-input" accept="audio/*,video/*" class="hidden" onchange="handleStudioCustomAudioUpload(this)">
+                                            <button type="button" onclick="document.getElementById('studio-custom-audio-file-input').click()" class="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-cyan-300 text-[10px] font-bold flex items-center gap-1" title="Importer un fichier audio ou MP3 depuis votre téléphone">
+                                                <i data-lucide="upload" class="w-3 h-3"></i> MP3/Audio
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Audio Time Readout Bar -->
+                                    <div class="flex items-center justify-between text-[10px] font-mono bg-black/30 px-2.5 py-1 rounded-xl border border-white/10">
+                                        <span class="text-gray-300">Lecture audio : <strong id="studio-audio-live-time" class="text-amber-300">0.0s</strong></span>
+                                        <span id="studio-audio-total-dur" class="text-cyan-300 font-bold">Extrait : 0.0s - Fin</span>
+                                    </div>
+
+                                    <!-- 1. Rogner l'audio (Début & Fin de la musique) -->
+                                    <div class="space-y-2 pt-1 border-t border-white/10">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[11px] font-extrabold text-white flex items-center gap-1">✂️ Rogner l'audio (Début &amp; Fin du son)</span>
+                                            <button type="button" onclick="resetStudioAudioTrimAndOffset()" class="text-[10px] text-rose-400 font-bold hover:underline">Réinitialiser</button>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                            <div class="bg-black/25 p-2 rounded-xl border border-white/10 space-y-1">
+                                                <div class="flex justify-between items-center text-[10px]">
+                                                    <span class="text-gray-300 font-semibold">Début du son :</span>
+                                                    <span id="lbl-studio-audio-trim-start" class="text-amber-300 font-mono font-bold">0.0s</span>
+                                                </div>
+                                                <input type="range" id="studio-audio-trim-start" min="0" max="60" step="0.1" value="0" oninput="onStudioAudioTrimChange('start', this.value)">
+                                                <div class="flex justify-between gap-1 pt-0.5">
+                                                    <button type="button" onclick="nudgeStudioAudioTrim('start', -0.5)" class="px-2 py-0.5 rounded bg-white/10 text-[9.5px] font-bold text-gray-200">-0.5s</button>
+                                                    <button type="button" onclick="nudgeStudioAudioTrim('start', 0.5)" class="px-2 py-0.5 rounded bg-white/10 text-[9.5px] font-bold text-gray-200">+0.5s</button>
+                                                </div>
+                                            </div>
+                                            <div class="bg-black/25 p-2 rounded-xl border border-white/10 space-y-1">
+                                                <div class="flex justify-between items-center text-[10px]">
+                                                    <span class="text-gray-300 font-semibold">Fin du son :</span>
+                                                    <span id="lbl-studio-audio-trim-end" class="text-amber-300 font-mono font-bold">30.0s</span>
+                                                </div>
+                                                <input type="range" id="studio-audio-trim-end" min="0.5" max="60" step="0.1" value="30" oninput="onStudioAudioTrimChange('end', this.value)">
+                                                <div class="flex justify-between gap-1 pt-0.5">
+                                                    <button type="button" onclick="nudgeStudioAudioTrim('end', -0.5)" class="px-2 py-0.5 rounded bg-white/10 text-[9.5px] font-bold text-gray-200">-0.5s</button>
+                                                    <button type="button" onclick="nudgeStudioAudioTrim('end', 0.5)" class="px-2 py-0.5 rounded bg-white/10 text-[9.5px] font-bold text-gray-200">+0.5s</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 2. Positionner l'audio sur la vidéo (Quand le son démarre dans la vidéo) -->
+                                    <div class="bg-black/25 p-2.5 rounded-xl border border-white/10 space-y-1.5">
+                                        <div class="flex justify-between items-center text-[10.5px]">
+                                            <span class="text-gray-200 font-bold flex items-center gap-1">📍 Positionner le départ de l'audio sur la vidéo :</span>
+                                            <span id="lbl-studio-audio-offset" class="text-cyan-300 font-mono font-bold">À 0.0s</span>
+                                        </div>
+                                        <input type="range" id="studio-audio-offset-slider" min="0" max="30" step="0.1" value="0" oninput="onStudioAudioOffsetChange(this.value)">
+                                        <div class="flex items-center justify-between gap-1.5 pt-0.5">
+                                            <span class="text-[9.5px] text-gray-400">Glisse ce curseur ou la piste jaune pour décaler le son</span>
+                                            <div class="flex items-center gap-1">
+                                                <button type="button" onclick="onStudioAudioOffsetChange(0)" class="px-2 py-0.5 rounded bg-white/10 text-[9.5px] font-bold text-cyan-300">Dès 0.0s</button>
+                                                <button type="button" onclick="onStudioAudioOffsetChange(Math.max(0, (studioEditState.audioStartOffset || 0) - 0.5))" class="px-1.5 py-0.5 rounded bg-white/10 text-[9.5px] font-bold text-gray-200">-0.5s</button>
+                                                <button type="button" onclick="onStudioAudioOffsetChange((studioEditState.audioStartOffset || 0) + 0.5)" class="px-1.5 py-0.5 rounded bg-white/10 text-[9.5px] font-bold text-gray-200">+0.5s</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Real-Time Dual Volume Mixer (Original Video Audio Volume + Added App Song Volume) -->
                                 <div class="glass-panel p-3 rounded-2xl space-y-3 border border-[#ff2a5f]/30">
                                     <div class="flex items-center justify-between">
@@ -5197,7 +5311,7 @@
             const mediaEl = e.target;
             if (!mediaEl || (mediaEl.tagName !== 'VIDEO' && mediaEl.tagName !== 'AUDIO')) return;
             if (isUploadStudioOpen()) {
-                const allowedInUpload = mediaEl.closest('#upload-modal') || mediaEl.id === 'studio-music-preview-audio';
+                const allowedInUpload = mediaEl.closest('#upload-modal') || mediaEl.id === 'studio-music-preview-audio' || mediaEl === studioSoundPreviewAudioEl || mediaEl === soundPreviewAudio || mediaEl.dataset?.rvAllowedPreview === 'true';
                 if (!allowedInUpload) {
                     try { mediaEl.pause(); } catch (err) {}
                     stopMasterAudio();
@@ -5220,7 +5334,7 @@
         function stripCloudinaryTrimFromUrl(url) {
             if (!url || typeof url !== "string") return "";
             return url
-                .replace(/\/upload\/(?:so_[\d.]+,?|eo_[\d.]+,?|f_mp4,?)+\//i, "/upload/")
+                .replace(/\/upload\/(?:so_[\d.]+,?|eo_[\d.]+,?|f_mp4,?|f_mp3,?)+\//i, "/upload/")
                 .replace(/([,/])so_[\d.]+/gi, "$1")
                 .replace(/([,/])eo_[\d.]+/gi, "$1")
                 .replace(/\/upload\/,+/i, "/upload/")
@@ -5278,7 +5392,15 @@
             const vIsServerTrimmed = isVideoElementServerTrimmed(v, cardEl);
             const relVideoPos = vIsServerTrimmed ? vTime : Math.max(0, vTime - trimStart);
             if (hasAttachedSound && audioEl === rvMasterAudio) {
-                return relVideoPos;
+                const aTrimStart = Math.max(0, parseFloat(cardEl.getAttribute("data-audio-trim-start") || "0") || 0);
+                const aTrimEnd = Math.max(0, parseFloat(cardEl.getAttribute("data-audio-trim-end") || "0") || 0);
+                const aOffset = Math.max(0, parseFloat(cardEl.getAttribute("data-audio-offset") || "0") || 0);
+                const relAfterOffset = Math.max(0, relVideoPos - aOffset);
+                const aSrc = audioEl.currentSrc || audioEl.src || "";
+                const aIsServerTrimmed = /[,/]so_[\d.]+/.test(aSrc);
+                const clipLen = (aTrimEnd > aTrimStart + 0.2) ? (aTrimEnd - aTrimStart) : 0;
+                const wrappedRel = (clipLen > 0) ? (relAfterOffset % clipLen) : relAfterOffset;
+                return aIsServerTrimmed ? wrappedRel : (aTrimStart + wrappedRel);
             }
             if (!hasStartTrim) return relVideoPos;
             const aSrc = audioEl.currentSrc || audioEl.src || "";
@@ -5294,12 +5416,13 @@
                 return { networkPrimary: mediaUrl, fallback: mediaUrl };
             }
             if (mediaUrl.includes("cloudinary.com") && mediaUrl.includes("/upload/")) {
-                if (/\/upload\/[^/]*f_mp3/i.test(mediaUrl) || mediaUrl.endsWith(".mp3")) {
-                    return { networkPrimary: mediaUrl, fallback: mediaUrl };
-                }
-                const baseClean = stripCloudinaryTrimFromUrl(mediaUrl);
-                const cleanStart = Math.max(0, Number(trimStart) || 0);
-                const cleanEnd = Math.max(0, Number(trimEnd) || 0);
+                const soMatch = mediaUrl.match(/\/upload\/(?:[^/]*,)?so_([\d.]+)/i);
+                const eoMatch = mediaUrl.match(/\/upload\/(?:[^/]*,)?eo_([\d.]+)/i);
+                const embeddedSo = soMatch ? (parseFloat(soMatch[1]) || 0) : 0;
+                const embeddedEo = eoMatch ? (parseFloat(eoMatch[1]) || 0) : 0;
+                const baseClean = stripCloudinaryTrimFromUrl(mediaUrl).replace(/\.mp3(\?.*)?$/i, ".mp4$1");
+                const cleanStart = Math.max(0, Number(trimStart) || embeddedSo || 0);
+                const cleanEnd = Math.max(0, Number(trimEnd) || embeddedEo || 0);
                 const parts = [];
                 if (cleanStart > 0.05) {
                     parts.push(`so_${Number(cleanStart.toFixed(2))}`);
@@ -5311,7 +5434,7 @@
                 const audioTrans = `${trimPrefix}f_mp3`;
                 const mp3Url = baseClean
                     .replace("/upload/", `/upload/${audioTrans}/`)
-                    .replace(/\.(mp4|webm|mov|mkv|avi)(\?.*)?$/i, ".mp3$2");
+                    .replace(/\.(mp4|webm|mov|mkv|avi|mp3)(\?.*)?$/i, ".mp3$2");
                 const trimmedFallbackUrl = applyCloudinaryTrimOnlyUrl(baseClean, cleanStart, cleanEnd);
                 return { networkPrimary: mp3Url, fallback: trimmedFallbackUrl };
             }
@@ -5321,7 +5444,9 @@
         function getRawAudioUrlsForCard(v, cardEl) {
             const customSoundUrl = (cardEl && cardEl.getAttribute("data-sound-url")) || "";
             if (customSoundUrl) {
-                return extractPlayableAudioUrlsFromMediaUrl(customSoundUrl, 0, 0);
+                const aTrimStart = parseFloat((cardEl && cardEl.getAttribute("data-audio-trim-start")) || "0") || 0;
+                const aTrimEnd = parseFloat((cardEl && cardEl.getAttribute("data-audio-trim-end")) || "0") || 0;
+                return extractPlayableAudioUrlsFromMediaUrl(customSoundUrl, aTrimStart, aTrimEnd);
             }
             const rawOriginal = (cardEl && cardEl.getAttribute("data-raw-url")) || "";
             const rawSrc = (cardEl && cardEl.getAttribute("data-src")) || (v && (v.currentSrc || v.src || v.getAttribute("src"))) || "";
@@ -5662,8 +5787,22 @@
         function alignMasterAudioToVideoOnce(v) {
             if (isOutsideFeedAudioBlocked()) { stopMasterAudio(); return; }
             if (!v || !rvMasterAudio || isGlobalMuted || rvMasterAudio.dataset.noAudioTrack === "true") return;
-            if (v !== activePlayingVideo || v.paused || rvMasterAudio.paused) return;
+            if (v !== activePlayingVideo || v.paused) return;
             const cardEl = v.closest(".video-card");
+            const aOffset = cardEl ? (Math.max(0, parseFloat(cardEl.getAttribute("data-audio-offset") || "0") || 0)) : 0;
+            const { trimStart } = getCardTrimBounds(cardEl);
+            const vIsServerTrimmed = isVideoElementServerTrimmed(v, cardEl);
+            const relVideoPos = vIsServerTrimmed ? (v.currentTime || 0) : Math.max(0, (v.currentTime || 0) - trimStart);
+            const { hasAttachedSound, musicGain, origGain } = getCardVolumeConfig(cardEl);
+            if (hasAttachedSound && aOffset > 0.05) {
+                if (relVideoPos < aOffset - 0.04) {
+                    rvMasterAudio.volume = 0;
+                    return;
+                } else {
+                    rvMasterAudio.volume = Math.max(0.05, musicGain);
+                }
+            }
+            if (rvMasterAudio.paused) return;
             const expectedMasterTime = computeSyncedAudioTimeForVideo(v, rvMasterAudio, cardEl);
             const aTime = rvMasterAudio.currentTime || 0;
             if (Math.abs(aTime - expectedMasterTime) > 0.09) {
@@ -6036,15 +6175,60 @@
         // ============================================================================
         // SOUND REUSE SYSTEM ("Réutiliser les sons des vidéos d'autres personnes")
         // ============================================================================
+        function resolveSoundObjectFromVideoDoc(docId, vData) {
+            if (!vData) return null;
+            const creator = getResolvedProfileIdentity(vData.userId, vData.username, vData.isVerified, vData.userPhotoURL, vData.userEmail);
+            const sTitle = unescapeHtml(vData.soundTitle || `Son original - @${creator.username}`);
+            const sAuthor = unescapeHtml(vData.soundAuthor || creator.username);
+            const hasAttached = !!(vData.soundUrl && String(vData.soundUrl).trim().length > 0);
+            const baseSource = hasAttached ? vData.soundUrl : (vData.url || "");
+            const tStart = hasAttached ? (vData.studioConfig?.audioTrimStart || 0) : (vData.trimStart || 0);
+            const tEnd = hasAttached ? (vData.studioConfig?.audioTrimEnd || 0) : (vData.trimEnd || 0);
+            const extracted = extractPlayableAudioUrlsFromMediaUrl(baseSource, tStart, tEnd);
+            return {
+                id: docId,
+                soundTitle: sTitle,
+                soundAuthor: sAuthor,
+                audioUrl: extracted.networkPrimary || baseSource,
+                fallbackAudioUrl: extracted.fallback || vData.url || baseSource,
+                rawVideoUrl: stripCloudinaryTrimFromUrl(vData.url || baseSource) || vData.url || baseSource,
+                photoURL: creator.photoURL || vData.userPhotoURL || "",
+                sourceVideoId: vData.soundSourceId || docId
+            };
+        }
+
+        window.useVideoSoundDirectly = async (docId, e) => {
+            if (e) e.stopPropagation();
+            if (!checkAuth()) return;
+            let vData = profileVideosData[docId] || null;
+            if (!vData) {
+                try {
+                    const snap = await getDoc(doc(db, "videos", docId));
+                    if (snap.exists()) {
+                        vData = snap.data();
+                        profileVideosData[docId] = vData;
+                    }
+                } catch (err) {}
+            }
+            if (!vData) return;
+            currentSoundSheetData = resolveSoundObjectFromVideoDoc(docId, vData);
+            window.useSelectedSoundForUpload();
+        };
+
         window.openSoundSheet = async (docId, e) => {
             if (e) e.stopPropagation();
             let vData = profileVideosData[docId] || null;
+            if (vData) {
+                currentSoundSheetData = resolveSoundObjectFromVideoDoc(docId, vData);
+            }
             const initialCreator = vData ? getResolvedProfileIdentity(vData.userId, vData.username, vData.isVerified, vData.userPhotoURL, vData.userEmail) : { username: 'utilisateur', isVerified: false, photoURL: '' };
-            const initialTitle = vData ? (vData.soundTitle || `Son original - @${initialCreator.username}`) : 'Son original';
-            const initialAuthor = vData ? (vData.soundAuthor || initialCreator.username) : initialCreator.username;
+            const initialTitle = vData ? unescapeHtml(vData.soundTitle || `Son original - @${initialCreator.username}`) : 'Son original';
+            const initialAuthor = vData ? unescapeHtml(vData.soundAuthor || initialCreator.username) : initialCreator.username;
             document.getElementById('sound-sheet-title').innerText = `♫ ${initialTitle}`;
             document.getElementById('sound-sheet-author').innerHTML = `Créé par @${escapeHtml(String(initialAuthor).replace(/^@+/, ''))}${getBadgeHtml(initialCreator.isVerified)}`;
             document.getElementById('sound-sheet-disc').innerHTML = getAvatarHTML(initialCreator.photoURL, "w-full h-full object-cover");
+            const prevBtn = document.getElementById('btn-preview-sound');
+            if (prevBtn) prevBtn.innerHTML = `<i data-lucide="play" class="w-4 h-4 text-cyan-400"></i> Écouter l'extrait`;
             document.getElementById('sound-sheet-modal').classList.add('open');
 
             if (!vData) {
@@ -6058,18 +6242,12 @@
             }
             if (!vData) return;
 
+            currentSoundSheetData = resolveSoundObjectFromVideoDoc(docId, vData);
             await hydrateUserProfilesMap([vData.userId]);
             const resolvedCreator = getResolvedProfileIdentity(vData.userId, vData.username, vData.isVerified, vData.userPhotoURL, vData.userEmail);
-            const sTitle = vData.soundTitle || `Son original - @${resolvedCreator.username}`;
-            const sAuthor = vData.soundAuthor || resolvedCreator.username;
-            const sAudioUrl = vData.soundUrl || vData.url;
-            currentSoundSheetData = {
-                soundTitle: sTitle,
-                soundAuthor: sAuthor,
-                audioUrl: sAudioUrl,
-                photoURL: resolvedCreator.photoURL || vData.userPhotoURL || "",
-                sourceVideoId: docId
-            };
+            currentSoundSheetData = resolveSoundObjectFromVideoDoc(docId, vData);
+            const sTitle = currentSoundSheetData.soundTitle;
+            const sAuthor = currentSoundSheetData.soundAuthor;
 
             document.getElementById('sound-sheet-title').innerText = `♫ ${sTitle}`;
             document.getElementById('sound-sheet-author').innerHTML = `Créé par @${escapeHtml(String(sAuthor).replace(/^@+/, ''))}${getBadgeHtml(resolvedCreator.isVerified)}`;
@@ -6129,13 +6307,36 @@
                 lucide.createIcons();
                 return;
             }
+            stopMasterAudio();
+            if (activePlayingVideo && !activePlayingVideo.paused) {
+                try { activePlayingVideo.pause(); } catch (e) {}
+            }
             if (soundPreviewAudio) soundPreviewAudio.pause();
-            soundPreviewAudio = new Audio(currentSoundSheetData.audioUrl);
+            soundPreviewAudio = new Audio();
+            soundPreviewAudio.dataset.rvAllowedPreview = "true";
+            soundPreviewAudio.src = currentSoundSheetData.audioUrl || currentSoundSheetData.fallbackAudioUrl || currentSoundSheetData.rawVideoUrl || "";
+            let triedSheetFb = false;
+            soundPreviewAudio.onerror = () => {
+                const fbUrl = currentSoundSheetData.fallbackAudioUrl || currentSoundSheetData.rawVideoUrl;
+                if (!triedSheetFb && fbUrl && soundPreviewAudio.src !== fbUrl) {
+                    triedSheetFb = true;
+                    soundPreviewAudio.src = fbUrl;
+                    soundPreviewAudio.play().catch(() => {});
+                }
+            };
             soundPreviewAudio.play().then(() => {
                 btn.innerHTML = `<i data-lucide="pause" class="w-4 h-4 text-[#ff2a5f]"></i> Pause`;
                 lucide.createIcons();
             }).catch(() => {
-                showToast("Lecture de l'extrait audio...", "info");
+                const fbUrl = currentSoundSheetData.fallbackAudioUrl || currentSoundSheetData.rawVideoUrl;
+                if (!triedSheetFb && fbUrl) {
+                    triedSheetFb = true;
+                    soundPreviewAudio.src = fbUrl;
+                    soundPreviewAudio.play().then(() => {
+                        btn.innerHTML = `<i data-lucide="pause" class="w-4 h-4 text-[#ff2a5f]"></i> Pause`;
+                        lucide.createIcons();
+                    }).catch(() => {});
+                }
             });
             soundPreviewAudio.onended = () => {
                 btn.innerHTML = `<i data-lucide="play" class="w-4 h-4 text-cyan-400"></i> Écouter l'extrait`;
@@ -6147,28 +6348,32 @@
             if (!currentSoundSheetData) return;
             const soundCopy = { ...currentSoundSheetData };
             closeSoundSheet();
+            const fullOverlay = document.getElementById('fullscreen-video-overlay');
+            if (fullOverlay && !fullOverlay.classList.contains('hidden')) {
+                closeFullVideo();
+            }
             if (!checkAuth()) return;
             selectedSoundForUpload = soundCopy;
+            studioEditState.audioTrimStart = 0;
+            studioEditState.audioTrimEnd = 0;
+            studioEditState.audioStartOffset = 0;
             window.openUploadModal();
-            const bar = document.getElementById('upload-selected-sound-bar');
-            const nameEl = document.getElementById('upload-selected-sound-name');
-            const soundInput = document.getElementById('video-sound-title');
-            if (bar && nameEl) {
-                nameEl.innerText = `♫ ${soundCopy.soundTitle}`;
-                bar.classList.remove('hidden');
-                bar.classList.add('flex');
-            }
-            if (soundInput) {
-                soundInput.value = soundCopy.soundTitle;
-            }
-            showToast(`Son "${soundCopy.soundTitle}" prêt pour ta vidéo ! 🎵`, "success");
+            bindSelectedSoundToStudioAudioEngine(true);
+            showToast(`Son « ${soundCopy.soundTitle} » chargé dans R-Studio ! Vous pouvez l'écouter, le rogner et le positionner 🎵`, "success");
         };
 
         window.clearSelectedUploadSound = () => {
             selectedSoundForUpload = null;
+            studioEditState.audioTrimStart = 0;
+            studioEditState.audioTrimEnd = 0;
+            studioEditState.audioStartOffset = 0;
             stopStudioCommunitySoundPreview();
             if (studioMusicPreviewAudio && !studioMusicPreviewAudio.paused) studioMusicPreviewAudio.pause();
-            if (studioMusicPreviewAudio) studioMusicPreviewAudio.removeAttribute('src');
+            if (studioMusicPreviewAudio) {
+                studioMusicPreviewAudio.removeAttribute('src');
+                studioMusicPreviewAudio.removeAttribute('data-bound-url');
+            }
+            updateStudioAudioPlayButtonsUI(false);
             if (typeof window.syncTimelinePillsUI === 'function') window.syncTimelinePillsUI();
             const bar = document.getElementById('upload-selected-sound-bar');
             if (bar) {
@@ -6177,6 +6382,8 @@
             }
             const soundInput = document.getElementById('video-sound-title');
             if (soundInput) soundInput.value = "";
+            const activeTitle = document.getElementById('studio-active-sound-title');
+            if (activeTitle) activeTitle.innerText = "Aucun son externe sélectionné (Son original)";
             if (typeof renderStudioCommunitySoundsList === 'function') {
                 renderStudioCommunitySoundsList(document.getElementById('studio-sound-search-input')?.value || '');
             }
@@ -10120,6 +10327,9 @@
                     }
                     div.setAttribute('data-trim-start', trimStart);
                     div.setAttribute('data-trim-end', trimEnd);
+                    div.setAttribute('data-audio-trim-start', String(data.studioConfig?.audioTrimStart || 0));
+                    div.setAttribute('data-audio-trim-end', String(data.studioConfig?.audioTrimEnd || 0));
+                    div.setAttribute('data-audio-offset', String(data.studioConfig?.audioStartOffset || 0));
                     div.setAttribute('data-orig-vol', String(data.studioConfig?.originalVolume ?? 100));
                     div.setAttribute('data-music-vol', String(data.studioConfig?.musicVolume ?? 100));
                     div.setAttribute('data-keep-orig-audio', String(data.studioConfig?.keepOriginalAudio !== false));
@@ -10228,7 +10438,7 @@
                             <div onclick="openSoundSheet('${docId}', event)" class="flex items-center gap-1.5 text-[11px] font-medium text-white/85 pointer-events-auto cursor-pointer hover:text-cyan-300 transition text-shadow w-full">
                                 <svg class="w-3 h-3 shrink-0 text-white/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
                                 <span class="truncate max-w-[185px] sm:max-w-[320px]">Contient : ${soundLabel}</span>
-                                <span class="text-[9.5px] px-2 py-0.5 rounded-full bg-white/12 border border-white/15 text-white/95 font-semibold shrink-0">Utiliser ce son</span>
+                                <button type="button" onclick="useVideoSoundDirectly('${docId}', event)" class="text-[9.5px] px-2.5 py-0.5 rounded-full bg-[#ff2a5f]/90 hover:bg-[#ff2a5f] border border-white/25 text-white font-extrabold shrink-0 shadow active:scale-95 transition">Utiliser ce son</button>
                             </div>
                         </div>
 
@@ -10397,7 +10607,11 @@
             stickerScale: 1.0,
             activeOverlayTarget: 'text',
             originalVolume: 100,
-            musicVolume: 100
+            musicVolume: 100,
+            audioTrimStart: 0,
+            audioTrimEnd: 0,
+            audioStartOffset: 0,
+            audioDuration: 30
         };
 
         let studioCapturedPhotoDataUrl = null;
@@ -10555,6 +10769,13 @@
                 }
             } else {
                 stopStudioCameraStream();
+                if (previewArea) previewArea.classList.remove('camera-fullscreen-active');
+                const topBar = document.getElementById('studio-livecam-top-bar');
+                const capBar = document.getElementById('studio-livecam-capture-bar');
+                const progWrap = document.getElementById('studio-rec-progress-wrap');
+                if (topBar) { topBar.classList.add('hidden'); topBar.classList.remove('flex'); }
+                if (capBar) { capBar.classList.add('hidden'); capBar.classList.remove('flex'); }
+                if (progWrap) progWrap.classList.add('hidden');
                 if (btnCam) btnCam.classList.remove('active');
                 if (btnGal) btnGal.classList.add('active');
                 const hasLoadedVideo = !!(studioSelectedFile || studioRecordedFile || (prevVid && prevVid.getAttribute('src')));
@@ -10966,16 +11187,341 @@
             window.updateStudioLiveVolumes();
         };
 
+        function updateStudioAudioPlayButtonsUI(isPlaying) {
+            const playSvg = `<svg class="w-3 h-3 fill-current ml-0.5" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>`;
+            const pauseSvg = `<svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`;
+            const topBtn = document.getElementById('btn-studio-top-sound-play');
+            if (topBtn) topBtn.innerHTML = isPlaying ? pauseSvg : playSvg;
+            const tlBtn = document.getElementById('btn-timeline-music-play');
+            if (tlBtn) tlBtn.innerHTML = isPlaying ? pauseSvg : playSvg;
+            const drwBtn = document.getElementById('btn-studio-drawer-sound-play');
+            if (drwBtn) {
+                drwBtn.innerHTML = isPlaying
+                    ? `${pauseSvg}<span>Pause</span>`
+                    : `${playSvg}<span>Écouter</span>`;
+            }
+            const eqBox = document.getElementById('studio-eq-waveform');
+            if (eqBox) eqBox.classList.toggle('rv-eq-playing', !!isPlaying);
+        }
+
+        function bindSelectedSoundToStudioAudioEngine(autoPlayPreview = false) {
+            if (!studioMusicPreviewAudio) return;
+            const bar = document.getElementById('upload-selected-sound-bar');
+            const nameEl = document.getElementById('upload-selected-sound-name');
+            const soundInput = document.getElementById('video-sound-title');
+            const activeTitle = document.getElementById('studio-active-sound-title');
+
+            if (!selectedSoundForUpload) {
+                if (bar) { bar.classList.add('hidden'); bar.classList.remove('flex'); }
+                if (activeTitle) activeTitle.innerText = "Aucun son externe sélectionné (Son original)";
+                updateStudioAudioPlayButtonsUI(false);
+                window.syncTimelinePillsUI();
+                return;
+            }
+
+            const dispTitle = selectedSoundForUpload.soundAuthor
+                ? `♫ ${selectedSoundForUpload.soundTitle} (@${selectedSoundForUpload.soundAuthor})`
+                : `♫ ${selectedSoundForUpload.soundTitle}`;
+            if (bar && nameEl) {
+                nameEl.innerText = dispTitle;
+                bar.classList.remove('hidden');
+                bar.classList.add('flex');
+            }
+            if (soundInput && !soundInput.value) {
+                soundInput.value = selectedSoundForUpload.soundTitle;
+            }
+            if (activeTitle) {
+                activeTitle.innerText = dispTitle;
+            }
+
+            const primaryUrl = selectedSoundForUpload.audioUrl || selectedSoundForUpload.fallbackAudioUrl || selectedSoundForUpload.rawVideoUrl || '';
+            if (primaryUrl && studioMusicPreviewAudio.getAttribute('data-bound-url') !== primaryUrl) {
+                studioMusicPreviewAudio.setAttribute('data-bound-url', primaryUrl);
+                studioMusicPreviewAudio.dataset.triedFallback = 'false';
+                studioMusicPreviewAudio.src = primaryUrl;
+                studioMusicPreviewAudio.loop = true;
+                studioMusicPreviewAudio.load();
+            }
+
+            studioMusicPreviewAudio.onloadedmetadata = () => {
+                const rawDur = (studioMusicPreviewAudio.duration && isFinite(studioMusicPreviewAudio.duration) && studioMusicPreviewAudio.duration > 0.5)
+                    ? Math.min(studioMusicPreviewAudio.duration, 180)
+                    : 30;
+                studioEditState.audioDuration = Number(rawDur.toFixed(1));
+                if (!studioEditState.audioTrimEnd || studioEditState.audioTrimEnd <= studioEditState.audioTrimStart || studioEditState.audioTrimEnd > studioEditState.audioDuration) {
+                    studioEditState.audioTrimEnd = studioEditState.audioDuration;
+                }
+                const startS = document.getElementById('studio-audio-trim-start');
+                const endS = document.getElementById('studio-audio-trim-end');
+                if (startS) {
+                    startS.max = studioEditState.audioDuration;
+                    startS.value = studioEditState.audioTrimStart || 0;
+                }
+                if (endS) {
+                    endS.max = studioEditState.audioDuration;
+                    endS.value = studioEditState.audioTrimEnd;
+                }
+                window.syncTimelinePillsUI();
+            };
+
+            studioMusicPreviewAudio.ontimeupdate = () => {
+                const cur = studioMusicPreviewAudio.currentTime || 0;
+                const liveEl = document.getElementById('studio-audio-live-time');
+                if (liveEl) liveEl.innerText = cur.toFixed(1) + 's';
+                const tStart = Number(studioEditState.audioTrimStart) || 0;
+                const tEnd = Number(studioEditState.audioTrimEnd) || 0;
+                if (tEnd > tStart + 0.2 && cur >= tEnd) {
+                    try { studioMusicPreviewAudio.currentTime = tStart; } catch (e) {}
+                    if (!studioMusicPreviewAudio.paused) studioMusicPreviewAudio.play().catch(() => {});
+                } else if (tStart > 0.05 && cur < tStart - 0.15) {
+                    try { studioMusicPreviewAudio.currentTime = tStart; } catch (e) {}
+                }
+            };
+
+            studioMusicPreviewAudio.onplay = () => updateStudioAudioPlayButtonsUI(true);
+            studioMusicPreviewAudio.onpause = () => updateStudioAudioPlayButtonsUI(false);
+            studioMusicPreviewAudio.onerror = () => {
+                if (!selectedSoundForUpload) return;
+                const fb = selectedSoundForUpload.fallbackAudioUrl || selectedSoundForUpload.rawVideoUrl;
+                if (fb && studioMusicPreviewAudio.dataset.triedFallback !== 'true' && studioMusicPreviewAudio.src !== fb) {
+                    studioMusicPreviewAudio.dataset.triedFallback = 'true';
+                    studioMusicPreviewAudio.src = fb;
+                    studioMusicPreviewAudio.load();
+                    if (autoPlayPreview) studioMusicPreviewAudio.play().catch(() => {});
+                }
+            };
+
+            window.syncTimelinePillsUI();
+            if (autoPlayPreview) {
+                try { studioMusicPreviewAudio.currentTime = Number(studioEditState.audioTrimStart) || 0; } catch (e) {}
+                studioMusicPreviewAudio.volume = Math.max(0.05, Math.min(1, (studioEditState.musicVolume ?? 100) / 100));
+                studioMusicPreviewAudio.play().then(() => {
+                    updateStudioAudioPlayButtonsUI(true);
+                }).catch(() => {});
+            }
+        }
+
+        window.toggleStudioSelectedSoundPlay = (ev) => {
+            if (ev) ev.stopPropagation();
+            stopStudioCommunitySoundPreview();
+            const v = document.getElementById('video-preview');
+            const hasVideoLoaded = !!(v && v.getAttribute('src') && !v.classList.contains('hidden'));
+
+            if (!selectedSoundForUpload) {
+                if (hasVideoLoaded) {
+                    window.toggleStudioPreviewPlay();
+                } else {
+                    window.openStudioDrawerTab('audio');
+                    showToast("Choisis un son dans la liste ou importe un fichier MP3/Audio 🎵", "info");
+                }
+                return;
+            }
+
+            bindSelectedSoundToStudioAudioEngine(false);
+            if (studioMusicPreviewAudio.paused) {
+                const tStart = Number(studioEditState.audioTrimStart) || 0;
+                const tEnd = Number(studioEditState.audioTrimEnd) || (studioEditState.audioDuration || 30);
+                if (studioMusicPreviewAudio.currentTime < tStart || (tEnd > tStart && studioMusicPreviewAudio.currentTime >= tEnd)) {
+                    try { studioMusicPreviewAudio.currentTime = tStart; } catch (e) {}
+                }
+                studioMusicPreviewAudio.volume = Math.max(0.05, Math.min(1, (studioEditState.musicVolume ?? 100) / 100));
+                studioMusicPreviewAudio.play().then(() => {
+                    updateStudioAudioPlayButtonsUI(true);
+                }).catch(() => {
+                    const fb = selectedSoundForUpload.fallbackAudioUrl || selectedSoundForUpload.rawVideoUrl;
+                    if (fb && studioMusicPreviewAudio.src !== fb) {
+                        studioMusicPreviewAudio.src = fb;
+                        studioMusicPreviewAudio.play().then(() => updateStudioAudioPlayButtonsUI(true)).catch(() => {});
+                    }
+                });
+                if (hasVideoLoaded && v.paused) {
+                    v.play().catch(() => {});
+                    const playBtn = document.getElementById('studio-play-toggle-btn');
+                    if (playBtn) {
+                        playBtn.innerHTML = `<i data-lucide="pause" class="w-4 h-4 fill-current"></i>`;
+                        lucide.createIcons();
+                    }
+                }
+            } else {
+                studioMusicPreviewAudio.pause();
+                updateStudioAudioPlayButtonsUI(false);
+                if (hasVideoLoaded && !v.paused) {
+                    v.pause();
+                    const playBtn = document.getElementById('studio-play-toggle-btn');
+                    if (playBtn) {
+                        playBtn.innerHTML = `<i data-lucide="play" class="w-4 h-4 fill-current ml-0.5"></i>`;
+                        lucide.createIcons();
+                    }
+                }
+            }
+        };
+
+        window.onStudioAudioTrimChange = (which, rawVal) => {
+            const maxDur = Math.max(1, Number(studioEditState.audioDuration) || 30);
+            let s = Number(studioEditState.audioTrimStart) || 0;
+            let e = Number(studioEditState.audioTrimEnd) || maxDur;
+            if (e <= 0 || e > maxDur) e = maxDur;
+            const vNum = Math.max(0, Math.min(maxDur, parseFloat(rawVal) || 0));
+
+            if (which === 'start') {
+                s = Math.min(vNum, Math.max(0, e - 0.5));
+            } else {
+                e = Math.max(vNum, Math.min(maxDur, s + 0.5));
+            }
+            studioEditState.audioTrimStart = Number(s.toFixed(1));
+            studioEditState.audioTrimEnd = Number(e.toFixed(1));
+
+            const startS = document.getElementById('studio-audio-trim-start');
+            const endS = document.getElementById('studio-audio-trim-end');
+            if (startS) startS.value = studioEditState.audioTrimStart;
+            if (endS) endS.value = studioEditState.audioTrimEnd;
+
+            window.syncTimelinePillsUI();
+            if (studioMusicPreviewAudio && studioMusicPreviewAudio.getAttribute('src')) {
+                const previewPoint = (which === 'end') ? Math.max(studioEditState.audioTrimStart, studioEditState.audioTrimEnd - 1.5) : studioEditState.audioTrimStart;
+                try { studioMusicPreviewAudio.currentTime = previewPoint; } catch (err) {}
+                if (studioMusicPreviewAudio.paused) {
+                    studioMusicPreviewAudio.play().catch(() => {});
+                }
+            }
+        };
+
+        window.nudgeStudioAudioTrim = (which, delta) => {
+            const cur = which === 'start' ? (Number(studioEditState.audioTrimStart) || 0) : (Number(studioEditState.audioTrimEnd) || (studioEditState.audioDuration || 30));
+            window.onStudioAudioTrimChange(which, cur + delta);
+        };
+
+        window.onStudioAudioOffsetChange = (rawVal) => {
+            const vidNetDur = Math.max(1, (Number(studioTrimState.end) || 30) - (Number(studioTrimState.start) || 0));
+            const maxOffset = Math.max(0, Number((vidNetDur - 0.5).toFixed(1)));
+            const nextOffset = Math.max(0, Math.min(maxOffset, Number((parseFloat(rawVal) || 0).toFixed(1))));
+            studioEditState.audioStartOffset = nextOffset;
+
+            const offSlider = document.getElementById('studio-audio-offset-slider');
+            if (offSlider) {
+                offSlider.max = Math.max(5, Number(vidNetDur.toFixed(1)));
+                offSlider.value = nextOffset;
+            }
+            window.syncTimelinePillsUI();
+
+            const v = document.getElementById('video-preview');
+            if (v && v.getAttribute('src') && !v.classList.contains('hidden')) {
+                try { v.currentTime = (Number(studioTrimState.start) || 0) + nextOffset; } catch (e) {}
+            }
+            if (studioMusicPreviewAudio && studioMusicPreviewAudio.getAttribute('src')) {
+                try { studioMusicPreviewAudio.currentTime = Number(studioEditState.audioTrimStart) || 0; } catch (e) {}
+            }
+        };
+
+        window.resetStudioAudioTrimAndOffset = () => {
+            studioEditState.audioTrimStart = 0;
+            studioEditState.audioTrimEnd = Number(studioEditState.audioDuration) || 30;
+            studioEditState.audioStartOffset = 0;
+            const startS = document.getElementById('studio-audio-trim-start');
+            const endS = document.getElementById('studio-audio-trim-end');
+            const offS = document.getElementById('studio-audio-offset-slider');
+            if (startS) startS.value = 0;
+            if (endS) endS.value = studioEditState.audioTrimEnd;
+            if (offS) offS.value = 0;
+            if (studioMusicPreviewAudio && studioMusicPreviewAudio.getAttribute('src')) {
+                try { studioMusicPreviewAudio.currentTime = 0; } catch (e) {}
+            }
+            window.syncTimelinePillsUI();
+            showToast("Rognage et position de l'audio réinitialisés ↺", "info");
+        };
+
+        window.handleStudioCustomAudioUpload = (inputEl) => {
+            if (!inputEl || !inputEl.files || !inputEl.files[0]) return;
+            const file = inputEl.files[0];
+            const blobUrl = URL.createObjectURL(file);
+            const cleanName = file.name.replace(/\.[^/.]+$/, "");
+            selectedSoundForUpload = {
+                id: 'custom_local_' + Date.now(),
+                soundTitle: cleanName,
+                soundAuthor: currentUserData?.username || 'moi',
+                audioUrl: blobUrl,
+                fallbackAudioUrl: blobUrl,
+                rawVideoUrl: blobUrl,
+                customFile: file,
+                sourceVideoId: null
+            };
+            studioEditState.audioTrimStart = 0;
+            studioEditState.audioTrimEnd = 0;
+            studioEditState.audioStartOffset = 0;
+            const inp = document.getElementById('video-sound-title');
+            if (inp) inp.value = cleanName;
+            bindSelectedSoundToStudioAudioEngine(true);
+            showToast(`Audio « ${cleanName} » importé et prêt à être rogné ! 🎵`, "success");
+        };
+
+        // Allow dragging #timeline-single-music-pill horizontally on #studio-music-track-lane to position audioStartOffset
+        (function initTimelineMusicPillDrag() {
+            let isDraggingMusicPill = false;
+            let dragStartX = 0;
+            let initialOffsetSec = 0;
+            document.addEventListener('pointerdown', (e) => {
+                const pill = e.target.closest('#timeline-single-music-pill');
+                if (!pill || e.target.closest('#btn-timeline-music-play')) return;
+                const lane = document.getElementById('studio-music-track-lane');
+                if (!lane) return;
+                isDraggingMusicPill = true;
+                dragStartX = e.clientX;
+                initialOffsetSec = Number(studioEditState.audioStartOffset) || 0;
+            });
+            document.addEventListener('pointermove', (e) => {
+                if (!isDraggingMusicPill) return;
+                const lane = document.getElementById('studio-music-track-lane');
+                if (!lane) return;
+                const rect = lane.getBoundingClientRect();
+                const deltaX = e.clientX - dragStartX;
+                if (Math.abs(deltaX) < 4) return;
+                const vidNetDur = Math.max(1, (Number(studioTrimState.end) || 30) - (Number(studioTrimState.start) || 0));
+                const deltaSec = (deltaX / Math.max(1, rect.width)) * vidNetDur;
+                window.onStudioAudioOffsetChange(initialOffsetSec + deltaSec);
+            });
+            document.addEventListener('pointerup', () => { isDraggingMusicPill = false; });
+            document.addEventListener('pointercancel', () => { isDraggingMusicPill = false; });
+        })();
+
         window.syncTimelinePillsUI = () => {
             const musicLabel = document.getElementById('timeline-music-pill-label');
             const musicVolBadge = document.getElementById('timeline-music-vol-badge');
+            const musicPill = document.getElementById('timeline-single-music-pill');
             const textLabel = document.getElementById('timeline-text-pill-label');
             const stickerLabel = document.getElementById('timeline-sticker-pill-label');
 
             const customSoundTxt = document.getElementById('video-sound-title')?.value?.trim() || '';
             const activeSoundName = (selectedSoundForUpload && selectedSoundForUpload.soundTitle) || customSoundTxt || 'Son original / Musique';
-            if (musicLabel) musicLabel.innerText = activeSoundName;
+
+            const aStart = Number(studioEditState.audioTrimStart) || 0;
+            const aEnd = Number(studioEditState.audioTrimEnd) || (studioEditState.audioDuration || 30);
+            const aOff = Number(studioEditState.audioStartOffset) || 0;
+            const trimSummary = (aStart > 0.05 || (studioEditState.audioDuration && aEnd < studioEditState.audioDuration - 0.15) || aOff > 0.05)
+                ? ` [${aStart.toFixed(1)}s-${aEnd.toFixed(1)}s${aOff > 0.05 ? ' • +' + aOff.toFixed(1) + 's' : ''}]`
+                : '';
+
+            if (musicLabel) musicLabel.innerText = activeSoundName + trimSummary;
             if (musicVolBadge) musicVolBadge.innerText = (studioEditState.musicVolume ?? 100) + '%';
+
+            const lblStart = document.getElementById('lbl-studio-audio-trim-start');
+            const lblEnd = document.getElementById('lbl-studio-audio-trim-end');
+            const lblOff = document.getElementById('lbl-studio-audio-offset');
+            const totDurEl = document.getElementById('studio-audio-total-dur');
+            const topMetaEl = document.getElementById('upload-selected-sound-meta');
+            if (lblStart) lblStart.innerText = aStart.toFixed(1) + 's';
+            if (lblEnd) lblEnd.innerText = aEnd.toFixed(1) + 's';
+            if (lblOff) lblOff.innerText = `À ${aOff.toFixed(1)}s`;
+            if (totDurEl) totDurEl.innerText = `Extrait : ${aStart.toFixed(1)}s - ${aEnd.toFixed(1)}s (${Math.max(0.5, aEnd - aStart).toFixed(1)}s)`;
+            if (topMetaEl) topMetaEl.innerText = `Extrait ${aStart.toFixed(1)}s-${aEnd.toFixed(1)}s • Départ ${aOff.toFixed(1)}s`;
+
+            if (musicPill) {
+                const vidNetDur = Math.max(1, (Number(studioTrimState.end) || 30) - (Number(studioTrimState.start) || 0));
+                const leftPct = Math.max(0, Math.min(82, (aOff / vidNetDur) * 100));
+                const clipDur = Math.max(0.5, aEnd - aStart);
+                const widthPct = Math.max(18, Math.min(100 - leftPct, (clipDur / vidNetDur) * 100));
+                musicPill.style.marginLeft = `${leftPct.toFixed(1)}%`;
+                musicPill.style.width = `${widthPct.toFixed(1)}%`;
+            }
 
             if (textLabel) {
                 textLabel.innerText = studioEditState.overlayText ? studioEditState.overlayText : 'Ajouter un texte';
@@ -10986,30 +11532,44 @@
         };
 
         function syncStudioAttachedSongPlaybackWithVideo(shouldPlay) {
-            const eqBox = document.getElementById('studio-eq-waveform');
-            if (eqBox) eqBox.classList.toggle('rv-eq-playing', !!shouldPlay);
             if (!studioMusicPreviewAudio) return;
-            const attachedUrl = selectedSoundForUpload ? (selectedSoundForUpload.audioUrl || selectedSoundForUpload.rawVideoUrl || '') : '';
+            const attachedUrl = selectedSoundForUpload ? (selectedSoundForUpload.audioUrl || selectedSoundForUpload.fallbackAudioUrl || selectedSoundForUpload.rawVideoUrl || '') : '';
             if (!attachedUrl) {
                 if (!studioMusicPreviewAudio.paused) studioMusicPreviewAudio.pause();
+                updateStudioAudioPlayButtonsUI(false);
                 return;
             }
-            if (studioMusicPreviewAudio.getAttribute('data-bound-url') !== attachedUrl) {
-                studioMusicPreviewAudio.setAttribute('data-bound-url', attachedUrl);
-                studioMusicPreviewAudio.src = attachedUrl;
-                studioMusicPreviewAudio.loop = true;
-                studioMusicPreviewAudio.load();
-            }
+            bindSelectedSoundToStudioAudioEngine(false);
             studioMusicPreviewAudio.volume = Math.max(0, Math.min(1, (studioEditState.musicVolume ?? 100) / 100));
             if (shouldPlay) {
-                studioMusicPreviewAudio.play().catch(() => {
-                    if (selectedSoundForUpload && selectedSoundForUpload.rawVideoUrl && studioMusicPreviewAudio.src !== selectedSoundForUpload.rawVideoUrl) {
-                        studioMusicPreviewAudio.src = selectedSoundForUpload.rawVideoUrl;
-                        studioMusicPreviewAudio.play().catch(() => {});
+                const v = document.getElementById('video-preview');
+                const relVid = (v && v.getAttribute('src') && !v.classList.contains('hidden'))
+                    ? Math.max(0, (v.currentTime || 0) - (studioTrimState.start || 0))
+                    : 0;
+                const aOff = Number(studioEditState.audioStartOffset) || 0;
+                const aStart = Number(studioEditState.audioTrimStart) || 0;
+                const aEnd = Number(studioEditState.audioTrimEnd) || (studioEditState.audioDuration || 30);
+                const clipDur = Math.max(0.5, aEnd - aStart);
+                if (relVid < aOff - 0.05) {
+                    if (!studioMusicPreviewAudio.paused) studioMusicPreviewAudio.pause();
+                    return;
+                }
+                const targetTime = aStart + ((relVid - aOff) % clipDur);
+                if (Math.abs((studioMusicPreviewAudio.currentTime || 0) - targetTime) > 0.3) {
+                    try { studioMusicPreviewAudio.currentTime = targetTime; } catch (e) {}
+                }
+                studioMusicPreviewAudio.play().then(() => {
+                    updateStudioAudioPlayButtonsUI(true);
+                }).catch(() => {
+                    const fb = selectedSoundForUpload.fallbackAudioUrl || selectedSoundForUpload.rawVideoUrl;
+                    if (fb && studioMusicPreviewAudio.src !== fb) {
+                        studioMusicPreviewAudio.src = fb;
+                        studioMusicPreviewAudio.play().then(() => updateStudioAudioPlayButtonsUI(true)).catch(() => {});
                     }
                 });
             } else {
                 if (!studioMusicPreviewAudio.paused) studioMusicPreviewAudio.pause();
+                updateStudioAudioPlayButtonsUI(false);
             }
         }
 
@@ -11048,12 +11608,13 @@
                 return;
             }
             studioCaptureSubMode = subMode === 'photo' ? 'photo' : 'video';
+            const previewArea = document.getElementById('upload-preview-area');
+            if (previewArea) previewArea.classList.add('camera-fullscreen-active');
             if (topBar) { topBar.classList.remove('hidden'); topBar.classList.add('flex'); }
             if (capBar) { capBar.classList.remove('hidden'); capBar.classList.add('flex'); }
             if (progWrap) progWrap.classList.remove('hidden');
             await window.switchStudioSourceMode('camera');
-            const previewArea = document.getElementById('upload-preview-area');
-            if (previewArea) previewArea.classList.remove('camera-fullscreen-active');
+            if (previewArea && studioCameraStream) previewArea.classList.add('camera-fullscreen-active');
         };
 
         window.exitInlineLiveCameraMode = () => {
@@ -11819,10 +12380,11 @@
             }
 
             stopStudioCommunitySoundPreview();
+            if (studioMusicPreviewAudio && !studioMusicPreviewAudio.paused) studioMusicPreviewAudio.pause();
             studioSoundPlayingId = soundId;
             const audio = new Audio();
-            audio.crossOrigin = "anonymous";
-            audio.src = item.audioUrl;
+            audio.dataset.rvAllowedPreview = "true";
+            audio.src = item.audioUrl || item.fallbackAudioUrl || item.rawVideoUrl;
             studioSoundPreviewAudioEl = audio;
 
             let triedFallback = false;
@@ -11879,14 +12441,13 @@
                 bar.classList.add('flex');
             }
 
+            studioEditState.audioTrimStart = 0;
+            studioEditState.audioTrimEnd = 0;
+            studioEditState.audioStartOffset = 0;
             stopStudioCommunitySoundPreview();
-            window.syncTimelinePillsUI();
-            const v = document.getElementById('video-preview');
-            if (v && v.getAttribute('src') && !v.paused) {
-                syncStudioAttachedSongPlaybackWithVideo(true);
-            }
+            bindSelectedSoundToStudioAudioEngine(true);
             renderStudioCommunitySoundsList(document.getElementById('studio-sound-search-input')?.value || '');
-            showToast(`Musique « ${item.soundTitle} » (@${item.soundAuthor}) ajoutée sur la piste audio ! 🎵`, "success");
+            showToast(`Musique « ${item.soundTitle} » (@${item.soundAuthor}) ajoutée et en lecture dans l'éditeur ! 🎵`, "success");
         };
 
         window.pickQuickStudioSound = (soundName) => {
@@ -12629,6 +13190,34 @@
                     if (cur >= studioTrimState.end || cur < studioTrimState.start - 0.15) {
                         v.currentTime = studioTrimState.start;
                         v.play().catch(() => {});
+                        if (selectedSoundForUpload && studioMusicPreviewAudio) {
+                            const aOff = Number(studioEditState.audioStartOffset) || 0;
+                            const aStart = Number(studioEditState.audioTrimStart) || 0;
+                            try { studioMusicPreviewAudio.currentTime = aStart; } catch (e) {}
+                            if (aOff > 0.05) {
+                                if (!studioMusicPreviewAudio.paused) studioMusicPreviewAudio.pause();
+                            } else if (!v.paused) {
+                                studioMusicPreviewAudio.play().catch(() => {});
+                            }
+                        }
+                    }
+                    if (selectedSoundForUpload && studioMusicPreviewAudio && !v.paused) {
+                        const relVid = Math.max(0, (v.currentTime || 0) - (studioTrimState.start || 0));
+                        const aOff = Number(studioEditState.audioStartOffset) || 0;
+                        const aStart = Number(studioEditState.audioTrimStart) || 0;
+                        const aEnd = Number(studioEditState.audioTrimEnd) || (studioEditState.audioDuration || 30);
+                        const clipDur = Math.max(0.5, aEnd - aStart);
+                        if (relVid < aOff - 0.05) {
+                            if (!studioMusicPreviewAudio.paused) studioMusicPreviewAudio.pause();
+                        } else {
+                            const expectedAudioT = aStart + ((relVid - aOff) % clipDur);
+                            if (studioMusicPreviewAudio.paused) {
+                                try { studioMusicPreviewAudio.currentTime = expectedAudioT; } catch (e) {}
+                                studioMusicPreviewAudio.play().catch(() => {});
+                            } else if (Math.abs((studioMusicPreviewAudio.currentTime || 0) - expectedAudioT) > 0.35) {
+                                try { studioMusicPreviewAudio.currentTime = expectedAudioT; } catch (e) {}
+                            }
+                        }
                     }
                     studioTrimState.playhead = v.currentTime || 0;
                     const phLine = document.getElementById('trim-playhead-line');
@@ -12845,8 +13434,12 @@
             const soundTitle = customSoundInput || (selectedSoundForUpload ? selectedSoundForUpload.soundTitle : `${currentUserData.username} - Son original`);
             const soundAuthor = selectedSoundForUpload ? selectedSoundForUpload.soundAuthor : currentUserData.username;
             const soundSourceId = selectedSoundForUpload ? selectedSoundForUpload.sourceVideoId : null;
-            const resolvedUploadSoundUrl = selectedSoundForUpload
-                ? (selectedSoundForUpload.audioUrl || selectedSoundForUpload.rawVideoUrl || (soundSourceId && profileVideosData[soundSourceId]?.url) || '')
+            const audioTrimStart = Math.max(0, Number((Number(studioEditState.audioTrimStart) || 0).toFixed(2)));
+            const audioTrimEnd = Math.max(0, Number((Number(studioEditState.audioTrimEnd) || 0).toFixed(2)));
+            const audioStartOffset = Math.max(0, Number((Number(studioEditState.audioStartOffset) || 0).toFixed(2)));
+
+            let baseUploadSoundUrl = selectedSoundForUpload
+                ? (selectedSoundForUpload.rawVideoUrl || selectedSoundForUpload.audioUrl || (soundSourceId && profileVideosData[soundSourceId]?.url) || '')
                 : '';
 
             const origVolNum = Number(studioEditState.originalVolume ?? 100);
@@ -12869,9 +13462,12 @@
                 stickerX: Number.isFinite(Number(studioEditState.stickerX)) ? Number(studioEditState.stickerX) : 22,
                 stickerY: Number.isFinite(Number(studioEditState.stickerY)) ? Number(studioEditState.stickerY) : 72,
                 stickerScale: Number.isFinite(Number(studioEditState.stickerScale)) ? Number(studioEditState.stickerScale) : 1.0,
-                keepOriginalAudio: keepOrigChecked || (!resolvedUploadSoundUrl),
+                keepOriginalAudio: keepOrigChecked || (!baseUploadSoundUrl && !(selectedSoundForUpload && selectedSoundForUpload.customFile)),
                 originalVolume: origVolNum,
                 musicVolume: musicVolNum,
+                audioTrimStart: audioTrimStart,
+                audioTrimEnd: audioTrimEnd,
+                audioStartOffset: audioStartOffset,
                 deletedRanges: studioTrimState.deletedRanges || []
             };
 
@@ -12914,6 +13510,13 @@
                 const isFypAllowed = audit.passed && audit.fypEligible && !strikeState.shadowbanned;
                 const causedSanctionFlag = !audit.passed;
                 document.getElementById('upload-status').innerText = "Téléversement et rendu R-Studio en cours...";
+                if (selectedSoundForUpload && selectedSoundForUpload.customFile) {
+                    const uploadedAudioCloudUrl = await uploadToCloudinary(selectedSoundForUpload.customFile);
+                    if (uploadedAudioCloudUrl) baseUploadSoundUrl = uploadedAudioCloudUrl;
+                }
+                const resolvedUploadSoundUrl = baseUploadSoundUrl
+                    ? (extractPlayableAudioUrlsFromMediaUrl(baseUploadSoundUrl, audioTrimStart, audioTrimEnd).networkPrimary || baseUploadSoundUrl)
+                    : '';
                 const rawUploadedUrl = await uploadToCloudinary(f);
                 const hasRealTrimOnUpload = (trimStart > 0.05) || (trimEnd > trimStart + 0.15 && studioTrimState && studioTrimState.duration && trimEnd < studioTrimState.duration - 0.15);
                 const url = hasRealTrimOnUpload ? applyCloudinaryTrimOnlyUrl(rawUploadedUrl, trimStart, trimEnd) : rawUploadedUrl;
@@ -14765,7 +15368,7 @@
             const canManage = !!(auth.currentUser && (data.userId === auth.currentUser.uid || (currentUserData && currentUserData.email === VIP_EMAIL)));
 
             const html = `
-            <div class="video-card w-full h-full relative bg-black flex items-center justify-center" data-id="${id}" data-src="${rawUrl}" data-raw-url="${escapeHtml(data.url || '')}" data-trim-start="${data.trimStart || 0}" data-trim-end="${data.trimEnd || 0}" data-deleted-ranges="${escapeHtml(JSON.stringify(data.studioConfig?.deletedRanges || []))}" data-sound-url="${escapeHtml(data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url) || '')}" data-orig-vol="${escapeHtml(String(data.studioConfig?.originalVolume ?? 100))}" data-music-vol="${escapeHtml(String(data.studioConfig?.musicVolume ?? 100))}" data-keep-orig-audio="${escapeHtml(String(data.studioConfig?.keepOriginalAudio !== false))}" data-muted-video="${(!((data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url)) && String(data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url)).trim()) && (data.studioConfig?.keepOriginalAudio === false || data.muted === true || data.hasAudio === false)) ? 'true' : 'false'}" data-in-view="true">
+            <div class="video-card w-full h-full relative bg-black flex items-center justify-center" data-id="${id}" data-src="${rawUrl}" data-raw-url="${escapeHtml(data.url || '')}" data-trim-start="${data.trimStart || 0}" data-trim-end="${data.trimEnd || 0}" data-audio-trim-start="${data.studioConfig?.audioTrimStart || 0}" data-audio-trim-end="${data.studioConfig?.audioTrimEnd || 0}" data-audio-offset="${data.studioConfig?.audioStartOffset || 0}" data-deleted-ranges="${escapeHtml(JSON.stringify(data.studioConfig?.deletedRanges || []))}" data-sound-url="${escapeHtml(data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url) || '')}" data-orig-vol="${escapeHtml(String(data.studioConfig?.originalVolume ?? 100))}" data-music-vol="${escapeHtml(String(data.studioConfig?.musicVolume ?? 100))}" data-keep-orig-audio="${escapeHtml(String(data.studioConfig?.keepOriginalAudio !== false))}" data-muted-video="${(!((data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url)) && String(data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url)).trim()) && (data.studioConfig?.keepOriginalAudio === false || data.muted === true || data.hasAudio === false)) ? 'true' : 'false'}" data-in-view="true">
                 <video id="fullscreen-active-video" class="w-full h-full ${fitClass} ${ data.studioConfig?.filterPreset || '' }" style="${ data.studioConfig?.customFilterCss ? 'filter:' + escapeHtml(data.studioConfig.customFilterCss) + ';' : '' }${ data.studioConfig?.transformCss ? 'transform:' + escapeHtml(data.studioConfig.transformCss) + ';' : '' }" muted playsinline webkit-playsinline preload="auto" src="${cachedUrl}"></video>
                 ${ data.studioConfig?.overlayText ? `<div class="rv-video-text-overlay absolute z-20 pointer-events-none text-center max-w-[85%] px-3.5 py-1.5 studio-text-banner-${ escapeHtml(data.studioConfig.overlayStyle || 'glass') } text-sm" style="--rv-overlay-text-color:${ escapeHtml(data.studioConfig.overlayColor || '#ffffff') };color:${ escapeHtml(data.studioConfig.overlayColor || '#ffffff') } !important;left:${ Number.isFinite(Number(data.studioConfig.overlayX)) ? Number(data.studioConfig.overlayX) : 50 }%;top:${ Number.isFinite(Number(data.studioConfig.overlayY)) ? Number(data.studioConfig.overlayY) : (data.studioConfig.overlayPos === 'top' ? 16 : (data.studioConfig.overlayPos === 'bottom' ? 76 : 50)) }%;transform:translate3d(-50%,-50%,0) scale(${ Number.isFinite(Number(data.studioConfig.overlayScale)) ? Number(data.studioConfig.overlayScale) : 1 });transform-origin:center center;">${ escapeHtml(data.studioConfig.overlayText) }</div>` : '' }
                 ${ data.studioConfig?.overlaySticker ? `<div class="absolute z-20 pointer-events-none text-4xl drop-shadow-xl" style="left:${ Number.isFinite(Number(data.studioConfig.stickerX)) ? Number(data.studioConfig.stickerX) : 78 }%;top:${ Number.isFinite(Number(data.studioConfig.stickerY)) ? Number(data.studioConfig.stickerY) : 22 }%;transform:translate3d(-50%,-50%,0) scale(${ Number.isFinite(Number(data.studioConfig.stickerScale)) ? Number(data.studioConfig.stickerScale) : 1 });transform-origin:center center;">${ escapeHtml(data.studioConfig.overlaySticker) }</div>` : '' }
@@ -14829,9 +15432,10 @@
                         <h3 class="font-bold font-display text-[14px] text-white text-shadow flex items-center cursor-pointer tracking-tight" onclick="viewUserProfile('${data.userId}'); closeFullVideo()">@${escapeHtml(String(data.username || 'utilisateur').replace(/^@+/, ''))}${badge}</h3>
                     </div>
                     <p class="video-desc-text text-[12px] leading-snug text-white/90 text-shadow line-clamp-2 pointer-events-auto">${formatDescription(escapeHtml(data.description))}</p>
-                    <div onclick="openSoundSheet('${id}', event)" class="flex items-center gap-1.5 text-[11px] font-medium text-white/85 pointer-events-auto cursor-pointer hover:text-cyan-300 transition text-shadow">
-                        <i data-lucide="music" class="w-3 h-3 shrink-0 text-white/80"></i>
-                        <span class="truncate max-w-[210px]">Contient : ${soundLabel}</span>
+                    <div onclick="openSoundSheet('${id}', event)" class="flex items-center gap-1.5 text-[11px] font-medium text-white/85 pointer-events-auto cursor-pointer hover:text-cyan-300 transition text-shadow w-full">
+                        <svg class="w-3 h-3 shrink-0 text-white/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                        <span class="truncate max-w-[185px] sm:max-w-[320px]">Contient : ${soundLabel}</span>
+                        <button type="button" onclick="useVideoSoundDirectly('${id}', event)" class="text-[9.5px] px-2.5 py-0.5 rounded-full bg-[#ff2a5f]/90 hover:bg-[#ff2a5f] border border-white/25 text-white font-extrabold shrink-0 shadow active:scale-95 transition">Utiliser ce son</button>
                     </div>
                 </div>
             </div>`; 
