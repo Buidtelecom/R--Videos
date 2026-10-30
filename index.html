@@ -801,11 +801,17 @@
         }
         .studio-text-banner-impact {
             background: #ff2a5f;
-            color: #ffffff !important;
+            color: #ffffff;
             padding: 5px 14px;
             border-radius: 8px;
             font-weight: 900;
             box-shadow: 0 6px 20px rgba(255, 42, 95, 0.5);
+        }
+        #studio-live-text-overlay,
+        #story-creator-live-text,
+        #story-viewer-text-content,
+        .rv-video-text-overlay {
+            color: var(--rv-overlay-text-color, #ffffff) !important;
         }
         @keyframes recPulse {
             0%, 100% { transform: scale(1); opacity: 1; }
@@ -2113,8 +2119,8 @@
             transition: width 0.08s linear;
         }
         body.light-theme #story-viewer-modal,
-        body.light-theme #story-viewer-modal :is(span, div, h3, p, button, i, svg),
-        body.light-theme #story-creator-canvas :is(span, div, p, button, i, svg) {
+        body.light-theme #story-viewer-modal :is(span, div, h3, p, button, i, svg):not(#story-viewer-text-content),
+        body.light-theme #story-creator-canvas :is(span, div, p, button, i, svg):not(#story-creator-live-text) {
             color: #ffffff !important;
         }
         body.light-theme #story-creator-modal > div {
@@ -3072,10 +3078,34 @@
                             <option value="cover">Plein écran 9:16</option>
                         </select>
                     </div>
+                    <div class="p-2.5 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center gap-3">
+                        <div class="w-16 aspect-[3/4] rounded-xl overflow-hidden bg-[#0c1222] border border-white/15 relative shrink-0 shadow-md">
+                            <img id="universal-edit-cover-preview-img" src="" alt="Couverture" class="w-full h-full object-cover">
+                            <video id="universal-edit-cover-preview-vid" class="w-full h-full object-cover hidden" muted playsinline preload="metadata"></video>
+                        </div>
+                        <div class="flex-1 min-w-0 space-y-1.5">
+                            <div class="flex justify-between items-center">
+                                <label class="text-[11px] text-gray-200 font-bold flex items-center gap-1">
+                                    <i data-lucide="image" class="w-3.5 h-3.5 text-amber-400"></i> Couverture (Miniature)
+                                </label>
+                                <span id="universal-edit-cover-time-badge" class="text-[10px] text-amber-300 font-bold">0.0s</span>
+                            </div>
+                            <input type="range" id="universal-edit-cover-slider" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer" min="0" max="30" value="0" step="0.1">
+                            <div class="flex items-center gap-1.5 pt-0.5 flex-wrap">
+                                <input type="file" id="universal-edit-cover-file" accept="image/*" class="hidden" onchange="handleUniversalEditCoverFile(this)">
+                                <button type="button" onclick="document.getElementById('universal-edit-cover-file').click()" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 border border-white/10 text-[10px] font-semibold text-cyan-300 flex items-center gap-1 transition">
+                                    <i data-lucide="upload" class="w-3 h-3"></i> Choisir une photo
+                                </button>
+                                <button type="button" id="universal-edit-cover-reset-btn" onclick="resetUniversalEditCoverToSlider()" class="hidden px-2 py-1 rounded-lg bg-rose-500/15 border border-rose-500/30 text-[10px] font-semibold text-rose-300 transition">
+                                    Extrait vidéo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="flex gap-2.5 pt-1">
                     <button onclick="closeModal('universal-edit-modal')" class="flex-1 py-2.5 bg-white/10 rounded-xl text-xs font-semibold">Annuler</button>
-                    <button onclick="saveUniversalEdit()" class="flex-1 py-2.5 bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-rose-600/30">Enregistrer</button>
+                    <button id="btn-save-universal-edit" onclick="saveUniversalEdit()" class="flex-1 py-2.5 bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-rose-600/30">Enregistrer</button>
                 </div>
             </div>
         </div>
@@ -3383,7 +3413,7 @@
                         <div id="studio-ring-light-overlay" class="absolute inset-0 pointer-events-none hidden studio-ring-light z-15"></div>
 
                         <!-- Draggable & Zoomable Text Overlay on Preview ("Bonjour" style from reference image) -->
-                        <div id="studio-live-text-overlay" class="hidden absolute z-25 cursor-grab active:cursor-grabbing select-none text-center max-w-[88%] px-3 py-1.5 studio-text-banner-glass text-white text-sm" style="left:50%;top:50%;transform:translate3d(-50%,-50%,0) scale(1);touch-action:none;" title="Glisser avec la main pour déplacer • Pincer à 2 doigts ou utiliser la barre pour zoomer/dézoomer"></div>
+                        <div id="studio-live-text-overlay" class="hidden absolute z-25 cursor-grab active:cursor-grabbing select-none text-center max-w-[88%] px-3 py-1.5 studio-text-banner-glass text-sm" style="--rv-overlay-text-color:#ffffff;color:#ffffff !important;left:50%;top:50%;transform:translate3d(-50%,-50%,0) scale(1);touch-action:none;" title="Glisser avec la main pour déplacer • Pincer à 2 doigts ou utiliser la barre pour zoomer/dézoomer"></div>
 
                         <!-- Draggable & Zoomable Sticker Overlay on Preview ("😘" style from reference image) -->
                         <div id="studio-live-sticker-overlay" class="hidden absolute z-25 cursor-grab active:cursor-grabbing select-none text-4xl drop-shadow-xl" style="left:22%;top:72%;transform:translate3d(-50%,-50%,0) scale(1);touch-action:none;" title="Glisser avec la main pour déplacer • Pincer à 2 doigts ou utiliser la barre pour zoomer/dézoomer"></div>
@@ -3765,11 +3795,14 @@
                                             <button type="button" onclick="setStudioTextStyle('impact')" class="px-2.5 py-1 rounded-lg bg-[#ff2a5f] text-[10px] font-bold text-white">Impact</button>
                                         </div>
                                         <div class="flex items-center gap-1.5">
-                                            <button type="button" onclick="setStudioTextColor('#ffffff')" class="w-5 h-5 rounded-full bg-white border border-gray-500"></button>
-                                            <button type="button" onclick="setStudioTextColor('#ff2a5f')" class="w-5 h-5 rounded-full bg-[#ff2a5f]"></button>
-                                            <button type="button" onclick="setStudioTextColor('#06b6d4')" class="w-5 h-5 rounded-full bg-cyan-400"></button>
-                                            <button type="button" onclick="setStudioTextColor('#facc15')" class="w-5 h-5 rounded-full bg-yellow-400"></button>
-                                            <button type="button" onclick="setStudioTextColor('#10b981')" class="w-5 h-5 rounded-full bg-emerald-400"></button>
+                                            <button type="button" data-studio-color="#ffffff" onclick="setStudioTextColor('#ffffff')" class="studio-color-swatch w-5 h-5 rounded-full bg-white border-2 border-cyan-400 ring-2 ring-cyan-400/50 scale-110 transition" title="Blanc (par défaut)"></button>
+                                            <button type="button" data-studio-color="#ff2a5f" onclick="setStudioTextColor('#ff2a5f')" class="studio-color-swatch w-5 h-5 rounded-full bg-[#ff2a5f] border border-white/20 transition" title="Rose Corail"></button>
+                                            <button type="button" data-studio-color="#06b6d4" onclick="setStudioTextColor('#06b6d4')" class="studio-color-swatch w-5 h-5 rounded-full bg-cyan-400 border border-white/20 transition" title="Cyan"></button>
+                                            <button type="button" data-studio-color="#facc15" onclick="setStudioTextColor('#facc15')" class="studio-color-swatch w-5 h-5 rounded-full bg-yellow-400 border border-white/20 transition" title="Jaune"></button>
+                                            <button type="button" data-studio-color="#10b981" onclick="setStudioTextColor('#10b981')" class="studio-color-swatch w-5 h-5 rounded-full bg-emerald-400 border border-white/20 transition" title="Vert"></button>
+                                            <button type="button" data-studio-color="#a855f7" onclick="setStudioTextColor('#a855f7')" class="studio-color-swatch w-5 h-5 rounded-full bg-purple-500 border border-white/20 transition" title="Violet"></button>
+                                            <button type="button" data-studio-color="#000000" onclick="setStudioTextColor('#000000')" class="studio-color-swatch w-5 h-5 rounded-full bg-black border border-white/40 transition" title="Noir"></button>
+                                            <input type="color" id="studio-text-color-picker" value="#ffffff" oninput="setStudioTextColor(this.value)" class="w-5 h-5 rounded-full cursor-pointer bg-transparent border-0 p-0" title="Choisir une couleur personnalisée">
                                         </div>
                                     </div>
                                     <div class="flex items-center justify-between pt-1 border-t border-white/10">
@@ -4332,7 +4365,7 @@
                     </div>
 
                     <!-- Live Text Overlay on Story Canvas -->
-                    <div id="story-creator-live-text" class="relative z-20 max-w-[88%] px-4 py-2.5 text-center break-words studio-text-banner-glass text-white text-lg font-extrabold shadow-2xl pointer-events-none">
+                    <div id="story-creator-live-text" class="relative z-20 max-w-[88%] px-4 py-2.5 text-center break-words studio-text-banner-glass text-lg font-extrabold shadow-2xl pointer-events-none" style="--rv-overlay-text-color:#ffffff;color:#ffffff !important;">
                         Tape ton texte de Story ici ✨
                     </div>
 
@@ -4378,11 +4411,14 @@
                             <button type="button" onclick="setStoryTextStyle('impact')" class="px-2 py-1 rounded-lg bg-[#ff2a5f] text-[10px] font-bold text-white">Impact</button>
                         </div>
                         <div class="flex items-center gap-1.5">
-                            <button type="button" onclick="setStoryTextColor('#ffffff')" class="w-5 h-5 rounded-full bg-white border border-gray-500"></button>
-                            <button type="button" onclick="setStoryTextColor('#ff2a5f')" class="w-5 h-5 rounded-full bg-[#ff2a5f]"></button>
-                            <button type="button" onclick="setStoryTextColor('#06b6d4')" class="w-5 h-5 rounded-full bg-cyan-400"></button>
-                            <button type="button" onclick="setStoryTextColor('#facc15')" class="w-5 h-5 rounded-full bg-yellow-400"></button>
-                            <button type="button" onclick="setStoryTextColor('#10b981')" class="w-5 h-5 rounded-full bg-emerald-400"></button>
+                            <button type="button" data-story-color="#ffffff" onclick="setStoryTextColor('#ffffff')" class="story-color-swatch w-5 h-5 rounded-full bg-white border-2 border-cyan-400 ring-2 ring-cyan-400/50 scale-110 transition" title="Blanc (par défaut)"></button>
+                            <button type="button" data-story-color="#ff2a5f" onclick="setStoryTextColor('#ff2a5f')" class="story-color-swatch w-5 h-5 rounded-full bg-[#ff2a5f] border border-white/20 transition" title="Rose Corail"></button>
+                            <button type="button" data-story-color="#06b6d4" onclick="setStoryTextColor('#06b6d4')" class="story-color-swatch w-5 h-5 rounded-full bg-cyan-400 border border-white/20 transition" title="Cyan"></button>
+                            <button type="button" data-story-color="#facc15" onclick="setStoryTextColor('#facc15')" class="story-color-swatch w-5 h-5 rounded-full bg-yellow-400 border border-white/20 transition" title="Jaune"></button>
+                            <button type="button" data-story-color="#10b981" onclick="setStoryTextColor('#10b981')" class="story-color-swatch w-5 h-5 rounded-full bg-emerald-400 border border-white/20 transition" title="Vert"></button>
+                            <button type="button" data-story-color="#a855f7" onclick="setStoryTextColor('#a855f7')" class="story-color-swatch w-5 h-5 rounded-full bg-purple-500 border border-white/20 transition" title="Violet"></button>
+                            <button type="button" data-story-color="#000000" onclick="setStoryTextColor('#000000')" class="story-color-swatch w-5 h-5 rounded-full bg-black border border-white/40 transition" title="Noir"></button>
+                            <input type="color" id="story-text-color-picker" value="#ffffff" oninput="setStoryTextColor(this.value)" class="w-5 h-5 rounded-full cursor-pointer bg-transparent border-0 p-0" title="Choisir une couleur personnalisée">
                         </div>
                     </div>
 
@@ -4449,7 +4485,7 @@
                 <div id="story-viewer-stage" class="absolute inset-0 z-10 flex items-center justify-center overflow-hidden bg-black">
                     <img id="story-viewer-img" class="hidden w-full h-full object-contain" alt="Story">
                     <video id="story-viewer-video" class="hidden w-full h-full object-contain" playsinline></video>
-                    <div id="story-viewer-text-content" class="hidden relative z-20 max-w-[88%] px-5 py-3 text-center break-words text-white text-xl font-extrabold shadow-2xl pointer-events-none"></div>
+                    <div id="story-viewer-text-content" class="hidden relative z-20 max-w-[88%] px-5 py-3 text-center break-words text-xl font-extrabold shadow-2xl pointer-events-none" style="--rv-overlay-text-color:#ffffff;color:#ffffff !important;"></div>
                 </div>
 
                 <!-- Left / Right Navigation Tap Zones -->
@@ -5051,6 +5087,77 @@
             pf.style.transform = `scaleX(${clamped})`;
         }
 
+        function stripCloudinaryTrimFromUrl(url) {
+            if (!url || typeof url !== "string") return "";
+            return url
+                .replace(/\/upload\/(?:so_[\d.]+,?|eo_[\d.]+,?|f_mp4,?)+\//i, "/upload/")
+                .replace(/([,/])so_[\d.]+/gi, "$1")
+                .replace(/([,/])eo_[\d.]+/gi, "$1")
+                .replace(/\/upload\/,+/i, "/upload/")
+                .replace(/,+/g, ",")
+                .replace(/,\//g, "/");
+        }
+
+        function applyCloudinaryTrimOnlyUrl(url, trimStart = 0, trimEnd = 0) {
+            if (!url || typeof url !== "string") return "";
+            if (!url.includes("cloudinary.com") || !url.includes("/upload/")) return url;
+            const baseClean = stripCloudinaryTrimFromUrl(url);
+            const cleanStart = Math.max(0, Number(trimStart) || 0);
+            const cleanEnd = Math.max(0, Number(trimEnd) || 0);
+            const parts = [];
+            if (cleanStart > 0.05) parts.push(`so_${Number(cleanStart.toFixed(2))}`);
+            if (cleanEnd > cleanStart + 0.15 && cleanEnd < 9999) parts.push(`eo_${Number(cleanEnd.toFixed(2))}`);
+            if (parts.length === 0) return baseClean;
+            return baseClean
+                .replace("/upload/", `/upload/${parts.join(",")},f_mp4/`)
+                .replace(/\.(webm|mov|mkv|avi)(\?.*)?$/i, ".mp4$2");
+        }
+
+        function getCardTrimBounds(cardEl) {
+            const trimStart = Math.max(0, parseFloat((cardEl && cardEl.getAttribute("data-trim-start")) || "0") || 0);
+            const trimEnd = Math.max(0, parseFloat((cardEl && cardEl.getAttribute("data-trim-end")) || "0") || 0);
+            const hasStartTrim = trimStart > 0.05;
+            const hasEndTrim = trimEnd > trimStart + 0.15 && trimEnd < 9999;
+            const hasTrim = hasStartTrim || hasEndTrim;
+            const expectedTrimDur = hasEndTrim ? (trimEnd - trimStart) : 0;
+            return { trimStart, trimEnd, hasStartTrim, hasEndTrim, hasTrim, expectedTrimDur };
+        }
+
+        function isVideoElementServerTrimmed(v, cardEl) {
+            if (!v || !cardEl) return true;
+            const { hasTrim, expectedTrimDur } = getCardTrimBounds(cardEl);
+            if (!hasTrim) return true;
+            if (expectedTrimDur > 0 && v.duration && isFinite(v.duration) && v.duration > 0) {
+                return v.duration <= expectedTrimDur + 0.85;
+            }
+            const vSrc = v.currentSrc || v.src || "";
+            return /[,/]so_[\d.]+|[,/]eo_[\d.]+/.test(vSrc) && v.dataset.triedRawFallback !== "true";
+        }
+
+        function getEffectiveVideoStartTime(v, cardEl) {
+            const { trimStart, hasStartTrim } = getCardTrimBounds(cardEl);
+            if (!hasStartTrim) return 0;
+            return isVideoElementServerTrimmed(v, cardEl) ? 0 : trimStart;
+        }
+
+        function computeSyncedAudioTimeForVideo(v, audioEl, cardEl) {
+            const vTime = (v && v.currentTime) || 0;
+            if (!v || !audioEl || !cardEl) return vTime;
+            const hasAttachedSound = !!(cardEl.getAttribute("data-sound-url") && cardEl.getAttribute("data-sound-url").trim().length > 0);
+            const { trimStart, hasStartTrim, expectedTrimDur } = getCardTrimBounds(cardEl);
+            const vIsServerTrimmed = isVideoElementServerTrimmed(v, cardEl);
+            const relVideoPos = vIsServerTrimmed ? vTime : Math.max(0, vTime - trimStart);
+            if (hasAttachedSound && audioEl === rvMasterAudio) {
+                return relVideoPos;
+            }
+            if (!hasStartTrim) return relVideoPos;
+            const aSrc = audioEl.currentSrc || audioEl.src || "";
+            const aIsServerTrimmed = (expectedTrimDur > 0 && audioEl.duration && isFinite(audioEl.duration) && audioEl.duration > 0)
+                ? (audioEl.duration <= expectedTrimDur + 0.85)
+                : /[,/]so_[\d.]+/.test(aSrc);
+            return aIsServerTrimmed ? relVideoPos : (trimStart + relVideoPos);
+        }
+
         function extractPlayableAudioUrlsFromMediaUrl(mediaUrl, trimStart = 0, trimEnd = 0) {
             if (!mediaUrl) return { networkPrimary: "", fallback: "" };
             if (mediaUrl.startsWith("blob:")) {
@@ -5060,15 +5167,23 @@
                 if (/\/upload\/[^/]*f_mp3/i.test(mediaUrl) || mediaUrl.endsWith(".mp3")) {
                     return { networkPrimary: mediaUrl, fallback: mediaUrl };
                 }
-                let audioTrans = "f_mp3,q_auto:low";
-                if (trimStart > 0.5) {
-                    audioTrans += `,so_${trimStart}`;
-                    if (trimEnd > trimStart + 1 && trimEnd < 9999) audioTrans += `,eo_${trimEnd}`;
+                const baseClean = stripCloudinaryTrimFromUrl(mediaUrl);
+                const cleanStart = Math.max(0, Number(trimStart) || 0);
+                const cleanEnd = Math.max(0, Number(trimEnd) || 0);
+                const parts = [];
+                if (cleanStart > 0.05) {
+                    parts.push(`so_${Number(cleanStart.toFixed(2))}`);
                 }
-                const mp3Url = mediaUrl
+                if (cleanEnd > cleanStart + 0.15 && cleanEnd < 9999) {
+                    parts.push(`eo_${Number(cleanEnd.toFixed(2))}`);
+                }
+                const trimPrefix = parts.length > 0 ? parts.join(",") + "," : "";
+                const audioTrans = `${trimPrefix}f_mp3`;
+                const mp3Url = baseClean
                     .replace("/upload/", `/upload/${audioTrans}/`)
                     .replace(/\.(mp4|webm|mov|mkv|avi)(\?.*)?$/i, ".mp3$2");
-                return { networkPrimary: mp3Url, fallback: mediaUrl };
+                const trimmedFallbackUrl = applyCloudinaryTrimOnlyUrl(baseClean, cleanStart, cleanEnd);
+                return { networkPrimary: mp3Url, fallback: trimmedFallbackUrl };
             }
             return { networkPrimary: mediaUrl, fallback: mediaUrl };
         }
@@ -5245,7 +5360,7 @@
                 rvMasterAudio.addEventListener("canplay", function onVerifyWhenReady() {
                     if (v !== activePlayingVideo || isGlobalMuted) return;
                     if (rvMasterAudio.paused && !v.paused) {
-                        try { rvMasterAudio.currentTime = v.currentTime || 0; } catch (e) {}
+                        try { rvMasterAudio.currentTime = computeSyncedAudioTimeForVideo(v, rvMasterAudio, cardEl || v.closest('.video-card')); } catch (e) {}
                         rvMasterAudio.playbackRate = currentPlaybackRate;
                         rvMasterAudio.play().then(() => {
                             rvMasterAudio.dataset.autoplayBlocked = "false";
@@ -5292,7 +5407,7 @@
                                 return;
                             }
                             if (activePlayingVideo && !activePlayingVideo.paused && !isGlobalMuted) {
-                                try { rvMasterAudio.currentTime = activePlayingVideo.currentTime || 0; } catch (e) {}
+                                try { rvMasterAudio.currentTime = computeSyncedAudioTimeForVideo(activePlayingVideo, rvMasterAudio, activePlayingVideo.closest('.video-card')); } catch (e) {}
                                 rvMasterAudio.play().then(() => {
                                     rvMasterAudio.dataset.autoplayBlocked = "false";
                                     updateTopMuteButtonUI(false);
@@ -5418,15 +5533,17 @@
             if (isOutsideFeedAudioBlocked()) { stopMasterAudio(); return; }
             if (!v || !rvMasterAudio || isGlobalMuted || rvMasterAudio.dataset.noAudioTrack === "true") return;
             if (v !== activePlayingVideo || v.paused || rvMasterAudio.paused) return;
-            const vTime = v.currentTime || 0;
+            const cardEl = v.closest(".video-card");
+            const expectedMasterTime = computeSyncedAudioTimeForVideo(v, rvMasterAudio, cardEl);
             const aTime = rvMasterAudio.currentTime || 0;
-            if (Math.abs(aTime - vTime) > 0.09) {
-                try { rvMasterAudio.currentTime = vTime; } catch (e) {}
+            if (Math.abs(aTime - expectedMasterTime) > 0.09) {
+                try { rvMasterAudio.currentTime = expectedMasterTime; } catch (e) {}
             }
             if (rvBgMusicAudio && rvBgMusicAudio.dataset.activeDual === "true" && !rvBgMusicAudio.paused) {
+                const expectedBgTime = computeSyncedAudioTimeForVideo(v, rvBgMusicAudio, cardEl);
                 const bgTime = rvBgMusicAudio.currentTime || 0;
-                if (Math.abs(bgTime - vTime) > 0.12) {
-                    try { rvBgMusicAudio.currentTime = vTime; } catch (e) {}
+                if (Math.abs(bgTime - expectedBgTime) > 0.12) {
+                    try { rvBgMusicAudio.currentTime = expectedBgTime; } catch (e) {}
                 }
             }
         }
@@ -5447,15 +5564,39 @@
             if (v.dataset.hwBound === "true") return;
             v.dataset.hwBound = "true";
 
-            // Automatic fallback to raw original URL if transformed URL ever encounters a format error
+            // Enforce trimStart immediately when metadata loads if stream is not server-trimmed
+            v.addEventListener("loadedmetadata", () => {
+                const activeCard = cardEl || v.closest(".video-card");
+                if (!activeCard) return;
+                const targetStart = getEffectiveVideoStartTime(v, activeCard);
+                if (targetStart > 0.05 && v.currentTime < targetStart - 0.05) {
+                    try { v.currentTime = targetStart; } catch (e) {}
+                }
+            });
+
+            // Automatic fallback to trimmed URL (or raw fallback seeked to trimStart) if transformed URL encounters an error
             v.addEventListener("error", () => {
-                const rawFallback = cardEl ? cardEl.getAttribute("data-raw-url") : null;
-                if (rawFallback && v.src !== rawFallback && v.dataset.triedRawFallback !== "true") {
-                    v.dataset.triedRawFallback = "true";
-                    v.src = rawFallback;
+                const activeCard = cardEl || v.closest(".video-card");
+                const rawFallback = activeCard ? activeCard.getAttribute("data-raw-url") : null;
+                if (!rawFallback) return;
+                const { trimStart, trimEnd } = getCardTrimBounds(activeCard);
+                const trimmedSimpleUrl = applyCloudinaryTrimOnlyUrl(rawFallback, trimStart, trimEnd);
+                if (trimmedSimpleUrl && v.src !== trimmedSimpleUrl && v.dataset.triedTrimSimpleFallback !== "true") {
+                    v.dataset.triedTrimSimpleFallback = "true";
+                    v.src = trimmedSimpleUrl;
                     v.load();
-                    if (v === activePlayingVideo && (!cardEl || cardEl.dataset.inView === "true") && (!cardEl || cardEl.dataset.userPaused !== "true")) {
-                        playVideoSynchronized(v, cardEl, false);
+                    if (v === activePlayingVideo && (!activeCard || activeCard.dataset.inView === "true") && (!activeCard || activeCard.dataset.userPaused !== "true")) {
+                        playVideoSynchronized(v, activeCard, true);
+                    }
+                    return;
+                }
+                const cleanRaw = stripCloudinaryTrimFromUrl(rawFallback) || rawFallback;
+                if (cleanRaw && v.src !== cleanRaw && v.dataset.triedRawFallback !== "true") {
+                    v.dataset.triedRawFallback = "true";
+                    v.src = cleanRaw;
+                    v.load();
+                    if (v === activePlayingVideo && (!activeCard || activeCard.dataset.inView === "true") && (!activeCard || activeCard.dataset.userPaused !== "true")) {
+                        playVideoSynchronized(v, activeCard, true);
                     }
                 }
             });
@@ -5479,7 +5620,7 @@
                         rvMasterAudio.dataset.pausedForNetBuffer = "false";
                         const startAudioNow = () => {
                             if (v !== activePlayingVideo || v.paused || isGlobalMuted) return;
-                            try { rvMasterAudio.currentTime = v.currentTime || 0; } catch (e) {}
+                            try { rvMasterAudio.currentTime = computeSyncedAudioTimeForVideo(v, rvMasterAudio, cardEl || v.closest('.video-card')); } catch (e) {}
                             rvMasterAudio.playbackRate = currentPlaybackRate;
                             rvMasterAudio.play().then(() => {
                                 rvMasterAudio.dataset.autoplayBlocked = "false";
@@ -5522,9 +5663,10 @@
             v.muted = true;
             v.loop = false;
             v.playbackRate = currentPlaybackRate;
-            try { v.currentTime = 0; } catch (e) {}
+            const targetVStart = getEffectiveVideoStartTime(v, cardEl);
+            try { v.currentTime = targetVStart; } catch (e) {}
             if (rvMasterAudio) {
-                try { rvMasterAudio.currentTime = 0; } catch (e) {}
+                try { rvMasterAudio.currentTime = computeSyncedAudioTimeForVideo(v, rvMasterAudio, cardEl); } catch (e) {}
             }
 
             v.play().then(() => {
@@ -5602,13 +5744,13 @@
                     const launchAudioNow = () => {
                         if (isOutsideFeedAudioBlocked() || activePlayingVideo !== v || v.paused || isGlobalMuted) { if (isOutsideFeedAudioBlocked()) stopMasterAudio(); return; }
                         const { hasAttachedSound, origGain, musicGain } = getCardVolumeConfig(cardEl);
-                        try { rvMasterAudio.currentTime = v.currentTime || 0; } catch (e) {}
+                        try { rvMasterAudio.currentTime = computeSyncedAudioTimeForVideo(v, rvMasterAudio, cardEl || v.closest('.video-card')); } catch (e) {}
                         rvMasterAudio.playbackRate = currentPlaybackRate;
                         rvMasterAudio.volume = hasAttachedSound ? Math.max(0.05, musicGain) : Math.max(0.05, origGain);
                         rvMasterAudio.play().then(() => {
                             rvMasterAudio.dataset.autoplayBlocked = "false";
                             if (rvBgMusicAudio && rvBgMusicAudio.dataset.activeDual === "true") {
-                                try { rvBgMusicAudio.currentTime = v.currentTime || 0; } catch (e) {}
+                                try { rvBgMusicAudio.currentTime = computeSyncedAudioTimeForVideo(v, rvBgMusicAudio, cardEl || v.closest('.video-card')); } catch (e) {}
                                 rvBgMusicAudio.volume = origGain;
                                 rvBgMusicAudio.playbackRate = currentPlaybackRate;
                                 rvBgMusicAudio.play().catch(() => {});
@@ -5632,8 +5774,12 @@
                     }
                 };
 
-                // Case 1: Resuming from a manual tap-pause mid-video (do not reset to 0)
+                // Case 1: Resuming from a manual tap-pause mid-video (ensure it never starts before effective trimStart)
                 if (!restartFromZero) {
+                    const minStart = getEffectiveVideoStartTime(v, cardEl);
+                    if (minStart > 0.05 && v.currentTime < minStart - 0.05) {
+                        try { v.currentTime = minStart; } catch (e) {}
+                    }
                     prepareMasterAudioTrack(v, cardEl, false);
                     v.dataset.launchComplete = "true";
                     v.play().then(() => {
@@ -5645,15 +5791,16 @@
                 // Case 2: First launch of a video card (make 1st play behave 100% identically to 2nd loop!)
                 v.dataset.launchComplete = "false";
                 if (!v.paused) v.pause();
-                if (v.readyState >= 1 && v.currentTime > 0.02) {
-                    try { v.currentTime = 0; } catch (e) {}
+                const initialTargetStart = getEffectiveVideoStartTime(v, cardEl);
+                if (v.readyState >= 1) {
+                    try { v.currentTime = initialTargetStart; } catch (e) {}
                 }
                 prepareMasterAudioTrack(v, cardEl, true);
-                v.lastTimeUpdatePos = 0;
+                v.lastTimeUpdatePos = initialTargetStart;
                 const cardHasNoAudio = isCardAudioUnavailable(v, cardEl);
                 updateTopMuteButtonUI(isGlobalMuted || cardHasNoAudio);
 
-                // If sound is currently muted OR this video has no audio enabled, start <video> immediately at 1.0x
+                // If sound is currently muted OR this video has no audio enabled, start <video> immediately at 1.0x from effective trimStart
                 if (isGlobalMuted || cardHasNoAudio) {
                     const startMutedOnly = () => {
                         if (activePlayingVideo !== v) return;
@@ -5661,6 +5808,10 @@
                         v.dataset.launchComplete = "true";
                         v.muted = true;
                         v.playbackRate = currentPlaybackRate;
+                        const tStart = getEffectiveVideoStartTime(v, cardEl);
+                        if (Math.abs((v.currentTime || 0) - tStart) > 0.08) {
+                            try { v.currentTime = tStart; } catch (e) {}
+                        }
                         updateTopMuteButtonUI(true);
                         v.play().catch(() => {});
                     };
@@ -5669,8 +5820,8 @@
                     return;
                 }
 
-                // Sound is active: Pre-warm <video>'s hardware MediaCodec at frame 0 while waiting for BOTH
-                // <video> and #rv-master-audio to be ready, then fire the exact same simultaneous 0.00s launch as Loop 2!
+                // Sound is active: Pre-warm <video>'s hardware MediaCodec at effective trimStart while waiting for BOTH
+                // <video> and #rv-master-audio to be ready, then fire the exact same simultaneous launch as Loop 2!
                 let launchedTogether = false;
                 let warmingDecoder = false;
 
@@ -5686,9 +5837,10 @@
                     v.muted = true;
                     v.loop = false;
                     v.playbackRate = currentPlaybackRate;
-                    try { v.currentTime = 0; } catch (e) {}
+                    const tStart = getEffectiveVideoStartTime(v, cardEl);
+                    try { v.currentTime = tStart; } catch (e) {}
                     if (rvMasterAudio) {
-                        try { rvMasterAudio.currentTime = 0; } catch (e) {}
+                        try { rvMasterAudio.currentTime = computeSyncedAudioTimeForVideo(v, rvMasterAudio, cardEl); } catch (e) {}
                         rvMasterAudio.playbackRate = currentPlaybackRate;
                         rvMasterAudio.volume = 0.85;
                     }
@@ -5702,14 +5854,18 @@
                     const videoReady = v.readyState >= 2;
                     const audioReady = !rvMasterAudio || rvMasterAudio.dataset.noAudioTrack === "true" || rvMasterAudio.readyState >= 2;
 
-                    // If video is ready before audio, prime the hardware MediaCodec decoder for 1 frame and hold at 0.00s
+                    // If video is ready before audio, prime the hardware MediaCodec decoder for 1 frame and hold at effective trimStart
                     if (videoReady && !audioReady && !warmingDecoder && v.dataset.decoderPrimed !== "true") {
                         warmingDecoder = true;
                         v.muted = true;
+                        const tStart = getEffectiveVideoStartTime(v, cardEl);
+                        if (Math.abs((v.currentTime || 0) - tStart) > 0.08) {
+                            try { v.currentTime = tStart; } catch (e) {}
+                        }
                         v.play().then(() => {
                             if (!launchedTogether && activePlayingVideo === v) {
                                 v.pause();
-                                try { v.currentTime = 0; } catch (e) {}
+                                try { v.currentTime = getEffectiveVideoStartTime(v, cardEl); } catch (e) {}
                                 v.dataset.decoderPrimed = "true";
                             }
                             warmingDecoder = false;
@@ -5812,7 +5968,7 @@
                     div.className = "bg-[#0c1222] aspect-[3/4] relative rounded-xl overflow-hidden border border-white/10 cursor-pointer group";
                     div.onclick = () => { closeSoundSheet(); openFullVideo(id); };
                     div.innerHTML = `
-                        <img src="${getVideoThumbnail(vid.url)}" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition">
+                        <img src="${escapeHtml(getVideoThumbnail(vid.url, (vid.thumbnailOffset !== undefined && Number(vid.thumbnailOffset) >= (Number(vid.trimStart) || 0)) ? vid.thumbnailOffset : (vid.trimStart || 0), vid.coverUrl || ''))}" data-fb="${escapeHtml(getVideoFallbackThumbnail(vid.url))}" onerror="if(this.dataset.fb && this.src!==this.dataset.fb){this.src=this.dataset.fb;}" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent"></div>
                         <div class="absolute bottom-1.5 left-2 right-2 flex items-center justify-between text-[10px] font-bold text-white">
                             <span class="flex items-center gap-1"><i data-lucide="play" class="w-3 h-3 fill-white"></i> ${formatCount(vid.views)}</span>
@@ -7472,13 +7628,24 @@
             const width = netConfig.width;
             const quality = netConfig.quality;
             if (url.includes("cloudinary.com") && url.includes("/upload/")) {
-                // H.264 Baseline Profile Level 3.0 (zero B-frames) + ac_none (strips unused audio from muted <video> for 30% faster load!)
-                let transformation = `${quality},f_mp4,vc_h264:baseline:3.0,ac_none,w_${width}`;
-                if (trimStart > 0.5) {
-                    transformation += `,so_${trimStart}`;
-                    if (trimEnd > trimStart + 1 && trimEnd < 9999) transformation += `,eo_${trimEnd}`;
+                const baseClean = stripCloudinaryTrimFromUrl(url);
+                const cleanStart = Math.max(0, Number(trimStart) || 0);
+                const cleanEnd = Math.max(0, Number(trimEnd) || 0);
+                const trimParts = [];
+                if (cleanStart > 0.05) {
+                    trimParts.push(`so_${Number(cleanStart.toFixed(2))}`);
                 }
-                let optimized = url.replace('/upload/', `/upload/${transformation}/`);
+                if (cleanEnd > cleanStart + 0.15 && cleanEnd < 9999) {
+                    trimParts.push(`eo_${Number(cleanEnd.toFixed(2))}`);
+                }
+                let transformation = "";
+                if (trimParts.length > 0) {
+                    // Put so_/eo_ first without vc_h264:baseline:3.0 so Cloudinary never rejects the trimmed stream on Loop 1
+                    transformation = `${trimParts.join(",")},${quality},f_mp4,w_${width}`;
+                } else {
+                    transformation = `${quality},f_mp4,vc_h264:baseline:3.0,ac_none,w_${width}`;
+                }
+                let optimized = baseClean.replace('/upload/', `/upload/${transformation}/`);
                 optimized = optimized.replace(/\.(webm|mov|mkv|avi)(\?.*)?$/i, '.mp4$2');
                 return optimized;
             }
@@ -7506,7 +7673,7 @@
                 prepareMasterAudioTrack(activePlayingVideo, cardEl, false);
                 const syncAndPlayAudio = () => {
                     if (isGlobalMuted || !activePlayingVideo || activePlayingVideo.paused) return;
-                    try { rvMasterAudio.currentTime = activePlayingVideo.currentTime || 0; } catch (e) {}
+                    try { rvMasterAudio.currentTime = computeSyncedAudioTimeForVideo(activePlayingVideo, rvMasterAudio, activePlayingVideo.closest('.video-card')); } catch (e) {}
                     rvMasterAudio.playbackRate = currentPlaybackRate;
                     rvMasterAudio.volume = 0.85;
                     rvMasterAudio.play().then(() => {
@@ -7643,12 +7810,36 @@
             }
         };
 
-        function getVideoThumbnail(url, offset) {
-            if (!url) return "";
-            if (url.includes("cloudinary.com")) {
-                const so = offset !== undefined ? offset : 0;
-                let newUrl = url.replace('/upload/', `/upload/w_240,q_auto:eco,f_jpg,so_${so}/`);
-                return newUrl.replace(/\.[^/.]+$/, ".jpg"); 
+        function getVideoThumbnail(url, offset, customCoverUrl = "") {
+            if (customCoverUrl && typeof customCoverUrl === "string" && customCoverUrl.trim().length > 0) {
+                return customCoverUrl.trim();
+            }
+            if (!url || typeof url !== "string") return "";
+            if (url.includes("cloudinary.com") && url.includes("/upload/")) {
+                if (url.includes("/image/upload/")) {
+                    return url;
+                }
+                const tempUrl = url.replace(/\/upload\/w_\d+,q_auto:[^/]+,f_jpg,so_[\d.]+\//i, "/upload/");
+                const trimSoMatch = tempUrl.match(/\/upload\/(?:[^/]*,)?so_([\d.]+)/i);
+                const embeddedTrimStart = trimSoMatch ? (parseFloat(trimSoMatch[1]) || 0) : 0;
+                const cleanBaseUrl = stripCloudinaryTrimFromUrl(tempUrl) || tempUrl;
+                let soVal = (offset !== undefined && offset !== null && Number.isFinite(Number(offset))) ? Number(offset) : 0;
+                if (soVal < embeddedTrimStart) {
+                    soVal = embeddedTrimStart;
+                }
+                soVal = Math.max(0, Number(soVal.toFixed(2)) || 0);
+                let newUrl = cleanBaseUrl.replace('/upload/', `/upload/w_320,q_auto:eco,f_jpg,so_${soVal}/`);
+                return newUrl.replace(/\.[^/.]+($|\?)/, ".jpg$1");
+            }
+            return url;
+        }
+
+        function getVideoFallbackThumbnail(url) {
+            if (!url || typeof url !== "string") return "";
+            if (url.includes("cloudinary.com") && url.includes("/upload/") && !url.includes("/image/upload/")) {
+                const tempUrl = url.replace(/\/upload\/w_\d+,q_auto:[^/]+,f_jpg,so_[\d.]+\//i, "/upload/");
+                const cleanBaseUrl = stripCloudinaryTrimFromUrl(tempUrl) || tempUrl;
+                return cleanBaseUrl.replace('/upload/', '/upload/w_320,q_auto:eco,f_jpg,so_0/').replace(/\.[^/.]+($|\?)/, ".jpg$1");
             }
             return url;
         }
@@ -7841,19 +8032,131 @@
             }
         };
 
+        window.handleUniversalEditCoverFile = (input) => {
+            if (!input || !input.files || !input.files[0] || !editContext || editContext.type !== 'video') return;
+            const file = input.files[0];
+            editContext.customCoverFile = file;
+            editContext.clearCustomCover = false;
+            const previewImg = document.getElementById('universal-edit-cover-preview-img');
+            const previewVid = document.getElementById('universal-edit-cover-preview-vid');
+            const badge = document.getElementById('universal-edit-cover-time-badge');
+            const resetBtn = document.getElementById('universal-edit-cover-reset-btn');
+            if (previewVid) previewVid.classList.add('hidden');
+            if (previewImg) {
+                previewImg.src = URL.createObjectURL(file);
+                previewImg.classList.remove('hidden');
+            }
+            if (badge) badge.innerText = "Photo perso";
+            if (resetBtn) resetBtn.classList.remove('hidden');
+        };
+
+        window.resetUniversalEditCoverToSlider = () => {
+            if (!editContext || editContext.type !== 'video') return;
+            editContext.customCoverFile = null;
+            editContext.clearCustomCover = true;
+            const fileInp = document.getElementById('universal-edit-cover-file');
+            if (fileInp) fileInp.value = "";
+            const resetBtn = document.getElementById('universal-edit-cover-reset-btn');
+            if (resetBtn) resetBtn.classList.add('hidden');
+            const slider = document.getElementById('universal-edit-cover-slider');
+            const val = slider ? (parseFloat(slider.value) || 0) : 0;
+            const badge = document.getElementById('universal-edit-cover-time-badge');
+            if (badge) badge.innerText = val.toFixed(1) + 's';
+            const previewImg = document.getElementById('universal-edit-cover-preview-img');
+            const previewVid = document.getElementById('universal-edit-cover-preview-vid');
+            if (previewVid) previewVid.classList.add('hidden');
+            if (previewImg && editContext.videoData) {
+                previewImg.src = getVideoThumbnail(editContext.videoData.url, val, "");
+                previewImg.classList.remove('hidden');
+            }
+        };
+
         window.openEditVideoModal = async (docId) => {
             if (!checkAuth()) return;
             const snap = await getDoc(doc(db, "videos", docId));
             if (!snap.exists()) return;
             const v = snap.data();
-            editContext = { type: 'video', id: docId };
+            const trimSoMatch = String(v.url || "").match(/\/upload\/(?:[^/]*,)?so_([\d.]+)/i);
+            const urlTrimStart = trimSoMatch ? (parseFloat(trimSoMatch[1]) || 0) : 0;
+            const trimEoMatch = String(v.url || "").match(/\/upload\/(?:[^/]*,)?eo_([\d.]+)/i);
+            const urlTrimEnd = trimEoMatch ? (parseFloat(trimEoMatch[1]) || 0) : 0;
+            const trimStart = Math.max(0, parseFloat(v.trimStart) || urlTrimStart || 0);
+            const trimEnd = Math.max(0, parseFloat(v.trimEnd) || urlTrimEnd || 0);
+            const initialOffset = (v.thumbnailOffset !== undefined && v.thumbnailOffset !== null && Number.isFinite(Number(v.thumbnailOffset)) && Number(v.thumbnailOffset) >= trimStart)
+                ? Number(v.thumbnailOffset)
+                : trimStart;
+
+            editContext = {
+                type: 'video',
+                id: docId,
+                videoData: v,
+                customCoverFile: null,
+                clearCustomCover: false
+            };
             document.getElementById('universal-edit-title').innerText = "Modifier la publication";
             document.getElementById('universal-edit-textarea').value = unescapeHtml(v.description || "");
             document.getElementById('universal-edit-location').value = unescapeHtml(v.location || "");
             document.getElementById('universal-edit-visibility').value = v.visibility || "public";
             document.getElementById('universal-edit-fit').value = v.aspectMode || "contain";
+
+            const fileInp = document.getElementById('universal-edit-cover-file');
+            if (fileInp) fileInp.value = "";
+            const slider = document.getElementById('universal-edit-cover-slider');
+            const badge = document.getElementById('universal-edit-cover-time-badge');
+            const previewImg = document.getElementById('universal-edit-cover-preview-img');
+            const previewVid = document.getElementById('universal-edit-cover-preview-vid');
+            const resetBtn = document.getElementById('universal-edit-cover-reset-btn');
+
+            if (slider) {
+                slider.min = Number(trimStart.toFixed(1));
+                slider.max = (trimEnd > trimStart) ? Number(trimEnd.toFixed(1)) : Math.max(Number((trimStart + 30).toFixed(1)), Number((initialOffset + 5).toFixed(1)));
+                slider.value = Number(initialOffset.toFixed(1));
+                slider.oninput = () => {
+                    const val = parseFloat(slider.value) || 0;
+                    editContext.customCoverFile = null;
+                    editContext.clearCustomCover = true;
+                    if (fileInp) fileInp.value = "";
+                    if (resetBtn) resetBtn.classList.add('hidden');
+                    if (badge) badge.innerText = val.toFixed(1) + 's';
+                    if (previewVid && previewVid.readyState >= 1) {
+                        previewVid.classList.remove('hidden');
+                        if (previewImg) previewImg.classList.add('hidden');
+                        try { previewVid.currentTime = val; } catch (e) {}
+                    } else if (previewImg) {
+                        previewImg.src = getVideoThumbnail(v.url, val, "");
+                    }
+                };
+                slider.onchange = () => {
+                    const val = parseFloat(slider.value) || 0;
+                    if (previewImg) {
+                        previewImg.src = getVideoThumbnail(v.url, val, "");
+                    }
+                };
+            }
+            if (badge) {
+                badge.innerText = (v.coverUrl && String(v.coverUrl).trim()) ? "Photo perso" : (initialOffset.toFixed(1) + 's');
+            }
+            if (resetBtn) {
+                resetBtn.classList.toggle('hidden', !(v.coverUrl && String(v.coverUrl).trim()));
+            }
+            if (previewImg) {
+                previewImg.src = getVideoThumbnail(v.url, initialOffset, v.coverUrl || "");
+                previewImg.classList.remove('hidden');
+            }
+            if (previewVid) {
+                previewVid.classList.add('hidden');
+                const cleanVidUrl = stripCloudinaryTrimFromUrl(v.url || "") || v.url || "";
+                previewVid.src = cleanVidUrl;
+                previewVid.onloadedmetadata = () => {
+                    if (slider && !(trimEnd > trimStart) && previewVid.duration && isFinite(previewVid.duration)) {
+                        slider.max = Math.max(trimStart + 0.5, Number(previewVid.duration.toFixed(1)));
+                    }
+                };
+            }
+
             document.getElementById('universal-edit-video-fields').classList.remove('hidden');
             document.getElementById('universal-edit-modal').classList.add('open');
+            if (window.lucide) lucide.createIcons();
         };
 
         window.openEditCommentModal = (vidId, commentId, currentText) => {
@@ -7877,16 +8180,32 @@
         window.saveUniversalEdit = async () => {
             if (!editContext) return;
             const newText = document.getElementById('universal-edit-textarea').value.trim();
+            const saveBtn = document.getElementById('btn-save-universal-edit');
+            const origBtnHtml = saveBtn ? saveBtn.innerHTML : "Enregistrer";
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = `<div class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`;
+            }
             try {
                 if (editContext.type === 'video') {
                     const loc = document.getElementById('universal-edit-location').value.trim();
                     const vis = document.getElementById('universal-edit-visibility').value;
                     const fit = document.getElementById('universal-edit-fit').value;
+                    const sliderEl = document.getElementById('universal-edit-cover-slider');
+                    const newThumbnailOffset = sliderEl ? Math.max(0, Number((parseFloat(sliderEl.value) || 0).toFixed(2))) : (editContext.videoData?.thumbnailOffset || 0);
+                    let nextCoverUrl = editContext.videoData?.coverUrl || "";
+                    if (editContext.customCoverFile) {
+                        nextCoverUrl = await uploadToCloudinary(editContext.customCoverFile);
+                    } else if (editContext.clearCustomCover) {
+                        nextCoverUrl = "";
+                    }
                     await updateDoc(doc(db, "videos", editContext.id), {
                         description: escapeHtml(newText),
                         location: escapeHtml(loc),
                         visibility: vis,
                         aspectMode: fit,
+                        thumbnailOffset: newThumbnailOffset,
+                        coverUrl: nextCoverUrl,
                         editedAt: serverTimestamp()
                     });
                     if (profileVideosData[editContext.id]) {
@@ -7894,16 +8213,20 @@
                         profileVideosData[editContext.id].location = escapeHtml(loc);
                         profileVideosData[editContext.id].visibility = vis;
                         profileVideosData[editContext.id].aspectMode = fit;
+                        profileVideosData[editContext.id].thumbnailOffset = newThumbnailOffset;
+                        profileVideosData[editContext.id].coverUrl = nextCoverUrl;
                     }
                     const fullOverlay = document.getElementById('fullscreen-video-overlay');
                     if (fullOverlay && !fullOverlay.classList.contains('hidden')) {
                         const activeCard = fullOverlay.querySelector(`.video-card[data-id="${editContext.id}"]`);
                         if (activeCard) openFullVideo(editContext.id);
                     }
-                    if (document.getElementById('profile-screen').classList.contains('active') && currentUserData) {
+                    if (currentProfileViewedData) {
+                        renderProfile(currentProfileViewedData, currentProfileViewedData.uid === auth.currentUser?.uid);
+                    } else if (currentUserData) {
                         renderProfile(currentUserData, true);
                     }
-                    showToast("Publication modifiée ✓", "success");
+                    showToast("Publication et couverture modifiées ✓", "success");
                     loadFeed();
                 } else if (editContext.type === 'comment') {
                     if (!newText) return;
@@ -7925,6 +8248,11 @@
                 closeModal('universal-edit-modal');
             } catch (e) {
                 showToast("Erreur modification: " + e.message, "error");
+            } finally {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = origBtnHtml;
+                }
             }
         };
 
@@ -9673,7 +10001,7 @@
                     
                     div.innerHTML = `
                         <video class="w-full h-full ${fitClass} ${ data.studioConfig?.filterPreset || vfxClass } pointer-events-none bg-black" style="${ data.studioConfig?.customFilterCss ? 'filter:' + escapeHtml(data.studioConfig.customFilterCss) + ';' : '' }${ data.studioConfig?.transformCss ? 'transform:' + escapeHtml(data.studioConfig.transformCss) + ';' : '' }" muted playsinline webkit-playsinline preload="none"></video>
-                        ${ data.studioConfig?.overlayText ? `<div class="absolute z-20 pointer-events-none text-center max-w-[85%] px-3.5 py-1.5 studio-text-banner-${ escapeHtml(data.studioConfig.overlayStyle || 'glass') } text-sm" style="color:${ escapeHtml(data.studioConfig.overlayColor || '#ffffff') };left:${ Number.isFinite(Number(data.studioConfig.overlayX)) ? Number(data.studioConfig.overlayX) : 50 }%;top:${ Number.isFinite(Number(data.studioConfig.overlayY)) ? Number(data.studioConfig.overlayY) : (data.studioConfig.overlayPos === 'top' ? 16 : (data.studioConfig.overlayPos === 'bottom' ? 76 : 50)) }%;transform:translate3d(-50%,-50%,0) scale(${ Number.isFinite(Number(data.studioConfig.overlayScale)) ? Number(data.studioConfig.overlayScale) : 1 });transform-origin:center center;">${ escapeHtml(data.studioConfig.overlayText) }</div>` : '' }
+                        ${ data.studioConfig?.overlayText ? `<div class="rv-video-text-overlay absolute z-20 pointer-events-none text-center max-w-[85%] px-3.5 py-1.5 studio-text-banner-${ escapeHtml(data.studioConfig.overlayStyle || 'glass') } text-sm" style="--rv-overlay-text-color:${ escapeHtml(data.studioConfig.overlayColor || '#ffffff') };color:${ escapeHtml(data.studioConfig.overlayColor || '#ffffff') } !important;left:${ Number.isFinite(Number(data.studioConfig.overlayX)) ? Number(data.studioConfig.overlayX) : 50 }%;top:${ Number.isFinite(Number(data.studioConfig.overlayY)) ? Number(data.studioConfig.overlayY) : (data.studioConfig.overlayPos === 'top' ? 16 : (data.studioConfig.overlayPos === 'bottom' ? 76 : 50)) }%;transform:translate3d(-50%,-50%,0) scale(${ Number.isFinite(Number(data.studioConfig.overlayScale)) ? Number(data.studioConfig.overlayScale) : 1 });transform-origin:center center;">${ escapeHtml(data.studioConfig.overlayText) }</div>` : '' }
                         ${ data.studioConfig?.overlaySticker ? `<div class="absolute z-20 pointer-events-none text-4xl drop-shadow-xl" style="left:${ Number.isFinite(Number(data.studioConfig.stickerX)) ? Number(data.studioConfig.stickerX) : 78 }%;top:${ Number.isFinite(Number(data.studioConfig.stickerY)) ? Number(data.studioConfig.stickerY) : 22 }%;transform:translate3d(-50%,-50%,0) scale(${ Number.isFinite(Number(data.studioConfig.stickerScale)) ? Number(data.studioConfig.stickerScale) : 1 });transform-origin:center center;">${ escapeHtml(data.studioConfig.overlaySticker) }</div>` : '' }
                         <div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 opacity-0">
                             <div class="bg-black/45 rounded-full p-4 backdrop-blur-md border border-white/15 shadow-2xl">
@@ -9799,13 +10127,31 @@
                     let lastProgressUpdate = 0;
                     v.addEventListener('timeupdate', () => {
                         const cur = v.currentTime || 0;
+                        const { trimStart: cTrimStart, trimEnd: cTrimEnd, hasStartTrim, hasEndTrim } = getCardTrimBounds(div);
+                        const vIsServerTrimmed = isVideoElementServerTrimmed(v, div);
+                        if (!vIsServerTrimmed && hasStartTrim && cur < cTrimStart - 0.08) {
+                            try { v.currentTime = cTrimStart; } catch (e) {}
+                            if (v === activePlayingVideo && rvMasterAudio && !rvMasterAudio.paused) {
+                                try { rvMasterAudio.currentTime = computeSyncedAudioTimeForVideo(v, rvMasterAudio, div); } catch (e) {}
+                            }
+                            return;
+                        }
+                        if (!vIsServerTrimmed && hasEndTrim && cur >= cTrimEnd) {
+                            triggerBump();
+                            recordRVideosWatchSignal(docId, 'loop_complete', v);
+                            restartOrAdvanceVideo(v, div);
+                            return;
+                        }
                         if (cardDeletedRanges.length > 0) {
+                            const rangeOffset = vIsServerTrimmed ? cTrimStart : 0;
                             for (let rIdx = 0; rIdx < cardDeletedRanges.length; rIdx++) {
                                 const r = cardDeletedRanges[rIdx];
-                                if (cur >= r.start && cur < r.end - 0.05) {
-                                    try { v.currentTime = r.end; } catch (e) {}
+                                const adjStart = Math.max(0, (Number(r.start) || 0) - rangeOffset);
+                                const adjEnd = Math.max(0, (Number(r.end) || 0) - rangeOffset);
+                                if (adjEnd > adjStart + 0.05 && cur >= adjStart && cur < adjEnd - 0.05) {
+                                    try { v.currentTime = adjEnd; } catch (e) {}
                                     if (v === activePlayingVideo && rvMasterAudio && !rvMasterAudio.paused) {
-                                        try { rvMasterAudio.currentTime = r.end; } catch (e) {}
+                                        try { rvMasterAudio.currentTime = computeSyncedAudioTimeForVideo(v, rvMasterAudio, div); } catch (e) {}
                                     }
                                     return;
                                 }
@@ -10816,6 +11162,9 @@
             if (!inp || !banner) return;
             const txt = inp.value.trim();
             studioEditState.overlayText = txt;
+            const chosenColor = studioEditState.overlayColor || '#ffffff';
+            banner.style.setProperty('--rv-overlay-text-color', chosenColor);
+            banner.style.setProperty('color', chosenColor, 'important');
             if (!txt) {
                 banner.classList.add('hidden');
                 banner.innerText = '';
@@ -10825,7 +11174,6 @@
             banner.innerText = txt;
             banner.classList.remove('hidden', 'studio-text-banner-glass', 'studio-text-banner-neon', 'studio-text-banner-cinema', 'studio-text-banner-impact');
             banner.classList.add('studio-text-banner-' + (studioEditState.overlayStyle || 'glass'));
-            banner.style.color = studioEditState.overlayColor || '#ffffff';
             applyStudioOverlayTransformStyles();
             if (typeof window.syncTimelinePillsUI === 'function') window.syncTimelinePillsUI();
         };
@@ -10836,7 +11184,18 @@
         };
 
         window.setStudioTextColor = (color) => {
-            studioEditState.overlayColor = color;
+            const chosen = color || '#ffffff';
+            studioEditState.overlayColor = chosen;
+            const picker = document.getElementById('studio-text-color-picker');
+            if (picker && /^#[0-9a-fA-F]{6}$/.test(chosen)) picker.value = chosen;
+            document.querySelectorAll('.studio-color-swatch').forEach(btn => {
+                const isActive = (btn.getAttribute('data-studio-color') || '').toLowerCase() === chosen.toLowerCase();
+                btn.classList.toggle('border-2', isActive);
+                btn.classList.toggle('border-cyan-400', isActive);
+                btn.classList.toggle('ring-2', isActive);
+                btn.classList.toggle('ring-cyan-400/50', isActive);
+                btn.classList.toggle('scale-110', isActive);
+            });
             window.updateStudioOverlayPreview();
         };
 
@@ -11647,6 +12006,8 @@
                 topAvatarBtn.innerHTML = `<img src="${escapeHtml(currentUserData.photoURL)}" class="w-full h-full object-cover rounded-full">`;
             }
 
+            studioEditState.overlayColor = '#ffffff';
+            window.setStudioTextColor('#ffffff');
             studioEditState.overlayX = 50;
             studioEditState.overlayY = 50;
             studioEditState.overlayScale = 1.0;
@@ -11764,6 +12125,20 @@
 
             if (inpStart) inpStart.value = studioTrimState.start.toFixed(1);
             if (inpEnd) inpEnd.value = studioTrimState.end.toFixed(1);
+            const coverSliderEl = document.getElementById('cover-slider');
+            if (coverSliderEl) {
+                const cMin = Math.max(0, Number(studioTrimState.start.toFixed(1)));
+                const cMax = Math.max(cMin + 0.1, Number(studioTrimState.end.toFixed(1)));
+                coverSliderEl.min = cMin;
+                coverSliderEl.max = cMax;
+                let curVal = parseFloat(coverSliderEl.value) || 0;
+                if (curVal < cMin || curVal > cMax) {
+                    curVal = cMin;
+                    coverSliderEl.value = curVal;
+                }
+                const cBadge = document.getElementById('studio-cover-time-badge');
+                if (cBadge) cBadge.innerText = curVal.toFixed(1) + 's';
+            }
 
             const netDur = computeNetTrimmedDuration();
             if (rangeLbl) rangeLbl.innerText = `${formatTrimTimestamp(studioTrimState.start)} - ${formatTrimTimestamp(studioTrimState.end)}`;
@@ -12292,11 +12667,18 @@
             if(!f) { showToast("Veuillez sélectionner ou filmer une vidéo avant de publier.", "error"); return; }
             const btn = document.getElementById('btn-publish'); const originalText = btn.innerText; btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`; btn.disabled = true;
             
-            const trimStart = parseFloat(document.getElementById('trim-start').value) || 0; 
-            const trimEnd = parseFloat(document.getElementById('trim-end').value) || 0;
+            const rawTrimStart = (typeof studioTrimState === 'object' && studioTrimState !== null && Number.isFinite(Number(studioTrimState.start)))
+                ? Number(studioTrimState.start)
+                : (parseFloat(document.getElementById('trim-start').value) || 0);
+            const rawTrimEnd = (typeof studioTrimState === 'object' && studioTrimState !== null && Number.isFinite(Number(studioTrimState.end)))
+                ? Number(studioTrimState.end)
+                : (parseFloat(document.getElementById('trim-end').value) || 0);
+            const trimStart = Math.max(0, Number(rawTrimStart.toFixed(2)) || 0);
+            const trimEnd = Math.max(0, Number(rawTrimEnd.toFixed(2)) || 0);
             const visibility = document.getElementById('video-visibility').value;
             const aspectMode = document.getElementById('video-aspect-mode').value || 'contain';
-            const thumbnailOffset = parseFloat(document.getElementById('cover-slider').value) || 0;
+            const rawThumbnailOffset = parseFloat(document.getElementById('cover-slider').value) || 0;
+            const thumbnailOffset = Math.max(trimStart, (trimEnd > trimStart ? Math.min(rawThumbnailOffset, trimEnd) : rawThumbnailOffset));
             const location = document.getElementById('video-location').value;
             const allowComments = document.getElementById('opt-comments').checked;
             const allowDownloads = document.getElementById('opt-downloads').checked;
@@ -12402,7 +12784,9 @@
                 const isFypAllowed = audit.passed && audit.fypEligible && !strikeState.shadowbanned;
                 const causedSanctionFlag = !audit.passed;
                 document.getElementById('upload-status').innerText = "Téléversement et rendu R-Studio en cours...";
-                const url = await uploadToCloudinary(f);
+                const rawUploadedUrl = await uploadToCloudinary(f);
+                const hasRealTrimOnUpload = (trimStart > 0.05) || (trimEnd > trimStart + 0.15 && studioTrimState && studioTrimState.duration && trimEnd < studioTrimState.duration - 0.15);
+                const url = hasRealTrimOnUpload ? applyCloudinaryTrimOnlyUrl(rawUploadedUrl, trimStart, trimEnd) : rawUploadedUrl;
                 const isUserCertif = !!(currentUserData.isVerified || currentUserData.email === VIP_EMAIL);
                 const newVideoRef = await addDoc(collection(db, "videos"), { 
                     userId: auth.currentUser.uid, 
@@ -12608,8 +12992,8 @@
                         card.dataset.userPaused = "false";
                         v.muted = true;
                         if (!v.paused) v.pause();
-                        if (v.readyState >= 1 && v.currentTime > 0) {
-                            try { v.currentTime = 0; } catch (e) {}
+                        if (v.readyState >= 1) {
+                            try { v.currentTime = getEffectiveVideoStartTime(v, card); } catch (e) {}
                         }
                         setProgressBarRatio(progressFill, 0);
                     } 
@@ -14252,9 +14636,9 @@
             const canManage = !!(auth.currentUser && (data.userId === auth.currentUser.uid || (currentUserData && currentUserData.email === VIP_EMAIL)));
 
             const html = `
-            <div class="video-card w-full h-full relative bg-black flex items-center justify-center" data-id="${id}" data-src="${rawUrl}" data-raw-url="${escapeHtml(data.url || '')}" data-sound-url="${escapeHtml(data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url) || '')}" data-orig-vol="${escapeHtml(String(data.studioConfig?.originalVolume ?? 100))}" data-music-vol="${escapeHtml(String(data.studioConfig?.musicVolume ?? 100))}" data-keep-orig-audio="${escapeHtml(String(data.studioConfig?.keepOriginalAudio !== false))}" data-muted-video="${(!((data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url)) && String(data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url)).trim()) && (data.studioConfig?.keepOriginalAudio === false || data.muted === true || data.hasAudio === false)) ? 'true' : 'false'}" data-in-view="true">
+            <div class="video-card w-full h-full relative bg-black flex items-center justify-center" data-id="${id}" data-src="${rawUrl}" data-raw-url="${escapeHtml(data.url || '')}" data-trim-start="${data.trimStart || 0}" data-trim-end="${data.trimEnd || 0}" data-deleted-ranges="${escapeHtml(JSON.stringify(data.studioConfig?.deletedRanges || []))}" data-sound-url="${escapeHtml(data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url) || '')}" data-orig-vol="${escapeHtml(String(data.studioConfig?.originalVolume ?? 100))}" data-music-vol="${escapeHtml(String(data.studioConfig?.musicVolume ?? 100))}" data-keep-orig-audio="${escapeHtml(String(data.studioConfig?.keepOriginalAudio !== false))}" data-muted-video="${(!((data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url)) && String(data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url)).trim()) && (data.studioConfig?.keepOriginalAudio === false || data.muted === true || data.hasAudio === false)) ? 'true' : 'false'}" data-in-view="true">
                 <video id="fullscreen-active-video" class="w-full h-full ${fitClass} ${ data.studioConfig?.filterPreset || '' }" style="${ data.studioConfig?.customFilterCss ? 'filter:' + escapeHtml(data.studioConfig.customFilterCss) + ';' : '' }${ data.studioConfig?.transformCss ? 'transform:' + escapeHtml(data.studioConfig.transformCss) + ';' : '' }" muted playsinline webkit-playsinline preload="auto" src="${cachedUrl}"></video>
-                ${ data.studioConfig?.overlayText ? `<div class="absolute z-20 pointer-events-none text-center max-w-[85%] px-3.5 py-1.5 studio-text-banner-${ escapeHtml(data.studioConfig.overlayStyle || 'glass') } text-sm" style="color:${ escapeHtml(data.studioConfig.overlayColor || '#ffffff') };left:${ Number.isFinite(Number(data.studioConfig.overlayX)) ? Number(data.studioConfig.overlayX) : 50 }%;top:${ Number.isFinite(Number(data.studioConfig.overlayY)) ? Number(data.studioConfig.overlayY) : (data.studioConfig.overlayPos === 'top' ? 16 : (data.studioConfig.overlayPos === 'bottom' ? 76 : 50)) }%;transform:translate3d(-50%,-50%,0) scale(${ Number.isFinite(Number(data.studioConfig.overlayScale)) ? Number(data.studioConfig.overlayScale) : 1 });transform-origin:center center;">${ escapeHtml(data.studioConfig.overlayText) }</div>` : '' }
+                ${ data.studioConfig?.overlayText ? `<div class="rv-video-text-overlay absolute z-20 pointer-events-none text-center max-w-[85%] px-3.5 py-1.5 studio-text-banner-${ escapeHtml(data.studioConfig.overlayStyle || 'glass') } text-sm" style="--rv-overlay-text-color:${ escapeHtml(data.studioConfig.overlayColor || '#ffffff') };color:${ escapeHtml(data.studioConfig.overlayColor || '#ffffff') } !important;left:${ Number.isFinite(Number(data.studioConfig.overlayX)) ? Number(data.studioConfig.overlayX) : 50 }%;top:${ Number.isFinite(Number(data.studioConfig.overlayY)) ? Number(data.studioConfig.overlayY) : (data.studioConfig.overlayPos === 'top' ? 16 : (data.studioConfig.overlayPos === 'bottom' ? 76 : 50)) }%;transform:translate3d(-50%,-50%,0) scale(${ Number.isFinite(Number(data.studioConfig.overlayScale)) ? Number(data.studioConfig.overlayScale) : 1 });transform-origin:center center;">${ escapeHtml(data.studioConfig.overlayText) }</div>` : '' }
                 ${ data.studioConfig?.overlaySticker ? `<div class="absolute z-20 pointer-events-none text-4xl drop-shadow-xl" style="left:${ Number.isFinite(Number(data.studioConfig.stickerX)) ? Number(data.studioConfig.stickerX) : 78 }%;top:${ Number.isFinite(Number(data.studioConfig.stickerY)) ? Number(data.studioConfig.stickerY) : 22 }%;transform:translate3d(-50%,-50%,0) scale(${ Number.isFinite(Number(data.studioConfig.stickerScale)) ? Number(data.studioConfig.stickerScale) : 1 });transform-origin:center center;">${ escapeHtml(data.studioConfig.overlaySticker) }</div>` : '' }
                 ${canManage ? `
                 <div class="absolute top-4 right-4 z-30 flex items-center gap-2 pointer-events-auto">
@@ -14329,6 +14713,38 @@
             const fullVid = document.getElementById('fullscreen-active-video');
             if (fullVid) {
                 const fullCard = fullVid.parentElement;
+                const fullDeletedRanges = Array.isArray(data.studioConfig?.deletedRanges) ? data.studioConfig.deletedRanges : [];
+                fullVid.addEventListener('timeupdate', () => {
+                    const cur = fullVid.currentTime || 0;
+                    const { trimStart: cTrimStart, trimEnd: cTrimEnd, hasStartTrim, hasEndTrim } = getCardTrimBounds(fullCard);
+                    const vIsServerTrimmed = isVideoElementServerTrimmed(fullVid, fullCard);
+                    if (!vIsServerTrimmed && hasStartTrim && cur < cTrimStart - 0.08) {
+                        try { fullVid.currentTime = cTrimStart; } catch (e) {}
+                        if (fullVid === activePlayingVideo && rvMasterAudio && !rvMasterAudio.paused) {
+                            try { rvMasterAudio.currentTime = computeSyncedAudioTimeForVideo(fullVid, rvMasterAudio, fullCard); } catch (e) {}
+                        }
+                        return;
+                    }
+                    if (!vIsServerTrimmed && hasEndTrim && cur >= cTrimEnd) {
+                        restartOrAdvanceVideo(fullVid, fullCard);
+                        return;
+                    }
+                    if (fullDeletedRanges.length > 0) {
+                        const rangeOffset = vIsServerTrimmed ? cTrimStart : 0;
+                        for (let rIdx = 0; rIdx < fullDeletedRanges.length; rIdx++) {
+                            const r = fullDeletedRanges[rIdx];
+                            const adjStart = Math.max(0, (Number(r.start) || 0) - rangeOffset);
+                            const adjEnd = Math.max(0, (Number(r.end) || 0) - rangeOffset);
+                            if (adjEnd > adjStart + 0.05 && cur >= adjStart && cur < adjEnd - 0.05) {
+                                try { fullVid.currentTime = adjEnd; } catch (e) {}
+                                if (fullVid === activePlayingVideo && rvMasterAudio && !rvMasterAudio.paused) {
+                                    try { rvMasterAudio.currentTime = computeSyncedAudioTimeForVideo(fullVid, rvMasterAudio, fullCard); } catch (e) {}
+                                }
+                                return;
+                            }
+                        }
+                    }
+                });
                 fullVid.addEventListener('ended', () => restartOrAdvanceVideo(fullVid, fullCard));
                 configureHardwareVideoElement(fullVid, fullCard);
                 playVideoSynchronized(fullVid, fullCard, true);
@@ -14631,6 +15047,7 @@
 
             const musicDrawer = document.getElementById('story-music-drawer');
             if (musicDrawer) musicDrawer.classList.add('hidden');
+            window.setStoryTextColor('#ffffff');
             window.clearStorySelectedMusic();
             window.switchStoryCreatorType('text');
             if (window.lucide) lucide.createIcons();
@@ -14944,7 +15361,18 @@
         };
 
         window.setStoryTextColor = (color) => {
-            storyCreatorState.textColor = color;
+            const chosen = color || '#ffffff';
+            storyCreatorState.textColor = chosen;
+            const picker = document.getElementById('story-text-color-picker');
+            if (picker && /^#[0-9a-fA-F]{6}$/.test(chosen)) picker.value = chosen;
+            document.querySelectorAll('.story-color-swatch').forEach(btn => {
+                const isActive = (btn.getAttribute('data-story-color') || '').toLowerCase() === chosen.toLowerCase();
+                btn.classList.toggle('border-2', isActive);
+                btn.classList.toggle('border-cyan-400', isActive);
+                btn.classList.toggle('ring-2', isActive);
+                btn.classList.toggle('ring-cyan-400/50', isActive);
+                btn.classList.toggle('scale-110', isActive);
+            });
             window.updateStoryCreatorLivePreview();
         };
 
@@ -14972,9 +15400,11 @@
                     liveTextEl.innerText = '';
                 }
             }
+            const chosenColor = storyCreatorState.textColor || '#ffffff';
             liveTextEl.classList.remove('studio-text-banner-glass', 'studio-text-banner-neon', 'studio-text-banner-cinema', 'studio-text-banner-impact');
             liveTextEl.classList.add('studio-text-banner-' + (storyCreatorState.textStyle || 'glass'));
-            liveTextEl.style.color = storyCreatorState.textColor || '#ffffff';
+            liveTextEl.style.setProperty('--rv-overlay-text-color', chosenColor);
+            liveTextEl.style.setProperty('color', chosenColor, 'important');
         };
 
         window.toggleStoryMusicDrawer = () => {
@@ -15357,9 +15787,11 @@
             }
 
             if (st.text && txtEl) {
+                const chosenStColor = st.textColor || '#ffffff';
                 txtEl.innerText = st.text;
-                txtEl.className = `relative z-20 max-w-[88%] px-5 py-3 text-center break-words text-white ${st.mediaType === 'text' ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'} font-extrabold shadow-2xl pointer-events-none studio-text-banner-${st.textStyle || 'glass'}`;
-                txtEl.style.color = st.textColor || '#ffffff';
+                txtEl.className = `relative z-20 max-w-[88%] px-5 py-3 text-center break-words ${st.mediaType === 'text' ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'} font-extrabold shadow-2xl pointer-events-none studio-text-banner-${st.textStyle || 'glass'}`;
+                txtEl.style.setProperty('--rv-overlay-text-color', chosenStColor);
+                txtEl.style.setProperty('color', chosenStColor, 'important');
                 txtEl.classList.remove('hidden');
             }
 
@@ -15613,7 +16045,7 @@
                 div.className = "bg-[#0c1222] aspect-[3/4] relative rounded-xl overflow-hidden border border-white/10 group cursor-pointer";
                 div.onclick = () => openFullVideo(id);
                 div.innerHTML = `
-                    <img src="${getVideoThumbnail(v.url)}" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                    <img src="${escapeHtml(getVideoThumbnail(v.url, (v.thumbnailOffset !== undefined && Number(v.thumbnailOffset) >= (Number(v.trimStart) || 0)) ? v.thumbnailOffset : (v.trimStart || 0), v.coverUrl || ''))}" data-fb="${escapeHtml(getVideoFallbackThumbnail(v.url))}" onerror="if(this.dataset.fb && this.src!==this.dataset.fb){this.src=this.dataset.fb;}" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30"></div>
                     <div class="absolute top-1.5 left-1.5 right-1.5 flex justify-between items-center">
                         ${count <= 3 ? `<span class="bg-[#ff2a5f] text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded">#${count}</span>` : '<span></span>'}
@@ -16368,7 +16800,9 @@
                 const div = document.createElement('div');
                 div.className = "bg-[#0c1222] aspect-[3/4] relative rounded-xl overflow-hidden border border-white/10 group cursor-pointer";
                 div.onclick = () => openFullVideo(id);
-                div.innerHTML = `${pinnedBadge}<img src="${getVideoThumbnail(v.url)}" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition duration-300"><div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div><div class="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between text-[9px] font-bold text-white drop-shadow-md"><span class="flex items-center gap-0.5"><i data-lucide="play" class="w-2.5 h-2.5 fill-white"></i> ${formatCount(v.views)}</span><span class="text-gray-300 text-[8px]">${dateStr}</span></div>`;
+                const profThumbUrl = getVideoThumbnail(v.url, (v.thumbnailOffset !== undefined && Number(v.thumbnailOffset) >= (Number(v.trimStart) || 0)) ? v.thumbnailOffset : (v.trimStart || 0), v.coverUrl || "");
+                const profFallbackThumb = getVideoFallbackThumbnail(v.url);
+                div.innerHTML = `${pinnedBadge}<img src="${escapeHtml(profThumbUrl)}" data-fb="${escapeHtml(profFallbackThumb)}" onerror="if(this.dataset.fb && this.src!==this.dataset.fb){this.src=this.dataset.fb;}" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition duration-300"><div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div><div class="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between text-[9px] font-bold text-white drop-shadow-md"><span class="flex items-center gap-0.5"><i data-lucide="play" class="w-2.5 h-2.5 fill-white"></i> ${formatCount(v.views)}</span><span class="text-gray-300 text-[8px]">${dateStr}</span></div>`;
                 frag.appendChild(div);
             });
             grid.appendChild(frag);
