@@ -107,18 +107,12 @@
         .snap-y-mandatory { scroll-snap-type: y mandatory; }
         .snap-start { scroll-snap-align: start; scroll-snap-stop: always; }
         video {
-            transform: translateZ(0);
-            -webkit-transform: translateZ(0);
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
             background: #000000 !important;
             background-color: #000000 !important;
             border: 0 !important;
             outline: 3px solid #000000 !important;
             outline-offset: -2px !important;
             box-shadow: 0 0 0 4px #000000, inset 0 0 0 2px #000000 !important;
-            clip-path: inset(1px);
-            -webkit-clip-path: inset(1px);
             display: block;
         }
         #feed-screen,
@@ -202,16 +196,10 @@
             z-index: 10;
             background: var(--bg-primary);
             opacity: 0;
-            will-change: opacity, transform;
         }
         .screen.active {
             display: flex;
             opacity: 1;
-            animation: screenFluidIn 0.26s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-        }
-        @keyframes screenFluidIn {
-            from { opacity: 0.01; transform: translate3d(0, 6px, 0); }
-            to { opacity: 1; transform: translate3d(0, 0, 0); }
         }
         @keyframes counterBumpUp {
             0% { transform: translateY(0) scale(1); }
@@ -247,18 +235,31 @@
             border: 1px solid rgba(255, 255, 255, 0.16);
         }
 
-        /* Reference-Image Transparent Right Reaction Column (Airy, Pro, Floating Icons) */
+        /* Reference-Image Transparent Right Reaction Column (Pure 2D Paint Order, No Circles, Never Culled on Scroll) */
+        .video-card {
+            isolation: isolate;
+        }
+        .video-card > video {
+            position: relative;
+            z-index: 1;
+        }
         .transparent-reaction-rail {
             position: absolute;
             right: 10px;
             top: auto;
             bottom: 62px;
-            z-index: 25;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 7px;
+            z-index: 30 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            gap: 8px;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            transform: none !important;
+            -webkit-transform: none !important;
+            filter: none !important;
         }
         @media (min-width: 768px) {
             .transparent-reaction-rail {
@@ -283,33 +284,71 @@
             height: 31px !important;
         }
         .reaction-btn-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1px;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 2px;
             cursor: pointer;
-            transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+            visibility: visible !important;
+            opacity: 1 !important;
+            transform: none !important;
+            -webkit-transform: none !important;
+            filter: none !important;
         }
         .reaction-btn-item span {
-            font-size: 10.5px;
-            line-height: 1.05;
-            font-weight: 600;
+            font-size: 11px;
+            line-height: 1.1;
+            font-weight: 700;
+            color: #ffffff !important;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 0 8px rgba(0, 0, 0, 0.85) !important;
         }
-        .reaction-btn-item:active { transform: scale(0.84); }
         .action-circle {
-            width: 28px;
-            height: 28px;
-            border-radius: 9999px;
-            background: transparent;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.18s ease;
-            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+            width: 28px !important;
+            height: 28px !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            filter: none !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            transform: none !important;
+            -webkit-transform: none !important;
         }
-        .action-circle svg {
-            width: 21px !important;
-            height: 21px !important;
+        .action-circle svg,
+        .action-circle i {
+            width: 24px !important;
+            height: 24px !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            flex-shrink: 0 !important;
+            filter: none !important;
+            paint-order: stroke fill;
+        }
+        .reaction-btn-item:not(.liked):not(.favorited) .action-circle svg {
+            color: #ffffff !important;
+            stroke: rgba(0, 0, 0, 0.65) !important;
+            stroke-width: 1.6px !important;
+        }
+        .reaction-btn-item:not(.liked):not(.favorited) .action-circle svg[fill="none"] {
+            stroke: #ffffff !important;
+            stroke-width: 2.3px !important;
+        }
+        .reaction-btn-item.liked .action-circle svg {
+            color: #ff2a5f !important;
+            stroke: #ff2a5f !important;
+            fill: #ff2a5f !important;
+            filter: none !important;
+        }
+        .reaction-btn-item.favorited .action-circle svg {
+            color: #facc15 !important;
+            stroke: #facc15 !important;
+            fill: #facc15 !important;
+            filter: none !important;
         }
 
         /* Repost Frosted Pill (Sleek, Airy & Professional - GPU friendly) */
@@ -432,8 +471,8 @@
             transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease, visibility 0s linear 0s;
         }
         
-        .liked svg { fill: #ff2a5f !important; color: #ff2a5f !important; filter: drop-shadow(0 0 10px rgba(255, 42, 95, 0.75)); }
-        .favorited svg { fill: #facc15 !important; color: #facc15 !important; filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.7)); }
+        .liked svg { fill: #ff2a5f !important; color: #ff2a5f !important; filter: none !important; }
+        .favorited svg { fill: #facc15 !important; color: #facc15 !important; filter: none !important; }
         
         .text-shadow { text-shadow: 0 1px 6px rgba(0,0,0,0.85); }
         .icon-shadow { filter: drop-shadow(0px 2px 6px rgba(0,0,0,0.7)); }
@@ -1344,11 +1383,6 @@
             overscroll-behavior-y: contain !important;
             touch-action: pan-y !important;
             scroll-behavior: auto;
-            transform: translateZ(0);
-            -webkit-transform: translateZ(0);
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
-            will-change: scroll-position;
         }
 
         .overflow-x-auto,
@@ -1360,9 +1394,6 @@
             overscroll-behavior-x: contain !important;
             touch-action: pan-x !important;
             scroll-behavior: auto;
-            transform: translateZ(0);
-            -webkit-transform: translateZ(0);
-            backface-visibility: hidden;
         }
 
         /* Feather-Light Windows, Modals, Bottom Sheets & Drawers (Zero GPU Blur Lag) */
@@ -1985,9 +2016,108 @@
             #studio-livecam-top-bar,
             #studio-livecam-capture-bar,
             #upload-selected-sound-bar,
-            #studio-countdown-overlay
-        ) :is(span, button, i, svg) {
+            #studio-countdown-overlay,
+            #video-controls-overlay,
+            .play-overlay
+        ) :is(span, button, i, svg, div) {
             color: #ffffff !important;
+        }
+        body.light-theme #upload-preview-area #video-controls-overlay button,
+        body.light-theme #upload-preview-area #studio-floating-zoom-hud button,
+        body.light-theme #upload-preview-area #studio-livecam-top-bar button {
+            background-color: rgba(15, 23, 42, 0.65) !important;
+            border-color: rgba(255, 255, 255, 0.24) !important;
+            color: #ffffff !important;
+        }
+
+        /* Guarantee high-contrast visibility for all buttons on video stages (#feed-screen, .video-card, #fullscreen-video-overlay, #story-viewer-modal, #story-creator-modal) in BOTH themes */
+        #feed-screen > div.absolute.top-0 button,
+        body.light-theme #feed-screen > div.absolute.top-0 button {
+            background-color: rgba(10, 14, 26, 0.58) !important;
+            border: 1px solid rgba(255, 255, 255, 0.24) !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45) !important;
+        }
+        #fullscreen-video-overlay button.glass-pill,
+        body.light-theme #fullscreen-video-overlay button.glass-pill {
+            background-color: rgba(10, 14, 26, 0.68) !important;
+            border: 1px solid rgba(255, 255, 255, 0.26) !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.55) !important;
+        }
+        .video-card > div.absolute.bottom-14,
+        .video-card > div.absolute.bottom-12 {
+            z-index: 28 !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            transform: none !important;
+            -webkit-transform: none !important;
+            filter: none !important;
+        }
+        .video-card > div.absolute.bottom-14 :is(h3, p, span, div),
+        .video-card > div.absolute.bottom-12 :is(h3, p, span, div),
+        body.light-theme .video-card > div.absolute.bottom-14 :is(h3, p, span, div),
+        body.light-theme .video-card > div.absolute.bottom-12 :is(h3, p, span, div) {
+            color: #ffffff !important;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 2px 8px rgba(0, 0, 0, 0.85) !important;
+        }
+        .transparent-reaction-rail .animate-spin-slow {
+            animation: none !important;
+            transform: none !important;
+        }
+        .video-card button[onclick*="openEditVideoModal"],
+        body.light-theme .video-card button[onclick*="openEditVideoModal"] {
+            background-color: rgba(10, 14, 26, 0.68) !important;
+            border: 1px solid rgba(34, 211, 238, 0.45) !important;
+            color: #67e8f9 !important;
+        }
+        /* Keep dark-surface buttons (bg-black/...) readable in Light Theme */
+        body.light-theme :is(.bg-black\/45, .bg-black\/50, .bg-black\/65, .bg-black\/70, .bg-black\/75),
+        body.light-theme :is(.bg-black\/45, .bg-black\/50, .bg-black\/65, .bg-black\/70, .bg-black\/75) :is(span, i, svg) {
+            background-color: rgba(15, 23, 42, 0.78) !important;
+            color: #ffffff !important;
+        }
+        /* Fix bottom navigation bar icons & active states in Light Theme so Home icon never blends into white background */
+        body.light-theme #bottom-nav .nav-item {
+            opacity: 0.85;
+        }
+        body.light-theme #bottom-nav .nav-item.opacity-100 {
+            opacity: 1 !important;
+        }
+        body.light-theme #bottom-nav .nav-item svg {
+            color: #0f172a !important;
+            stroke: #0f172a !important;
+            fill: none !important;
+        }
+        body.light-theme #bottom-nav .nav-item.opacity-100 svg,
+        body.light-theme #bottom-nav #nav-feed.opacity-100 svg {
+            color: #ff2a5f !important;
+            stroke: #ff2a5f !important;
+            fill: rgba(255, 42, 95, 0.18) !important;
+        }
+        body.light-theme #bottom-nav .nav-item.opacity-100 span {
+            color: #ff2a5f !important;
+        }
+        /* Ensure all secondary buttons inside Light Theme containers have crisp visible borders & icons */
+        body.light-theme :is(
+            #discover-screen,
+            #inbox-screen,
+            #profile-screen,
+            #profile-social-modal,
+            #sound-sheet-modal,
+            #chat-screen,
+            #settings-modal,
+            #comments-sheet,
+            #options-modal,
+            #universal-edit-modal,
+            #edit-modal,
+            #delete-confirm-modal,
+            #logout-modal,
+            #report-modal,
+            #login-prompt-modal
+        ) button:is(.bg-white\/5, .bg-white\/10, .bg-white\/15, .bg-white\/20, .glass-pill) {
+            background-color: #e2e8f0 !important;
+            border: 1px solid rgba(15, 23, 42, 0.18) !important;
+            color: #0f172a !important;
         }
         body.light-theme #studio-empty-prompt .from-\[\#ff2a5f\] svg {
             color: #ffffff !important;
@@ -7612,7 +7742,7 @@
                 const optimizedUrl = photoURL.includes('cloudinary') ? photoURL.replace('/upload/', '/upload/w_100,c_fill,q_auto:eco,f_auto/') : photoURL;
                 return `<img src="${optimizedUrl}" loading="lazy" decoding="async" class="${sizeClass} rounded-full object-cover">`;
             }
-            return `<div class="${sizeClass} rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center"><i data-lucide="user" class="text-gray-300 w-1/2 h-1/2"></i></div>`;
+            return `<div class="${sizeClass} rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center"><svg class="text-gray-300 w-1/2 h-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>`;
         }
 
         function formatCount(num) {
@@ -10003,13 +10133,13 @@
                         <video class="w-full h-full ${fitClass} ${ data.studioConfig?.filterPreset || vfxClass } pointer-events-none bg-black" style="${ data.studioConfig?.customFilterCss ? 'filter:' + escapeHtml(data.studioConfig.customFilterCss) + ';' : '' }${ data.studioConfig?.transformCss ? 'transform:' + escapeHtml(data.studioConfig.transformCss) + ';' : '' }" muted playsinline webkit-playsinline preload="none"></video>
                         ${ data.studioConfig?.overlayText ? `<div class="rv-video-text-overlay absolute z-20 pointer-events-none text-center max-w-[85%] px-3.5 py-1.5 studio-text-banner-${ escapeHtml(data.studioConfig.overlayStyle || 'glass') } text-sm" style="--rv-overlay-text-color:${ escapeHtml(data.studioConfig.overlayColor || '#ffffff') };color:${ escapeHtml(data.studioConfig.overlayColor || '#ffffff') } !important;left:${ Number.isFinite(Number(data.studioConfig.overlayX)) ? Number(data.studioConfig.overlayX) : 50 }%;top:${ Number.isFinite(Number(data.studioConfig.overlayY)) ? Number(data.studioConfig.overlayY) : (data.studioConfig.overlayPos === 'top' ? 16 : (data.studioConfig.overlayPos === 'bottom' ? 76 : 50)) }%;transform:translate3d(-50%,-50%,0) scale(${ Number.isFinite(Number(data.studioConfig.overlayScale)) ? Number(data.studioConfig.overlayScale) : 1 });transform-origin:center center;">${ escapeHtml(data.studioConfig.overlayText) }</div>` : '' }
                         ${ data.studioConfig?.overlaySticker ? `<div class="absolute z-20 pointer-events-none text-4xl drop-shadow-xl" style="left:${ Number.isFinite(Number(data.studioConfig.stickerX)) ? Number(data.studioConfig.stickerX) : 78 }%;top:${ Number.isFinite(Number(data.studioConfig.stickerY)) ? Number(data.studioConfig.stickerY) : 22 }%;transform:translate3d(-50%,-50%,0) scale(${ Number.isFinite(Number(data.studioConfig.stickerScale)) ? Number(data.studioConfig.stickerScale) : 1 });transform-origin:center center;">${ escapeHtml(data.studioConfig.overlaySticker) }</div>` : '' }
-                        <div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 opacity-0">
+                        <div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 opacity-0 z-20">
                             <div class="bg-black/45 rounded-full p-4 backdrop-blur-md border border-white/15 shadow-2xl">
-                                <i data-lucide="play" class="w-10 h-10 text-white fill-white ml-0.5"></i>
+                                <svg class="w-10 h-10 text-white fill-white ml-0.5" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
                             </div>
                         </div>
                         <div class="absolute inset-0 z-10" onclick="togglePlay(this, event, '${docId}', '${data.userId}')" ondblclick="handleDoubleTap(event, '${docId}', '${data.userId}', this)"></div>
-                        <div class="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none"></div>
+                        <div class="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black/80 via-black/35 to-transparent pointer-events-none z-15"></div>
                         
                         <!-- TRANSPARENT RIGHT REACTION COLUMN (Airy & Professional) -->
                         <div class="transparent-reaction-rail">
@@ -10019,13 +10149,13 @@
                                     ${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}
                                 </div>
                                 <span data-story-badge-uid="${data.userId}" class="rv-story-mini-badge ${hasUserActiveStory(data.userId) ? '' : 'hidden'}">STORY</span>
-                                ${!isMe && !isFollowing ? `<button onclick="toggleFollowFromFeed('${data.userId}', this, event)" class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-[#ff2a5f] text-white flex items-center justify-center shadow border border-black z-20"><i data-lucide="plus" class="w-2.5 h-2.5 stroke-[3]"></i></button>` : ''}
+                                ${!isMe && !isFollowing ? `<button onclick="toggleFollowFromFeed('${data.userId}', this, event)" class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-[#ff2a5f] text-white flex items-center justify-center shadow border border-black z-20"><svg class="w-2.5 h-2.5 stroke-[3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button>` : ''}
                             </div>
 
                             <!-- Heart / Like -->
                             <div class="reaction-btn-item group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${docId}', this, '${data.userId}')">
                                 <div class="action-circle">
-                                    <i data-lucide="heart" class="w-6 h-6 like-icon ${iLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-white fill-white/90'} transition-all"></i>
+                                    <svg class="w-6 h-6 like-icon ${iLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-white fill-white/90'} transition-all" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
                                 </div>
                                 <span class="text-[10.5px] font-semibold text-white text-shadow like-count">${formatCount(getRealLikesCount(data))}</span>
                             </div>
@@ -10033,7 +10163,7 @@
                             <!-- Comment -->
                             <div class="reaction-btn-item" onclick="openComments('${docId}', ${data.allowComments})">
                                 <div class="action-circle">
-                                    <i data-lucide="message-circle" class="w-6 h-6 text-white fill-white/90"></i>
+                                    <svg class="w-6 h-6 text-white fill-white/90" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
                                 </div>
                                 <span class="text-[10.5px] font-semibold text-white text-shadow comment-count">${formatCount(data.commentCount)}</span>
                             </div>
@@ -10041,7 +10171,7 @@
                             <!-- Bookmark / Favorite -->
                             <div class="reaction-btn-item ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${docId}', this)">
                                 <div class="action-circle">
-                                    <i data-lucide="bookmark" class="w-6 h-6 fav-icon ${iFav ? 'fill-yellow-400 text-yellow-400' : 'text-white fill-white/90'} transition-all"></i>
+                                    <svg class="w-6 h-6 fav-icon ${iFav ? 'fill-yellow-400 text-yellow-400' : 'text-white fill-white/90'} transition-all" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path></svg>
                                 </div>
                                 <span class="text-[10.5px] font-semibold text-white text-shadow fav-text">${formatCount(getRealFavoritesCount(data))}</span>
                             </div>
@@ -10049,7 +10179,7 @@
                             <!-- Share / More Options -->
                             <div class="reaction-btn-item" onclick="openOptions('${docId}', '${data.url}', '${safeUsername}', ${allowDL}, '${data.userId}', ${isPinned})">
                                 <div class="action-circle">
-                                    <i data-lucide="redo-2" class="w-6 h-6 text-white"></i>
+                                    <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"></path><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13"></path></svg>
                                 </div>
                                 <span class="text-[10.5px] font-semibold text-white text-shadow share-count">${formatCount(getRealSharesCount(data))}</span>
                             </div>
@@ -10066,7 +10196,7 @@
                         <div class="absolute bottom-14 left-3 right-14 z-20 text-left pointer-events-none flex flex-col items-start gap-1 max-w-[82%] sm:max-w-lg">
                             <!-- Compact Meta Row: Location/Date + Quick Emoji Burst -->
                             <div class="flex items-center gap-1.5 pointer-events-auto flex-wrap">
-                                ${data.location ? `<div class="creator-tag-chip"><i data-lucide="map-pin" class="w-2.5 h-2.5 text-cyan-400"></i> ${escapeHtml(data.location)}</div>` : `<div class="creator-tag-chip">${isPinned ? '📌 Épinglé • ' : ''}${dateStr}</div>`}
+                                ${data.location ? `<div class="creator-tag-chip"><svg class="w-2.5 h-2.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg> ${escapeHtml(data.location)}</div>` : `<div class="creator-tag-chip">${isPinned ? '📌 Épinglé • ' : ''}${dateStr}</div>`}
                                 <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/38 border border-white/10 text-[10.5px]">
                                     <span onclick="triggerEmojiBurst('${docId}', '🔥', event)" class="cursor-pointer hover:scale-125 transition">🔥</span>
                                     <span onclick="triggerEmojiBurst('${docId}', '😍', event)" class="cursor-pointer hover:scale-125 transition">😍</span>
@@ -10077,7 +10207,7 @@
                             <!-- Tight Repost Pill Stacked Directly Above @username -->
                             <div class="flex flex-col items-start gap-0.5 pointer-events-auto mt-0.5">
                                 <button onclick="toggleRepostVideo('${docId}', this, event)" class="repost-frosted-pill self-start ${iReposted ? 'reposted' : ''}">
-                                    <i data-lucide="repeat-2" class="w-3 h-3"></i>
+                                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 9 3-3 3 3"></path><path d="M13 18H7a2 2 0 0 1-2-2V6"></path><path d="m22 15-3 3-3-3"></path><path d="M11 6h6a2 2 0 0 1 2 2v10"></path></svg>
                                     <span>${iReposted ? 'Republié ✓' : 'Republier'}</span>
                                 </button>
                                 <!-- Creator Handle + Inline Translation / Edit -->
@@ -10096,7 +10226,7 @@
 
                             <!-- Clickable Music / Sound Row ("♫ Contient : ...") -->
                             <div onclick="openSoundSheet('${docId}', event)" class="flex items-center gap-1.5 text-[11px] font-medium text-white/85 pointer-events-auto cursor-pointer hover:text-cyan-300 transition text-shadow w-full">
-                                <i data-lucide="music" class="w-3 h-3 shrink-0 text-white/80"></i>
+                                <svg class="w-3 h-3 shrink-0 text-white/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
                                 <span class="truncate max-w-[185px] sm:max-w-[320px]">Contient : ${soundLabel}</span>
                                 <span class="text-[9.5px] px-2 py-0.5 rounded-full bg-white/12 border border-white/15 text-white/95 font-semibold shrink-0">Utiliser ce son</span>
                             </div>
@@ -12923,12 +13053,11 @@
             const x = clientX - rect.left;
             const y = clientY - rect.top;
             const heart = document.createElement('div');
-            heart.innerHTML = `<i data-lucide="heart" class="w-24 h-24 fill-[#ff2a5f] text-[#ff2a5f]"></i>`;
+            heart.innerHTML = `<svg class="w-24 h-24 fill-[#ff2a5f] text-[#ff2a5f]" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>`;
             heart.className = 'big-heart';
             heart.style.left = x + 'px';
             heart.style.top = y + 'px';
             card.appendChild(heart);
-            lucide.createIcons();
             setTimeout(() => heart.remove(), 850);
             const likeBtn = card.querySelector('.group');
             if (likeBtn && !likeBtn.classList.contains('liked') && docId) {
@@ -14654,32 +14783,32 @@
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                     </button>
                 </div>` : ''}
-                <div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 opacity-0">
+                <div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 opacity-0 z-20">
                     <div class="bg-black/45 rounded-full p-4 backdrop-blur-md border border-white/15 shadow-2xl">
-                        <i data-lucide="play" class="w-10 h-10 text-white fill-white ml-0.5"></i>
+                        <svg class="w-10 h-10 text-white fill-white ml-0.5" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
                     </div>
                 </div>
                 <div class="absolute inset-0 z-10" onclick="togglePlay(this, event, '${id}', '${data.userId}')" ondblclick="handleDoubleTap(event, '${id}', '${data.userId}', this)"></div>
-                <div class="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none"></div>
+                <div class="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black/80 via-black/35 to-transparent pointer-events-none z-15"></div>
                 <div class="transparent-reaction-rail">
                     <div class="relative mb-1 cursor-pointer" onclick="viewUserProfile('${data.userId}'); closeFullVideo()">
                         <div data-story-avatar-uid="${data.userId}" class="w-9 h-9 rounded-full ${hasUserActiveStory(data.userId) ? 'rv-story-ring-feed' : 'border-[1.5px] border-white/90'} overflow-hidden bg-black">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div>
                         <span data-story-badge-uid="${data.userId}" class="rv-story-mini-badge ${hasUserActiveStory(data.userId) ? '' : 'hidden'}">STORY</span>
                     </div>
                     <div class="reaction-btn-item group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${id}', this, '${data.userId}')">
-                        <div class="action-circle"><i data-lucide="heart" class="w-6 h-6 ${iLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-white fill-white/90'}"></i></div>
+                        <div class="action-circle"><svg class="w-6 h-6 like-icon ${iLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-white fill-white/90'}" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg></div>
                         <span class="text-[10.5px] font-semibold text-white text-shadow like-count">${formatCount(getRealLikesCount(data))}</span>
                     </div>
                     <div class="reaction-btn-item" onclick="openComments('${id}')">
-                        <div class="action-circle"><i data-lucide="message-circle" class="w-6 h-6 text-white fill-white/90"></i></div>
+                        <div class="action-circle"><svg class="w-6 h-6 text-white fill-white/90" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg></div>
                         <span class="text-[10.5px] font-semibold text-white text-shadow comment-count">${formatCount(data.commentCount)}</span>
                     </div>
                     <div class="reaction-btn-item ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${id}', this)">
-                        <div class="action-circle"><i data-lucide="bookmark" class="w-6 h-6 ${iFav ? 'fill-yellow-400 text-yellow-400' : 'text-white fill-white/90'}"></i></div>
+                        <div class="action-circle"><svg class="w-6 h-6 fav-icon ${iFav ? 'fill-yellow-400 text-yellow-400' : 'text-white fill-white/90'}" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path></svg></div>
                         <span class="text-[10.5px] font-semibold text-white text-shadow fav-text">${formatCount(getRealFavoritesCount(data))}</span>
                     </div>
                     <div class="reaction-btn-item" onclick="openOptions('${id}', '${data.url}', '${escapeHtml(data.username)}', ${data.allowDownloads !== false}, '${data.userId}', ${!!data.isPinned})">
-                        <div class="action-circle"><i data-lucide="redo-2" class="w-6 h-6 text-white"></i></div>
+                        <div class="action-circle"><svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"></path><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13"></path></svg></div>
                         <span class="text-[10.5px] font-semibold text-white text-shadow share-count">${formatCount(getRealSharesCount(data))}</span>
                     </div>
                     <div class="mt-0.5 cursor-pointer" onclick="openSoundSheet('${id}', event)">
@@ -17581,6 +17710,18 @@
             window.addEventListener('load', initAppLanguageAndStartupState);
         }
         
+        if (window.lucide && typeof window.lucide.createIcons === 'function' && !window.lucide.__rvOptimized) {
+            const origLucideCreateIcons = window.lucide.createIcons.bind(window.lucide);
+            window.lucide.createIcons = function(opts) {
+                if (document.querySelector('i[data-lucide]')) {
+                    origLucideCreateIcons(opts);
+                }
+                document.querySelectorAll('svg[data-lucide]').forEach(svg => {
+                    svg.removeAttribute('data-lucide');
+                });
+            };
+            window.lucide.__rvOptimized = true;
+        }
         lucide.createIcons();        
     </script>
 </body>
