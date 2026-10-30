@@ -2284,7 +2284,7 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="text-xs sm:text-sm font-medium text-slate-700">Utiliser un autre compte</div>
-                            <input type="email" id="google-other-account-autofill-input" name="email" autocomplete="username email" inputmode="email" placeholder="Sélectionner une autre adresse de l'appareil..." class="hidden w-full bg-transparent border-0 outline-none text-xs text-[#1a73e8] placeholder-slate-400 font-medium p-0 mt-0.5 focus:ring-0" oninput="onInlineDeviceChipEmailPicked(this.value)" onchange="onInlineDeviceChipEmailPicked(this.value)">
+                            <input type="email" id="google-other-account-autofill-input" name="email" autocomplete="username email" inputmode="email" enterkeyhint="done" placeholder="Touchez pour choisir votre adresse @gmail.com..." class="hidden w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 outline-none text-xs text-slate-900 placeholder-slate-400 font-medium mt-1 focus:border-[#1a73e8]" oninput="onInlineDeviceChipEmailInput(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault(); validateSelectedGoogleAccount();}">
                         </div>
                     </label>
 
@@ -7956,83 +7956,14 @@
             if (window.lucide) lucide.createIcons();
         }
 
-        window.onInlineDeviceChipEmailPicked = (val) => {
+        window.onInlineDeviceChipEmailInput = (val) => {
             const clean = String(val || '').toLowerCase().trim();
             const errEl = document.getElementById('google-chooser-error');
             if (errEl) errEl.classList.add('hidden');
-            if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
-                selectedGoogleAccountEmail = clean;
-                saveGoogleAccountToDevice({
-                    email: clean,
-                    username: buildDefaultUsernameFromEmail(clean)
-                });
-                const otherInp = document.getElementById('google-other-account-autofill-input');
-                if (otherInp) {
-                    otherInp.value = '';
-                    otherInp.classList.add('hidden');
-                }
-                discoverPhoneOnlyGoogleAccounts().then(() => {
-                    renderSavedGoogleAccountsInModal();
-                });
+            if (clean) {
+                selectedGoogleAccountEmail = clean.includes('@') ? clean : (clean + '@gmail.com');
             }
         };
-
-        async function handleGoogleOAuthUserResult(gUser) {
-            if (!gUser || !gUser.email) return false;
-            const gEmail = String(gUser.email).toLowerCase().trim();
-            const gName = gUser.displayName || buildDefaultUsernameFromEmail(gEmail);
-            const gPhoto = gUser.photoURL || '';
-            const maskedPass = getDeterministicGoogleMaskedPassword(gEmail, 0);
-
-            if (isAccountBlockedUnder12(gUser.uid, gEmail)) {
-                closeGoogleAccountChooserModal();
-                showUnder12BlockedModalState();
-                await signOut(rawAuth).catch(() => {});
-                return true;
-            }
-
-            const existingRecord = await findAndConsolidateExistingAccountByEmail(gEmail);
-            if (existingRecord) {
-                activeCanonicalUid = existingRecord.id;
-                activeCanonicalEmail = gEmail;
-                currentUserData = existingRecord.data;
-                currentUserData.uid = existingRecord.id;
-                if (existingRecord.data.authMethod !== 'google' && !existingRecord.data.isAgeBlocked) {
-                    currentUserData.ageVerified = true;
-                    safeSetStorage(`rv_birthdate_verified_${existingRecord.id}`, existingRecord.data.birthDate || 'existing_user');
-                    safeSetStorage(`rv_birthdate_email_${gEmail}`, existingRecord.data.birthDate || 'existing_user');
-                }
-                if (gUser.uid !== existingRecord.id) {
-                    await deleteDoc(doc(db, "users", gUser.uid)).catch(() => {});
-                }
-            } else {
-                activeCanonicalUid = gUser.uid;
-                activeCanonicalEmail = gEmail;
-                currentUserData = await setupNewGoogleUserInFirestore(gUser, gEmail, gName);
-                if (gPhoto) {
-                    currentUserData.photoURL = gPhoto;
-                    await updateDoc(doc(db, "users", gUser.uid), { photoURL: gPhoto }).catch(() => {});
-                }
-            }
-
-            saveGoogleAccountToDevice({
-                email: gEmail,
-                uid: activeCanonicalUid,
-                username: currentUserData?.username || gName,
-                photoURL: currentUserData?.photoURL || gPhoto,
-                maskedPass: maskedPass
-            });
-            closeGoogleAccountChooserModal();
-            await handleAuthenticatedUserEntry(gUser);
-            return true;
-        }
-
-        // Gérer le retour éventuel d'une redirection OAuth Google (accounts.google.com)
-        getRedirectResult(rawAuth).then(async (result) => {
-            if (result && result.user && result.user.email) {
-                await handleGoogleOAuthUserResult(result.user);
-            }
-        }).catch(() => {});
 
         window.triggerOtherPhoneGoogleAccount = async () => {
             const otherInp = document.getElementById('google-other-account-autofill-input');
@@ -8051,9 +7982,13 @@
                             username: (picked[0].name && picked[0].name[0]) || buildDefaultUsernameFromEmail(em)
                         });
                         selectedGoogleAccountEmail = em;
-                        if (otherInp) otherInp.classList.add('hidden');
+                        if (otherInp) {
+                            otherInp.value = '';
+                            otherInp.classList.add('hidden');
+                        }
                         await discoverPhoneOnlyGoogleAccounts();
                         renderSavedGoogleAccountsInModal();
+                        await executeGoogleMaskedSignInOrRegister(em);
                         return;
                     }
                 }
@@ -8075,9 +8010,13 @@
                             photoURL: cred.iconURL || ''
                         });
                         selectedGoogleAccountEmail = em;
-                        if (otherInp) otherInp.classList.add('hidden');
+                        if (otherInp) {
+                            otherInp.value = '';
+                            otherInp.classList.add('hidden');
+                        }
                         await discoverPhoneOnlyGoogleAccounts();
                         renderSavedGoogleAccountsInModal();
+                        await executeGoogleMaskedSignInOrRegister(em);
                         return;
                     }
                 }
@@ -8088,6 +8027,11 @@
             selectedGoogleAccountEmail = String(email || '').toLowerCase().trim();
             const errEl = document.getElementById('google-chooser-error');
             if (errEl) errEl.classList.add('hidden');
+            const otherInp = document.getElementById('google-other-account-autofill-input');
+            if (otherInp) {
+                otherInp.value = '';
+                otherInp.classList.add('hidden');
+            }
             renderSavedGoogleAccountsInModal();
         };
 
@@ -8104,44 +8048,27 @@
             if (!selectedGoogleAccountEmail && discoveredPhoneGoogleAccounts.length > 0) {
                 selectedGoogleAccountEmail = discoveredPhoneGoogleAccounts[0].email;
             }
-            if (!selectedGoogleAccountEmail) {
+            if (!selectedGoogleAccountEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(selectedGoogleAccountEmail)) {
                 const errEl = document.getElementById('google-chooser-error');
                 if (errEl) {
-                    errEl.innerText = "Veuillez sélectionner un compte Google ci-dessus.";
+                    errEl.innerText = "Veuillez sélectionner ou saisir une adresse Google valide (@gmail.com).";
                     errEl.classList.remove('hidden');
+                }
+                if (otherInp) {
+                    otherInp.classList.remove('hidden');
+                    otherInp.focus();
                 }
                 return;
             }
             await executeGoogleMaskedSignInOrRegister(selectedGoogleAccountEmail);
         };
 
+        // Ouvre directement la carte Google intégrée à l'application (ne quitte jamais l'application vers un navigateur externe qui bloque le retour !)
         window.openGoogleAccountChooserModal = async () => {
             const errEl = document.getElementById('google-chooser-error');
             if (errEl) errEl.classList.add('hidden');
             safeSetStorage('rv_google_saved_accounts_v1', '[]');
 
-            // 1. Si aucun compte n'est encore mémorisé localement, essayer d'ouvrir directement la fenêtre native accounts.google.com (exactement comme TikTok)
-            const localSaved = getSavedGoogleAccounts();
-            if (localSaved.length === 0) {
-                try {
-                    const provider = new GoogleAuthProvider();
-                    provider.setCustomParameters({ prompt: 'select_account' });
-                    isRegistering = true;
-                    const result = await signInWithPopup(rawAuth, provider);
-                    isRegistering = false;
-                    if (result && result.user && result.user.email) {
-                        await handleGoogleOAuthUserResult(result.user);
-                        return;
-                    }
-                } catch (popupErr) {
-                    isRegistering = false;
-                    if (popupErr && (popupErr.code === 'auth/popup-closed-by-user' || popupErr.code === 'auth/cancelled-popup-request')) {
-                        return;
-                    }
-                }
-            }
-
-            // 2. Ouvrir la fenêtre "Sélectionnez un compte — Accéder à l'application R-Videos" avec les comptes de l'appareil
             const modal = document.getElementById('google-account-chooser-modal');
             if (modal) modal.classList.add('open');
 
@@ -8242,11 +8169,10 @@
             isGoogleAutoAuthInProgress = true;
 
             try {
-                // Étape 1 : Vérifier d'abord si cet email possède DÉJÀ un compte dans Firestore (ex: inscrit par email auparavant)
+                // Étape 1 : Vérifier si cet email possède déjà un compte dans Firestore
                 const existingAccountRecord = await findAndConsolidateExistingAccountByEmail(cleanEmail);
                 const savedAcc = getSavedGoogleAccounts().find(a => String(a.email).toLowerCase().trim() === cleanEmail);
 
-                // Mot de passe candidat : googlePassKey du compte existant, ou mot de passe mémorisé sur l'appareil, ou mot de passe masqué déterministe
                 const primaryPasswordCandidate = (existingAccountRecord && existingAccountRecord.data.googlePassKey)
                     || (savedAcc && savedAcc.maskedPass)
                     || getDeterministicGoogleMaskedPassword(cleanEmail, 0);
@@ -8259,29 +8185,22 @@
                     loginPassEl.value = primaryPasswordCandidate;
                 }
 
-                // Étape 2 : Si l'utilisateur avait DÉJÀ un compte dans l'application (inscrit par email ou Google)
+                // Étape 2 : Si l'utilisateur possède déjà un compte dans Firestore
                 if (existingAccountRecord) {
                     const canonicalUid = existingAccountRecord.id;
                     const existingUserData = existingAccountRecord.data;
                     existingUserData.uid = canonicalUid;
 
-                    // Marquer comme compte existant déjà vérifié s'il avait été créé par email auparavant
                     if (existingUserData.authMethod !== 'google' && !existingUserData.isAgeBlocked) {
                         existingUserData.ageVerified = true;
-                        if (existingUserData.birthDate) {
-                            safeSetStorage(`rv_birthdate_verified_${canonicalUid}`, existingUserData.birthDate);
-                            safeSetStorage(`rv_birthdate_email_${cleanEmail}`, existingUserData.birthDate);
-                        } else {
-                            safeSetStorage(`rv_birthdate_verified_${canonicalUid}`, 'existing_user');
-                            safeSetStorage(`rv_birthdate_email_${cleanEmail}`, 'existing_user');
-                        }
+                        safeSetStorage(`rv_birthdate_verified_${canonicalUid}`, existingUserData.birthDate || 'existing_user');
+                        safeSetStorage(`rv_birthdate_email_${cleanEmail}`, existingUserData.birthDate || 'existing_user');
                     }
 
                     activeCanonicalUid = canonicalUid;
                     activeCanonicalEmail = cleanEmail;
                     currentUserData = existingUserData;
 
-                    // Tenter d'abord la connexion directe sur l'email principal
                     try {
                         isRegistering = true;
                         await signInWithEmailAndPassword(rawAuth, cleanEmail, primaryPasswordCandidate);
@@ -8294,13 +8213,7 @@
                             username: existingUserData.username,
                             photoURL: existingUserData.photoURL || ''
                         });
-                        isGoogleAutoAuthInProgress = false;
-                        closeGoogleAccountChooserModal();
-                        await handleAuthenticatedUserEntry(rawAuth.currentUser);
-                        return;
                     } catch (directSignInErr) {
-                        // Si le compte avait été créé par formulaire email avec un mot de passe manuel différent,
-                        // on ouvre la session Firebase via le jeton Google tout en rattachant 100% la session au UID du compte existant (ZÉRO compte parallèle créé !)
                         const parts = cleanEmail.split('@');
                         const googleBridgeEmail = `${parts[0]}+gauth@${parts[1] || 'gmail.com'}`;
                         const bridgePass = getDeterministicGoogleMaskedPassword(cleanEmail, 1);
@@ -8308,16 +8221,11 @@
                             await signInWithEmailAndPassword(rawAuth, googleBridgeEmail, bridgePass);
                         } catch (bridgeSignInErr) {
                             await createUserWithEmailAndPassword(rawAuth, googleBridgeEmail, bridgePass);
-                            // Important : Si un doc avec le UID technique du pont existait par erreur, on le supprime pour ne garder que le vrai compte existant !
                             if (rawAuth.currentUser && rawAuth.currentUser.uid !== canonicalUid) {
                                 await deleteDoc(doc(db, "users", rawAuth.currentUser.uid)).catch(() => {});
                             }
                         }
                         isRegistering = false;
-                        activeCanonicalUid = canonicalUid;
-                        activeCanonicalEmail = cleanEmail;
-                        currentUserData = existingUserData;
-
                         saveGoogleAccountToDevice({
                             email: cleanEmail,
                             firebaseAuthEmail: googleBridgeEmail,
@@ -8326,41 +8234,76 @@
                             username: existingUserData.username,
                             photoURL: existingUserData.photoURL || ''
                         });
-                        isGoogleAutoAuthInProgress = false;
-                        closeGoogleAccountChooserModal();
-                        await handleAuthenticatedUserEntry(rawAuth.currentUser);
-                        return;
+                    }
+
+                    activeCanonicalUid = canonicalUid;
+                    activeCanonicalEmail = cleanEmail;
+                    currentUserData = existingUserData;
+                    isGoogleAutoAuthInProgress = false;
+                    closeGoogleAccountChooserModal();
+                    closeModal('login-prompt-modal');
+                    await handleAuthenticatedUserEntry(rawAuth.currentUser);
+                    return;
+                }
+
+                // Étape 3 : Nouvel utilisateur (ou compte Firebase Auth existant sans doc Firestore trouvé)
+                const newMaskedPass = getDeterministicGoogleMaskedPassword(cleanEmail, 0);
+                let authedFirebaseUser = null;
+                isRegistering = true;
+                try {
+                    const signInAttempt = await signInWithEmailAndPassword(rawAuth, cleanEmail, newMaskedPass);
+                    authedFirebaseUser = signInAttempt.user;
+                } catch (firstSignInErr) {
+                    try {
+                        const regCred = await createUserWithEmailAndPassword(rawAuth, cleanEmail, newMaskedPass);
+                        authedFirebaseUser = regCred.user;
+                    } catch (regErr) {
+                        const parts = cleanEmail.split('@');
+                        const googleBridgeEmail = `${parts[0]}+gauth@${parts[1] || 'gmail.com'}`;
+                        const bridgePass = getDeterministicGoogleMaskedPassword(cleanEmail, 1);
+                        try {
+                            const bridgeSignIn = await signInWithEmailAndPassword(rawAuth, googleBridgeEmail, bridgePass);
+                            authedFirebaseUser = bridgeSignIn.user;
+                        } catch (bErr) {
+                            const bridgeReg = await createUserWithEmailAndPassword(rawAuth, googleBridgeEmail, bridgePass);
+                            authedFirebaseUser = bridgeReg.user;
+                        }
                     }
                 }
 
-                // Étape 3 : Aucun compte existant dans Firestore -> C'est un tout nouvel utilisateur qui s'inscrit pour la 1ère fois avec Google
-                const newMaskedPass = getDeterministicGoogleMaskedPassword(cleanEmail, 0);
-                try {
-                    isRegistering = true;
-                    const regCred = await createUserWithEmailAndPassword(rawAuth, cleanEmail, newMaskedPass);
-                    const username = buildDefaultUsernameFromEmail(cleanEmail);
-                    const newData = await setupNewGoogleUserInFirestore(regCred.user, cleanEmail, username);
-                    activeCanonicalUid = regCred.user.uid;
+                if (authedFirebaseUser) {
+                    const existingDocSnap = await getDoc(doc(db, "users", authedFirebaseUser.uid));
+                    let finalUserData = null;
+                    if (existingDocSnap.exists()) {
+                        finalUserData = existingDocSnap.data();
+                        finalUserData.uid = authedFirebaseUser.uid;
+                    } else {
+                        const username = buildDefaultUsernameFromEmail(cleanEmail);
+                        finalUserData = await setupNewGoogleUserInFirestore(authedFirebaseUser, cleanEmail, username);
+                    }
+                    activeCanonicalUid = authedFirebaseUser.uid;
                     activeCanonicalEmail = cleanEmail;
-                    currentUserData = newData;
+                    currentUserData = finalUserData;
                     saveGoogleAccountToDevice({
                         email: cleanEmail,
-                        firebaseAuthEmail: cleanEmail,
+                        firebaseAuthEmail: authedFirebaseUser.email || cleanEmail,
                         maskedPass: newMaskedPass,
-                        uid: regCred.user.uid,
-                        username: username
+                        uid: authedFirebaseUser.uid,
+                        username: finalUserData.username || buildDefaultUsernameFromEmail(cleanEmail),
+                        photoURL: finalUserData.photoURL || ''
                     });
                     isRegistering = false;
                     isGoogleAutoAuthInProgress = false;
                     closeGoogleAccountChooserModal();
-                    await handleAuthenticatedUserEntry(regCred.user);
-                } catch (newRegErr) {
-                    isRegistering = false;
-                    isGoogleAutoAuthInProgress = false;
-                    if (errEl) {
-                        errEl.innerText = "Erreur de connexion Google : " + (newRegErr.message || "veuillez réessayer");
-                        errEl.classList.remove('hidden');
-                    }
+                    closeModal('login-prompt-modal');
+                    await handleAuthenticatedUserEntry(authedFirebaseUser);
+                }
+            } catch (unexpectedErr) {
+                isRegistering = false;
+                isGoogleAutoAuthInProgress = false;
+                if (errEl) {
+                    errEl.innerText = "Erreur de connexion : " + (unexpectedErr.message || "veuillez réessayer");
+                    errEl.classList.remove('hidden');
                 }
             } finally {
                 isRegistering = false;
@@ -8786,6 +8729,8 @@
                     window.OneSignalDeferred.push(function(OneSignal) { try { OneSignal.login(effectiveUid); } catch(e) {} });
                 }
                 
+                closeGoogleAccountChooserModal();
+                closeModal('login-prompt-modal');
                 document.getElementById('auth-screen').classList.remove('active'); 
                 document.getElementById('bottom-nav').classList.remove('hidden'); 
                 document.getElementById('bottom-nav').classList.add('flex');
@@ -8801,6 +8746,7 @@
                 const currentActive = document.querySelector('.screen.active');
                 if (!hasUserVerifiedBirthDate(effectiveUid, cleanUserEmail)) {
                     // Première connexion : demander obligatoirement la date de naissance (12 ans requis)
+                    window.navigateTo('feed');
                     openFirstTimeBirthDateModal();
                 } else if (!currentActive || currentActive.id === 'auth-screen' || currentActive.id === 'splash-screen') { 
                     window.navigateTo('feed'); 
