@@ -1496,7 +1496,6 @@
             #offline-screen,
             #auth-screen,
             #login-prompt-modal,
-            #google-account-chooser-modal,
             #birthdate-verification-modal,
             #delete-confirm-modal,
             #logout-modal,
@@ -1526,7 +1525,6 @@
             #offline-screen,
             #auth-screen,
             #login-prompt-modal,
-            #google-account-chooser-modal,
             #birthdate-verification-modal,
             #delete-confirm-modal,
             #logout-modal,
@@ -1556,7 +1554,6 @@
             #offline-screen,
             #auth-screen,
             #login-prompt-modal,
-            #google-account-chooser-modal,
             #birthdate-verification-modal,
             #delete-confirm-modal,
             #logout-modal,
@@ -1686,7 +1683,6 @@
             #offline-screen,
             #auth-screen,
             #login-prompt-modal,
-            #google-account-chooser-modal,
             #birthdate-verification-modal,
             #delete-confirm-modal,
             #logout-modal,
@@ -1728,7 +1724,6 @@
             #first-time-lang-modal,
             #auth-screen,
             #login-prompt-modal,
-            #google-account-chooser-modal,
             #birthdate-verification-modal,
             #delete-confirm-modal,
             #logout-modal,
@@ -2000,6 +1995,33 @@
         body.light-theme .google-auth-btn span {
             color: #0f172a !important;
         }
+        /* Authentic Google "Sélectionnez un compte" Card (Matches accounts.google.com screenshot with R-Videos branding) */
+        #google-account-chooser-modal .google-oauth-card {
+            background: #ffffff !important;
+            color: #1f1f1f !important;
+            border-radius: 28px !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35) !important;
+        }
+        #google-account-chooser-modal .google-oauth-row {
+            background: #ffffff !important;
+            color: #1f1f1f !important;
+            transition: background-color 0.15s ease;
+        }
+        #google-account-chooser-modal .google-oauth-row:hover {
+            background: #f8fafc !important;
+        }
+        #google-account-chooser-modal .google-oauth-row.selected-google-row {
+            background: #eff6ff !important;
+        }
+        #google-account-chooser-modal #btn-confirm-google-chooser {
+            background: #1a73e8 !important;
+            color: #ffffff !important;
+        }
+        #google-account-chooser-modal #btn-confirm-google-chooser span,
+        #google-account-chooser-modal #btn-confirm-google-chooser svg {
+            color: #ffffff !important;
+        }
     </style>
 </head>
 <body class="relative overflow-hidden bg-black light-theme">
@@ -2232,41 +2254,51 @@
             </div>
         </div>
 
-        <!-- GOOGLE ACCOUNT CHOOSER MODAL (TikTok-Style Direct Phone Account Selection — Zero Text Input Form) -->
+        <!-- GOOGLE ACCOUNT CHOOSER MODAL (Identical to accounts.google.com screenshot with R-Videos branding) -->
         <div id="google-account-chooser-modal" class="modal-overlay z-[122]">
-            <div class="glass-panel w-11/12 max-w-md p-6 rounded-3xl shadow-2xl border border-white/15 text-left relative overflow-hidden">
-                <div class="flex items-center justify-between pb-3.5 mb-3.5 border-b border-white/10">
+            <div class="google-oauth-card w-11/12 max-w-md overflow-hidden text-left relative">
+                <!-- Top Bar: G Se connecter avec Google -->
+                <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-200">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shadow-md shrink-0 border border-slate-200">
-                            <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-extrabold text-white font-display">Choisir un compte Google</h3>
-                            <p class="text-[11px] text-gray-400">Sélectionnez votre adresse pour continuer sur R-Videos</p>
-                        </div>
+                        <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                        <span class="text-xs sm:text-sm font-medium text-slate-600">Se connecter avec Google</span>
                     </div>
-                    <button type="button" onclick="closeGoogleAccountChooserModal()" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center text-gray-400 hover:text-white transition">
+                    <button type="button" onclick="closeGoogleAccountChooserModal()" class="w-7 h-7 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500 transition">
                         <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 </div>
 
-                <!-- Direct Selectable List of Google Accounts Detected on Phone / App (No text input!) -->
-                <div class="space-y-2 mb-4">
-                    <div id="google-saved-accounts-list" class="space-y-2 max-h-64 overflow-y-auto no-scrollbar pr-0.5">
-                        <div class="flex items-center justify-center gap-2 py-6 text-xs text-gray-400">
-                            <div class="w-4 h-4 border-2 border-[#ff2a5f] border-t-transparent rounded-full animate-spin"></div>
-                            <span>Récupération des adresses Google de l'appareil...</span>
+                <!-- Main Body: R-Videos App Icon + Sélectionnez un compte + Accéder à l'application R-Videos -->
+                <div class="px-6 pt-5 pb-6">
+                    <div class="w-12 h-12 rounded-2xl rv-brand-logo-icon shadow-md border border-[#ec514c]/30 mb-4"></div>
+                    <h3 class="text-xl sm:text-2xl font-normal text-slate-900 tracking-tight mb-1">Sélectionnez un compte</h3>
+                    <p class="text-xs sm:text-sm text-slate-600 mb-4">Accéder à l'application <span class="text-[#1a73e8] font-semibold">R-Videos</span></p>
+
+                    <!-- Device Google Accounts List -->
+                    <div id="google-saved-accounts-list" class="divide-y divide-slate-200 border-t border-b border-slate-200 max-h-60 overflow-y-auto no-scrollbar"></div>
+
+                    <!-- "Utiliser un autre compte" row (exactly like screenshot) -->
+                    <label for="google-other-account-autofill-input" onclick="triggerOtherPhoneGoogleAccount()" class="google-oauth-row flex items-center gap-3.5 py-3 px-2 border-b border-slate-200 cursor-pointer">
+                        <div class="w-9 h-9 rounded-full flex items-center justify-center text-slate-600 shrink-0">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/></svg>
                         </div>
-                    </div>
-                </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-xs sm:text-sm font-medium text-slate-700">Utiliser un autre compte</div>
+                            <input type="email" id="google-other-account-autofill-input" name="email" autocomplete="username email" inputmode="email" placeholder="Sélectionner une autre adresse de l'appareil..." class="hidden w-full bg-transparent border-0 outline-none text-xs text-[#1a73e8] placeholder-slate-400 font-medium p-0 mt-0.5 focus:ring-0" oninput="onInlineDeviceChipEmailPicked(this.value)" onchange="onInlineDeviceChipEmailPicked(this.value)">
+                        </div>
+                    </label>
 
-                <p id="google-chooser-error" class="hidden text-xs text-rose-300 bg-rose-950/60 border border-rose-500/40 p-2.5 rounded-xl font-medium mb-3"></p>
+                    <p id="google-chooser-error" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 p-2.5 rounded-xl font-medium mt-3"></p>
 
-                <div class="flex flex-col gap-2">
-                    <button type="button" id="btn-confirm-google-chooser" onclick="validateSelectedGoogleAccount()" class="w-full bg-gradient-to-r from-[#ff2a5f] to-rose-600 hover:opacity-95 text-white font-extrabold py-3.5 rounded-xl transition flex justify-center items-center gap-2 h-12 shadow-lg shadow-rose-600/30 active:scale-95">
-                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                        <span>Valider et se connecter</span>
+                    <!-- Validate Choice Button -->
+                    <button type="button" id="btn-confirm-google-chooser" onclick="validateSelectedGoogleAccount()" class="mt-4 w-full py-3 rounded-full font-bold text-xs sm:text-sm transition flex justify-center items-center gap-2 shadow-md active:scale-95">
+                        <span>Valider et continuer</span>
                     </button>
+
+                    <!-- Privacy & Terms Footer (exactly like screenshot) -->
+                    <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
+                        Avant d'utiliser l'appli R-Videos, vous pouvez consulter ses <span onclick="closeGoogleAccountChooserModal(); openPrivacyPolicy();" class="text-[#1a73e8] font-medium cursor-pointer hover:underline">Règles de confidentialité</span> et ses <span onclick="closeGoogleAccountChooserModal(); openPrivacyPolicy();" class="text-[#1a73e8] font-medium cursor-pointer hover:underline">Conditions d'utilisation</span>.
+                    </p>
                 </div>
             </div>
         </div>
@@ -4137,7 +4169,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, deleteUser, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, deleteUser, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs, getCountFromServer, onSnapshot, query, orderBy, serverTimestamp, updateDoc, limit, arrayUnion, arrayRemove, increment, where, deleteDoc, writeBatch, startAfter } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         const firebaseConfig = { apiKey: "AIzaSyCfiExPZwsF53-Ix3cCeIa3tq1MJ5359RU", authDomain: "nanofinance-9192a.firebaseapp.com", projectId: "nanofinance-9192a", storageBucket: "nanofinance-9192a.firebasestorage.app", messagingSenderId: "376434082116", appId: "1:376434082116:web:838ef702670608bc959711", measurementId: "G-9455DCWCNL" };
@@ -7589,7 +7621,7 @@
         // CONNEXION GOOGLE AUTOMATIQUE (SÉLECTION 1-CLIC COMME TIKTOK + MOT DE PASSE MASQUÉ MÉMORISÉ)
         // ZÉRO COMPTE PARALLÈLE : Rentre directement dans le compte existant si déjà inscrit par email !
         // ============================================================================
-        const GOOGLE_SAVED_ACCOUNTS_KEY = 'rv_google_saved_accounts_v1';
+        const GOOGLE_SAVED_ACCOUNTS_KEY = 'rv_device_only_google_accounts_v2';
         let isGoogleAutoAuthInProgress = false;
         let selectedGoogleAccountEmail = '';
         let discoveredPhoneGoogleAccounts = [];
@@ -7607,6 +7639,7 @@
         function saveGoogleAccountToDevice(accountObj) {
             if (!accountObj || !accountObj.email) return;
             const cleanEmail = String(accountObj.email).toLowerCase().trim().replace('+gauth@', '@');
+            if (!cleanEmail.includes('@') || cleanEmail.endsWith('@bot.local')) return;
             const list = getSavedGoogleAccounts();
             const existingIdx = list.findIndex(a => String(a.email).toLowerCase().trim() === cleanEmail);
             const merged = {
@@ -7645,7 +7678,7 @@
             return cleaned.length >= 2 ? cleaned.slice(0, 22) : ('user_' + Math.floor(1000 + Math.random() * 9000));
         }
 
-        // Recherche le vrai compte original existant pour cet email et supprime tout éventuel doublon parallèle
+        // Recherche le vrai compte original existant pour cet email lors de la connexion et supprime tout éventuel doublon parallèle
         async function findAndConsolidateExistingAccountByEmail(rawEmail) {
             const cleanEmail = String(rawEmail || '').toLowerCase().trim().replace('+gauth@', '@');
             if (!cleanEmail || !cleanEmail.includes('@')) return null;
@@ -7662,7 +7695,6 @@
                 });
             } catch (e) {}
 
-            // Scan broader users collection in case email had uppercase letters when originally registered
             try {
                 const snapAll = await getDocs(query(collection(db, "users"), limit(60)));
                 snapAll.forEach(d => {
@@ -7684,12 +7716,10 @@
                 return only;
             }
 
-            // S'il y a plusieurs documents (ex: ancien compte inscrit par email + compte parallèle créé par erreur),
-            // on identifie le vrai compte original et on supprime le doublon parallèle !
             for (const cand of candidates) {
                 let score = 0;
                 const d = cand.data;
-                if (d.authMethod !== 'google') score += 5000; // Compte créé à l'origine par inscription email !
+                if (d.authMethod !== 'google') score += 5000;
                 if (d.photoURL && d.photoURL.length > 5) score += 2000;
                 if (d.bio && d.bio !== 'Nouveau membre' && d.bio !== 'Pas de bio') score += 1500;
                 if (Array.isArray(d.followers) && d.followers.length > 0) score += d.followers.length * 100;
@@ -7697,7 +7727,7 @@
                 if (d.isVerified) score += 3000;
                 try {
                     const vSnap = await getDocs(query(collection(db, "videos"), where("userId", "==", cand.id), limit(1)));
-                    if (!vSnap.empty) score += 20000; // Possède des vidéos publiées !
+                    if (!vSnap.empty) score += 20000;
                 } catch (e) {}
                 const createdSec = d.createdAt?.seconds || 9999999999;
                 cand._score = score;
@@ -7706,13 +7736,12 @@
 
             candidates.sort((a, b) => {
                 if (b._score !== a._score) return b._score - a._score;
-                return a._createdSec - b._createdSec; // Le plus ancien gagne
+                return a._createdSec - b._createdSec;
             });
 
             const primary = candidates[0];
             primary.data.uid = primary.id;
 
-            // Nettoyer les doublons parallèles sans vidéos
             for (let i = 1; i < candidates.length; i++) {
                 const dup = candidates[i];
                 if (dup._score < 10000) {
@@ -7725,45 +7754,57 @@
             return primary;
         }
 
-        // Récupère automatiquement les adresses Google présentes sur le téléphone / l'application (sans doublons)
-        async function discoverPhoneAndAppGoogleAccounts() {
+        // Récupère UNIQUEMENT les comptes Google présents dans CE téléphone / appareil (ZÉRO requête à la collection `users` du serveur !)
+        async function discoverPhoneOnlyGoogleAccounts() {
             const accountMap = new Map();
 
             const addCandidate = (acc) => {
                 if (!acc || !acc.email) return;
                 const cleanEmail = String(acc.email).toLowerCase().trim().replace('+gauth@', '@');
-                if (!cleanEmail.includes('@') || cleanEmail.endsWith('@bot.local')) return;
+                if (!cleanEmail.includes('@') || cleanEmail.endsWith('@bot.local') || cleanEmail.endsWith('@example.com')) return;
                 const existing = accountMap.get(cleanEmail) || {};
-                // Préférer les métadonnées du compte original (pas "Nouveau membre" si un vrai pseudo/photo existe)
-                const bestUsername = (existing.username && existing.isOriginalAccount)
-                    ? existing.username
-                    : (acc.username || existing.username || buildDefaultUsernameFromEmail(cleanEmail));
-                const bestPhoto = existing.photoURL || acc.photoURL || '';
-                const bestUid = (acc.isOriginalAccount ? acc.uid : (existing.uid || acc.uid)) || '';
-
                 accountMap.set(cleanEmail, {
                     email: cleanEmail,
-                    username: bestUsername,
-                    photoURL: bestPhoto,
-                    uid: bestUid,
-                    bio: acc.bio || existing.bio || '',
-                    googlePassKey: acc.googlePassKey || existing.googlePassKey || '',
-                    isVerified: !!(acc.isVerified || existing.isVerified || cleanEmail === VIP_EMAIL.toLowerCase()),
-                    birthDate: acc.birthDate || existing.birthDate || '',
-                    ageVerified: !!(acc.ageVerified || existing.ageVerified),
-                    isOriginalAccount: !!(acc.isOriginalAccount || existing.isOriginalAccount),
-                    rememberedOnDevice: !!(acc.rememberedOnDevice || existing.rememberedOnDevice)
+                    username: acc.username || existing.username || buildDefaultUsernameFromEmail(cleanEmail),
+                    photoURL: acc.photoURL || existing.photoURL || '',
+                    uid: acc.uid || existing.uid || '',
+                    rememberedOnDevice: true
                 });
             };
 
-            // 1. Comptes enregistrés sur l'appareil
-            getSavedGoogleAccounts().forEach(a => addCandidate({ ...a, rememberedOnDevice: true }));
+            // 1. Comptes Google mémorisés localement sur cet appareil
+            getSavedGoogleAccounts().forEach(a => addCandidate(a));
 
-            // 2. Champ login-email éventuel
+            // 2. Utilisateur Firebase actuellement ou précédemment connecté sur cet appareil
+            if (rawAuth && rawAuth.currentUser && rawAuth.currentUser.email) {
+                addCandidate({
+                    email: rawAuth.currentUser.email,
+                    username: rawAuth.currentUser.displayName || '',
+                    photoURL: rawAuth.currentUser.photoURL || '',
+                    uid: rawAuth.currentUser.uid
+                });
+            }
+
+            // 3. Champ email du téléphone si pré-rempli par l'appareil
             const loginInpVal = document.getElementById('login-email')?.value?.trim();
-            if (loginInpVal && loginInpVal.includes('@')) addCandidate({ email: loginInpVal, rememberedOnDevice: true });
+            if (loginInpVal && loginInpVal.includes('@')) addCandidate({ email: loginInpVal });
+            const regInpVal = document.getElementById('reg-email')?.value?.trim();
+            if (regInpVal && regInpVal.includes('@')) addCandidate({ email: regInpVal });
 
-            // 3. Sessions Firebase locales dans IndexedDB du téléphone
+            // 4. Inspection de toutes les clés locales de CET appareil (localStorage & sessionStorage : ex. firebase:authUser, OneSignal, etc.)
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (!k || k === 'rv_google_saved_accounts_v1') continue; // Ignorer l'ancien cache v1 qui contenait les e-mails du serveur
+                    const v = localStorage.getItem(k);
+                    if (v && v.includes('@gmail.com')) {
+                        const matches = v.match(/[a-zA-Z0-9._%+-]+@gmail\.com/gi);
+                        if (matches) matches.forEach(em => addCandidate({ email: em }));
+                    }
+                }
+            } catch (e) {}
+
+            // 5. Sessions Firebase locales enregistrées dans l'IndexedDB de CE téléphone uniquement
             try {
                 if (window.indexedDB) {
                     await new Promise((resolve) => {
@@ -7782,8 +7823,7 @@
                                             addCandidate({
                                                 email: val.email.replace('+gauth@', '@'),
                                                 username: val.displayName || buildDefaultUsernameFromEmail(val.email),
-                                                photoURL: val.photoURL || '',
-                                                rememberedOnDevice: true
+                                                photoURL: val.photoURL || ''
                                             });
                                         }
                                     });
@@ -7797,57 +7837,52 @@
                 }
             } catch (e) {}
 
-            // 4. Bridge Android / Credential Manager silencieux
+            // 6. Bridge Android AccountManager natif de l'appareil (si exposé par le conteneur mobile/APK)
             try {
-                if (window.Android && typeof window.Android.getDeviceEmails === 'function') {
-                    const raw = window.Android.getDeviceEmails();
-                    const emails = Array.isArray(raw) ? raw : JSON.parse(raw || '[]');
-                    emails.forEach(em => addCandidate({ email: em, rememberedOnDevice: true }));
-                }
-            } catch (e) {}
-
-            try {
-                if (navigator.credentials && navigator.credentials.get) {
-                    const cred = await navigator.credentials.get({ password: true, mediation: 'silent' }).catch(() => null);
-                    if (cred && cred.id && cred.id.includes('@')) {
-                        addCandidate({ email: cred.id, username: cred.name || '', photoURL: cred.iconURL || '', rememberedOnDevice: true });
+                if (window.Android) {
+                    if (typeof window.Android.getDeviceEmails === 'function') {
+                        const raw = window.Android.getDeviceEmails();
+                        const emails = Array.isArray(raw) ? raw : JSON.parse(raw || '[]');
+                        emails.forEach(em => addCandidate({ email: em }));
+                    } else if (typeof window.Android.getAccounts === 'function') {
+                        const raw = window.Android.getAccounts();
+                        const emails = Array.isArray(raw) ? raw : JSON.parse(raw || '[]');
+                        emails.forEach(em => addCandidate({ email: em }));
+                    } else if (typeof window.Android.getUserEmail === 'function') {
+                        const em = window.Android.getUserEmail();
+                        if (em) addCandidate({ email: em });
                     }
                 }
             } catch (e) {}
 
-            // 5. Comptes existants dans la collection `users` de Firestore (en privilégiant les comptes inscrits par email)
+            // 7. Gestionnaire d'identifiants Google de l'appareil (Credential Management API)
             try {
-                const snap = await getDocs(query(collection(db, "users"), limit(50)));
-                const rawDocs = [];
-                snap.forEach(d => {
-                    const u = d.data();
-                    if (!u || !u.email || isVirtualBotIdOrUser(d.id, u.email, u.isBot)) return;
-                    rawDocs.push({ id: d.id, data: u });
-                });
-                // Trier pour passer les comptes originaux (non-google ou plus anciens) en priorité
-                rawDocs.sort((a, b) => {
-                    const aOrig = a.data.authMethod !== 'google' ? 1 : 0;
-                    const bOrig = b.data.authMethod !== 'google' ? 1 : 0;
-                    if (bOrig !== aOrig) return bOrig - aOrig;
-                    return (a.data.createdAt?.seconds || 0) - (b.data.createdAt?.seconds || 0);
-                });
-                rawDocs.forEach(({ id, data: u }) => {
-                    addCandidate({
-                        email: u.email,
-                        username: u.username || buildDefaultUsernameFromEmail(u.email),
-                        photoURL: u.photoURL || '',
-                        uid: id,
-                        bio: u.bio || '',
-                        googlePassKey: u.googlePassKey || '',
-                        isVerified: !!(u.isVerified || u.email.toLowerCase() === VIP_EMAIL.toLowerCase()),
-                        birthDate: u.birthDate || '',
-                        ageVerified: !!(u.ageVerified || u.authMethod !== 'google'),
-                        isOriginalAccount: u.authMethod !== 'google'
-                    });
-                });
+                if (navigator.credentials && navigator.credentials.get) {
+                    const cred = await navigator.credentials.get({
+                        password: true,
+                        federated: { providers: ['https://accounts.google.com'] },
+                        mediation: 'silent'
+                    }).catch(() => null);
+                    if (cred && cred.id && cred.id.includes('@')) {
+                        addCandidate({ email: cred.id, username: cred.name || '', photoURL: cred.iconURL || '' });
+                    }
+                }
             } catch (e) {}
 
-            discoveredPhoneGoogleAccounts = Array.from(accountMap.values());
+            // Enrichir uniquement le pseudo/photo des comptes de CET appareil s'ils ont déjà un profil sur R-Videos
+            const deviceList = Array.from(accountMap.values());
+            for (const item of deviceList) {
+                try {
+                    const existingRec = await findAndConsolidateExistingAccountByEmail(item.email);
+                    if (existingRec && existingRec.data) {
+                        item.username = existingRec.data.username || item.username;
+                        item.photoURL = existingRec.data.photoURL || item.photoURL || '';
+                        item.uid = existingRec.id;
+                    }
+                } catch (e) {}
+            }
+
+            discoveredPhoneGoogleAccounts = deviceList;
             if (!selectedGoogleAccountEmail && discoveredPhoneGoogleAccounts.length > 0) {
                 selectedGoogleAccountEmail = discoveredPhoneGoogleAccounts[0].email;
             } else if (selectedGoogleAccountEmail && !discoveredPhoneGoogleAccounts.some(a => a.email === selectedGoogleAccountEmail)) {
@@ -7856,12 +7891,26 @@
             return discoveredPhoneGoogleAccounts;
         }
 
+        const GOOGLE_AVATAR_COLORS = ['#795548', '#5c6bc0', '#00897b', '#e53935', '#8e24aa', '#039be5', '#43a047'];
+
+        function getAvatarColorForEmail(email) {
+            let sum = 0;
+            const s = String(email || '');
+            for (let i = 0; i < s.length; i++) sum += s.charCodeAt(i);
+            return GOOGLE_AVATAR_COLORS[sum % GOOGLE_AVATAR_COLORS.length];
+        }
+
         function renderSavedGoogleAccountsInModal() {
             const listContainer = document.getElementById('google-saved-accounts-list');
+            const otherInp = document.getElementById('google-other-account-autofill-input');
             if (!listContainer) return;
 
             if (discoveredPhoneGoogleAccounts.length === 0) {
-                listContainer.innerHTML = `<div class="text-center text-xs text-gray-400 py-6">Aucun compte détecté sur cet appareil.</div>`;
+                listContainer.innerHTML = '';
+                if (otherInp) {
+                    otherInp.classList.remove('hidden');
+                    setTimeout(() => otherInp.focus(), 60);
+                }
                 return;
             }
 
@@ -7872,31 +7921,32 @@
             listContainer.innerHTML = discoveredPhoneGoogleAccounts.map(acc => {
                 const emailSafe = escapeHtml(acc.email);
                 const emailJs = escapeJsSingleQuotedAttr(acc.email);
-                const displayName = escapeHtml(acc.username || buildDefaultUsernameFromEmail(acc.email));
+                const rawName = acc.username || buildDefaultUsernameFromEmail(acc.email);
+                const displayName = escapeHtml(String(rawName).replace(/^@+/, ''));
                 const initial = (displayName.charAt(0) || 'G').toUpperCase();
                 const isSelected = (acc.email === selectedGoogleAccountEmail);
                 const isBlocked = isAccountBlockedUnder12(acc.uid, acc.email);
+                const bgColor = getAvatarColorForEmail(acc.email);
                 const avatarContent = (acc.photoURL && acc.photoURL.length > 5)
                     ? `<img src="${escapeHtml(acc.photoURL)}" class="w-full h-full object-cover rounded-full">`
                     : initial;
 
                 return `
-                <div onclick="selectGoogleAccountOption('${emailJs}')" class="flex items-center justify-between gap-3 p-3 rounded-2xl border cursor-pointer transition active:scale-[0.99] ${isSelected ? 'bg-[#ff2a5f]/15 border-[#ff2a5f] shadow-md shadow-rose-600/15' : 'bg-white/5 hover:bg-white/10 border-white/15'}">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#EA4335] text-white font-extrabold text-sm flex items-center justify-center shrink-0 shadow overflow-hidden">
+                <div onclick="selectGoogleAccountOption('${emailJs}')" ondblclick="selectGoogleAccountOption('${emailJs}'); validateSelectedGoogleAccount();" class="google-oauth-row ${isSelected ? 'selected-google-row' : ''} flex items-center justify-between gap-3 py-3 px-2 cursor-pointer">
+                    <div class="flex items-center gap-3.5 min-w-0">
+                        <div class="w-9 h-9 rounded-full text-white font-semibold text-sm flex items-center justify-center shrink-0 overflow-hidden" style="background-color: ${bgColor};">
                             ${avatarContent}
                         </div>
                         <div class="min-w-0">
-                            <div class="text-xs font-extrabold text-white truncate flex items-center gap-1.5">
-                                <span>@${displayName}</span>
-                                ${acc.rememberedOnDevice ? `<span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">Mémorisé</span>` : ''}
+                            <div class="text-xs sm:text-sm font-medium text-slate-900 truncate flex items-center gap-1.5">
+                                <span>${displayName}</span>
                                 ${isBlocked ? `<span class="text-[9px] px-1.5 py-0.5 rounded bg-rose-600 text-white font-bold">Bloqué (-12 ans)</span>` : ''}
                             </div>
-                            <div class="text-[11px] text-gray-400 truncate">${emailSafe}</div>
+                            <div class="text-[11px] sm:text-xs text-slate-500 truncate">${emailSafe}</div>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition ${isSelected ? 'border-[#ff2a5f] bg-[#ff2a5f] text-white' : 'border-gray-400 bg-transparent'}">
+                    <div class="flex items-center shrink-0 pr-1">
+                        <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition ${isSelected ? 'border-[#1a73e8] bg-[#1a73e8] text-white' : 'border-slate-300 bg-transparent'}">
                             ${isSelected ? `<i data-lucide="check" class="w-3 h-3 stroke-[3]"></i>` : ''}
                         </div>
                     </div>
@@ -7906,6 +7956,134 @@
             if (window.lucide) lucide.createIcons();
         }
 
+        window.onInlineDeviceChipEmailPicked = (val) => {
+            const clean = String(val || '').toLowerCase().trim();
+            const errEl = document.getElementById('google-chooser-error');
+            if (errEl) errEl.classList.add('hidden');
+            if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
+                selectedGoogleAccountEmail = clean;
+                saveGoogleAccountToDevice({
+                    email: clean,
+                    username: buildDefaultUsernameFromEmail(clean)
+                });
+                const otherInp = document.getElementById('google-other-account-autofill-input');
+                if (otherInp) {
+                    otherInp.value = '';
+                    otherInp.classList.add('hidden');
+                }
+                discoverPhoneOnlyGoogleAccounts().then(() => {
+                    renderSavedGoogleAccountsInModal();
+                });
+            }
+        };
+
+        async function handleGoogleOAuthUserResult(gUser) {
+            if (!gUser || !gUser.email) return false;
+            const gEmail = String(gUser.email).toLowerCase().trim();
+            const gName = gUser.displayName || buildDefaultUsernameFromEmail(gEmail);
+            const gPhoto = gUser.photoURL || '';
+            const maskedPass = getDeterministicGoogleMaskedPassword(gEmail, 0);
+
+            if (isAccountBlockedUnder12(gUser.uid, gEmail)) {
+                closeGoogleAccountChooserModal();
+                showUnder12BlockedModalState();
+                await signOut(rawAuth).catch(() => {});
+                return true;
+            }
+
+            const existingRecord = await findAndConsolidateExistingAccountByEmail(gEmail);
+            if (existingRecord) {
+                activeCanonicalUid = existingRecord.id;
+                activeCanonicalEmail = gEmail;
+                currentUserData = existingRecord.data;
+                currentUserData.uid = existingRecord.id;
+                if (existingRecord.data.authMethod !== 'google' && !existingRecord.data.isAgeBlocked) {
+                    currentUserData.ageVerified = true;
+                    safeSetStorage(`rv_birthdate_verified_${existingRecord.id}`, existingRecord.data.birthDate || 'existing_user');
+                    safeSetStorage(`rv_birthdate_email_${gEmail}`, existingRecord.data.birthDate || 'existing_user');
+                }
+                if (gUser.uid !== existingRecord.id) {
+                    await deleteDoc(doc(db, "users", gUser.uid)).catch(() => {});
+                }
+            } else {
+                activeCanonicalUid = gUser.uid;
+                activeCanonicalEmail = gEmail;
+                currentUserData = await setupNewGoogleUserInFirestore(gUser, gEmail, gName);
+                if (gPhoto) {
+                    currentUserData.photoURL = gPhoto;
+                    await updateDoc(doc(db, "users", gUser.uid), { photoURL: gPhoto }).catch(() => {});
+                }
+            }
+
+            saveGoogleAccountToDevice({
+                email: gEmail,
+                uid: activeCanonicalUid,
+                username: currentUserData?.username || gName,
+                photoURL: currentUserData?.photoURL || gPhoto,
+                maskedPass: maskedPass
+            });
+            closeGoogleAccountChooserModal();
+            await handleAuthenticatedUserEntry(gUser);
+            return true;
+        }
+
+        // Gérer le retour éventuel d'une redirection OAuth Google (accounts.google.com)
+        getRedirectResult(rawAuth).then(async (result) => {
+            if (result && result.user && result.user.email) {
+                await handleGoogleOAuthUserResult(result.user);
+            }
+        }).catch(() => {});
+
+        window.triggerOtherPhoneGoogleAccount = async () => {
+            const otherInp = document.getElementById('google-other-account-autofill-input');
+            if (otherInp) {
+                otherInp.classList.remove('hidden');
+                otherInp.focus();
+            }
+            // 1. Tenter le sélecteur de contacts/comptes natif Android Chrome si disponible
+            try {
+                if (navigator.contacts && navigator.contacts.select) {
+                    const picked = await navigator.contacts.select(['email', 'name'], { multiple: false });
+                    if (picked && picked.length > 0 && picked[0].email && picked[0].email[0]) {
+                        const em = String(picked[0].email[0]).toLowerCase().trim();
+                        saveGoogleAccountToDevice({
+                            email: em,
+                            username: (picked[0].name && picked[0].name[0]) || buildDefaultUsernameFromEmail(em)
+                        });
+                        selectedGoogleAccountEmail = em;
+                        if (otherInp) otherInp.classList.add('hidden');
+                        await discoverPhoneOnlyGoogleAccounts();
+                        renderSavedGoogleAccountsInModal();
+                        return;
+                    }
+                }
+            } catch (e) {}
+
+            // 2. Tenter Credential Manager (comptes Google de l'appareil)
+            try {
+                if (navigator.credentials && navigator.credentials.get) {
+                    const cred = await navigator.credentials.get({
+                        password: true,
+                        federated: { providers: ['https://accounts.google.com'] },
+                        mediation: 'optional'
+                    }).catch(() => null);
+                    if (cred && cred.id && cred.id.includes('@')) {
+                        const em = String(cred.id).toLowerCase().trim();
+                        saveGoogleAccountToDevice({
+                            email: em,
+                            username: cred.name || buildDefaultUsernameFromEmail(em),
+                            photoURL: cred.iconURL || ''
+                        });
+                        selectedGoogleAccountEmail = em;
+                        if (otherInp) otherInp.classList.add('hidden');
+                        await discoverPhoneOnlyGoogleAccounts();
+                        renderSavedGoogleAccountsInModal();
+                        return;
+                    }
+                }
+            } catch (e) {}
+        };
+
         window.selectGoogleAccountOption = (email) => {
             selectedGoogleAccountEmail = String(email || '').toLowerCase().trim();
             const errEl = document.getElementById('google-chooser-error');
@@ -7914,24 +8092,64 @@
         };
 
         window.validateSelectedGoogleAccount = async () => {
+            const otherInp = document.getElementById('google-other-account-autofill-input');
+            if (otherInp && otherInp.value.trim()) {
+                let raw = otherInp.value.trim().toLowerCase();
+                if (!raw.includes('@')) raw += '@gmail.com';
+                selectedGoogleAccountEmail = raw;
+                saveGoogleAccountToDevice({ email: raw, username: buildDefaultUsernameFromEmail(raw) });
+                otherInp.value = '';
+                otherInp.classList.add('hidden');
+            }
             if (!selectedGoogleAccountEmail && discoveredPhoneGoogleAccounts.length > 0) {
                 selectedGoogleAccountEmail = discoveredPhoneGoogleAccounts[0].email;
             }
-            if (!selectedGoogleAccountEmail) return;
+            if (!selectedGoogleAccountEmail) {
+                const errEl = document.getElementById('google-chooser-error');
+                if (errEl) {
+                    errEl.innerText = "Veuillez sélectionner un compte Google ci-dessus.";
+                    errEl.classList.remove('hidden');
+                }
+                return;
+            }
             await executeGoogleMaskedSignInOrRegister(selectedGoogleAccountEmail);
         };
 
         window.openGoogleAccountChooserModal = async () => {
             const errEl = document.getElementById('google-chooser-error');
             if (errEl) errEl.classList.add('hidden');
+            safeSetStorage('rv_google_saved_accounts_v1', '[]');
+
+            // 1. Si aucun compte n'est encore mémorisé localement, essayer d'ouvrir directement la fenêtre native accounts.google.com (exactement comme TikTok)
+            const localSaved = getSavedGoogleAccounts();
+            if (localSaved.length === 0) {
+                try {
+                    const provider = new GoogleAuthProvider();
+                    provider.setCustomParameters({ prompt: 'select_account' });
+                    isRegistering = true;
+                    const result = await signInWithPopup(rawAuth, provider);
+                    isRegistering = false;
+                    if (result && result.user && result.user.email) {
+                        await handleGoogleOAuthUserResult(result.user);
+                        return;
+                    }
+                } catch (popupErr) {
+                    isRegistering = false;
+                    if (popupErr && (popupErr.code === 'auth/popup-closed-by-user' || popupErr.code === 'auth/cancelled-popup-request')) {
+                        return;
+                    }
+                }
+            }
+
+            // 2. Ouvrir la fenêtre "Sélectionnez un compte — Accéder à l'application R-Videos" avec les comptes de l'appareil
             const modal = document.getElementById('google-account-chooser-modal');
             if (modal) modal.classList.add('open');
 
-            if (discoveredPhoneGoogleAccounts.length > 0) {
-                renderSavedGoogleAccountsInModal();
-            }
-            await discoverPhoneAndAppGoogleAccounts();
+            await discoverPhoneOnlyGoogleAccounts();
             renderSavedGoogleAccountsInModal();
+            if (discoveredPhoneGoogleAccounts.length === 0) {
+                window.triggerOtherPhoneGoogleAccount();
+            }
         };
 
         window.closeGoogleAccountChooserModal = () => {
