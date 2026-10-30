@@ -2022,6 +2022,106 @@
         #google-account-chooser-modal #btn-confirm-google-chooser svg {
             color: #ffffff !important;
         }
+    
+        /* =====================================================================
+           SPECIAL STORY RING (24H ACTIVE STORY) FOR PROFILE & FEED AVATARS
+           ===================================================================== */
+        @keyframes rvStoryRingGradientShift {
+            0% { background-position: 0% 50%; box-shadow: 0 0 12px rgba(255, 42, 95, 0.9), 0 0 22px rgba(6, 182, 212, 0.55); }
+            50% { background-position: 100% 50%; box-shadow: 0 0 18px rgba(245, 158, 11, 0.95), 0 0 28px rgba(168, 85, 247, 0.75); }
+            100% { background-position: 0% 50%; box-shadow: 0 0 12px rgba(255, 42, 95, 0.9), 0 0 22px rgba(6, 182, 212, 0.55); }
+        }
+        @keyframes rvStoryPulseHalo {
+            0%, 100% { transform: scale(1); opacity: 0.85; }
+            50% { transform: scale(1.12); opacity: 0.25; }
+        }
+        .rv-story-ring-feed {
+            position: relative;
+            padding: 2.5px !important;
+            border: none !important;
+            background: linear-gradient(135deg, #ff2a5f, #ff7b00, #facc15, #06b6d4, #a855f7, #ff2a5f) !important;
+            background-size: 300% 300% !important;
+            animation: rvStoryRingGradientShift 2.6s ease infinite !important;
+            border-radius: 9999px !important;
+        }
+        .rv-story-ring-feed::before {
+            content: "";
+            position: absolute;
+            inset: -3px;
+            border-radius: 9999px;
+            border: 1.5px solid rgba(255, 42, 95, 0.85);
+            animation: rvStoryPulseHalo 1.9s ease-in-out infinite;
+            pointer-events: none;
+        }
+        .rv-story-ring-feed > img,
+        .rv-story-ring-feed > div {
+            border: 2px solid #000000 !important;
+            border-radius: 9999px !important;
+        }
+        .rv-story-ring-profile {
+            position: relative;
+            padding: 3.5px !important;
+            border: none !important;
+            background: linear-gradient(135deg, #ff2a5f, #ff7b00, #facc15, #06b6d4, #a855f7, #ff2a5f) !important;
+            background-size: 300% 300% !important;
+            animation: rvStoryRingGradientShift 2.6s ease infinite !important;
+            border-radius: 9999px !important;
+        }
+        .rv-story-ring-profile::before {
+            content: "";
+            position: absolute;
+            inset: -5px;
+            border-radius: 9999px;
+            border: 2px solid rgba(6, 182, 212, 0.8);
+            animation: rvStoryPulseHalo 2s ease-in-out infinite;
+            pointer-events: none;
+        }
+        .rv-story-ring-profile > #profile-avatar-container {
+            border: 3px solid #05070e !important;
+        }
+        .rv-story-mini-badge {
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(90deg, #ff2a5f, #f59e0b);
+            color: #ffffff !important;
+            font-size: 7.5px !important;
+            font-weight: 900 !important;
+            letter-spacing: 0.04em;
+            padding: 1px 4.5px;
+            border-radius: 9999px;
+            border: 1px solid #000000;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.75);
+            z-index: 15;
+            pointer-events: none;
+            line-height: 1.1;
+            white-space: nowrap;
+        }
+        .story-progress-bar-bg {
+            flex: 1;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.28);
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        .story-progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ffffff, #ff2a5f);
+            border-radius: 9999px;
+            transition: width 0.08s linear;
+        }
+        body.light-theme #story-viewer-modal,
+        body.light-theme #story-viewer-modal :is(span, div, h3, p, button, i, svg),
+        body.light-theme #story-creator-canvas :is(span, div, p, button, i, svg) {
+            color: #ffffff !important;
+        }
+        body.light-theme #story-creator-modal > div {
+            background: #f8fafc !important;
+            color: #0f172a !important;
+        }
+
     </style>
 </head>
 <body class="relative overflow-hidden bg-black light-theme">
@@ -2032,6 +2132,8 @@
         <audio id="rv-master-audio" preload="auto" playsinline></audio>
         <audio id="rv-bg-music-audio" preload="auto" playsinline></audio>
         <audio id="studio-music-preview-audio" preload="auto" playsinline></audio>
+        <audio id="story-music-audio" preload="auto" playsinline></audio>
+        <audio id="story-creator-preview-audio" preload="auto" playsinline></audio>
 
         <!-- PULL TO REFRESH LOADER -->
         <div id="ptr-loader" class="absolute top-0 left-0 w-full flex justify-center pt-4 -translate-y-16 pointer-events-none">
@@ -2541,9 +2643,23 @@
                     </div>
 
                     <div class="flex flex-col items-center">
-                        <div class="relative mb-3">
-                            <div class="w-24 h-24 rounded-full p-[2.5px] bg-gradient-to-tr from-[#ff2a5f] via-purple-500 to-cyan-400 shadow-xl shadow-rose-500/20">
+                        <div class="relative mb-3 flex flex-col items-center">
+                            <div id="profile-avatar-ring" data-story-profile-ring="true" onclick="handleProfileAvatarClick()" class="w-24 h-24 rounded-full p-[2.5px] bg-white/15 border border-white/25 shadow-xl cursor-pointer transition-all duration-300 relative group" title="Voir ou ajouter une Story (24h)">
                                 <div id="profile-avatar-container" class="w-full h-full rounded-full flex items-center justify-center overflow-hidden bg-[#0c1222]"></div>
+                                <span id="profile-story-ring-badge" class="hidden rv-story-mini-badge !top-auto !-bottom-1.5 !text-[8.5px] !px-2 !py-0.5">STORY</span>
+                                <button type="button" id="profile-story-add-btn" onclick="event.stopPropagation(); openStoryCreatorModal();" class="hidden absolute bottom-0 right-0 w-7 h-7 rounded-full bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white border-2 border-[#0c1222] items-center justify-center shadow-lg active:scale-90 transition z-20" title="Poster une Story (24h)">
+                                    <i data-lucide="plus" class="w-4 h-4 stroke-[3]"></i>
+                                </button>
+                            </div>
+                            <div id="profile-story-status-bar" class="hidden mt-2.5 items-center gap-1.5">
+                                <button type="button" id="btn-view-profile-story" onclick="openStoryViewer(window.currentProfileUid)" class="px-3 py-1 rounded-full bg-gradient-to-r from-[#ff2a5f] via-amber-500 to-cyan-500 text-white text-[10.5px] font-extrabold flex items-center gap-1.5 shadow-lg shadow-rose-600/30 active:scale-95 transition">
+                                    <i data-lucide="sparkles" class="w-3 h-3"></i>
+                                    <span id="profile-story-status-text">Voir la Story (24h)</span>
+                                </button>
+                                <button type="button" id="btn-add-extra-story" onclick="openStoryCreatorModal()" class="hidden px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-cyan-300 text-[10.5px] font-extrabold items-center gap-1 active:scale-95 transition" title="Ajouter une nouvelle Story">
+                                    <i data-lucide="plus-circle" class="w-3 h-3"></i>
+                                    <span>+ Story</span>
+                                </button>
                             </div>
                         </div>
                         <div class="flex items-center gap-1 mb-0.5">
@@ -2577,8 +2693,11 @@
                             </div>
                         </div>
 
-                        <div id="my-profile-actions" class="flex gap-2 mt-4 w-full max-w-sm hidden">
-                            <button onclick="openEditProfile()" class="flex-1 bg-white/10 hover:bg-white/15 py-2.5 rounded-xl text-xs font-bold border border-white/15 transition" data-i18n="edit_profile">Modifier le profil</button>
+                        <div id="my-profile-actions" class="flex gap-1.5 mt-4 w-full max-w-md hidden flex-wrap sm:flex-nowrap">
+                            <button onclick="openStoryCreatorModal()" class="px-3 py-2.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-[#ff2a5f] to-amber-500 text-white flex items-center justify-center gap-1.5 shadow-md shadow-rose-600/25 active:scale-95 transition" title="Poster une Story (Texte, Photo, Vidéo + Musique - 24h)">
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i> Story
+                            </button>
+                            <button onclick="openEditProfile()" class="flex-1 bg-white/10 hover:bg-white/15 py-2.5 px-2.5 rounded-xl text-xs font-bold border border-white/15 transition truncate" data-i18n="edit_profile">Modifier le profil</button>
                             <button onclick="openProfileSocialModal('views')" class="glass-pill px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 text-cyan-300" title="Voir qui a visité mon profil / Mode Invisible">
                                 <i data-lucide="eye" class="w-4 h-4 text-cyan-400"></i> Visites
                             </button>
@@ -4131,6 +4250,225 @@
             </div>
         </div>
         
+        
+        <!-- STORY CREATOR MODAL (Texte, Photo, Vidéo + Ajout de Musique • Durée 24h) -->
+        <div id="story-creator-modal" class="modal-overlay z-[112] !p-0">
+            <div class="bg-[#080c18] w-full h-full max-w-xl mx-auto flex flex-col relative overflow-hidden shadow-2xl md:rounded-3xl md:h-[94vh] md:border md:border-white/15">
+                <!-- Header -->
+                <div class="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[#0b1020] shrink-0">
+                    <div class="flex items-center gap-2.5">
+                        <button type="button" onclick="closeStoryCreatorModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 flex items-center justify-center text-white active:scale-90 transition">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                        <div>
+                            <h3 class="text-sm font-extrabold font-display text-white">Créer une Story (24h)</h3>
+                            <p class="text-[10px] text-cyan-400 font-semibold">Texte, Photo ou Vidéo + Musique • Supprimable à tout moment</p>
+                        </div>
+                    </div>
+                    <button type="button" id="btn-publish-story" onclick="publishUserStory()" class="px-4 py-2 rounded-full bg-gradient-to-r from-[#ff2a5f] via-rose-600 to-amber-500 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-lg shadow-rose-600/30 active:scale-95 transition">
+                        <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                        <span>Publier</span>
+                    </button>
+                </div>
+
+                <!-- Mode Selector Tabs: Texte | Photo | Vidéo | Musique -->
+                <div class="grid grid-cols-4 gap-1.5 px-3 py-2 bg-[#0a0f1d] border-b border-white/10 shrink-0">
+                    <button type="button" id="story-tab-text" onclick="switchStoryCreatorType('text')" class="py-2 px-2 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white shadow">
+                        <i data-lucide="type" class="w-3.5 h-3.5"></i>
+                        <span>Texte</span>
+                    </button>
+                    <button type="button" id="story-tab-photo" onclick="switchStoryCreatorType('photo')" class="py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-white/5 text-gray-300 hover:text-white border border-white/10">
+                        <i data-lucide="image" class="w-3.5 h-3.5 text-cyan-400"></i>
+                        <span>Photo</span>
+                    </button>
+                    <button type="button" id="story-tab-video" onclick="switchStoryCreatorType('video')" class="py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-white/5 text-gray-300 hover:text-white border border-white/10">
+                        <i data-lucide="video" class="w-3.5 h-3.5 text-purple-400"></i>
+                        <span>Vidéo</span>
+                    </button>
+                    <button type="button" id="story-tab-music-btn" onclick="toggleStoryMusicDrawer()" class="py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-amber-500/15 text-amber-300 border border-amber-400/30 hover:bg-amber-500/25">
+                        <i data-lucide="music" class="w-3.5 h-3.5 text-amber-400"></i>
+                        <span>Musique</span>
+                    </button>
+                </div>
+
+                <!-- Hidden File Inputs for Story Photo, Video & Custom Audio -->
+                <input type="file" id="story-photo-file-input" accept="image/*" class="hidden" onchange="handleStoryMediaFileSelected(this, 'photo')">
+                <input type="file" id="story-video-file-input" accept="video/*" class="hidden" onchange="handleStoryMediaFileSelected(this, 'video')">
+                <input type="file" id="story-audio-file-input" accept="audio/*,video/*" class="hidden" onchange="handleStoryCustomAudioFile(this)">
+
+                <!-- Live 9:16 Story Preview Canvas -->
+                <div id="story-creator-canvas" class="relative flex-1 min-h-[240px] w-full overflow-hidden flex items-center justify-center select-none" style="background: linear-gradient(135deg, #ff2a5f 0%, #7c3aed 50%, #06b6d4 100%);">
+                    <!-- Photo Preview -->
+                    <img id="story-creator-photo-preview" class="hidden absolute inset-0 w-full h-full object-contain bg-black z-10" alt="Story Photo">
+                    <!-- Video Preview -->
+                    <video id="story-creator-video-preview" class="hidden absolute inset-0 w-full h-full object-contain bg-black z-10" loop playsinline></video>
+                    <!-- Live Camera Stream for Story -->
+                    <video id="story-creator-camera-stream" class="hidden absolute inset-0 w-full h-full object-cover bg-black z-12" autoplay muted playsinline></video>
+
+                    <!-- Prompt when Photo/Video mode is selected but no file chosen yet -->
+                    <div id="story-media-picker-prompt" class="hidden absolute inset-0 z-15 bg-black/75 flex-col items-center justify-center p-6 text-center gap-3">
+                        <div class="flex items-center gap-3">
+                            <button type="button" onclick="triggerStoryGalleryPicker()" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/20 text-white transition active:scale-95">
+                                <i data-lucide="folder-open" class="w-7 h-7 text-[#ff2a5f]"></i>
+                                <span class="text-xs font-extrabold">Choisir de la galerie</span>
+                            </button>
+                            <button type="button" onclick="toggleStoryCreatorCamera()" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/20 text-white transition active:scale-95">
+                                <i data-lucide="camera" class="w-7 h-7 text-cyan-400"></i>
+                                <span class="text-xs font-extrabold">Prendre en direct</span>
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-gray-300">Vous pouvez aussi ajouter du texte et de la musique sur votre story</p>
+                    </div>
+
+                    <!-- Live Camera Shutter Bar inside Story Creator -->
+                    <div id="story-camera-capture-bar" class="hidden absolute bottom-4 inset-x-0 z-30 justify-center items-center gap-4">
+                        <button type="button" onclick="captureStoryCameraMedia()" id="story-cam-shutter-btn" class="px-5 py-2.5 rounded-full bg-[#ff2a5f] text-white font-extrabold text-xs shadow-xl border-2 border-white flex items-center gap-2 active:scale-90 transition">
+                            <i data-lucide="camera" class="w-4 h-4"></i>
+                            <span id="story-cam-shutter-label">Capturer</span>
+                        </button>
+                        <button type="button" onclick="stopStoryCreatorCamera()" class="px-3.5 py-2 rounded-full bg-black/70 text-gray-200 text-xs font-bold border border-white/20">
+                            Fermer caméra
+                        </button>
+                    </div>
+
+                    <!-- Live Text Overlay on Story Canvas -->
+                    <div id="story-creator-live-text" class="relative z-20 max-w-[88%] px-4 py-2.5 text-center break-words studio-text-banner-glass text-white text-lg font-extrabold shadow-2xl pointer-events-none">
+                        Tape ton texte de Story ici ✨
+                    </div>
+
+                    <!-- Attached Music Floating Pill on Story Canvas -->
+                    <div id="story-creator-music-pill" class="hidden absolute bottom-3 left-3 right-3 z-25 bg-black/75 border border-amber-400/50 rounded-full px-3.5 py-1.5 items-center justify-between gap-2 shadow-xl">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-[#ff2a5f] to-amber-400 flex items-center justify-center animate-spin-slow shrink-0">
+                                <i data-lucide="music" class="w-3 h-3 text-white"></i>
+                            </div>
+                            <span id="story-creator-music-label" class="text-xs font-extrabold text-white truncate">♫ Musique ajoutée</span>
+                        </div>
+                        <button type="button" onclick="clearStorySelectedMusic()" class="text-[10px] font-bold text-rose-300 hover:text-white px-2 py-0.5 rounded-full bg-white/10 shrink-0">Retirer</button>
+                    </div>
+                </div>
+
+                <!-- Bottom Controls Area: Text Input, Background Gradients, Styles & Music Drawer -->
+                <div class="p-3.5 bg-[#0b1020] border-t border-white/10 space-y-2.5 max-h-[46%] overflow-y-auto no-scrollbar shrink-0">
+                    <!-- Text / Caption Input -->
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="story-text-input" placeholder="Écris le texte ou la légende de ta story..." class="auth-input text-xs py-2.5 flex-1" oninput="updateStoryCreatorLivePreview()">
+                        <button type="button" id="story-change-media-btn" onclick="triggerStoryGalleryPicker()" class="hidden px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-bold text-cyan-300 shrink-0 items-center gap-1">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Changer
+                        </button>
+                    </div>
+
+                    <!-- Gradient Background Picker (Visible in Text Mode or for Canvas background) -->
+                    <div id="story-bg-gradients-row" class="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+                        <span class="text-[10px] font-bold text-gray-400 shrink-0">Fond :</span>
+                        <button type="button" onclick="setStoryBgGradient(0)" class="w-6 h-6 rounded-full shrink-0 border-2 border-white shadow" style="background: linear-gradient(135deg, #ff2a5f 0%, #7c3aed 50%, #06b6d4 100%);"></button>
+                        <button type="button" onclick="setStoryBgGradient(1)" class="w-6 h-6 rounded-full shrink-0 border border-white/40" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);"></button>
+                        <button type="button" onclick="setStoryBgGradient(2)" class="w-6 h-6 rounded-full shrink-0 border border-white/40" style="background: linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #db2777 100%);"></button>
+                        <button type="button" onclick="setStoryBgGradient(3)" class="w-6 h-6 rounded-full shrink-0 border border-white/40" style="background: linear-gradient(135deg, #059669 0%, #0284c7 50%, #4f46e5 100%);"></button>
+                        <button type="button" onclick="setStoryBgGradient(4)" class="w-6 h-6 rounded-full shrink-0 border border-white/40" style="background: linear-gradient(135deg, #7c3aed 0%, #c026d3 50%, #ff2a5f 100%);"></button>
+                        <button type="button" onclick="setStoryBgGradient(5)" class="w-6 h-6 rounded-full shrink-0 border border-white/40" style="background: linear-gradient(135deg, #000000 0%, #18181b 60%, #27272a 100%);"></button>
+                    </div>
+
+                    <!-- Text Style & Color Row -->
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-1">
+                            <button type="button" onclick="setStoryTextStyle('glass')" class="px-2 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-white">Glass</button>
+                            <button type="button" onclick="setStoryTextStyle('neon')" class="px-2 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-cyan-300">Néon</button>
+                            <button type="button" onclick="setStoryTextStyle('cinema')" class="px-2 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-amber-300">Cinéma</button>
+                            <button type="button" onclick="setStoryTextStyle('impact')" class="px-2 py-1 rounded-lg bg-[#ff2a5f] text-[10px] font-bold text-white">Impact</button>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="setStoryTextColor('#ffffff')" class="w-5 h-5 rounded-full bg-white border border-gray-500"></button>
+                            <button type="button" onclick="setStoryTextColor('#ff2a5f')" class="w-5 h-5 rounded-full bg-[#ff2a5f]"></button>
+                            <button type="button" onclick="setStoryTextColor('#06b6d4')" class="w-5 h-5 rounded-full bg-cyan-400"></button>
+                            <button type="button" onclick="setStoryTextColor('#facc15')" class="w-5 h-5 rounded-full bg-yellow-400"></button>
+                            <button type="button" onclick="setStoryTextColor('#10b981')" class="w-5 h-5 rounded-full bg-emerald-400"></button>
+                        </div>
+                    </div>
+
+                    <!-- Collapsible Music Selection Drawer for Story -->
+                    <div id="story-music-drawer" class="hidden pt-2 border-t border-white/10 space-y-2">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs font-extrabold text-amber-300 flex items-center gap-1.5">
+                                <i data-lucide="music" class="w-3.5 h-3.5"></i> Ajouter une musique à la Story
+                            </span>
+                            <button type="button" onclick="document.getElementById('story-audio-file-input').click()" class="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/15 text-[10px] font-bold text-cyan-300 flex items-center gap-1">
+                                <i data-lucide="upload" class="w-3 h-3"></i> Audio téléphone
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-cyan-400"></i>
+                            <input type="text" id="story-sound-search-input" placeholder="Rechercher un son ou @utilisateur..." class="auth-input pl-8 text-xs py-1.5" oninput="renderStoryCommunitySoundsList(this.value)">
+                        </div>
+                        <div id="story-sounds-list" class="max-h-36 overflow-y-auto no-scrollbar space-y-1.5"></div>
+                        <div class="flex items-center justify-between gap-3 pt-1">
+                            <span class="text-[10px] text-gray-300 font-bold">Volume musique :</span>
+                            <input type="range" id="story-music-vol-slider" min="0" max="100" value="90" oninput="updateStoryMusicVolume(this.value)" class="flex-1">
+                            <span id="story-music-vol-label" class="text-[10px] font-mono text-amber-300 font-bold">90%</span>
+                        </div>
+                    </div>
+                    <div id="story-upload-status" class="text-center text-[11px] font-bold text-cyan-400 empty:hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STORY VIEWER MODAL (Consultation depuis le profil • Durée 24h • Suppression à tout moment) -->
+        <div id="story-viewer-modal" class="modal-overlay z-[115] !p-0 bg-black">
+            <div class="relative w-full h-full max-w-lg mx-auto bg-black flex flex-col justify-between overflow-hidden select-none">
+                <!-- Top Progress Bars + Author Header -->
+                <div class="relative z-30 pt-3 px-3 pb-4 bg-gradient-to-b from-black/85 via-black/40 to-transparent">
+                    <div id="story-viewer-progress-bars" class="flex items-center gap-1.5 mb-3"></div>
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div id="story-viewer-avatar" class="w-9 h-9 rounded-full overflow-hidden rv-story-ring-feed shrink-0"></div>
+                            <div class="min-w-0">
+                                <div id="story-viewer-username" class="text-xs font-extrabold text-white truncate flex items-center gap-1">@utilisateur</div>
+                                <div id="story-viewer-time" class="text-[10px] text-gray-300 truncate">Il y a 1 min • 24h</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <button type="button" id="btn-story-viewer-mute" onclick="toggleStoryViewerMute()" class="w-8 h-8 rounded-full bg-black/50 border border-white/15 flex items-center justify-center text-white active:scale-90 transition" title="Son de la story">
+                                <i id="story-viewer-mute-icon" data-lucide="volume-2" class="w-4 h-4"></i>
+                            </button>
+                            <button type="button" id="btn-story-viewer-add" onclick="closeStoryViewer(); openStoryCreatorModal();" class="hidden px-2.5 h-8 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 text-white text-[10.5px] font-extrabold items-center gap-1 active:scale-95 transition" title="Ajouter une nouvelle Story">
+                                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                <span>Ajouter</span>
+                            </button>
+                            <button type="button" id="btn-delete-current-story" onclick="deleteCurrentStory()" class="hidden px-2.5 h-8 rounded-full bg-rose-600/90 hover:bg-rose-600 text-white text-[10.5px] font-extrabold items-center gap-1 shadow-lg active:scale-95 transition" title="Supprimer cette story maintenant">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                <span>Supprimer</span>
+                            </button>
+                            <button type="button" onclick="closeStoryViewer()" class="w-8 h-8 rounded-full bg-black/50 border border-white/15 flex items-center justify-center text-white active:scale-90 transition" title="Fermer">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Story Media & Text Stage -->
+                <div id="story-viewer-stage" class="absolute inset-0 z-10 flex items-center justify-center overflow-hidden bg-black">
+                    <img id="story-viewer-img" class="hidden w-full h-full object-contain" alt="Story">
+                    <video id="story-viewer-video" class="hidden w-full h-full object-contain" playsinline></video>
+                    <div id="story-viewer-text-content" class="hidden relative z-20 max-w-[88%] px-5 py-3 text-center break-words text-white text-xl font-extrabold shadow-2xl pointer-events-none"></div>
+                </div>
+
+                <!-- Left / Right Navigation Tap Zones -->
+                <div class="absolute inset-y-20 left-0 w-1/3 z-20 cursor-pointer" onclick="prevUserStory()"></div>
+                <div class="absolute inset-y-20 right-0 w-2/3 z-20 cursor-pointer" onclick="nextUserStory()"></div>
+
+                <!-- Bottom Music & Story Counter Footer -->
+                <div class="relative z-30 px-4 pb-5 pt-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent flex items-center justify-between gap-2 pointer-events-none">
+                    <div id="story-viewer-music-bar" class="hidden items-center gap-2 bg-black/65 border border-white/15 rounded-full px-3.5 py-1.5 max-w-[75%]">
+                        <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-[#ff2a5f] to-amber-400 flex items-center justify-center animate-spin-slow shrink-0">
+                            <i data-lucide="music" class="w-3 h-3 text-white"></i>
+                        </div>
+                        <span id="story-viewer-music-title" class="text-xs font-bold text-white truncate">♫ Son original</span>
+                    </div>
+                    <span id="story-viewer-counter" class="text-[11px] font-bold text-white/80 ml-auto bg-black/50 px-2.5 py-1 rounded-full border border-white/10">1 / 1</span>
+                </div>
+            </div>
+        </div>
+
         <!-- TRANSPARENT FULL-WIDTH BOTTOM NAVIGATION BAR (Matches Reference Screenshot) -->
         <div id="bottom-nav" class="absolute bottom-0 left-0 right-0 w-full bg-gradient-to-t from-black/90 via-black/50 to-transparent h-14 z-30 flex justify-around items-center text-white px-2 hidden">
             <div onclick="navigateTo('feed')" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-100 transition-all" id="nav-feed">
@@ -4216,6 +4554,11 @@
         let currentVideoIdForComments = null;
         let currentVideoAuthorId = null; 
         let currentProfileUid = null;
+        window.currentProfileUid = null;
+        const STORY_DURATION_MS = 24 * 60 * 60 * 1000; // 24 heures
+        const LOCAL_STORIES_STORAGE_KEY = 'rv_user_stories_cache_v1';
+        const userStoriesMap = new Map();
+        const currentSessionBlobUrls = new Set();
         let currentChatId = null;
         let currentChatReceiver = null;
         let viewedVideos = new Set();
@@ -4635,6 +4978,21 @@
         let avStartBarrierTimer = null;
         const prewarmedAudioUrls = new Set();
 
+        function isUploadStudioOpen() {
+            const upModal = document.getElementById('upload-modal');
+            return !!(upModal && upModal.classList.contains('open'));
+        }
+
+        function isStoryModalOpen() {
+            const creator = document.getElementById('story-creator-modal');
+            const viewer = document.getElementById('story-viewer-modal');
+            return !!((creator && creator.classList.contains('open')) || (viewer && viewer.classList.contains('open')));
+        }
+
+        function isOutsideFeedAudioBlocked() {
+            return isUploadStudioOpen() || isStoryModalOpen();
+        }
+
         function stopMasterAudio() {
             if (avStartBarrierTimer) {
                 clearTimeout(avStartBarrierTimer);
@@ -4643,6 +5001,49 @@
             if (rvMasterAudio && !rvMasterAudio.paused) rvMasterAudio.pause();
             if (rvBgMusicAudio && !rvBgMusicAudio.paused) rvBgMusicAudio.pause();
         }
+
+        function pauseAllOutsideUploadMedia() {
+            stopMasterAudio();
+            activePlayingVideo = null;
+            if (soundPreviewAudio) {
+                try { soundPreviewAudio.pause(); } catch (e) {}
+                soundPreviewAudio = null;
+            }
+            document.querySelectorAll('video').forEach(v => {
+                if (isUploadStudioOpen() && v.closest('#upload-modal')) return;
+                if (isStoryModalOpen() && (v.closest('#story-creator-modal') || v.closest('#story-viewer-modal'))) return;
+                v.muted = true;
+                if (!v.paused) {
+                    try { v.pause(); } catch (e) {}
+                }
+            });
+            document.querySelectorAll('audio').forEach(a => {
+                if (isUploadStudioOpen() && (a.id === 'studio-music-preview-audio' || a.closest('#upload-modal'))) return;
+                if (isStoryModalOpen() && (a.id === 'story-music-audio' || a.id === 'story-creator-preview-audio')) return;
+                if (!a.paused) {
+                    try { a.pause(); } catch (e) {}
+                }
+            });
+        }
+
+        // Global capture guard: while in Upload or Story modals, prevent any outside video/audio from activating
+        document.addEventListener('play', (e) => {
+            const mediaEl = e.target;
+            if (!mediaEl || (mediaEl.tagName !== 'VIDEO' && mediaEl.tagName !== 'AUDIO')) return;
+            if (isUploadStudioOpen()) {
+                const allowedInUpload = mediaEl.closest('#upload-modal') || mediaEl.id === 'studio-music-preview-audio';
+                if (!allowedInUpload) {
+                    try { mediaEl.pause(); } catch (err) {}
+                    stopMasterAudio();
+                }
+            } else if (isStoryModalOpen()) {
+                const allowedInStory = mediaEl.closest('#story-creator-modal') || mediaEl.closest('#story-viewer-modal') || mediaEl.id === 'story-music-audio' || mediaEl.id === 'story-creator-preview-audio';
+                if (!allowedInStory) {
+                    try { mediaEl.pause(); } catch (err) {}
+                    stopMasterAudio();
+                }
+            }
+        }, true);
 
         function setProgressBarRatio(pf, ratio) {
             if (!pf) return;
@@ -4826,6 +5227,7 @@
         }
 
         function verifyAudioActiveOrAutoMute(v, cardEl) {
+            if (isOutsideFeedAudioBlocked()) { stopMasterAudio(); return; }
             if (!v || v !== activePlayingVideo) return;
             if (isCardAudioUnavailable(v, cardEl)) {
                 if (rvMasterAudio && !rvMasterAudio.paused) rvMasterAudio.pause();
@@ -5013,6 +5415,7 @@
 
         // Aligns #rv-master-audio (and optional dual track #rv-bg-music-audio) to <video>
         function alignMasterAudioToVideoOnce(v) {
+            if (isOutsideFeedAudioBlocked()) { stopMasterAudio(); return; }
             if (!v || !rvMasterAudio || isGlobalMuted || rvMasterAudio.dataset.noAudioTrack === "true") return;
             if (v !== activePlayingVideo || v.paused || rvMasterAudio.paused) return;
             const vTime = v.currentTime || 0;
@@ -5068,6 +5471,7 @@
             });
 
             v.addEventListener("playing", () => {
+                if (isOutsideFeedAudioBlocked() && !v.closest('#upload-modal') && !v.closest('#story-creator-modal') && !v.closest('#story-viewer-modal')) { v.muted = true; try { v.pause(); } catch(e){} stopMasterAudio(); return; }
                 v.muted = true;
                 if (v.playbackRate !== currentPlaybackRate) v.playbackRate = currentPlaybackRate;
                 if (v === activePlayingVideo && v.dataset.launchComplete === "true" && !isGlobalMuted && rvMasterAudio && rvMasterAudio.dataset.noAudioTrack !== "true") {
@@ -5102,6 +5506,7 @@
         }
 
         function restartOrAdvanceVideo(v, cardEl) {
+            if (isOutsideFeedAudioBlocked()) { stopMasterAudio(); if (v && !v.paused) v.pause(); return; }
             if (!v || v.isRestartingLoop) return;
             v.isRestartingLoop = true;
             if (appSettings.autoScroll && cardEl && cardEl.nextElementSibling) {
@@ -5148,6 +5553,12 @@
 
         function playVideoSynchronized(v, cardEl = null, restartFromZero = false) {
             if (!v) return;
+            if (isOutsideFeedAudioBlocked() && !v.closest('#upload-modal') && !v.closest('#story-creator-modal') && !v.closest('#story-viewer-modal')) {
+                stopMasterAudio();
+                v.muted = true;
+                if (!v.paused) { try { v.pause(); } catch (e) {} }
+                return;
+            }
             try {
                 stopMasterAudio();
                 cancelBackgroundVideoCache();
@@ -5189,7 +5600,7 @@
                         return;
                     }
                     const launchAudioNow = () => {
-                        if (activePlayingVideo !== v || v.paused || isGlobalMuted) return;
+                        if (isOutsideFeedAudioBlocked() || activePlayingVideo !== v || v.paused || isGlobalMuted) { if (isOutsideFeedAudioBlocked()) stopMasterAudio(); return; }
                         const { hasAttachedSound, origGain, musicGain } = getCardVolumeConfig(cardEl);
                         try { rvMasterAudio.currentTime = v.currentTime || 0; } catch (e) {}
                         rvMasterAudio.playbackRate = currentPlaybackRate;
@@ -5264,7 +5675,7 @@
                 let warmingDecoder = false;
 
                 const executeWarmSimultaneousLaunch = () => {
-                    if (launchedTogether || activePlayingVideo !== v) return;
+                    if (isOutsideFeedAudioBlocked() || launchedTogether || activePlayingVideo !== v) { if (isOutsideFeedAudioBlocked()) stopMasterAudio(); return; }
                     if (cardEl && (cardEl.dataset.inView !== "true" || cardEl.dataset.userPaused === "true")) return;
                     launchedTogether = true;
                     if (avStartBarrierTimer) {
@@ -7027,6 +7438,9 @@
                             isVerified: isCert,
                             photoURL: d.photoURL || ""
                         });
+                        if (typeof ingestUserStoriesFromDoc === 'function') {
+                            ingestUserStoriesFromDoc(uId, d);
+                        }
                     }
                 } catch (e) {}
             }));
@@ -9271,12 +9685,13 @@
                         
                         <!-- TRANSPARENT RIGHT REACTION COLUMN (Airy & Professional) -->
                         <div class="transparent-reaction-rail">
-                            <!-- Creator Avatar with pink '+' badge -->
-                            <div class="relative mb-1 cursor-pointer" onclick="viewUserProfile('${data.userId}')">
-                                <div class="w-9 h-9 rounded-full border-[1.5px] border-white/90 overflow-hidden bg-black shadow-md transition transform hover:scale-105">
+                            <!-- Creator Avatar with pink '+' badge & Special Story Ring -->
+                            <div class="relative mb-1 cursor-pointer" onclick="viewUserProfile('${data.userId}')" title="${hasUserActiveStory(data.userId) ? 'Story active • Entrer dans le profil pour voir la story' : 'Voir le profil'}">
+                                <div data-story-avatar-uid="${data.userId}" class="w-9 h-9 rounded-full ${hasUserActiveStory(data.userId) ? 'rv-story-ring-feed' : 'border-[1.5px] border-white/90'} overflow-hidden bg-black shadow-md transition transform hover:scale-105">
                                     ${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}
                                 </div>
-                                ${!isMe && !isFollowing ? `<button onclick="toggleFollowFromFeed('${data.userId}', this, event)" class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-[#ff2a5f] text-white flex items-center justify-center shadow border border-black"><i data-lucide="plus" class="w-2.5 h-2.5 stroke-[3]"></i></button>` : ''}
+                                <span data-story-badge-uid="${data.userId}" class="rv-story-mini-badge ${hasUserActiveStory(data.userId) ? '' : 'hidden'}">STORY</span>
+                                ${!isMe && !isFollowing ? `<button onclick="toggleFollowFromFeed('${data.userId}', this, event)" class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-[#ff2a5f] text-white flex items-center justify-center shadow border border-black z-20"><i data-lucide="plus" class="w-2.5 h-2.5 stroke-[3]"></i></button>` : ''}
                             </div>
 
                             <!-- Heart / Like -->
@@ -9484,7 +9899,7 @@
         let studioMaxDurationSec = 60;
         let studioCountdownSec = 0;
 
-        let studioEditState = {
+        let studioEditState = window.studioEditState = {
             filterPreset: 'vfx-none',
             brightness: 100,
             contrast: 100,
@@ -9580,9 +9995,23 @@
             if (studioMusicPreviewAudio && !studioMusicPreviewAudio.paused) studioMusicPreviewAudio.pause();
             stopStudioCameraStream();
             const v = document.getElementById('video-preview');
-            if (v) v.pause();
+            if (v) {
+                v.pause();
+                v.muted = true;
+            }
             stopMasterAudio();
             window.closeModal('upload-modal');
+            setTimeout(() => {
+                if (!isOutsideFeedAudioBlocked()) {
+                    const fullOverlay = document.getElementById('fullscreen-video-overlay');
+                    if (fullOverlay && !fullOverlay.classList.contains('hidden')) {
+                        const fv = document.getElementById('fullscreen-active-video');
+                        if (fv) playVideoSynchronized(fv, fv.parentElement, false);
+                    } else if (document.getElementById('feed-screen')?.classList.contains('active')) {
+                        handleVideoPlayback();
+                    }
+                }
+            }, 120);
         };
 
         window.switchStudioSourceMode = async (mode) => {
@@ -11192,8 +11621,8 @@
 
         window.openUploadModal = () => {
             if(!checkAuth()) return;
-            stopMasterAudio();
-            document.querySelectorAll('.video-card video').forEach(v => v.pause());
+            document.getElementById('upload-modal').classList.add('open');
+            pauseAllOutsideUploadMedia();
             stopStudioCameraStream();
             hideStudioMediaLoading();
 
@@ -12135,7 +12564,14 @@
                     const sourceUrl = card.getAttribute('data-src');
                     const progressFill = card.querySelector('.video-progress-fill');
 
-                    if(entry.isIntersecting) { 
+                    if(entry.isIntersecting) {
+                        if (isOutsideFeedAudioBlocked()) {
+                            card.dataset.inView = "false";
+                            v.muted = true;
+                            if (!v.paused) v.pause();
+                            stopMasterAudio();
+                            return;
+                        } 
                         if (card.dataset.inView === "true" && activePlayingVideo === v && !v.paused) {
                             return;
                         }
@@ -13843,7 +14279,8 @@
                 <div class="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none"></div>
                 <div class="transparent-reaction-rail">
                     <div class="relative mb-1 cursor-pointer" onclick="viewUserProfile('${data.userId}'); closeFullVideo()">
-                        <div class="w-9 h-9 rounded-full border-[1.5px] border-white/90 overflow-hidden bg-black">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div>
+                        <div data-story-avatar-uid="${data.userId}" class="w-9 h-9 rounded-full ${hasUserActiveStory(data.userId) ? 'rv-story-ring-feed' : 'border-[1.5px] border-white/90'} overflow-hidden bg-black">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div>
+                        <span data-story-badge-uid="${data.userId}" class="rv-story-mini-badge ${hasUserActiveStory(data.userId) ? '' : 'hidden'}">STORY</span>
                     </div>
                     <div class="reaction-btn-item group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${id}', this, '${data.userId}')">
                         <div class="action-circle"><i data-lucide="heart" class="w-6 h-6 ${iLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-white fill-white/90'}"></i></div>
@@ -13905,16 +14342,1185 @@
             document.getElementById('fullscreen-video-container').innerHTML = "";
         };
 
+        
+        // ============================================================================
+        // SYSTÈME DE STORIES 24H (TEXTE, PHOTO, VIDÉO + MUSIQUE, SUPPRESSION À TOUT MOMENT)
+        // Cercle de profil spécial dans le fil d'actualité & consultation depuis le profil
+        // ============================================================================
+        let storyCreatorState = {
+            type: 'text', // 'text' | 'photo' | 'video'
+            text: '',
+            textStyle: 'glass',
+            textColor: '#ffffff',
+            bgGradient: 'linear-gradient(135deg, #ff2a5f 0%, #7c3aed 50%, #06b6d4 100%)',
+            mediaFile: null,
+            mediaPreviewUrl: '',
+            photoDataUrl: '',
+            selectedMusic: null, // { soundTitle, soundAuthor, audioUrl }
+            musicVolume: 90,
+            cameraStream: null,
+            mediaRecorder: null,
+            recordedChunks: [],
+            isRecordingVideo: false
+        };
+
+        let storyViewerState = {
+            uid: null,
+            stories: [],
+            currentIndex: 0,
+            timer: null,
+            progressInterval: null,
+            slideStartMs: 0,
+            slideDurationMs: 6000,
+            isMuted: false
+        };
+
+        function isPlayableStoryUrl(url) {
+            if (!url || typeof url !== 'string') return false;
+            const trimmed = url.trim();
+            if (!trimmed) return false;
+            if (trimmed.startsWith('blob:')) {
+                return currentSessionBlobUrls.has(trimmed);
+            }
+            return trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:');
+        }
+
+        function loadCachedStoriesFromStorage() {
+            try {
+                const raw = safeGetStorage(LOCAL_STORIES_STORAGE_KEY, '{}');
+                const parsed = JSON.parse(raw || '{}');
+                if (parsed && typeof parsed === 'object') {
+                    Object.entries(parsed).forEach(([uid, arr]) => {
+                        const valid = filterValidActiveStories(arr);
+                        if (valid.length > 0) {
+                            userStoriesMap.set(uid, valid);
+                        }
+                    });
+                }
+            } catch (e) {}
+        }
+
+        function saveCachedStoriesToStorage() {
+            try {
+                const obj = {};
+                userStoriesMap.forEach((arr, uid) => {
+                    const valid = filterValidActiveStories(arr);
+                    if (valid.length > 0) obj[uid] = valid;
+                });
+                safeSetStorage(LOCAL_STORIES_STORAGE_KEY, JSON.stringify(obj));
+            } catch (e) {}
+        }
+
+        function filterValidActiveStories(storiesArray) {
+            if (!Array.isArray(storiesArray)) return [];
+            const now = Date.now();
+            return storiesArray.filter(st => {
+                if (!st || !st.id) return false;
+                const created = Number(st.createdAtMs) || 0;
+                const expires = Number(st.expiresAtMs) || (created ? created + STORY_DURATION_MS : 0);
+                if (!expires) return false;
+                if ((st.mediaType === 'photo' || st.mediaType === 'video') && st.mediaUrl && String(st.mediaUrl).startsWith('blob:') && !currentSessionBlobUrls.has(st.mediaUrl)) {
+                    return false;
+                }
+                return now < expires && (now - created) < STORY_DURATION_MS;
+            }).sort((a, b) => (Number(a.createdAtMs) || 0) - (Number(b.createdAtMs) || 0));
+        }
+
+        loadCachedStoriesFromStorage();
+
+        function ingestUserStoriesFromDoc(uid, userDocData) {
+            if (!uid || !userDocData) return [];
+            const rawList = Array.isArray(userDocData.activeStories) ? userDocData.activeStories : null;
+            if (rawList === null) {
+                return getUserActiveStories(uid);
+            }
+            const validList = filterValidActiveStories(rawList);
+            userStoriesMap.set(uid, validList);
+            saveCachedStoriesToStorage();
+
+            // Auto-purge expired stories (>24h) from Firestore in background only if owner/VIP
+            if (rawList.length !== validList.length && auth.currentUser && (auth.currentUser.uid === uid || currentUserData?.email === VIP_EMAIL)) {
+                setDoc(doc(db, "users", uid), { activeStories: validList }, { merge: true }).catch(() => {});
+            }
+            refreshAllStoryRingsInDOM(uid);
+            return validList;
+        }
+
+        function getUserActiveStories(uid) {
+            if (!uid) return [];
+            if (auth.currentUser && uid === auth.currentUser.uid && currentUserData && Array.isArray(currentUserData.activeStories)) {
+                const validOwn = filterValidActiveStories(currentUserData.activeStories);
+                userStoriesMap.set(uid, validOwn);
+                return validOwn;
+            }
+            const cached = userStoriesMap.get(uid) || [];
+            const valid = filterValidActiveStories(cached);
+            if (valid.length !== cached.length) {
+                userStoriesMap.set(uid, valid);
+                saveCachedStoriesToStorage();
+            }
+            return valid;
+        }
+        window.getUserActiveStories = getUserActiveStories;
+
+        function hasUserActiveStory(uid) {
+            return getUserActiveStories(uid).length > 0;
+        }
+        window.hasUserActiveStory = hasUserActiveStory;
+
+        function formatRemainingStoryTime(story) {
+            if (!story) return "24h";
+            const now = Date.now();
+            const created = Number(story.createdAtMs) || now;
+            const expires = Number(story.expiresAtMs) || (created + STORY_DURATION_MS);
+            const remMs = Math.max(0, expires - now);
+            const remHours = Math.floor(remMs / 3600000);
+            const remMins = Math.max(1, Math.floor((remMs % 3600000) / 60000));
+            const agoStr = formatDateStamp(new Date(created));
+            if (remHours >= 1) {
+                return `${agoStr} • Expire dans ${remHours}h`;
+            }
+            return `${agoStr} • Expire dans ${remMins} min`;
+        }
+
+        function refreshAllStoryRingsInDOM(uid) {
+            if (!uid) return;
+            const hasStory = hasUserActiveStory(uid);
+            document.querySelectorAll(`[data-story-avatar-uid="${uid}"]`).forEach(el => {
+                if (hasStory) {
+                    el.classList.add('rv-story-ring-feed');
+                    el.classList.remove('border-[1.5px]', 'border-white/90');
+                } else {
+                    el.classList.remove('rv-story-ring-feed');
+                    el.classList.add('border-[1.5px]', 'border-white/90');
+                }
+            });
+            document.querySelectorAll(`[data-story-badge-uid="${uid}"]`).forEach(badge => {
+                badge.classList.toggle('hidden', !hasStory);
+            });
+            if (currentProfileUid === uid) {
+                const isMe = !!(auth.currentUser && auth.currentUser.uid === uid);
+                updateProfileStoryUI(uid, isMe);
+            }
+        }
+
+        function updateProfileStoryUI(uid, isMe) {
+            const ringEl = document.getElementById('profile-avatar-ring');
+            const ringBadge = document.getElementById('profile-story-ring-badge');
+            const addBtn = document.getElementById('profile-story-add-btn');
+            const statusBar = document.getElementById('profile-story-status-bar');
+            const statusText = document.getElementById('profile-story-status-text');
+            const addExtraBtn = document.getElementById('btn-add-extra-story');
+
+            const activeStories = getUserActiveStories(uid);
+            const hasStory = activeStories.length > 0;
+
+            if (addBtn) {
+                addBtn.classList.toggle('hidden', !isMe);
+                addBtn.classList.toggle('flex', !!isMe);
+            }
+
+            if (ringEl) {
+                if (hasStory) {
+                    ringEl.classList.add('rv-story-ring-profile');
+                    ringEl.classList.remove('bg-white/15', 'border', 'border-white/25');
+                } else {
+                    ringEl.classList.remove('rv-story-ring-profile');
+                    ringEl.classList.add('bg-white/15', 'border', 'border-white/25');
+                }
+            }
+            if (ringBadge) {
+                ringBadge.classList.toggle('hidden', !hasStory);
+            }
+            if (statusBar) {
+                if (hasStory) {
+                    statusBar.classList.remove('hidden');
+                    statusBar.classList.add('flex');
+                    if (statusText) {
+                        statusText.innerText = isMe
+                            ? `Voir ma Story (${activeStories.length})`
+                            : `Voir la Story (${activeStories.length})`;
+                    }
+                    if (addExtraBtn) {
+                        addExtraBtn.classList.toggle('hidden', !isMe);
+                        addExtraBtn.classList.toggle('inline-flex', !!isMe);
+                    }
+                } else {
+                    statusBar.classList.add('hidden');
+                    statusBar.classList.remove('flex');
+                }
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        window.handleProfileAvatarClick = () => {
+            const targetUid = currentProfileUid || (auth.currentUser ? auth.currentUser.uid : null);
+            if (!targetUid) return;
+            const isMe = !!(auth.currentUser && targetUid === auth.currentUser.uid);
+            const activeStories = getUserActiveStories(targetUid);
+            if (activeStories.length > 0) {
+                window.openStoryViewer(targetUid, 0);
+            } else if (isMe) {
+                window.openStoryCreatorModal();
+            } else {
+                showToast("Cet utilisateur n'a pas de story active (24h) pour le moment.", "info");
+            }
+        };
+
+        // Periodic check every 60s to expire >24h stories automatically
+        setInterval(() => {
+            userStoriesMap.forEach((arr, uid) => {
+                const valid = filterValidActiveStories(arr);
+                if (valid.length !== arr.length) {
+                    userStoriesMap.set(uid, valid);
+                    refreshAllStoryRingsInDOM(uid);
+                }
+            });
+        }, 60000);
+
+        // --- STORY CREATOR MODAL LOGIC ---
+        function stopStoryCreatorMedia() {
+            const previewAudio = document.getElementById('story-creator-preview-audio');
+            if (previewAudio) {
+                previewAudio.onerror = null;
+                if (!previewAudio.paused) {
+                    try { previewAudio.pause(); } catch (e) {}
+                }
+            }
+            const vidPrev = document.getElementById('story-creator-video-preview');
+            if (vidPrev) {
+                vidPrev.onloadedmetadata = null;
+                vidPrev.onended = null;
+                vidPrev.onerror = null;
+                try { vidPrev.pause(); } catch (e) {}
+                vidPrev.removeAttribute('src');
+                vidPrev.classList.add('hidden');
+            }
+            window.stopStoryCreatorCamera();
+        }
+
+        window.openStoryCreatorModal = () => {
+            if (!checkAuth()) return;
+            const modal = document.getElementById('story-creator-modal');
+            if (!modal) return;
+            modal.classList.add('open');
+            pauseAllOutsideUploadMedia();
+            stopStoryCreatorMedia();
+
+            storyCreatorState.type = 'text';
+            storyCreatorState.text = '';
+            storyCreatorState.textStyle = 'glass';
+            storyCreatorState.textColor = '#ffffff';
+            storyCreatorState.bgGradient = 'linear-gradient(135deg, #ff2a5f 0%, #7c3aed 50%, #06b6d4 100%)';
+            storyCreatorState.mediaFile = null;
+            storyCreatorState.mediaPreviewUrl = '';
+            storyCreatorState.photoDataUrl = '';
+            storyCreatorState.selectedMusic = null;
+            storyCreatorState.musicVolume = 90;
+
+            const txtInp = document.getElementById('story-text-input');
+            if (txtInp) txtInp.value = '';
+            const photoInp = document.getElementById('story-photo-file-input');
+            if (photoInp) photoInp.value = '';
+            const vidInp = document.getElementById('story-video-file-input');
+            if (vidInp) vidInp.value = '';
+            const audInp = document.getElementById('story-audio-file-input');
+            if (audInp) audInp.value = '';
+            const statusEl = document.getElementById('story-upload-status');
+            if (statusEl) statusEl.innerText = '';
+
+            const musicDrawer = document.getElementById('story-music-drawer');
+            if (musicDrawer) musicDrawer.classList.add('hidden');
+            window.clearStorySelectedMusic();
+            window.switchStoryCreatorType('text');
+            if (window.lucide) lucide.createIcons();
+        };
+
+        window.closeStoryCreatorModal = () => {
+            stopStoryCreatorMedia();
+            const modal = document.getElementById('story-creator-modal');
+            if (modal) modal.classList.remove('open');
+            setTimeout(() => {
+                if (!isOutsideFeedAudioBlocked() && document.getElementById('feed-screen')?.classList.contains('active')) {
+                    handleVideoPlayback();
+                }
+            }, 120);
+        };
+
+        window.switchStoryCreatorType = (type) => {
+            storyCreatorState.type = type;
+            window.stopStoryCreatorCamera();
+
+            const tabs = {
+                text: document.getElementById('story-tab-text'),
+                photo: document.getElementById('story-tab-photo'),
+                video: document.getElementById('story-tab-video')
+            };
+            Object.entries(tabs).forEach(([k, btn]) => {
+                if (!btn) return;
+                if (k === type) {
+                    btn.className = "py-2 px-2 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white shadow";
+                } else {
+                    btn.className = "py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-white/5 text-gray-300 hover:text-white border border-white/10";
+                }
+            });
+
+            const photoPrev = document.getElementById('story-creator-photo-preview');
+            const vidPrev = document.getElementById('story-creator-video-preview');
+            const promptBox = document.getElementById('story-media-picker-prompt');
+            const changeBtn = document.getElementById('story-change-media-btn');
+            const bgRow = document.getElementById('story-bg-gradients-row');
+
+            if (type === 'text') {
+                if (photoPrev) photoPrev.classList.add('hidden');
+                if (vidPrev) { try { vidPrev.pause(); } catch (e) {} vidPrev.classList.add('hidden'); }
+                if (promptBox) { promptBox.classList.add('hidden'); promptBox.classList.remove('flex'); }
+                if (changeBtn) { changeBtn.classList.add('hidden'); changeBtn.classList.remove('inline-flex'); }
+                if (bgRow) bgRow.classList.remove('hidden');
+            } else if (type === 'photo') {
+                if (vidPrev) { try { vidPrev.pause(); } catch (e) {} vidPrev.classList.add('hidden'); }
+                if (bgRow) bgRow.classList.add('hidden');
+                const hasPhoto = !!(storyCreatorState.photoDataUrl || (storyCreatorState.mediaFile && storyCreatorState.mediaFile.type && storyCreatorState.mediaFile.type.startsWith('image/')));
+                if (hasPhoto && photoPrev) {
+                    photoPrev.classList.remove('hidden');
+                    if (promptBox) { promptBox.classList.add('hidden'); promptBox.classList.remove('flex'); }
+                    if (changeBtn) { changeBtn.classList.remove('hidden'); changeBtn.classList.add('inline-flex'); }
+                } else {
+                    if (photoPrev) photoPrev.classList.add('hidden');
+                    if (promptBox) { promptBox.classList.remove('hidden'); promptBox.classList.add('flex'); }
+                    if (changeBtn) { changeBtn.classList.add('hidden'); changeBtn.classList.remove('inline-flex'); }
+                }
+            } else if (type === 'video') {
+                if (photoPrev) photoPrev.classList.add('hidden');
+                if (bgRow) bgRow.classList.add('hidden');
+                const hasVideo = !!(storyCreatorState.mediaPreviewUrl && storyCreatorState.mediaFile && storyCreatorState.mediaFile.type && storyCreatorState.mediaFile.type.startsWith('video/'));
+                if (hasVideo && vidPrev) {
+                    vidPrev.classList.remove('hidden');
+                    vidPrev.play().catch(() => {});
+                    if (promptBox) { promptBox.classList.add('hidden'); promptBox.classList.remove('flex'); }
+                    if (changeBtn) { changeBtn.classList.remove('hidden'); changeBtn.classList.add('inline-flex'); }
+                } else {
+                    if (vidPrev) vidPrev.classList.add('hidden');
+                    if (promptBox) { promptBox.classList.remove('hidden'); promptBox.classList.add('flex'); }
+                    if (changeBtn) { changeBtn.classList.add('hidden'); changeBtn.classList.remove('inline-flex'); }
+                }
+            }
+            window.updateStoryCreatorLivePreview();
+            if (window.lucide) lucide.createIcons();
+        };
+
+        window.triggerStoryGalleryPicker = () => {
+            if (storyCreatorState.type === 'video') {
+                document.getElementById('story-video-file-input')?.click();
+            } else {
+                storyCreatorState.type = 'photo';
+                document.getElementById('story-photo-file-input')?.click();
+            }
+        };
+
+        window.handleStoryMediaFileSelected = (inputEl, mediaType) => {
+            if (!inputEl || !inputEl.files || !inputEl.files[0]) return;
+            const file = inputEl.files[0];
+            window.stopStoryCreatorCamera();
+            storyCreatorState.mediaFile = file;
+
+            const photoPrev = document.getElementById('story-creator-photo-preview');
+            const vidPrev = document.getElementById('story-creator-video-preview');
+            const promptBox = document.getElementById('story-media-picker-prompt');
+            const changeBtn = document.getElementById('story-change-media-btn');
+
+            if (mediaType === 'photo' || (file.type && file.type.startsWith('image/'))) {
+                storyCreatorState.type = 'photo';
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const rawDataUrl = ev.target.result;
+                    storyCreatorState.photoDataUrl = rawDataUrl;
+                    // Compress photo via canvas so fallback dataURL is lightweight for localStorage & Firestore
+                    const img = new Image();
+                    img.onload = () => {
+                        try {
+                            const maxDim = 720;
+                            let w = img.naturalWidth || 720;
+                            let h = img.naturalHeight || 1280;
+                            if (w > maxDim || h > maxDim) {
+                                if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+                                else { w = Math.round((w * maxDim) / h); h = maxDim; }
+                            }
+                            const c = document.createElement('canvas');
+                            c.width = w;
+                            c.height = h;
+                            c.getContext('2d').drawImage(img, 0, 0, w, h);
+                            storyCreatorState.photoDataUrl = c.toDataURL('image/jpeg', 0.82);
+                        } catch (e) {}
+                    };
+                    img.src = rawDataUrl;
+                    if (photoPrev) {
+                        photoPrev.src = rawDataUrl;
+                        photoPrev.classList.remove('hidden');
+                    }
+                    if (vidPrev) { try { vidPrev.pause(); } catch (e) {} vidPrev.classList.add('hidden'); }
+                    if (promptBox) { promptBox.classList.add('hidden'); promptBox.classList.remove('flex'); }
+                    if (changeBtn) { changeBtn.classList.remove('hidden'); changeBtn.classList.add('inline-flex'); }
+                    window.updateStoryCreatorLivePreview();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                storyCreatorState.type = 'video';
+                const objUrl = URL.createObjectURL(file);
+                currentSessionBlobUrls.add(objUrl);
+                storyCreatorState.mediaPreviewUrl = objUrl;
+                if (vidPrev) {
+                    vidPrev.src = objUrl;
+                    vidPrev.muted = false;
+                    vidPrev.classList.remove('hidden');
+                    vidPrev.play().catch(() => {});
+                }
+                if (photoPrev) photoPrev.classList.add('hidden');
+                if (promptBox) { promptBox.classList.add('hidden'); promptBox.classList.remove('flex'); }
+                if (changeBtn) { changeBtn.classList.remove('hidden'); changeBtn.classList.add('inline-flex'); }
+                window.updateStoryCreatorLivePreview();
+            }
+        };
+
+        window.toggleStoryCreatorCamera = async () => {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                window.triggerStoryGalleryPicker();
+                return;
+            }
+            try {
+                window.stopStoryCreatorCamera();
+                const isVid = storyCreatorState.type === 'video';
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+                    audio: isVid
+                }).catch(async () => {
+                    return await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                });
+                storyCreatorState.cameraStream = stream;
+                const camEl = document.getElementById('story-creator-camera-stream');
+                const promptBox = document.getElementById('story-media-picker-prompt');
+                const capBar = document.getElementById('story-camera-capture-bar');
+                const shutterLbl = document.getElementById('story-cam-shutter-label');
+                if (camEl) {
+                    camEl.srcObject = stream;
+                    camEl.classList.remove('hidden');
+                    await camEl.play().catch(() => {});
+                }
+                if (promptBox) { promptBox.classList.add('hidden'); promptBox.classList.remove('flex'); }
+                if (capBar) { capBar.classList.remove('hidden'); capBar.classList.add('flex'); }
+                if (shutterLbl) shutterLbl.innerText = isVid ? 'Filmer (Stop pour valider)' : 'Prendre la photo';
+            } catch (e) {
+                showToast("Caméra indisponible, ouverture de la galerie...", "info");
+                window.triggerStoryGalleryPicker();
+            }
+        };
+
+        window.stopStoryCreatorCamera = () => {
+            const activeRec = storyCreatorState.mediaRecorder;
+            storyCreatorState.mediaRecorder = null;
+            storyCreatorState.isRecordingVideo = false;
+            if (activeRec && activeRec.state !== 'inactive') {
+                try { activeRec.stop(); } catch (e) {}
+            }
+            if (storyCreatorState.cameraStream) {
+                storyCreatorState.cameraStream.getTracks().forEach(t => {
+                    try { t.stop(); } catch (e) {}
+                });
+                storyCreatorState.cameraStream = null;
+            }
+            const camEl = document.getElementById('story-creator-camera-stream');
+            if (camEl) {
+                camEl.srcObject = null;
+                camEl.classList.add('hidden');
+            }
+            const capBar = document.getElementById('story-camera-capture-bar');
+            if (capBar) {
+                capBar.classList.add('hidden');
+                capBar.classList.remove('flex');
+            }
+        };
+
+        window.captureStoryCameraMedia = () => {
+            const camEl = document.getElementById('story-creator-camera-stream');
+            if (!storyCreatorState.cameraStream || !camEl) return;
+
+            if (storyCreatorState.type === 'video') {
+                const shutterLbl = document.getElementById('story-cam-shutter-label');
+                if (storyCreatorState.isRecordingVideo) {
+                    storyCreatorState.isRecordingVideo = false;
+                    if (storyCreatorState.mediaRecorder && storyCreatorState.mediaRecorder.state !== 'inactive') {
+                        try { storyCreatorState.mediaRecorder.stop(); } catch (e) {}
+                    }
+                    return;
+                }
+                storyCreatorState.recordedChunks = [];
+                let mime = 'video/webm';
+                if (window.MediaRecorder && MediaRecorder.isTypeSupported) {
+                    if (MediaRecorder.isTypeSupported('video/mp4')) mime = 'video/mp4';
+                    else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')) mime = 'video/webm;codecs=vp8,opus';
+                    else if (MediaRecorder.isTypeSupported('video/webm')) mime = 'video/webm';
+                }
+                let recorder = null;
+                try {
+                    recorder = new MediaRecorder(storyCreatorState.cameraStream, { mimeType: mime });
+                } catch (e) {
+                    recorder = new MediaRecorder(storyCreatorState.cameraStream);
+                }
+                storyCreatorState.mediaRecorder = recorder;
+                recorder.ondataavailable = (ev) => {
+                    if (ev.data && ev.data.size > 0) storyCreatorState.recordedChunks.push(ev.data);
+                };
+                recorder.onstop = () => {
+                    const actualMime = (recorder && recorder.mimeType) || mime || 'video/webm';
+                    const blob = new Blob(storyCreatorState.recordedChunks, { type: actualMime });
+                    const ext = actualMime.includes('mp4') ? 'mp4' : 'webm';
+                    const file = new File([blob], `story_vid_${Date.now()}.${ext}`, { type: actualMime });
+                    storyCreatorState.mediaFile = file;
+                    const blobUrl = URL.createObjectURL(blob);
+                    currentSessionBlobUrls.add(blobUrl);
+                    storyCreatorState.mediaPreviewUrl = blobUrl;
+                    window.stopStoryCreatorCamera();
+                    const creatorModal = document.getElementById('story-creator-modal');
+                    if (creatorModal && creatorModal.classList.contains('open')) {
+                        const vidPrev = document.getElementById('story-creator-video-preview');
+                        if (vidPrev) {
+                            vidPrev.src = storyCreatorState.mediaPreviewUrl;
+                            vidPrev.classList.remove('hidden');
+                            vidPrev.play().catch(() => {});
+                        }
+                        const changeBtn = document.getElementById('story-change-media-btn');
+                        if (changeBtn) { changeBtn.classList.remove('hidden'); changeBtn.classList.add('inline-flex'); }
+                    }
+                };
+                recorder.start(200);
+                storyCreatorState.isRecordingVideo = true;
+                if (shutterLbl) shutterLbl.innerText = "⏹️ Arrêter l'enregistrement";
+                return;
+            }
+
+            // Photo capture
+            const canvas = document.createElement('canvas');
+            canvas.width = camEl.videoWidth || 720;
+            canvas.height = camEl.videoHeight || 1280;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(camEl, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.84);
+            storyCreatorState.photoDataUrl = dataUrl;
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    storyCreatorState.mediaFile = new File([blob], `story_photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+                }
+            }, 'image/jpeg', 0.84);
+            window.stopStoryCreatorCamera();
+            const photoPrev = document.getElementById('story-creator-photo-preview');
+            if (photoPrev) {
+                photoPrev.src = dataUrl;
+                photoPrev.classList.remove('hidden');
+            }
+            const changeBtn = document.getElementById('story-change-media-btn');
+            if (changeBtn) { changeBtn.classList.remove('hidden'); changeBtn.classList.add('inline-flex'); }
+            window.updateStoryCreatorLivePreview();
+        };
+
+        const STORY_BG_GRADIENTS = [
+            'linear-gradient(135deg, #ff2a5f 0%, #7c3aed 50%, #06b6d4 100%)',
+            'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%)',
+            'linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #db2777 100%)',
+            'linear-gradient(135deg, #059669 0%, #0284c7 50%, #4f46e5 100%)',
+            'linear-gradient(135deg, #7c3aed 0%, #c026d3 50%, #ff2a5f 100%)',
+            'linear-gradient(135deg, #000000 0%, #18181b 60%, #27272a 100%)'
+        ];
+
+        window.setStoryBgGradient = (gradOrIdx) => {
+            const grad = typeof gradOrIdx === 'number' ? (STORY_BG_GRADIENTS[gradOrIdx] || STORY_BG_GRADIENTS[0]) : gradOrIdx;
+            storyCreatorState.bgGradient = grad;
+            const canvasEl = document.getElementById('story-creator-canvas');
+            if (canvasEl) canvasEl.style.background = grad;
+        };
+
+        window.setStoryTextStyle = (style) => {
+            storyCreatorState.textStyle = style;
+            window.updateStoryCreatorLivePreview();
+        };
+
+        window.setStoryTextColor = (color) => {
+            storyCreatorState.textColor = color;
+            window.updateStoryCreatorLivePreview();
+        };
+
+        window.updateStoryCreatorLivePreview = () => {
+            const inp = document.getElementById('story-text-input');
+            const liveTextEl = document.getElementById('story-creator-live-text');
+            const canvasEl = document.getElementById('story-creator-canvas');
+            if (!liveTextEl) return;
+
+            const val = (inp ? inp.value : '').trim();
+            storyCreatorState.text = val;
+            if (canvasEl && storyCreatorState.type === 'text') {
+                canvasEl.style.background = storyCreatorState.bgGradient;
+            }
+
+            if (storyCreatorState.type === 'text') {
+                liveTextEl.classList.remove('hidden');
+                liveTextEl.innerText = val || 'Tape ton texte de Story ici ✨';
+            } else {
+                if (val) {
+                    liveTextEl.classList.remove('hidden');
+                    liveTextEl.innerText = val;
+                } else {
+                    liveTextEl.classList.add('hidden');
+                    liveTextEl.innerText = '';
+                }
+            }
+            liveTextEl.classList.remove('studio-text-banner-glass', 'studio-text-banner-neon', 'studio-text-banner-cinema', 'studio-text-banner-impact');
+            liveTextEl.classList.add('studio-text-banner-' + (storyCreatorState.textStyle || 'glass'));
+            liveTextEl.style.color = storyCreatorState.textColor || '#ffffff';
+        };
+
+        window.toggleStoryMusicDrawer = () => {
+            const drawer = document.getElementById('story-music-drawer');
+            if (!drawer) return;
+            const isHidden = drawer.classList.toggle('hidden');
+            if (!isHidden) {
+                if (studioCommunitySoundsCatalog.length === 0) {
+                    buildStudioSoundCatalogFromVideosMap();
+                }
+                window.renderStoryCommunitySoundsList(document.getElementById('story-sound-search-input')?.value || '');
+            }
+            if (window.lucide) lucide.createIcons();
+        };
+
+        window.renderStoryCommunitySoundsList = (queryStr = '') => {
+            const container = document.getElementById('story-sounds-list');
+            if (!container) return;
+            if (studioCommunitySoundsCatalog.length === 0) {
+                buildStudioSoundCatalogFromVideosMap();
+            }
+            const qNorm = String(queryStr || '').toLowerCase().trim();
+            const filtered = qNorm
+                ? studioCommunitySoundsCatalog.filter(s => s.searchKeywords.includes(qNorm))
+                : studioCommunitySoundsCatalog;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="text-center text-[11px] text-gray-400 py-3">Aucun son trouvé. Tu peux aussi importer un audio depuis ton téléphone.</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.slice(0, 40).map(item => {
+                const isSelected = !!(storyCreatorState.selectedMusic && storyCreatorState.selectedMusic.soundTitle === item.soundTitle);
+                const safeIdJs = escapeJsSingleQuotedAttr(item.id);
+                return `
+                <div class="flex items-center justify-between gap-2 p-2 rounded-xl border ${isSelected ? 'bg-[#ff2a5f]/20 border-[#ff2a5f]' : 'bg-white/5 border-white/10'}">
+                    <div class="min-w-0 flex-1">
+                        <div class="text-xs font-bold text-white truncate">♫ ${escapeHtml(item.soundTitle)}</div>
+                        <div class="text-[10px] text-cyan-300 truncate">@${escapeHtml(item.soundAuthor)}</div>
+                    </div>
+                    <button type="button" onclick="selectStoryCommunitySound('${safeIdJs}')" class="px-3 py-1 rounded-xl ${isSelected ? 'bg-emerald-500 text-white' : 'bg-gradient-to-r from-[#ff2a5f] to-amber-500 text-white'} text-[10px] font-extrabold shrink-0">
+                        ${isSelected ? 'Choisi ✓' : 'Ajouter'}
+                    </button>
+                </div>`;
+            }).join('');
+        };
+
+        window.selectStoryCommunitySound = (soundId) => {
+            const item = studioCommunitySoundsCatalog.find(s => s.id === soundId);
+            if (!item) return;
+            storyCreatorState.selectedMusic = {
+                soundTitle: item.soundTitle,
+                soundAuthor: item.soundAuthor,
+                audioUrl: item.audioUrl || item.fallbackAudioUrl || item.rawVideoUrl
+            };
+            applyStoryCreatorSelectedMusicUI();
+        };
+
+        window.handleStoryCustomAudioFile = (inputEl) => {
+            if (!inputEl || !inputEl.files || !inputEl.files[0]) return;
+            const file = inputEl.files[0];
+            const cleanName = file.name.replace(/\.[^/.]+$/, "");
+            const localUrl = URL.createObjectURL(file);
+            currentSessionBlobUrls.add(localUrl);
+            storyCreatorState.selectedMusic = {
+                soundTitle: cleanName || "Musique personnalisée",
+                soundAuthor: currentUserData?.username || "moi",
+                audioUrl: localUrl,
+                audioFile: file
+            };
+            applyStoryCreatorSelectedMusicUI();
+        };
+
+        function applyStoryCreatorSelectedMusicUI() {
+            const pill = document.getElementById('story-creator-music-pill');
+            const label = document.getElementById('story-creator-music-label');
+            const previewAudio = document.getElementById('story-creator-preview-audio');
+            if (!storyCreatorState.selectedMusic) {
+                if (pill) { pill.classList.add('hidden'); pill.classList.remove('flex'); }
+                if (previewAudio && !previewAudio.paused) {
+                    try { previewAudio.pause(); } catch (e) {}
+                }
+                return;
+            }
+            if (label) label.innerText = `♫ ${storyCreatorState.selectedMusic.soundTitle}`;
+            if (pill) { pill.classList.remove('hidden'); pill.classList.add('flex'); }
+            if (previewAudio && isPlayableStoryUrl(storyCreatorState.selectedMusic.audioUrl)) {
+                previewAudio.src = storyCreatorState.selectedMusic.audioUrl;
+                previewAudio.loop = true;
+                previewAudio.volume = Math.max(0, Math.min(1, (storyCreatorState.musicVolume ?? 90) / 100));
+                previewAudio.play().catch(() => {});
+            }
+            window.renderStoryCommunitySoundsList(document.getElementById('story-sound-search-input')?.value || '');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        window.clearStorySelectedMusic = () => {
+            storyCreatorState.selectedMusic = null;
+            const pill = document.getElementById('story-creator-music-pill');
+            if (pill) { pill.classList.add('hidden'); pill.classList.remove('flex'); }
+            const previewAudio = document.getElementById('story-creator-preview-audio');
+            if (previewAudio) {
+                previewAudio.onerror = null;
+                try { previewAudio.pause(); } catch (e) {}
+                previewAudio.removeAttribute('src');
+            }
+            window.renderStoryCommunitySoundsList(document.getElementById('story-sound-search-input')?.value || '');
+        };
+
+        window.updateStoryMusicVolume = (val) => {
+            const v = parseInt(val, 10);
+            const cleanVol = isNaN(v) ? 90 : Math.max(0, Math.min(100, v));
+            storyCreatorState.musicVolume = cleanVol;
+            const lbl = document.getElementById('story-music-vol-label');
+            if (lbl) lbl.innerText = cleanVol + '%';
+            const previewAudio = document.getElementById('story-creator-preview-audio');
+            if (previewAudio) previewAudio.volume = Math.max(0, Math.min(1, cleanVol / 100));
+        };
+
+        window.publishUserStory = async () => {
+            if (!checkAuth()) return;
+            const type = storyCreatorState.type || 'text';
+            const textVal = (document.getElementById('story-text-input')?.value || '').trim();
+
+            if (type === 'text' && !textVal) {
+                showToast("Écris un texte pour publier ta Story texte !", "error");
+                document.getElementById('story-text-input')?.focus();
+                return;
+            }
+            if ((type === 'photo' || type === 'video') && !storyCreatorState.mediaFile && !storyCreatorState.photoDataUrl && !storyCreatorState.mediaPreviewUrl) {
+                showToast(type === 'photo' ? "Choisis ou prends une photo pour ta Story !" : "Choisis ou filme une vidéo pour ta Story !", "error");
+                return;
+            }
+
+            const btn = document.getElementById('btn-publish-story');
+            const statusEl = document.getElementById('story-upload-status');
+            const origBtnHtml = btn ? btn.innerHTML : 'Publier';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<div class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>`;
+            }
+
+            try {
+                let finalMediaUrl = '';
+                if (type === 'photo') {
+                    if (statusEl) statusEl.innerText = "Téléversement de la photo de Story...";
+                    if (storyCreatorState.mediaFile) {
+                        try {
+                            const uploadedPhoto = await uploadToCloudinary(storyCreatorState.mediaFile);
+                            if (uploadedPhoto) finalMediaUrl = uploadedPhoto;
+                        } catch (e) {}
+                    }
+                    if (!finalMediaUrl && storyCreatorState.photoDataUrl) {
+                        finalMediaUrl = storyCreatorState.photoDataUrl;
+                    }
+                } else if (type === 'video') {
+                    if (statusEl) statusEl.innerText = "Téléversement de la vidéo de Story...";
+                    if (storyCreatorState.mediaFile) {
+                        try {
+                            const uploadedVid = await uploadToCloudinary(storyCreatorState.mediaFile);
+                            if (uploadedVid) finalMediaUrl = uploadedVid;
+                        } catch (e) {}
+                    }
+                    if (!finalMediaUrl && storyCreatorState.mediaPreviewUrl) {
+                        finalMediaUrl = storyCreatorState.mediaPreviewUrl;
+                    }
+                }
+
+                let finalSoundUrl = storyCreatorState.selectedMusic?.audioUrl || '';
+                if (storyCreatorState.selectedMusic?.audioFile) {
+                    if (statusEl) statusEl.innerText = "Téléversement de la musique...";
+                    try {
+                        const upAud = await uploadToCloudinary(storyCreatorState.selectedMusic.audioFile);
+                        if (upAud) finalSoundUrl = upAud;
+                    } catch (e) {}
+                }
+
+                const nowMs = Date.now();
+                const uid = auth.currentUser.uid;
+                const newStory = {
+                    id: `story_${nowMs}_${Math.random().toString(36).slice(2, 7)}`,
+                    userId: String(uid || ''),
+                    username: String(currentUserData?.username || auth.currentUser?.displayName || "utilisateur"),
+                    userPhotoURL: String(currentUserData?.photoURL || ""),
+                    isVerified: !!(currentUserData?.isVerified || currentUserData?.email === VIP_EMAIL),
+                    mediaType: String(type || 'text'),
+                    mediaUrl: String(finalMediaUrl || ''),
+                    text: String(textVal || ''),
+                    textStyle: String(storyCreatorState.textStyle || 'glass'),
+                    textColor: String(storyCreatorState.textColor || '#ffffff'),
+                    bgGradient: String(storyCreatorState.bgGradient || 'linear-gradient(135deg, #ff2a5f 0%, #7c3aed 50%, #06b6d4 100%)'),
+                    soundTitle: String(storyCreatorState.selectedMusic?.soundTitle || ''),
+                    soundAuthor: String(storyCreatorState.selectedMusic?.soundAuthor || ''),
+                    soundUrl: String(finalSoundUrl || ''),
+                    musicVolume: Number(storyCreatorState.musicVolume ?? 90),
+                    createdAtMs: nowMs,
+                    expiresAtMs: nowMs + STORY_DURATION_MS
+                };
+
+                const existingStories = getUserActiveStories(uid);
+                const updatedStories = [...existingStories, newStory];
+                userStoriesMap.set(uid, updatedStories);
+                if (currentUserData) {
+                    currentUserData.activeStories = updatedStories;
+                }
+                saveCachedStoriesToStorage();
+                refreshAllStoryRingsInDOM(uid);
+
+                // Filter out session-only blob URLs before persisting to Firestore so other devices never load dead blob URLs
+                const firestoreSafeStories = updatedStories.map(stItem => ({
+                    ...stItem,
+                    mediaUrl: String(stItem.mediaUrl || '').startsWith('blob:') ? '' : String(stItem.mediaUrl || ''),
+                    soundUrl: String(stItem.soundUrl || '').startsWith('blob:') ? '' : String(stItem.soundUrl || '')
+                })).filter(stItem => stItem.mediaType === 'text' || stItem.mediaUrl);
+
+                if (firestoreSafeStories.length > 0) {
+                    await setDoc(doc(db, "users", uid), {
+                        activeStories: firestoreSafeStories
+                    }, { merge: true }).catch(() => {});
+                }
+
+                window.closeStoryCreatorModal();
+                showToast("Story publiée pour 24h ! Ton cercle de profil est maintenant actif ✨", "success");
+            } catch (err) {
+                showToast("Erreur lors de la publication de la story : " + (err.message || "réessayez"), "error");
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = origBtnHtml;
+                }
+                if (statusEl) statusEl.innerText = '';
+            }
+        };
+
+        // --- STORY VIEWER MODAL LOGIC (CONSULTATION DEPUIS LE PROFIL & SUPPRESSION À TOUT MOMENT) ---
+        function clearStoryViewerTimers() {
+            if (storyViewerState.timer) {
+                clearTimeout(storyViewerState.timer);
+                storyViewerState.timer = null;
+            }
+            if (storyViewerState.progressInterval) {
+                clearInterval(storyViewerState.progressInterval);
+                storyViewerState.progressInterval = null;
+            }
+        }
+
+        function stopStoryViewerMedia() {
+            clearStoryViewerTimers();
+            const vid = document.getElementById('story-viewer-video');
+            if (vid) {
+                vid.onloadedmetadata = null;
+                vid.onended = null;
+                vid.onerror = null;
+                try { vid.pause(); } catch (e) {}
+                vid.removeAttribute('src');
+                vid.classList.add('hidden');
+            }
+            const aud = document.getElementById('story-music-audio');
+            if (aud) {
+                aud.onerror = null;
+                try { aud.pause(); } catch (e) {}
+                aud.removeAttribute('src');
+            }
+        }
+
+        window.openStoryViewer = async (uid = null, startIndex = 0) => {
+            const targetUid = uid || currentProfileUid || (auth.currentUser ? auth.currentUser.uid : null);
+            if (!targetUid) return;
+            let stories = getUserActiveStories(targetUid);
+            if (stories.length === 0) {
+                try {
+                    const snap = await getDoc(doc(db, "users", targetUid));
+                    if (snap.exists()) {
+                        stories = ingestUserStoriesFromDoc(targetUid, snap.data());
+                    }
+                } catch (e) {}
+            }
+            if (!stories || stories.length === 0) {
+                showToast("Aucune story active (24h) pour cet utilisateur.", "info");
+                refreshAllStoryRingsInDOM(targetUid);
+                return;
+            }
+
+            const modal = document.getElementById('story-viewer-modal');
+            if (!modal) return;
+            modal.classList.add('open');
+            pauseAllOutsideUploadMedia();
+            stopStoryViewerMedia();
+
+            storyViewerState.uid = targetUid;
+            storyViewerState.stories = stories;
+            storyViewerState.currentIndex = Math.max(0, Math.min(startIndex, stories.length - 1));
+            renderCurrentStorySlide();
+        };
+
+        window.closeStoryViewer = () => {
+            stopStoryViewerMedia();
+            const modal = document.getElementById('story-viewer-modal');
+            if (modal) modal.classList.remove('open');
+            setTimeout(() => {
+                if (!isOutsideFeedAudioBlocked() && document.getElementById('feed-screen')?.classList.contains('active')) {
+                    handleVideoPlayback();
+                }
+            }, 120);
+        };
+
+        function renderCurrentStorySlide() {
+            stopStoryViewerMedia();
+            const viewerModal = document.getElementById('story-viewer-modal');
+            if (!viewerModal || !viewerModal.classList.contains('open')) return;
+
+            const stories = getUserActiveStories(storyViewerState.uid);
+            storyViewerState.stories = stories;
+            if (stories.length === 0) {
+                window.closeStoryViewer();
+                refreshAllStoryRingsInDOM(storyViewerState.uid);
+                return;
+            }
+            if (storyViewerState.currentIndex >= stories.length) {
+                storyViewerState.currentIndex = stories.length - 1;
+            }
+            const idx = storyViewerState.currentIndex;
+            const st = stories[idx];
+            if (!st) {
+                window.closeStoryViewer();
+                return;
+            }
+            const isOwner = !!(auth.currentUser && (auth.currentUser.uid === storyViewerState.uid || currentUserData?.email === VIP_EMAIL));
+
+            // 1. Progress Bars
+            const barsContainer = document.getElementById('story-viewer-progress-bars');
+            if (barsContainer) {
+                barsContainer.innerHTML = stories.map((_, i) => `
+                    <div class="story-progress-bar-bg">
+                        <div id="story-prog-fill-${i}" class="story-progress-bar-fill" style="width: ${i < idx ? '100%' : '0%'};"></div>
+                    </div>
+                `).join('');
+            }
+
+            // 2. Header Info & Owner Delete/Add Buttons
+            const identity = getResolvedProfileIdentity(storyViewerState.uid, st.username, st.isVerified, st.userPhotoURL);
+            const avEl = document.getElementById('story-viewer-avatar');
+            if (avEl) avEl.innerHTML = getAvatarHTML(identity.photoURL || st.userPhotoURL, "w-full h-full object-cover");
+            const userEl = document.getElementById('story-viewer-username');
+            if (userEl) userEl.innerHTML = `@${escapeHtml(String(identity.username || st.username || 'utilisateur').replace(/^@+/, ''))}${getBadgeHtml(identity.isVerified)}`;
+            const timeEl = document.getElementById('story-viewer-time');
+            if (timeEl) timeEl.innerText = formatRemainingStoryTime(st);
+
+            const delBtn = document.getElementById('btn-delete-current-story');
+            if (delBtn) {
+                delBtn.classList.toggle('hidden', !isOwner);
+                delBtn.classList.toggle('inline-flex', isOwner);
+            }
+            const addBtn = document.getElementById('btn-story-viewer-add');
+            if (addBtn) {
+                const isStrictlyMe = !!(auth.currentUser && auth.currentUser.uid === storyViewerState.uid);
+                addBtn.classList.toggle('hidden', !isStrictlyMe);
+                addBtn.classList.toggle('inline-flex', isStrictlyMe);
+            }
+            const counterEl = document.getElementById('story-viewer-counter');
+            if (counterEl) counterEl.innerText = `${idx + 1} / ${stories.length}`;
+
+            // 3. Stage Content (Text, Photo, or Video)
+            const stageEl = document.getElementById('story-viewer-stage');
+            const imgEl = document.getElementById('story-viewer-img');
+            const vidEl = document.getElementById('story-viewer-video');
+            const txtEl = document.getElementById('story-viewer-text-content');
+
+            if (imgEl) {
+                imgEl.onerror = null;
+                imgEl.classList.add('hidden');
+            }
+            if (vidEl) vidEl.classList.add('hidden');
+            if (txtEl) txtEl.classList.add('hidden');
+
+            if (st.mediaType === 'text') {
+                if (stageEl) stageEl.style.background = st.bgGradient || 'linear-gradient(135deg, #ff2a5f 0%, #7c3aed 50%, #06b6d4 100%)';
+            } else {
+                if (stageEl) stageEl.style.background = '#000000';
+            }
+
+            if (st.text && txtEl) {
+                txtEl.innerText = st.text;
+                txtEl.className = `relative z-20 max-w-[88%] px-5 py-3 text-center break-words text-white ${st.mediaType === 'text' ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'} font-extrabold shadow-2xl pointer-events-none studio-text-banner-${st.textStyle || 'glass'}`;
+                txtEl.style.color = st.textColor || '#ffffff';
+                txtEl.classList.remove('hidden');
+            }
+
+            // 4. Music / Audio playback
+            const musicBar = document.getElementById('story-viewer-music-bar');
+            const musicTitle = document.getElementById('story-viewer-music-title');
+            const storyAudio = document.getElementById('story-music-audio');
+            if (st.soundTitle || st.soundUrl) {
+                if (musicBar) { musicBar.classList.remove('hidden'); musicBar.classList.add('flex'); }
+                if (musicTitle) musicTitle.innerText = `♫ ${st.soundTitle || 'Musique'} ${st.soundAuthor ? '• @' + st.soundAuthor : ''}`;
+                if (storyAudio && isPlayableStoryUrl(st.soundUrl)) {
+                    storyAudio.onerror = () => {};
+                    storyAudio.src = st.soundUrl;
+                    storyAudio.loop = true;
+                    storyAudio.muted = storyViewerState.isMuted;
+                    storyAudio.volume = Math.max(0, Math.min(1, (st.musicVolume ?? 90) / 100));
+                    storyAudio.play().catch(() => {});
+                }
+            } else {
+                if (musicBar) { musicBar.classList.add('hidden'); musicBar.classList.remove('flex'); }
+            }
+
+            // 5. Slide Duration & Auto-Advance Progress
+            const startSlideProgressTimer = (durationMs) => {
+                clearStoryViewerTimers();
+                const currentModal = document.getElementById('story-viewer-modal');
+                if (!currentModal || !currentModal.classList.contains('open')) return;
+                storyViewerState.slideDurationMs = durationMs;
+                storyViewerState.slideStartMs = performance.now();
+                const fillEl = document.getElementById(`story-prog-fill-${idx}`);
+                storyViewerState.progressInterval = setInterval(() => {
+                    if (!currentModal.classList.contains('open')) {
+                        clearStoryViewerTimers();
+                        return;
+                    }
+                    const elapsed = performance.now() - storyViewerState.slideStartMs;
+                    const pct = Math.max(0, Math.min(100, (elapsed / durationMs) * 100));
+                    if (fillEl) fillEl.style.width = `${pct}%`;
+                    if (elapsed >= durationMs) {
+                        clearStoryViewerTimers();
+                        window.nextUserStory();
+                    }
+                }, 60);
+            };
+
+            if (st.mediaType === 'photo' && isPlayableStoryUrl(st.mediaUrl) && imgEl) {
+                imgEl.onerror = () => { imgEl.classList.add('hidden'); };
+                imgEl.src = st.mediaUrl;
+                imgEl.classList.remove('hidden');
+                startSlideProgressTimer(6500);
+            } else if (st.mediaType === 'video' && isPlayableStoryUrl(st.mediaUrl) && vidEl) {
+                vidEl.onerror = () => { startSlideProgressTimer(6000); };
+                vidEl.src = st.mediaUrl;
+                vidEl.muted = storyViewerState.isMuted || !!(st.soundUrl && st.keepOriginalAudio === false);
+                vidEl.classList.remove('hidden');
+                vidEl.onloadedmetadata = () => {
+                    const durMs = (vidEl.duration && isFinite(vidEl.duration)) ? Math.min(vidEl.duration * 1000, 60000) : 10000;
+                    startSlideProgressTimer(durMs);
+                };
+                vidEl.onended = () => {
+                    window.nextUserStory();
+                };
+                vidEl.play().catch(() => {
+                    if (viewerModal.classList.contains('open')) {
+                        startSlideProgressTimer(8000);
+                    }
+                });
+            } else {
+                startSlideProgressTimer(6000);
+            }
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        window.nextUserStory = () => {
+            const stories = storyViewerState.stories || [];
+            if (storyViewerState.currentIndex + 1 < stories.length) {
+                storyViewerState.currentIndex += 1;
+                renderCurrentStorySlide();
+            } else {
+                window.closeStoryViewer();
+            }
+        };
+
+        window.prevUserStory = () => {
+            if (storyViewerState.currentIndex > 0) {
+                storyViewerState.currentIndex -= 1;
+                renderCurrentStorySlide();
+            } else {
+                storyViewerState.currentIndex = 0;
+                renderCurrentStorySlide();
+            }
+        };
+
+        window.toggleStoryViewerMute = () => {
+            storyViewerState.isMuted = !storyViewerState.isMuted;
+            const vidEl = document.getElementById('story-viewer-video');
+            const audEl = document.getElementById('story-music-audio');
+            if (vidEl) vidEl.muted = storyViewerState.isMuted;
+            if (audEl) audEl.muted = storyViewerState.isMuted;
+            const iconEl = document.getElementById('story-viewer-mute-icon');
+            if (iconEl) iconEl.setAttribute('data-lucide', storyViewerState.isMuted ? 'volume-x' : 'volume-2');
+            if (window.lucide) lucide.createIcons();
+        };
+
+        window.deleteCurrentStory = async () => {
+            if (!checkAuth() || !storyViewerState.uid) return;
+            const targetUid = storyViewerState.uid;
+            const isOwner = (auth.currentUser.uid === targetUid) || (currentUserData?.email === VIP_EMAIL);
+            if (!isOwner) return;
+
+            const stories = getUserActiveStories(targetUid);
+            const currentSt = stories[storyViewerState.currentIndex];
+            if (!currentSt) return;
+
+            const remaining = stories.filter(s => s.id !== currentSt.id);
+            userStoriesMap.set(targetUid, remaining);
+            if (auth.currentUser.uid === targetUid && currentUserData) {
+                currentUserData.activeStories = remaining;
+            }
+            if (currentProfileViewedData && currentProfileViewedData.uid === targetUid) {
+                currentProfileViewedData.activeStories = remaining;
+            }
+            saveCachedStoriesToStorage();
+            refreshAllStoryRingsInDOM(targetUid);
+
+            try {
+                const firestoreSafeRemaining = remaining.map(stItem => ({
+                    ...stItem,
+                    mediaUrl: String(stItem.mediaUrl || '').startsWith('blob:') ? '' : String(stItem.mediaUrl || ''),
+                    soundUrl: String(stItem.soundUrl || '').startsWith('blob:') ? '' : String(stItem.soundUrl || '')
+                }));
+                await setDoc(doc(db, "users", targetUid), {
+                    activeStories: firestoreSafeRemaining
+                }, { merge: true });
+            } catch (e) {}
+
+            showToast("Story supprimée avec succès ! 🗑️", "success");
+
+            if (remaining.length === 0) {
+                window.closeStoryViewer();
+            } else {
+                if (storyViewerState.currentIndex >= remaining.length) {
+                    storyViewerState.currentIndex = remaining.length - 1;
+                }
+                renderCurrentStorySlide();
+            }
+        };
+
         window.openMyProfile = async () => { 
             if(!checkAuth()) return; 
             navigateTo('profile'); 
             if (currentUserData) {
+                currentUserData.uid = currentUserData.uid || auth.currentUser.uid;
                 renderProfile(currentUserData, true); 
             }
             try {
                 const freshSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
                 if (freshSnap.exists()) {
                     currentUserData = freshSnap.data();
+                    currentUserData.uid = auth.currentUser.uid;
                     if (currentProfileUid === auth.currentUser.uid) {
                         renderProfile(currentUserData, true);
                     }
@@ -13969,8 +15575,9 @@
                 if (isVirtualBotIdOrUser(targetUid, u.email, u.isBot)) return;
                 const isCert = !!(u.isVerified || (u.email || '').toLowerCase().trim() === VIP_EMAIL.toLowerCase());
                 userProfileCache.set(targetUid, { username: u.username || "utilisateur", isVerified: isCert, photoURL: u.photoURL || "" });
+                if (typeof ingestUserStoriesFromDoc === 'function') ingestUserStoriesFromDoc(targetUid, u);
                 const badge = getBadgeHtml(isCert); 
-                html += `<div onclick="viewUserProfile('${targetUid}')" class="flex items-center justify-between p-3 bg-white/[0.04] border border-white/10 rounded-2xl cursor-pointer hover:bg-white/[0.08] transition"><div class="flex items-center gap-3"><div class="w-11 h-11">${getAvatarHTML(u.photoURL, "w-full h-full")}</div><div><div class="font-bold text-sm flex items-center">@${escapeHtml(u.username)}${badge}</div><div class="text-xs text-gray-400 truncate max-w-[200px]">${escapeHtml(u.bio || 'Créateur R-Videos')}</div></div></div><i data-lucide="chevron-right" class="w-4 h-4 text-gray-500"></i></div>`; 
+                html += `<div onclick="viewUserProfile('${targetUid}')" class="flex items-center justify-between p-3 bg-white/[0.04] border border-white/10 rounded-2xl cursor-pointer hover:bg-white/[0.08] transition"><div class="flex items-center gap-3"><div class="relative w-11 h-11"><div data-story-avatar-uid="${targetUid}" class="w-11 h-11 rounded-full ${hasUserActiveStory(targetUid) ? 'rv-story-ring-feed' : ''}">${getAvatarHTML(u.photoURL, "w-full h-full")}</div><span data-story-badge-uid="${targetUid}" class="rv-story-mini-badge ${hasUserActiveStory(targetUid) ? '' : 'hidden'}">STORY</span></div><div><div class="font-bold text-sm flex items-center">@${escapeHtml(u.username)}${badge}</div><div class="text-xs text-gray-400 truncate max-w-[200px]">${escapeHtml(u.bio || 'Créateur R-Videos')}</div></div></div><i data-lucide="chevron-right" class="w-4 h-4 text-gray-500"></i></div>`; 
             }); 
             searchResultsContainer.innerHTML = html; 
             lucide.createIcons(); 
@@ -14451,8 +16058,11 @@
             return `
             <div onclick="closeProfileSocialModal(); viewUserProfile('${pUid}')" class="flex items-center justify-between gap-3 p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 cursor-pointer transition">
                 <div class="flex items-center gap-3 min-w-0">
-                    <div class="w-11 h-11 rounded-full overflow-hidden bg-slate-800 shrink-0 border border-white/15">
-                        ${getAvatarHTML(person.photoURL, "w-full h-full object-cover")}
+                    <div class="relative w-11 h-11 shrink-0">
+                        <div data-story-avatar-uid="${pUid}" class="w-11 h-11 rounded-full overflow-hidden bg-slate-800 border border-white/15 ${hasUserActiveStory(pUid) ? 'rv-story-ring-feed' : ''}">
+                            ${getAvatarHTML(person.photoURL, "w-full h-full object-cover")}
+                        </div>
+                        <span data-story-badge-uid="${pUid}" class="rv-story-mini-badge ${hasUserActiveStory(pUid) ? '' : 'hidden'}">STORY</span>
                     </div>
                     <div class="min-w-0">
                         <div class="font-bold text-xs md:text-sm text-white flex items-center truncate">
@@ -14670,12 +16280,22 @@
         }
 
         async function renderProfile(data, isMe) { 
-            currentProfileUid = data.uid;
+            if (data && isMe && auth.currentUser && !data.uid) {
+                data.uid = auth.currentUser.uid;
+            }
+            currentProfileUid = data ? data.uid : null;
+            window.currentProfileUid = currentProfileUid;
             currentProfileViewedData = data;
             currentProfileVideoLikers = [];
+            if (typeof ingestUserStoriesFromDoc === 'function') {
+                ingestUserStoriesFromDoc(data.uid, data);
+            }
             document.getElementById('profile-handle').textContent = "@" + data.username;
             document.getElementById('profile-bio').textContent = data.bio || "Pas de bio";
-            document.getElementById('profile-avatar-container').innerHTML = getAvatarHTML(data.photoURL, "w-full h-full"); 
+            document.getElementById('profile-avatar-container').innerHTML = getAvatarHTML(data.photoURL, "w-full h-full");
+            if (typeof updateProfileStoryUI === 'function') {
+                updateProfileStoryUI(data.uid, isMe);
+            }
             updateProfileOnlineStatusUI(data, isMe);
             const joinedEl = document.getElementById('profile-joined-date');
             if (joinedEl) {
@@ -15345,7 +16965,7 @@
                         if (p.classList && (p.classList.contains('like-count') || p.classList.contains('comment-count') || p.classList.contains('fav-text') || p.classList.contains('share-count') || p.classList.contains('comment-like-count') || p.id === 'profile-followers' || p.id === 'profile-following' || p.id === 'profile-likes' || p.id === 'profile-views-count')) {
                             return NodeFilter.FILTER_REJECT;
                         }
-                        if (p.classList && (p.classList.contains('video-desc-text') || p.id === 'profile-handle' || p.id === 'profile-bio' || p.id === 'chat-username')) {
+                        if (p.classList && (p.classList.contains('video-desc-text') || p.id === 'profile-handle' || p.id === 'profile-bio' || p.id === 'chat-username' || p.id === 'story-viewer-text-content' || p.id === 'story-creator-live-text')) {
                             const valTrim = node.nodeValue ? node.nodeValue.trim() : '';
                             if (valTrim !== 'Pas de bio' && (!node.__rvFrText || node.__rvFrText.trim() !== 'Pas de bio')) {
                                 return NodeFilter.FILTER_REJECT;
