@@ -1404,6 +1404,7 @@
         #studio-post-stage,
         #settings-modal > .overflow-y-auto,
         #options-modal > .overflow-y-auto,
+        #native-share-apps-sheet > .overflow-y-auto,
         #first-time-lang-grid,
         #privacy-modal .overflow-y-auto {
             -webkit-overflow-scrolling: touch !important;
@@ -1433,6 +1434,7 @@
         #sound-sheet-modal,
         #profile-social-modal,
         #options-modal,
+        #native-share-apps-sheet,
         #settings-modal,
         #discover-screen .glass-panel,
         #inbox-screen .glass-panel,
@@ -1577,6 +1579,7 @@
             #settings-modal,
             #comments-sheet,
             #options-modal,
+            #native-share-apps-sheet,
             #upload-modal,
             #studio-full-sticker-picker-modal
         ) :is(.text-white, h1, h2, h3, h4) {
@@ -1606,6 +1609,7 @@
             #settings-modal,
             #comments-sheet,
             #options-modal,
+            #native-share-apps-sheet,
             #upload-modal,
             #studio-full-sticker-picker-modal
         ) :is(.text-gray-100, .text-gray-200, .text-gray-300) {
@@ -1635,6 +1639,7 @@
             #settings-modal,
             #comments-sheet,
             #options-modal,
+            #native-share-apps-sheet,
             #upload-modal,
             #studio-full-sticker-picker-modal
         ) :is(.text-gray-400, .text-gray-500) {
@@ -1654,6 +1659,7 @@
             #settings-modal,
             #comments-sheet,
             #options-modal,
+            #native-share-apps-sheet,
             #upload-modal,
             #privacy-modal,
             #moderation-warning-modal,
@@ -1675,6 +1681,7 @@
             #settings-modal,
             #comments-sheet,
             #options-modal,
+            #native-share-apps-sheet,
             #upload-modal,
             #privacy-modal,
             #moderation-warning-modal
@@ -1694,6 +1701,7 @@
             #settings-modal,
             #comments-sheet,
             #options-modal,
+            #native-share-apps-sheet,
             #upload-modal,
             #privacy-modal,
             #moderation-warning-modal
@@ -1713,6 +1721,7 @@
             #settings-modal,
             #comments-sheet,
             #options-modal,
+            #native-share-apps-sheet,
             #upload-modal,
             #privacy-modal,
             #moderation-warning-modal,
@@ -1729,6 +1738,7 @@
             #settings-modal,
             #comments-sheet,
             #options-modal,
+            #native-share-apps-sheet,
             #upload-modal
         ) :is(.text-purple-200, .text-purple-300, .text-purple-400) {
             color: #7c3aed !important;
@@ -1764,6 +1774,7 @@
             #settings-modal,
             #comments-sheet,
             #options-modal,
+            #native-share-apps-sheet,
             #upload-modal,
             #studio-full-sticker-picker-modal
         ) :is(
@@ -1803,6 +1814,7 @@
             #settings-modal,
             #comments-sheet,
             #options-modal,
+            #native-share-apps-sheet,
             #upload-modal
         ) :is(.border-white\/5, .border-white\/10, .border-white\/15, .border-white\/20) {
             border-color: rgba(15, 23, 42, 0.12) !important;
@@ -1821,6 +1833,7 @@
             #report-modal,
             #comments-sheet,
             #options-modal,
+            #native-share-apps-sheet,
             #upload-modal
         ) :is(
             .bg-\[\#0c1222\],
@@ -4523,6 +4536,47 @@
                 
                 <button onclick="closeOptions()" class="mt-1 py-2.5 w-full text-center text-gray-400 font-bold hover:text-white text-xs border-t border-white/10" data-i18n="close_btn">
                     Annuler
+                </button>
+            </div>
+        </div>
+
+        <!-- NATIVE PHONE APPS SHARE SHEET (Opens when sharing video to phone apps: WhatsApp, Facebook, etc.) -->
+        <div id="native-share-apps-backdrop" class="modal-overlay z-[95]" onclick="closeNativePhoneShareSheet()"></div>
+        <div id="native-share-apps-sheet" class="bottom-sheet z-[96]">
+            <div class="w-full flex justify-center pt-3 pb-1 cursor-pointer" onclick="closeNativePhoneShareSheet()">
+                <div class="w-12 h-1 bg-gray-600 rounded-full"></div>
+            </div>
+            <div class="p-4 flex flex-col gap-3 pb-6 overflow-y-auto no-scrollbar">
+                <div class="text-center">
+                    <h3 class="font-bold text-white text-sm font-display">Partager la vidéo avec…</h3>
+                    <p id="native-share-sheet-subtitle" class="text-[11px] text-gray-400 mt-0.5 truncate">Choisissez une application de votre téléphone</p>
+                </div>
+
+                <!-- Primary OS Native App Chooser Trigger (Android Intent / Web Share API) -->
+                <a id="native-share-os-chooser-btn" href="javascript:void(0)" class="flex items-center justify-between p-3 bg-gradient-to-r from-cyan-500/20 to-[#ff2a5f]/20 hover:from-cyan-500/30 hover:to-[#ff2a5f]/30 border border-cyan-400/30 rounded-2xl text-white transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-cyan-500/25 flex items-center justify-center text-cyan-300 shrink-0">
+                            <i data-lucide="smartphone" class="w-5 h-5"></i>
+                        </div>
+                        <div class="text-left">
+                            <div class="font-bold text-xs text-white">Applications du téléphone</div>
+                            <div class="text-[10px] text-gray-300">Ouvrir le sélecteur système (WhatsApp, Facebook, Bluetooth…)</div>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-cyan-300 shrink-0"></i>
+                </a>
+
+                <!-- Grid of Phone Applications -->
+                <div id="native-share-apps-grid" class="grid grid-cols-4 gap-2.5 pt-1"></div>
+
+                <!-- Copy Link Row -->
+                <button type="button" id="native-share-copy-btn" class="flex items-center justify-center gap-2 p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-white text-xs font-bold transition">
+                    <i data-lucide="link" class="w-4 h-4 text-cyan-400"></i>
+                    <span>Copier le lien de la vidéo</span>
+                </button>
+
+                <button type="button" onclick="closeNativePhoneShareSheet()" class="py-2 w-full text-center text-gray-400 font-bold hover:text-white text-xs border-t border-white/10">
+                    Fermer
                 </button>
             </div>
         </div>
@@ -8084,8 +8138,8 @@
         }
 
         async function registerUniqueShareAction(videoId) {
-            if (!videoId || !auth.currentUser) return;
-            const uid = auth.currentUser.uid;
+            if (!videoId) return;
+            const uid = (auth && auth.currentUser) ? auth.currentUser.uid : 'guest_local';
             const lockKey = `share_${videoId}`;
             if (pendingInteractionLocks.has(lockKey)) return;
             pendingInteractionLocks.add(lockKey);
@@ -8106,34 +8160,226 @@
                     el.innerText = formatCount(vData.shares);
                 });
 
-                await updateDoc(doc(db, "videos", videoId), {
-                    shares: vData.shares,
-                    sharedBy: arrayUnion(uid)
-                }).catch(() => {});
+                if (auth && auth.currentUser) {
+                    await updateDoc(doc(db, "videos", videoId), {
+                        shares: vData.shares,
+                        sharedBy: arrayUnion(uid)
+                    }).catch(() => {});
+                }
             } finally {
                 pendingInteractionLocks.delete(lockKey);
             }
         }
 
+        function getCleanShareableVideoUrl(url, vData = null) {
+            let candidate = url || '';
+            if (vData && (Number(vData.trimStart) > 0 || Number(vData.trimEnd) > 0)) {
+                candidate = applyCloudinaryTrimOnlyUrl(candidate, vData.trimStart, vData.trimEnd);
+            }
+            try {
+                const parsed = new URL(candidate, window.location.href);
+                if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+                    return parsed.href;
+                }
+            } catch (e) {}
+            return window.location.href;
+        }
+
+        window.closeNativePhoneShareSheet = () => {
+            const backdrop = document.getElementById('native-share-apps-backdrop');
+            const sheet = document.getElementById('native-share-apps-sheet');
+            if (backdrop) backdrop.classList.remove('open');
+            if (sheet) sheet.classList.remove('open');
+        };
+
+        window.openNativePhoneShareSheet = (shareUrl, videoId, username, shareTitle, shareText) => {
+            const safeName = (username || 'createur').replace(/^@+/, '');
+            const title = shareTitle || `Vidéo de @${safeName} sur R-Videos`;
+            const text = shareText || `Regarde cette vidéo de @${safeName} sur R-Videos !`;
+            const fullMessage = `${text}\n${shareUrl}`;
+            const encUrl = encodeURIComponent(shareUrl);
+            const encText = encodeURIComponent(text);
+            const encFull = encodeURIComponent(fullMessage);
+            const encTitle = encodeURIComponent(title);
+            const isAndroid = /Android/i.test(navigator.userAgent || '');
+            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+
+            const subtitleEl = document.getElementById('native-share-sheet-subtitle');
+            if (subtitleEl) {
+                subtitleEl.textContent = `Vidéo de @${safeName} • Choisissez une application`;
+            }
+
+            // Configure primary OS chooser button
+            const osBtn = document.getElementById('native-share-os-chooser-btn');
+            const androidChooserIntent = `intent:#Intent;action=android.intent.action.SEND;type=text/plain;S.android.intent.extra.SUBJECT=${encTitle};S.android.intent.extra.TEXT=${encFull};end`;
+            if (osBtn) {
+                if (isAndroid) {
+                    osBtn.setAttribute('href', androidChooserIntent);
+                    osBtn.setAttribute('target', '_top');
+                } else {
+                    osBtn.setAttribute('href', 'javascript:void(0)');
+                    osBtn.removeAttribute('target');
+                }
+                osBtn.onclick = (e) => {
+                    registerUniqueShareAction(videoId);
+                    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+                        e.preventDefault();
+                        navigator.share({ title, text, url: shareUrl }).then(() => {
+                            window.closeNativePhoneShareSheet();
+                        }).catch((err) => {
+                            if (err && err.name === 'AbortError') return;
+                            if (isAndroid) {
+                                window.location.href = androidChooserIntent;
+                            } else {
+                                copyTextSafe(shareUrl);
+                            }
+                        });
+                    } else if (!isAndroid) {
+                        e.preventDefault();
+                        copyTextSafe(shareUrl);
+                    }
+                };
+            }
+
+            const smsHref = isIOS ? `sms:&body=${encFull}` : `sms:?body=${encFull}`;
+            const apps = [
+                {
+                    name: 'WhatsApp',
+                    bg: 'background:#25D366;',
+                    href: `https://api.whatsapp.com/send?text=${encFull}`,
+                    svg: '<svg class="w-6 h-6 text-white fill-current" viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2zm5.82 14.01c-.24.68-1.41 1.3-1.95 1.38-.5.08-1.13.11-1.83-.11-.42-.13-.97-.31-1.67-.61-2.95-1.27-4.88-4.25-5.03-4.45-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.3.59-.37.79-.37.2 0 .4.01.57.01.18 0 .43-.07.67.51.24.59.82 2.01.89 2.16.07.15.12.32.02.52-.1.2-.15.32-.3.5-.15.17-.31.39-.44.52-.15.15-.3.31-.13.61.17.3.76 1.25 1.63 2.03 1.12 1 2.06 1.31 2.36 1.46.3.15.47.12.64-.07.17-.2.74-.86.94-1.16.2-.3.4-.25.67-.15.27.1 1.71.81 2 .96.3.15.49.22.57.34.08.12.08.71-.16 1.39z"/></svg>'
+                },
+                {
+                    name: 'Facebook',
+                    bg: 'background:#1877F2;',
+                    href: `https://www.facebook.com/sharer/sharer.php?u=${encUrl}&quote=${encText}`,
+                    svg: '<svg class="w-6 h-6 text-white fill-current" viewBox="0 0 24 24"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/></svg>'
+                },
+                {
+                    name: 'Messenger',
+                    bg: 'background:linear-gradient(135deg,#00B2FF,#006AFF);',
+                    href: isAndroid
+                        ? `intent:#Intent;action=android.intent.action.SEND;type=text/plain;package=com.facebook.orca;S.android.intent.extra.TEXT=${encFull};S.browser_fallback_url=${encodeURIComponent('https://www.facebook.com/sharer/sharer.php?u=' + encUrl)};end`
+                        : `fb-messenger://share/?link=${encUrl}`,
+                    svg: '<svg class="w-6 h-6 text-white fill-current" viewBox="0 0 24 24"><path d="M12 2C6.36 2 2 6.13 2 11.7c0 2.91 1.19 5.44 3.14 7.17.16.13.26.35.27.57l.05 1.78c.02.57.61.94 1.13.71l1.98-.87c.17-.08.36-.1.55-.06.91.25 1.87.38 2.88.38 5.64 0 10-4.13 10-9.7C22 6.13 17.64 2 12 2zm6 7.46-2.93 4.67c-.47.73-1.47.92-2.17.4l-2.34-1.75a.6.6 0 0 0-.72 0l-3.16 2.4c-.42.32-.97-.18-.69-.63l2.93-4.67c.47-.73 1.47-.92 2.17-.4l2.34 1.75a.6.6 0 0 0 .72 0l3.16-2.4c.42-.32.97.18.69.63z"/></svg>'
+                },
+                {
+                    name: 'Telegram',
+                    bg: 'background:#26A5E4;',
+                    href: `https://t.me/share/url?url=${encUrl}&text=${encText}`,
+                    svg: '<svg class="w-6 h-6 text-white fill-current" viewBox="0 0 24 24"><path d="M11.94 2C6.45 2 2 6.45 2 11.94s4.45 9.94 9.94 9.94 9.94-4.45 9.94-9.94S17.43 2 11.94 2zm4.88 6.81-1.69 7.97c-.12.56-.46.7-.93.43l-2.58-1.9-1.24 1.2c-.14.14-.26.26-.53.26l.19-2.63 4.78-4.32c.21-.18-.05-.29-.32-.1L7.02 13.2l-2.54-.79c-.55-.17-.56-.55.12-.82l9.92-3.83c.46-.17.86.11.7.87z"/></svg>'
+                },
+                {
+                    name: 'SMS',
+                    bg: 'background:#10B981;',
+                    href: smsHref,
+                    sameTab: true,
+                    svg: '<svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
+                },
+                {
+                    name: 'Instagram',
+                    bg: 'background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);',
+                    href: isAndroid
+                        ? `intent:#Intent;action=android.intent.action.SEND;type=text/plain;package=com.instagram.android;S.android.intent.extra.TEXT=${encFull};S.browser_fallback_url=${encodeURIComponent('https://www.instagram.com/')};end`
+                        : 'instagram://app',
+                    copyFirst: true,
+                    svg: '<svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>'
+                },
+                {
+                    name: 'TikTok',
+                    bg: 'background:#111827;border:1px solid rgba(255,255,255,0.2);',
+                    href: isAndroid
+                        ? `intent:#Intent;action=android.intent.action.SEND;type=text/plain;package=com.zhiliaoapp.musically;S.android.intent.extra.TEXT=${encFull};S.browser_fallback_url=${encodeURIComponent('https://www.tiktok.com/')};end`
+                        : 'snssdk1233://',
+                    copyFirst: true,
+                    svg: '<svg class="w-6 h-6 text-white fill-current" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>'
+                },
+                {
+                    name: 'E-mail',
+                    bg: 'background:#EA4335;',
+                    href: `mailto:?subject=${encTitle}&body=${encFull}`,
+                    sameTab: true,
+                    svg: '<svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>'
+                }
+            ];
+
+            const grid = document.getElementById('native-share-apps-grid');
+            if (grid) {
+                grid.innerHTML = apps.map((app, idx) => `
+                    <a href="${app.href}" ${app.sameTab ? '' : 'target="_blank" rel="noopener noreferrer"'} data-app-idx="${idx}" class="native-app-share-item flex flex-col items-center gap-1.5 p-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition active:scale-95">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center shadow-md" style="${app.bg}">
+                            ${app.svg}
+                        </div>
+                        <span class="text-[11px] font-semibold text-white truncate max-w-full">${app.name}</span>
+                    </a>
+                `).join('');
+
+                grid.querySelectorAll('.native-app-share-item').forEach((linkEl) => {
+                    linkEl.addEventListener('click', () => {
+                        const idx = Number(linkEl.getAttribute('data-app-idx'));
+                        const app = apps[idx];
+                        if (app && app.copyFirst) {
+                            copyTextSafe(shareUrl);
+                        }
+                        registerUniqueShareAction(videoId);
+                        setTimeout(() => window.closeNativePhoneShareSheet(), 350);
+                    });
+                });
+            }
+
+            const copyBtn = document.getElementById('native-share-copy-btn');
+            if (copyBtn) {
+                copyBtn.onclick = () => {
+                    copyTextSafe(shareUrl);
+                    registerUniqueShareAction(videoId);
+                    window.closeNativePhoneShareSheet();
+                };
+            }
+
+            if (window.lucide) {
+                try { lucide.createIcons(); } catch (e) {}
+            }
+
+            const backdrop = document.getElementById('native-share-apps-backdrop');
+            const sheet = document.getElementById('native-share-apps-sheet');
+            if (backdrop) backdrop.classList.add('open');
+            if (sheet) sheet.classList.add('open');
+        };
+
         window.shareVideo = (url, videoId, username) => {
-            if (!checkAuth()) return;
-            const finalUrl = getWatermarkedUrl(url, username);
-            if (navigator.share) {
+            const vData = (videoId && profileVideosData && profileVideosData[videoId]) ? profileVideosData[videoId] : null;
+            const safeName = (username || (vData && vData.username) || 'createur').replace(/^@+/, '');
+            const cleanVideoUrl = getCleanShareableVideoUrl(url, vData);
+            const shareTitle = `Vidéo de @${safeName} sur R-Videos`;
+            const shareText = `Regarde cette vidéo de @${safeName} sur R-Videos !`;
+            const fullShareText = `${shareText}\n${cleanVideoUrl}`;
+
+            if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
                 navigator.share({
-                    title: 'R-Videos',
-                    text: `Regarde cette vidéo de @${username} sur R-Videos !`,
-                    url: finalUrl
+                    title: shareTitle,
+                    text: shareText,
+                    url: cleanVideoUrl
                 }).then(() => {
                     registerUniqueShareAction(videoId);
                 }).catch((err) => {
-                    if (err.name !== 'AbortError') {
-                        copyTextSafe(finalUrl);
-                        registerUniqueShareAction(videoId);
+                    if (err && err.name === 'AbortError') {
+                        return;
                     }
+                    // Fallback attempt with text-only if URL field caused rejection
+                    navigator.share({
+                        title: shareTitle,
+                        text: fullShareText
+                    }).then(() => {
+                        registerUniqueShareAction(videoId);
+                    }).catch((err2) => {
+                        if (err2 && err2.name === 'AbortError') {
+                            return;
+                        }
+                        window.openNativePhoneShareSheet(cleanVideoUrl, videoId, safeName, shareTitle, shareText);
+                    });
                 });
             } else {
-                copyTextSafe(finalUrl);
-                registerUniqueShareAction(videoId);
+                window.openNativePhoneShareSheet(cleanVideoUrl, videoId, safeName, shareTitle, shareText);
             }
         };
 
@@ -9986,7 +10232,7 @@
 
         window.openOptions = (id, url, username, allowDL, authorId = null, isPinned = false) => {
             activeOptionsVideoId = id;
-            document.getElementById('opt-share').onclick = () => { window.shareVideo(url, id, username); window.closeOptions(); };
+            document.getElementById('opt-share').onclick = () => { window.closeOptions(); window.shareVideo(url, id, username); };
             const btnDL = document.getElementById('opt-download');
             if(allowDL) {
                 btnDL.classList.remove('hidden');
@@ -17710,7 +17956,7 @@
                     isPulling = false;
                     return;
                 }
-                if (e.target && e.target.closest('.overflow-x-auto, #studio-editor-drawer, #studio-real-sounds-list, #comments-sheet, #sound-sheet-modal, #profile-social-modal, #options-modal, #settings-modal, #chat-screen')) {
+                if (e.target && e.target.closest('.overflow-x-auto, #studio-editor-drawer, #studio-real-sounds-list, #comments-sheet, #sound-sheet-modal, #profile-social-modal, #options-modal, #native-share-apps-sheet, #settings-modal, #chat-screen')) {
                     isPulling = false;
                     return;
                 }
