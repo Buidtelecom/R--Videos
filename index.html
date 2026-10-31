@@ -7170,6 +7170,75 @@
         const sessionWatchMetrics = new Map(); // videoId -> { startTime, accumulatedSec, loops, reportedSkip }
         const sessionSeenFeedCount = new Map(); // videoId -> number of impressions in session
 
+        // ============================================================================
+        // COMPTEUR MASQUÉ DE "DÉJÀ VUE" PAR VIDÉO (UNIQUEMENT UTILISATEURS ENREGISTRÉS)
+        // Incrémenté dès que la vidéo commence à être vue (sans attendre la fin)
+        // ============================================================================
+        function getRegisteredUserDejaVuMap() {
+            if (isGuestMode || !auth.currentUser || !auth.currentUser.uid) return {};
+            const uid = auth.currentUser.uid;
+            let localCounts = {};
+            try {
+                const raw = safeGetStorage(`rv_hidden_deja_vu_${uid}`, '{}');
+                const parsed = JSON.parse(raw || '{}');
+                if (parsed && typeof parsed === 'object') localCounts = parsed;
+            } catch (e) {}
+            const fsCounts = (currentUserData && currentUserData.hiddenSeenCounts && typeof currentUserData.hiddenSeenCounts === 'object')
+                ? currentUserData.hiddenSeenCounts
+                : {};
+            const merged = { ...fsCounts };
+            for (const [vId, cnt] of Object.entries(localCounts)) {
+                merged[vId] = Math.max(Number(merged[vId] || 0), Number(cnt || 0));
+            }
+            return merged;
+        }
+
+        function getHiddenDejaVuCount(videoOrId) {
+            if (isGuestMode || !auth.currentUser || !auth.currentUser.uid) return 0;
+            const vidId = (typeof videoOrId === 'string') ? videoOrId : (videoOrId && videoOrId.id);
+            if (!vidId) return 0;
+            const uid = auth.currentUser.uid;
+            const map = getRegisteredUserDejaVuMap();
+            let count = Number(map[vidId] || 0);
+            const vData = (typeof videoOrId === 'object' && videoOrId) ? videoOrId : profileVideosData[vidId];
+            if (count === 0 && vData && vData.userSeenCounts && typeof vData.userSeenCounts === 'object' && vData.userSeenCounts[uid]) {
+                count = Math.max(count, Number(vData.userSeenCounts[uid]) || 0);
+            }
+            if (count === 0 && vData && Array.isArray(vData.viewedBy) && vData.viewedBy.includes(uid)) {
+                count = 1;
+            }
+            return count;
+        }
+
+        function incrementHiddenDejaVuCount(vidId) {
+            if (isGuestMode || !auth.currentUser || !auth.currentUser.uid || !vidId) return 0;
+            const uid = auth.currentUser.uid;
+            const map = getRegisteredUserDejaVuMap();
+            const nextCount = Math.max(0, Number(map[vidId] || getHiddenDejaVuCount(vidId) || 0)) + 1;
+            map[vidId] = nextCount;
+            try {
+                safeSetStorage(`rv_hidden_deja_vu_${uid}`, JSON.stringify(map));
+            } catch (e) {}
+            if (!currentUserData) currentUserData = {};
+            if (!currentUserData.hiddenSeenCounts || typeof currentUserData.hiddenSeenCounts !== 'object') {
+                currentUserData.hiddenSeenCounts = {};
+            }
+            currentUserData.hiddenSeenCounts[vidId] = nextCount;
+            if (profileVideosData[vidId]) {
+                if (!profileVideosData[vidId].userSeenCounts || typeof profileVideosData[vidId].userSeenCounts !== 'object') {
+                    profileVideosData[vidId].userSeenCounts = {};
+                }
+                profileVideosData[vidId].userSeenCounts[uid] = nextCount;
+            }
+            updateDoc(doc(db, "users", uid), {
+                [`hiddenSeenCounts.${vidId}`]: nextCount
+            }).catch(() => {});
+            updateDoc(doc(db, "videos", vidId), {
+                [`userSeenCounts.${uid}`]: increment(1)
+            }).catch(() => {});
+            return nextCount;
+        }
+
         function saveUserInterestGraph() {
             try { safeSetStorage('rv_interest_graph', JSON.stringify(userInterestGraph)); } catch (e) {}
         }
@@ -7244,6 +7313,9 @@
             if (eventType === 'enter') {
                 metric.enteredAt = performance.now();
                 sessionSeenFeedCount.set(docId, (sessionSeenFeedCount.get(docId) || 0) + 1);
+                if (!isGuestMode && auth.currentUser) {
+                    incrementHiddenDejaVuCount(docId);
+                }
             } else if (eventType === 'loop_complete') {
                 metric.loops += 1;
                 userInterestGraph.completedVideos[docId] = 1;
@@ -7367,6 +7439,7 @@
             const vidId = video.id;
             if (!vidId) return false;
             const uid = auth.currentUser?.uid || null;
+            if (!isGuestMode && uid && getHiddenDejaVuCount(video) > 0) return true;
             if (viewedVideos.has(vidId) || hasUserInteractedOnce('view', vidId)) return true;
             if ((sessionSeenFeedCount.get(vidId) || 0) > 0) return true;
             if (uid && Array.isArray(video.viewedBy) && video.viewedBy.includes(uid)) return true;
@@ -7528,19 +7601,18 @@
             if (video.isPinned) score += 350;
             if (video.isVerified) score += 280;
 
-            // 7. Skip & Already-Seen Adjustments (Prioritize unseen discovery while keeping feed rich when <= 1000 videos)
-            if (video.id) {
+            // 7. Skip & Already-Seen Adjustments (Uniquement pour les utilisateurs enregistrés ; les invités sont classés par score de viralité)
+            if (video.id && !isGuestMode && auth.currentUser) {
                 if (isSkippedByMe) {
                     score -= 3500;
                 }
-                const alreadySeen = hasUserAlreadySeenVideo(video);
-                const seenTimes = sessionSeenFeedCount.get(video.id) || 0;
-                if (!alreadySeen) {
+                const dejaVuCount = getHiddenDejaVuCount(video);
+                if (dejaVuCount === 0) {
                     score += 950;
                 } else if (isStrictUnseenDiscoveryActive()) {
-                    score -= Math.max(1, seenTimes) * 1800;
-                } else if (seenTimes > 0) {
-                    score -= Math.min(seenTimes * 160, 640);
+                    score -= dejaVuCount * 1800;
+                } else {
+                    score -= Math.min(dejaVuCount * 160, 640);
                 }
             }
 
@@ -10772,8 +10844,8 @@
                 const unseenVideos = videos.filter(v => !hasUserAlreadySeenVideo(v));
                 const existingCardsCount = container.querySelectorAll('.video-card').length;
 
-                if (strictNoRepeatMode && !allowSeenFallback) {
-                    // App has > 1000 videos: prioritize strict unseen discovery so the user never sees a video twice
+                if (!isGuestMode && auth.currentUser && strictNoRepeatMode && !allowSeenFallback) {
+                    // App has > 1000 videos (Registered users): prioritize strict unseen discovery so the user never sees a video twice
                     if (unseenVideos.length > 0) {
                         videos = unseenVideos;
                     } else if (hasMoreFeedVideos && lastVisibleDoc) {
@@ -10791,8 +10863,8 @@
                         return;
                     }
                 } else {
-                    // App has <= 1000 videos (or fallback mode is active):
-                    // Keep ALL eligible videos (both unseen and seen) so the user always has videos to watch.
+                    // App has <= 1000 videos (or guest mode, or fallback mode is active):
+                    // Keep ALL eligible videos so the user always has videos to watch.
                     if (videos.length === 0) {
                         if (hasMoreFeedVideos && lastVisibleDoc) {
                             isFetchingMore = false;
@@ -10810,19 +10882,44 @@
                 }
 
                 if (currentFeedMode === 'foryou') {
+                    if (!isGuestMode && auth.currentUser) {
+                        // Utilisateurs enregistrés : classer en premier les vidéos ayant le moins de "déjà vue" (compteur masqué).
+                        // Si le compteur de "déjà vue" est équivalent, le score de viralité prend le contrôle sur le classement.
+                        const viralScoresMap = new Map();
+                        videos.forEach(v => viralScoresMap.set(v.id, calculateViralScore(v)));
+                        videos.sort((a, b) => {
+                            const seenA = getHiddenDejaVuCount(a);
+                            const seenB = getHiddenDejaVuCount(b);
+                            if (seenA !== seenB) return seenA - seenB;
+                            return (viralScoresMap.get(b.id) || 0) - (viralScoresMap.get(a.id) || 0);
+                        });
+                        // Diversifier par palier de "déjà vue" uniquement si les compteurs sont différents,
+                        // tout en laissant le score de viralité contrôler l'ordre lorsque tous sont équivalents
+                        const distinctCounts = Array.from(new Set(videos.map(v => getHiddenDejaVuCount(v)))).sort((a, b) => a - b);
+                        if (distinctCounts.length > 1) {
+                            const groupedBySeenCount = [];
+                            distinctCounts.forEach(cnt => {
+                                const tierVideos = videos.filter(v => getHiddenDejaVuCount(v) === cnt);
+                                groupedBySeenCount.push(...tierVideos);
+                            });
+                            videos = groupedBySeenCount;
+                        }
+                    } else {
+                        // Invités : classement uniquement par score de viralité
+                        const guestViralScores = new Map();
+                        videos.forEach(v => guestViralScores.set(v.id, calculateViralScore(v)));
+                        videos.sort((a, b) => (guestViralScores.get(b.id) || 0) - (guestViralScores.get(a.id) || 0));
+                    }
+                } else if (!isGuestMode && auth.currentUser) {
+                    // Dans l'onglet Suivis pour les utilisateurs enregistrés : envoyer aussi en premier celles avec le moins de "déjà vue", puis par score de viralité
+                    const viralScoresMap = new Map();
+                    videos.forEach(v => viralScoresMap.set(v.id, calculateViralScore(v)));
                     videos.sort((a, b) => {
-                        const aUnseen = !hasUserAlreadySeenVideo(a);
-                        const bUnseen = !hasUserAlreadySeenVideo(b);
-                        if (aUnseen !== bUnseen) return aUnseen ? -1 : 1;
-                        return calculateViralScore(b) - calculateViralScore(a);
+                        const seenA = getHiddenDejaVuCount(a);
+                        const seenB = getHiddenDejaVuCount(b);
+                        if (seenA !== seenB) return seenA - seenB;
+                        return (viralScoresMap.get(b.id) || 0) - (viralScoresMap.get(a.id) || 0);
                     });
-                    // Diversify unseen and seen groups separately when <= 1000 videos so unseen videos always stay first
-                    const unseenSorted = videos.filter(v => !hasUserAlreadySeenVideo(v));
-                    const seenSorted = videos.filter(v => hasUserAlreadySeenVideo(v));
-                    videos = [
-                        ...diversifyForYouFeed(unseenSorted),
-                        ...diversifyForYouFeed(seenSorted)
-                    ];
                 }
 
                 await hydrateUserProfilesMap(videos.map(v => v.userId));
@@ -16023,6 +16120,10 @@
                     }
                 });
                 fullVid.addEventListener('ended', () => restartOrAdvanceVideo(fullVid, fullCard));
+                if (!isGuestMode && auth.currentUser) {
+                    incrementHiddenDejaVuCount(id);
+                }
+                recordUniqueVideoView(id);
                 configureHardwareVideoElement(fullVid, fullCard);
                 playVideoSynchronized(fullVid, fullCard, true);
             }
