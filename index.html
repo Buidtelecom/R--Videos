@@ -4552,6 +4552,26 @@
                     <p id="native-share-sheet-subtitle" class="text-[11px] text-gray-400 mt-0.5 truncate">Choisissez une application de votre téléphone</p>
                 </div>
 
+                <!-- Live Preview of the Redesigned R-Videos Original Logo + @Username Watermark on Shared/Downloaded Video -->
+                <div class="flex items-center justify-between px-3 py-2 rounded-2xl bg-gradient-to-r from-[#1a060d] via-[#0b1020] to-[#091526] border border-[#ff2a5f]/40 shadow-lg">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="relative w-10 h-10 rounded-xl p-[1.5px] bg-gradient-to-tr from-[#ff2a5f] via-amber-400 to-cyan-400 shadow-md shrink-0">
+                            <div class="w-full h-full rounded-[10px] rv-brand-logo-icon"></div>
+                            <div class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-r from-[#ff2a5f] to-rose-600 border border-black flex items-center justify-center text-[8px] text-white font-black">▶</div>
+                        </div>
+                        <div class="min-w-0 text-left">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs font-black tracking-tight bg-gradient-to-r from-white via-rose-200 to-[#ff2a5f] bg-clip-text text-transparent font-display">R-VIDEOS</span>
+                                <span class="px-1.5 py-0.5 rounded-md bg-[#ff2a5f]/25 border border-[#ff2a5f]/40 text-[8px] font-extrabold text-rose-200 uppercase">Logo Actif</span>
+                            </div>
+                            <div id="native-share-watermark-user-pill" class="inline-flex items-center gap-1 mt-0.5 px-2 py-0.5 rounded-full bg-white/10 border border-cyan-400/40 text-[10px] font-extrabold text-white truncate max-w-[180px]">
+                                <span class="text-cyan-300">@createur</span>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="text-[9.5px] font-bold text-emerald-300 bg-emerald-500/15 border border-emerald-400/30 px-2 py-1 rounded-lg shrink-0">Sur la vidéo ✓</span>
+                </div>
+
                 <!-- Primary OS Native App Chooser Trigger (Android Intent / Web Share API) -->
                 <a id="native-share-os-chooser-btn" href="javascript:void(0)" class="flex items-center justify-between p-3 bg-gradient-to-r from-cyan-500/20 to-[#ff2a5f]/20 hover:from-cyan-500/30 hover:to-[#ff2a5f]/30 border border-cyan-400/30 rounded-2xl text-white transition">
                     <div class="flex items-center gap-3">
@@ -6839,11 +6859,346 @@
                 .replace(/>/g, "&gt;");
         }
         
-        function getWatermarkedUrl(url, username) {
+        const RV_ORIGINAL_LOGO_DATA_URI = "data:image/png;base64,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";
+        const rvUserWatermarkCache = {};
+        const rvUserWatermarkInFlight = {};
+        let rvGlobalLogoBadgePublicId = safeGetStorage('rv_cld_logo_badge_v5', '') || '';
+        let rvGlobalLogoBadgePromise = null;
+        let rvCachedOriginalLogoImg = null;
+
+        function loadOriginalBrandLogoImage() {
+            if (rvCachedOriginalLogoImg && rvCachedOriginalLogoImg.complete) {
+                return Promise.resolve(rvCachedOriginalLogoImg);
+            }
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    rvCachedOriginalLogoImg = img;
+                    resolve(img);
+                };
+                img.onerror = (err) => reject(err);
+                img.src = RV_ORIGINAL_LOGO_DATA_URI;
+            });
+        }
+
+        function drawRoundedRectPath(ctx, x, y, w, h, r) {
+            const radius = Math.min(r, w / 2, h / 2);
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.arcTo(x + w, y, x + w, y + h, radius);
+            ctx.arcTo(x + w, y + h, x, y + h, radius);
+            ctx.arcTo(x, y + h, x, y, radius);
+            ctx.arcTo(x, y, x + w, y, radius);
+            ctx.closePath();
+        }
+
+        function resolveWatermarkUsername(username = '', vData = null, url = '') {
+            let candidate = username ? unescapeHtml(String(username)).replace(/^@+/, '').trim() : '';
+            if (!candidate && vData && vData.username) {
+                candidate = unescapeHtml(String(vData.username)).replace(/^@+/, '').trim();
+            }
+            if (!candidate && typeof activeOptionsVideoId !== 'undefined' && activeOptionsVideoId && profileVideosData && profileVideosData[activeOptionsVideoId]?.username) {
+                candidate = unescapeHtml(String(profileVideosData[activeOptionsVideoId].username)).replace(/^@+/, '').trim();
+            }
+            if (!candidate && url && profileVideosData) {
+                const matched = Object.values(profileVideosData).find(item => item && item.url && (item.url === url || stripCloudinaryTrimFromUrl(item.url) === stripCloudinaryTrimFromUrl(url)));
+                if (matched && matched.username) {
+                    candidate = unescapeHtml(String(matched.username)).replace(/^@+/, '').trim();
+                }
+            }
+            if (!candidate && typeof currentUserData !== 'undefined' && currentUserData && currentUserData.username) {
+                candidate = unescapeHtml(String(currentUserData.username)).replace(/^@+/, '').trim();
+            }
+            return candidate || 'utilisateur';
+        }
+
+        async function renderLuxuryWatermarkBadgeBlob(username = '', includeUsername = true) {
+            const logoImg = await loadOriginalBrandLogoImage();
+            const rawUser = String(username || '').replace(/^@+/, '').trim() || 'utilisateur';
+            const displayUser = rawUser.length > 16 ? rawUser.slice(0, 15) + '…' : rawUser;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 540;
+            canvas.height = includeUsername ? 210 : 136;
+            const ctx = canvas.getContext('2d');
+            const cw = canvas.width;
+            const ch = canvas.height;
+
+            // 1. Top Luxury Obsidian-Crimson Brand Capsule
+            const bx = 10, by = 10, bw = cw - 20, bh = includeUsername ? 118 : (ch - 20), br = 34;
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.72)';
+            ctx.shadowBlur = 14;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 5;
+            drawRoundedRectPath(ctx, bx, by, bw, bh, br);
+            const bgGrad = ctx.createLinearGradient(bx, by, bx + bw, by + bh);
+            bgGrad.addColorStop(0, 'rgba(20, 6, 14, 0.95)');
+            bgGrad.addColorStop(0.5, 'rgba(10, 15, 30, 0.95)');
+            bgGrad.addColorStop(1, 'rgba(28, 6, 16, 0.96)');
+            ctx.fillStyle = bgGrad;
+            ctx.fill();
+            ctx.restore();
+
+            // Ambient radial glow behind the original logo
+            ctx.save();
+            drawRoundedRectPath(ctx, bx, by, bw, bh, br);
+            ctx.clip();
+            const haloGrad = ctx.createRadialGradient(74, by + bh / 2, 6, 74, by + bh / 2, 82);
+            haloGrad.addColorStop(0, 'rgba(255, 42, 95, 0.48)');
+            haloGrad.addColorStop(1, 'rgba(255, 42, 95, 0)');
+            ctx.fillStyle = haloGrad;
+            ctx.fillRect(bx, by, bw, bh);
+
+            const topShine = ctx.createLinearGradient(bx, by, bx, by + bh * 0.48);
+            topShine.addColorStop(0, 'rgba(255, 255, 255, 0.18)');
+            topShine.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = topShine;
+            ctx.fillRect(bx, by, bw, bh * 0.48);
+            ctx.restore();
+
+            // Luminous Gradient Outer Rim on Top Capsule
+            ctx.save();
+            drawRoundedRectPath(ctx, bx, by, bw, bh, br);
+            const borderGrad = ctx.createLinearGradient(bx, by, bx + bw, by + bh);
+            borderGrad.addColorStop(0, '#ff2a5f');
+            borderGrad.addColorStop(0.5, '#f59e0b');
+            borderGrad.addColorStop(1, '#06b6d4');
+            ctx.strokeStyle = borderGrad;
+            ctx.lineWidth = 3.5;
+            ctx.stroke();
+            ctx.restore();
+
+            // 2. Original R-Videos Logo Emblem in Metallic-Neon Squircle Frame
+            const lSize = 90;
+            const lx = 24;
+            const ly = by + Math.round((bh - lSize) / 2);
+            const lr = 22;
+
+            ctx.save();
+            drawRoundedRectPath(ctx, lx - 3, ly - 3, lSize + 6, lSize + 6, lr + 3);
+            const frameGrad = ctx.createLinearGradient(lx - 3, ly - 3, lx + lSize + 3, ly + lSize + 3);
+            frameGrad.addColorStop(0, '#ff2a5f');
+            frameGrad.addColorStop(0.5, '#ffd5d3');
+            frameGrad.addColorStop(1, '#06b6d4');
+            ctx.fillStyle = frameGrad;
+            ctx.fill();
+            ctx.restore();
+
+            ctx.save();
+            drawRoundedRectPath(ctx, lx, ly, lSize, lSize, lr);
+            ctx.clip();
+            ctx.drawImage(logoImg, lx, ly, lSize, lSize);
+            const logoGloss = ctx.createLinearGradient(lx, ly, lx, ly + lSize * 0.5);
+            logoGloss.addColorStop(0, 'rgba(255, 255, 255, 0.26)');
+            logoGloss.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = logoGloss;
+            ctx.fillRect(lx, ly, lSize, lSize * 0.5);
+            ctx.restore();
+
+            // Mini Play Spark Badge at bottom-right corner of the logo
+            const pbX = lx + lSize - 12;
+            const pbY = ly + lSize - 12;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(pbX, pbY, 13, 0, Math.PI * 2);
+            ctx.fillStyle = '#ff2a5f';
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#0b1020';
+            ctx.stroke();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(pbX - 3.5, pbY - 5.5);
+            ctx.lineTo(pbX + 5.5, pbY);
+            ctx.lineTo(pbX - 3.5, pbY + 5.5);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+
+            // 3. Brand Typography ("R-VIDEOS")
+            const tx = lx + lSize + 20;
+            const titleY = by + Math.round(bh / 2);
+            ctx.save();
+            ctx.font = '900 44px Arial, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetY = 2;
+            const textGrad = ctx.createLinearGradient(tx, titleY - 22, tx + 250, titleY + 22);
+            textGrad.addColorStop(0, '#ffffff');
+            textGrad.addColorStop(0.6, '#ffd5d3');
+            textGrad.addColorStop(1, '#ff2a5f');
+            ctx.fillStyle = textGrad;
+            ctx.fillText('R-VIDEOS', tx, titleY);
+            ctx.restore();
+
+            // 4. Full-Width High-Contrast Creator Username Banner Underneath
+            if (includeUsername) {
+                const ux = 14;
+                const uy = by + bh + 8;
+                const uw = cw - 28;
+                const uh = 64;
+                const ur = 32;
+
+                ctx.save();
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+                ctx.shadowBlur = 12;
+                ctx.shadowOffsetY = 4;
+                drawRoundedRectPath(ctx, ux, uy, uw, uh, ur);
+                const uBgGrad = ctx.createLinearGradient(ux, uy, ux + uw, uy + uh);
+                uBgGrad.addColorStop(0, 'rgba(10, 15, 29, 0.96)');
+                uBgGrad.addColorStop(0.5, 'rgba(30, 8, 20, 0.96)');
+                uBgGrad.addColorStop(1, 'rgba(8, 22, 38, 0.96)');
+                ctx.fillStyle = uBgGrad;
+                ctx.fill();
+                ctx.restore();
+
+                ctx.save();
+                drawRoundedRectPath(ctx, ux, uy, uw, uh, ur);
+                const uBorderGrad = ctx.createLinearGradient(ux, uy, ux + uw, uy);
+                uBorderGrad.addColorStop(0, '#06b6d4');
+                uBorderGrad.addColorStop(0.5, '#ffffff');
+                uBorderGrad.addColorStop(1, '#ff2a5f');
+                ctx.strokeStyle = uBorderGrad;
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                ctx.restore();
+
+                // Draw @username in huge bold high-contrast white & cyan text centered in the banner
+                ctx.save();
+                ctx.font = 'bold 34px Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+                ctx.shadowBlur = 6;
+                ctx.shadowOffsetY = 2;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText('@' + displayUser, ux + uw / 2, uy + uh / 2 + 1);
+                ctx.restore();
+            }
+
+            return new Promise((resolve) => {
+                canvas.toBlob((blob) => resolve(blob), 'image/png', 1.0);
+            });
+        }
+
+        async function uploadWatermarkBlobToCloudinary(blob) {
+            if (!blob) return '';
+            const formData = new FormData();
+            formData.append('file', blob, 'rvideos_watermark.png');
+            formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+            const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            if (data && data.public_id) {
+                return String(data.public_id);
+            }
+            return '';
+        }
+
+        async function ensureGlobalBrandLogoWatermarkOnCloudinary() {
+            if (rvGlobalLogoBadgePublicId) return rvGlobalLogoBadgePublicId;
+            if (rvGlobalLogoBadgePromise) return rvGlobalLogoBadgePromise;
+            rvGlobalLogoBadgePromise = (async () => {
+                try {
+                    const blob = await renderLuxuryWatermarkBadgeBlob('', false);
+                    const pubId = await uploadWatermarkBlobToCloudinary(blob);
+                    if (pubId) {
+                        rvGlobalLogoBadgePublicId = pubId;
+                        safeSetStorage('rv_cld_logo_badge_v5', pubId);
+                    }
+                    return pubId;
+                } catch (e) {
+                    return '';
+                } finally {
+                    rvGlobalLogoBadgePromise = null;
+                }
+            })();
+            return rvGlobalLogoBadgePromise;
+        }
+
+        async function ensureUserWatermarkBadgeOnCloudinary(username) {
+            const cleanName = resolveWatermarkUsername(username);
+            const safeKey = cleanName.replace(/[^a-zA-Z0-9_.-]/g, '').toLowerCase() || 'utilisateur';
+            const storageKey = `rv_cld_user_wm_v5_${safeKey}`;
+            if (rvUserWatermarkCache[safeKey]) return rvUserWatermarkCache[safeKey];
+            const fromStorage = safeGetStorage(storageKey, '');
+            if (fromStorage) {
+                rvUserWatermarkCache[safeKey] = fromStorage;
+                return fromStorage;
+            }
+            if (rvUserWatermarkInFlight[safeKey]) return rvUserWatermarkInFlight[safeKey];
+            rvUserWatermarkInFlight[safeKey] = (async () => {
+                try {
+                    const blob = await renderLuxuryWatermarkBadgeBlob(cleanName, true);
+                    const pubId = await uploadWatermarkBlobToCloudinary(blob);
+                    if (pubId) {
+                        rvUserWatermarkCache[safeKey] = pubId;
+                        safeSetStorage(storageKey, pubId);
+                    }
+                    return pubId;
+                } catch (e) {
+                    return '';
+                } finally {
+                    delete rvUserWatermarkInFlight[safeKey];
+                }
+            })();
+            return rvUserWatermarkInFlight[safeKey];
+        }
+
+        // Warm up the base R-Videos Original Logo badge + current user's badge on Cloudinary right away
+        setTimeout(() => {
+            ensureGlobalBrandLogoWatermarkOnCloudinary();
+            if (typeof currentUserData !== 'undefined' && currentUserData && currentUserData.username) {
+                ensureUserWatermarkBadgeOnCloudinary(currentUserData.username);
+            }
+        }, 500);
+
+        function getWatermarkedUrl(url, username, vData = null) {
             if (!url || !url.includes("cloudinary")) return url;
-            const safeUser = username ? username.replace(/[^a-zA-Z0-9_.-]/g, '') : 'User';
-            const watermark = `l_text:Arial_40_bold:R-VIDEOS,g_north_east,x_20,y_20,co_white,o_60/l_text:Arial_25_bold:@${safeUser},g_south_east,x_20,y_20,co_white,o_80`;
-            return url.replace('/upload/', `/upload/${watermark}/`);
+            if (!vData && typeof activeOptionsVideoId !== 'undefined' && activeOptionsVideoId && profileVideosData && profileVideosData[activeOptionsVideoId]) {
+                vData = profileVideosData[activeOptionsVideoId];
+            }
+            const resolvedUser = resolveWatermarkUsername(username, vData, url);
+            const safeUser = resolvedUser.replace(/[^a-zA-Z0-9_.-]/g, '') || 'utilisateur';
+            const storageKey = `rv_cld_user_wm_v5_${safeUser.toLowerCase()}`;
+            const userBadgeId = rvUserWatermarkCache[safeUser.toLowerCase()] || safeGetStorage(storageKey, '') || '';
+            if (userBadgeId) {
+                rvUserWatermarkCache[safeUser.toLowerCase()] = userBadgeId;
+            } else {
+                ensureUserWatermarkBadgeOnCloudinary(resolvedUser);
+            }
+
+            const existingSoMatch = url.match(/[,/]so_([\d.]+)/i);
+            const existingEoMatch = url.match(/[,/]eo_([\d.]+)/i);
+            const trimStart = Math.max(0, Number((vData && vData.trimStart !== undefined) ? vData.trimStart : (existingSoMatch ? existingSoMatch[1] : 0)) || 0);
+            const trimEnd = Math.max(0, Number((vData && vData.trimEnd !== undefined) ? vData.trimEnd : (existingEoMatch ? existingEoMatch[1] : 0)) || 0);
+
+            const baseClean = stripCloudinaryTrimFromUrl(url) || url;
+            const trimParts = [];
+            if (trimStart > 0.05) trimParts.push(`so_${Number(trimStart.toFixed(2))}`);
+            if (trimEnd > trimStart + 0.15 && trimEnd < 9999) trimParts.push(`eo_${Number(trimEnd.toFixed(2))}`);
+            const trimPrefix = trimParts.length > 0 ? `${trimParts.join(",")}/` : "";
+
+            // Always include a native Cloudinary @username text overlay in addition to the badge so the creator's username is 100% visible on every video
+            let watermarkTransform = "";
+            if (userBadgeId) {
+                const cldId = userBadgeId.replace(/\//g, ':');
+                watermarkTransform = `l_${cldId},w_250,g_north_east,x_16,y_18,o_96/l_${cldId},w_230,g_south_east,x_16,y_52,o_94/l_text:Arial_26_bold:@${safeUser},g_south_east,x_20,y_16,co_white,o_95`;
+            } else if (rvGlobalLogoBadgePublicId) {
+                const cldLogoId = rvGlobalLogoBadgePublicId.replace(/\//g, ':');
+                watermarkTransform = `l_${cldLogoId},w_220,g_north_east,x_16,y_18,o_96/l_text:Arial_28_bold:@${safeUser},g_north_east,x_20,y_86,co_white,o_95/l_${cldLogoId},w_200,g_south_east,x_16,y_54,o_94/l_text:Arial_28_bold:@${safeUser},g_south_east,x_20,y_18,co_white,o_95`;
+            } else {
+                watermarkTransform = `l_text:Arial_36_bold:R-VIDEOS,g_north_east,x_20,y_20,co_white,o_90/l_text:Arial_28_bold:@${safeUser},g_north_east,x_20,y_64,co_white,o_95/l_text:Arial_28_bold:@${safeUser},g_south_east,x_20,y_20,co_white,o_95`;
+            }
+
+            return baseClean
+                .replace('/upload/', `/upload/${trimPrefix}${watermarkTransform}/f_mp4/`)
+                .replace(/\.(webm|mov|mkv|avi)(\?.*)?$/i, '.mp4$2');
         }
 
         function formatDescription(text) {
@@ -7046,6 +7401,9 @@
             if (!vidId) return;
             const uid = auth.currentUser?.uid || null;
             const vData = profileVideosData[vidId];
+            if (vData && vData.username) {
+                ensureUserWatermarkBadgeOnCloudinary(vData.username);
+            }
             if (viewedVideos.has(vidId) || hasUserInteractedOnce('view', vidId)) return;
             if (uid && vData && Array.isArray(vData.viewedBy) && vData.viewedBy.includes(uid)) {
                 viewedVideos.add(vidId);
@@ -8104,10 +8462,19 @@
             showToast(`Vitesse de lecture : ${currentPlaybackRate}x`, "info");
         };
 
-        window.downloadVideo = (url, videoId, username) => {
+        window.downloadVideo = async (url, videoId, username) => {
             if (!checkAuth()) return;
-            const finalUrl = getWatermarkedUrl(url, username);
-            showToast("Préparation du téléchargement...", "success");
+            const vData = (videoId && profileVideosData && profileVideosData[videoId]) ? profileVideosData[videoId] : null;
+            const safeName = (username || (vData && vData.username) || 'createur').replace(/^@+/, '');
+            showToast("Application du logo R-Videos & @" + safeName + " sur la vidéo...", "info");
+            try {
+                await Promise.race([
+                    ensureUserWatermarkBadgeOnCloudinary(safeName),
+                    new Promise(resolve => setTimeout(resolve, 3500))
+                ]);
+            } catch (e) {}
+            const finalUrl = getWatermarkedUrl(url, safeName, vData);
+            showToast("Téléchargement de la vidéo avec logo R-Videos !", "success");
             window.open(finalUrl, '_blank');
         };
 
@@ -8171,13 +8538,11 @@
             }
         }
 
-        function getCleanShareableVideoUrl(url, vData = null) {
-            let candidate = url || '';
-            if (vData && (Number(vData.trimStart) > 0 || Number(vData.trimEnd) > 0)) {
-                candidate = applyCloudinaryTrimOnlyUrl(candidate, vData.trimStart, vData.trimEnd);
-            }
+        function getCleanShareableVideoUrl(url, vData = null, username = '') {
+            const safeName = (username || (vData && vData.username) || 'createur').replace(/^@+/, '');
+            const watermarked = getWatermarkedUrl(url || '', safeName, vData);
             try {
-                const parsed = new URL(candidate, window.location.href);
+                const parsed = new URL(watermarked, window.location.href);
                 if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
                     return parsed.href;
                 }
@@ -8207,6 +8572,10 @@
             const subtitleEl = document.getElementById('native-share-sheet-subtitle');
             if (subtitleEl) {
                 subtitleEl.textContent = `Vidéo de @${safeName} • Choisissez une application`;
+            }
+            const wmUserPill = document.getElementById('native-share-watermark-user-pill');
+            if (wmUserPill) {
+                wmUserPill.innerHTML = `<span class="text-cyan-300">@${escapeHtml(safeName)}</span>`;
             }
 
             // Configure primary OS chooser button
@@ -8349,7 +8718,7 @@
         window.shareVideo = (url, videoId, username) => {
             const vData = (videoId && profileVideosData && profileVideosData[videoId]) ? profileVideosData[videoId] : null;
             const safeName = (username || (vData && vData.username) || 'createur').replace(/^@+/, '');
-            const cleanVideoUrl = getCleanShareableVideoUrl(url, vData);
+            const cleanVideoUrl = getCleanShareableVideoUrl(url, vData, safeName);
             const shareTitle = `Vidéo de @${safeName} sur R-Videos`;
             const shareText = `Regarde cette vidéo de @${safeName} sur R-Videos !`;
             const fullShareText = `${shareText}\n${cleanVideoUrl}`;
@@ -10232,6 +10601,9 @@
 
         window.openOptions = (id, url, username, allowDL, authorId = null, isPinned = false) => {
             activeOptionsVideoId = id;
+            if (username) {
+                ensureUserWatermarkBadgeOnCloudinary(username);
+            }
             document.getElementById('opt-share').onclick = () => { window.closeOptions(); window.shareVideo(url, id, username); };
             const btnDL = document.getElementById('opt-download');
             if(allowDL) {
@@ -15596,6 +15968,9 @@
             await hydrateUserProfilesMap([data.userId]);
             const authorIdentity = getResolvedProfileIdentity(data.userId, data.username, data.isVerified, data.userPhotoURL, data.userEmail);
             data.username = authorIdentity.username;
+            if (data.username) {
+                ensureUserWatermarkBadgeOnCloudinary(data.username);
+            }
             data.isVerified = authorIdentity.isVerified;
             data.userPhotoURL = authorIdentity.photoURL || data.userPhotoURL;
 
