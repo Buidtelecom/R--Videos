@@ -2014,6 +2014,13 @@
             .studio-tab-pill.active,
             #btn-login,
             #btn-register,
+            #btn-apple-login,
+            #btn-apple-register,
+            #btn-phone-login,
+            #btn-phone-register,
+            #btn-send-phone-code,
+            #btn-verify-phone-code,
+            #btn-confirm-apple-auth,
             #btn-confirm-google-chooser,
             #btn-submit-birthdate,
             #btn-reset-pass,
@@ -2044,6 +2051,13 @@
             .studio-tab-pill.active,
             #btn-login,
             #btn-register,
+            #btn-apple-login,
+            #btn-apple-register,
+            #btn-phone-login,
+            #btn-phone-register,
+            #btn-send-phone-code,
+            #btn-verify-phone-code,
+            #btn-confirm-apple-auth,
             #btn-confirm-google-chooser,
             #btn-submit-birthdate,
             #btn-reset-pass,
@@ -2058,6 +2072,57 @@
             .pourtoi-last-video-hint
         ) :is(span, i, svg, div) {
             color: #ffffff !important;
+        }
+
+        /* High-contrast visibility for Apple & Phone login buttons in BOTH Light and Dark themes */
+        #btn-apple-login,
+        #btn-apple-register,
+        #btn-confirm-apple-auth,
+        body.light-theme #btn-apple-login,
+        body.light-theme #btn-apple-register,
+        body.light-theme #btn-confirm-apple-auth {
+            background: #0f172a !important;
+            background-color: #0f172a !important;
+            color: #ffffff !important;
+            border: 1.5px solid rgba(15, 23, 42, 0.85) !important;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.22) !important;
+        }
+        #btn-apple-login :is(span, svg),
+        #btn-apple-register :is(span, svg),
+        #btn-confirm-apple-auth :is(span, svg),
+        body.light-theme #btn-apple-login :is(span, svg),
+        body.light-theme #btn-apple-register :is(span, svg),
+        body.light-theme #btn-confirm-apple-auth :is(span, svg) {
+            color: #ffffff !important;
+            fill: #ffffff !important;
+        }
+        #btn-phone-login,
+        #btn-phone-register,
+        body.light-theme #btn-phone-login,
+        body.light-theme #btn-phone-register {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+            color: #ffffff !important;
+            border: 1.5px solid rgba(56, 189, 248, 0.45) !important;
+            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.28) !important;
+        }
+        #btn-phone-login :is(span, svg),
+        #btn-phone-register :is(span, svg),
+        body.light-theme #btn-phone-login :is(span, svg),
+        body.light-theme #btn-phone-register :is(span, svg) {
+            color: #ffffff !important;
+        }
+        body.light-theme :is(#phone-auth-modal, #apple-auth-modal) :is(h3, label, .text-white, .text-gray-200, .text-gray-300) {
+            color: #0f172a !important;
+        }
+        body.light-theme #phone-auth-modal .phone-otp-digit {
+            background: #f1f5f9 !important;
+            border: 1.5px solid rgba(15, 23, 42, 0.22) !important;
+            color: #0f172a !important;
+        }
+        body.light-theme #phone-auth-modal .bg-cyan-500\/10 {
+            background: #ecfeff !important;
+            border-color: rgba(2, 132, 199, 0.35) !important;
+            color: #0369a1 !important;
         }
 
         /* Keep white text & icons on 3:4 video thumbnail cards (Discover, Profile, Sound Sheet) */
