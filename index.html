@@ -3319,10 +3319,31 @@
 
         <!-- EDIT PROFILE MODAL -->
         <div id="edit-modal" class="modal-overlay">
-            <div class="glass-panel w-11/12 max-w-md p-6 rounded-3xl shadow-2xl">
+            <div class="glass-panel w-11/12 max-w-md p-6 rounded-3xl shadow-2xl max-h-[92vh] overflow-y-auto no-scrollbar">
                 <h3 class="text-lg font-bold mb-4 font-display" data-i18n="edit_profile">Modifier le profil</h3>
                 <label class="block text-xs text-gray-400 mb-1.5">Photo de profil</label>
-                <input type="file" id="edit-file-input" accept="image/*" class="block w-full text-xs text-gray-300 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-white/10 file:text-white file:font-semibold mb-4"/>
+                <input type="file" id="edit-file-input" accept="image/*" onchange="handleProfileAvatarFileSelect(this)" class="block w-full text-xs text-gray-300 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-white/10 file:text-white file:font-semibold mb-3"/>
+                <!-- Zone de positionnement et cadrage de la photo de profil avant validation -->
+                <div id="profile-avatar-cropper-box" class="hidden mb-4 p-3.5 rounded-2xl bg-black/35 border border-white/15 flex-col items-center gap-2.5">
+                    <div class="flex items-center justify-between w-full">
+                        <span class="text-[11px] font-bold text-cyan-300 flex items-center gap-1.5">
+                            <i data-lucide="move" class="w-3.5 h-3.5"></i> Positionner la photo de profil
+                        </span>
+                        <button type="button" onclick="resetProfileAvatarCropPosition()" class="text-[10px] font-bold text-gray-300 hover:text-white px-2 py-0.5 rounded-lg bg-white/10">Recadrer au centre</button>
+                    </div>
+                    <div id="profile-avatar-crop-stage" class="relative w-36 h-36 rounded-full overflow-hidden border-2 border-[#ff2a5f] shadow-xl bg-[#0c1222] cursor-grab active:cursor-grabbing select-none" style="touch-action:none;">
+                        <canvas id="profile-avatar-crop-canvas" width="320" height="320" class="w-full h-full pointer-events-none block"></canvas>
+                        <div class="absolute inset-0 rounded-full ring-1 ring-inset ring-white/25 pointer-events-none"></div>
+                    </div>
+                    <p class="text-[10px] text-gray-400 text-center">Glissez l'image avec le doigt ou la souris pour bien la positionner</p>
+                    <div class="flex items-center gap-2 w-full px-1">
+                        <span class="text-[10px] font-semibold text-gray-300 shrink-0">Zoom</span>
+                        <button type="button" onclick="stepProfileAvatarZoom(-0.15)" class="w-6 h-6 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-black flex items-center justify-center shrink-0">−</button>
+                        <input type="range" id="profile-avatar-zoom-slider" min="1" max="3.5" step="0.02" value="1" oninput="onProfileAvatarZoomChange(this.value)" class="flex-1 accent-[#ff2a5f] h-1.5 cursor-pointer">
+                        <button type="button" onclick="stepProfileAvatarZoom(0.15)" class="w-6 h-6 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-black flex items-center justify-center shrink-0">+</button>
+                        <span id="profile-avatar-zoom-label" class="text-[10px] font-mono font-bold text-cyan-300 min-w-[36px] text-right">100%</span>
+                    </div>
+                </div>
                 <input type="text" id="edit-username" placeholder="Nom d'utilisateur" class="auth-input mb-3" data-i18n-placeholder="username_placeholder">
                 <textarea id="edit-bio" placeholder="Bio" class="auth-input mb-4" rows="3"></textarea>
                 <div class="flex gap-2.5 mb-4">
@@ -4334,7 +4355,7 @@
             </div>
 
             <!-- Quick Emoji, Photo Sticker, Animated Video Sticker (max 5s) & Owner Poll Bar for Comments -->
-            <div class="px-3.5 py-1.5 bg-[#0c1222]/90 border-t border-white/5 flex items-center gap-2 overflow-x-auto no-scrollbar text-sm">
+            <div id="comment-quick-tools-bar" class="px-3.5 py-1.5 bg-[#0c1222]/90 border-t border-white/5 flex items-center gap-2 overflow-x-auto no-scrollbar text-sm">
                 <!-- Bouton Sondage (2 à 5 choix) affiché uniquement lorsque l'utilisateur est sur sa propre publication -->
                 <button type="button" id="btn-open-comment-poll" onclick="toggleCommentPollBuilder()" class="hidden shrink-0 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-400/50 text-amber-300 text-[11px] font-extrabold items-center gap-1 hover:bg-amber-500/30 transition" title="Créer un sondage dans les commentaires de ta pub (2 à 5 choix)">
                     <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i>
@@ -4416,26 +4437,59 @@
                 </button>
             </div>
 
-            <!-- Pending Photo or Animated Video Sticker Preview Bar -->
-            <div id="comment-pending-sticker-bar" class="hidden px-4 py-2 bg-[#11182b] border-t border-white/10 items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <div class="relative w-12 h-12 rounded-xl overflow-hidden border-2 border-[#ff2a5f] shadow-md bg-black/40 shrink-0">
-                        <img id="comment-pending-sticker-img" src="" alt="Sticker" class="w-full h-full object-cover">
-                        <video id="comment-pending-sticker-video" src="" autoplay loop muted playsinline class="hidden w-full h-full object-cover"></video>
+            <!-- Pending Photo or Animated Video Sticker Preview & 5-Second Trimmer Bar -->
+            <div id="comment-pending-sticker-bar" class="hidden px-4 py-2.5 bg-[#11182b] border-t border-white/10 flex-col gap-2">
+                <div class="flex items-center justify-between w-full">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="relative w-12 h-12 rounded-xl overflow-hidden border-2 border-[#ff2a5f] shadow-md bg-black/40 shrink-0">
+                            <img id="comment-pending-sticker-img" src="" alt="Sticker" class="w-full h-full object-cover">
+                            <video id="comment-pending-sticker-video" src="" autoplay loop muted playsinline class="hidden w-full h-full object-cover"></video>
+                        </div>
+                        <div class="min-w-0">
+                            <div id="comment-pending-sticker-title" class="text-xs font-bold text-white truncate">Sticker photo prêt</div>
+                            <div id="comment-pending-sticker-subtitle" class="text-[10px] text-gray-400 truncate">Cliquez sur envoyer ou ajoutez un texte</div>
+                        </div>
                     </div>
-                    <div>
-                        <div id="comment-pending-sticker-title" class="text-xs font-bold text-white">Sticker photo prêt</div>
-                        <div class="text-[10px] text-gray-400">Cliquez sur envoyer ou ajoutez un texte</div>
+                    <button type="button" onclick="clearPendingCommentSticker()" class="p-1.5 rounded-full bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 transition shrink-0" title="Retirer le sticker">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+                <!-- Outil de rognage en 5 secondes pour le sticker vidéo (vidéo galerie <= 1 min) -->
+                <div id="comment-video-sticker-trimmer" class="hidden pt-2 border-t border-white/10 flex-col gap-1.5">
+                    <div class="flex items-center justify-between text-[10px]">
+                        <span class="font-extrabold text-purple-300 flex items-center gap-1">
+                            <i data-lucide="scissors" class="w-3 h-3"></i> Rogner l'extrait en 5s max :
+                        </span>
+                        <span id="comment-video-sticker-trim-label" class="font-mono font-bold text-cyan-300">0.0s - 5.0s (5.0s)</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="bg-black/30 px-2.5 py-1.5 rounded-xl border border-white/10">
+                            <div class="flex justify-between text-[9.5px] text-gray-300 mb-0.5">
+                                <span>Début</span>
+                                <span id="lbl-comment-sticker-start" class="font-mono text-purple-300 font-bold">0.0s</span>
+                            </div>
+                            <input type="range" id="comment-sticker-trim-start" min="0" max="55" step="0.1" value="0" oninput="onCommentVideoStickerTrimInput('start', this.value)" class="w-full accent-purple-500 h-1 cursor-pointer">
+                        </div>
+                        <div class="bg-black/30 px-2.5 py-1.5 rounded-xl border border-white/10">
+                            <div class="flex justify-between text-[9.5px] text-gray-300 mb-0.5">
+                                <span>Fin (≤ 5s)</span>
+                                <span id="lbl-comment-sticker-end" class="font-mono text-cyan-300 font-bold">5.0s</span>
+                            </div>
+                            <input type="range" id="comment-sticker-trim-end" min="0.5" max="60" step="0.1" value="5" oninput="onCommentVideoStickerTrimInput('end', this.value)" class="w-full accent-cyan-400 h-1 cursor-pointer">
+                        </div>
                     </div>
                 </div>
-                <button type="button" onclick="clearPendingCommentSticker()" class="p-1.5 rounded-full bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 transition" title="Retirer le sticker">
-                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                </button>
             </div>
 
-            <!-- Hidden Gallery Inputs for Comment Photo Stickers & Short Video Animated Stickers (max 5s) -->
+            <!-- Hidden Gallery Inputs for Comment Photo Stickers & Short Video Animated Stickers (max 1 min -> rogné en 5s) -->
             <input type="file" id="comment-sticker-file-input" accept="image/*" class="hidden" onchange="handleCommentStickerFileSelected(this)">
             <input type="file" id="comment-video-sticker-file-input" accept="video/*" class="hidden" onchange="handleCommentVideoStickerSelected(this)">
+
+            <!-- Message affiché en Mode Invité : consultation seule sans interaction -->
+            <div id="comments-guest-readonly-bar" class="hidden p-3 border-t border-white/10 bg-[#0c1222] items-center justify-between gap-2">
+                <span class="text-xs text-gray-300">Mode invité : connectez-vous pour commenter ou interagir.</span>
+                <button type="button" onclick="closeComments(); checkAuth();" class="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white text-xs font-bold shrink-0 shadow-md active:scale-95 transition">Se connecter</button>
+            </div>
 
             <div id="comment-input-area" class="p-3 border-t border-white/10 flex items-center gap-1.5 bg-[#0c1222]">
                 <button type="button" onclick="triggerCommentGallerySticker()" class="bg-[#162038] hover:bg-white/15 border border-white/10 text-cyan-400 p-2.5 rounded-full shrink-0 active:scale-90 transition" title="Mettre un sticker photo depuis la galerie">
@@ -10905,10 +10959,29 @@
                             videos = groupedBySeenCount;
                         }
                     } else {
-                        // Invités : classement uniquement par score de viralité
-                        const guestViralScores = new Map();
-                        videos.forEach(v => guestViralScores.set(v.id, calculateViralScore(v)));
-                        videos.sort((a, b) => (guestViralScores.get(b.id) || 0) - (guestViralScores.get(a.id) || 0));
+                        // Mode Invité : montrer les vidéos de celle qui a le plus de réactions jusqu'à celle qui en a le moins
+                        const getGuestTotalReactions = (v) => {
+                            if (!v) return 0;
+                            const likes = getRealLikesCount(v);
+                            const comments = Math.max(0, Number(v.commentCount || 0));
+                            const favs = getRealFavoritesCount(v);
+                            const shares = getRealSharesCount(v);
+                            const reposts = getRealRepostsCount(v);
+                            return likes + comments + favs + shares + reposts;
+                        };
+                        const guestReactionScores = new Map();
+                        const guestViralFallback = new Map();
+                        videos.forEach(v => {
+                            guestReactionScores.set(v.id, getGuestTotalReactions(v));
+                            guestViralFallback.set(v.id, calculateViralScore(v));
+                        });
+                        videos.sort((a, b) => {
+                            const diffReactions = (guestReactionScores.get(b.id) || 0) - (guestReactionScores.get(a.id) || 0);
+                            if (diffReactions !== 0) return diffReactions;
+                            const diffViews = (Number(b.views || 0)) - (Number(a.views || 0));
+                            if (diffViews !== 0) return diffViews;
+                            return (guestViralFallback.get(b.id) || 0) - (guestViralFallback.get(a.id) || 0);
+                        });
                     }
                 } else if (!isGuestMode && auth.currentUser) {
                     // Dans l'onglet Suivis pour les utilisateurs enregistrés : envoyer aussi en premier celles avec le moins de "déjà vue", puis par score de viralité
@@ -14461,21 +14534,35 @@
         }
 
         window.openComments = async (id, allowed = true) => { 
-            if(!checkAuth()) return;
             currentVideoIdForComments = id; 
             currentVideoAuthorId = profileVideosData[id]?.userId || null;
             updateCommentOwnerPollButtonVisibility();
             const inputArea = document.getElementById('comment-input-area');
             const disabledMsg = document.getElementById('comments-disabled-msg');
+            const quickToolsBar = document.getElementById('comment-quick-tools-bar');
+            const guestReadonlyBar = document.getElementById('comments-guest-readonly-bar');
+            const isGuest = !!(isGuestMode || !auth.currentUser);
             const isAllowed = (allowed !== false);
-            if(isAllowed) {
-                inputArea.classList.remove('hidden');
-                inputArea.classList.add('flex');
-                disabledMsg.classList.add('hidden');
+
+            if (isGuest) {
+                if (inputArea) { inputArea.classList.add('hidden'); inputArea.classList.remove('flex'); }
+                if (quickToolsBar) { quickToolsBar.classList.add('hidden'); quickToolsBar.classList.remove('flex'); }
+                if (disabledMsg) disabledMsg.classList.toggle('hidden', isAllowed);
+                if (guestReadonlyBar) {
+                    guestReadonlyBar.classList.toggle('hidden', !isAllowed);
+                    guestReadonlyBar.classList.toggle('flex', isAllowed);
+                }
             } else {
-                inputArea.classList.add('hidden');
-                inputArea.classList.remove('flex');
-                disabledMsg.classList.remove('hidden');
+                if (guestReadonlyBar) { guestReadonlyBar.classList.add('hidden'); guestReadonlyBar.classList.remove('flex'); }
+                if (isAllowed) {
+                    if (inputArea) { inputArea.classList.remove('hidden'); inputArea.classList.add('flex'); }
+                    if (quickToolsBar) { quickToolsBar.classList.remove('hidden'); quickToolsBar.classList.add('flex'); }
+                    if (disabledMsg) disabledMsg.classList.add('hidden');
+                } else {
+                    if (inputArea) { inputArea.classList.add('hidden'); inputArea.classList.remove('flex'); }
+                    if (quickToolsBar) { quickToolsBar.classList.add('hidden'); quickToolsBar.classList.remove('flex'); }
+                    if (disabledMsg) disabledMsg.classList.remove('hidden');
+                }
             }
             const backdrop = document.getElementById('comments-backdrop');
             if (backdrop) backdrop.classList.add('open');
@@ -14498,6 +14585,9 @@
         let pendingCommentStickerDataUrl = null;
         let pendingCommentStickerFile = null;
         let pendingCommentStickerIsVideo = false;
+        let pendingCommentStickerTrimStart = 0;
+        let pendingCommentStickerTrimEnd = 5;
+        let pendingCommentStickerDuration = 5;
         let commentsUnsubscribe = null;
         let commentPollDraftOptions = ['', ''];
 
@@ -14770,21 +14860,89 @@
             }
         };
 
-        function showPendingCommentStickerBar(previewUrl, isVideo = false) {
+        function updateCommentVideoStickerTrimUI() {
+            const startLbl = document.getElementById('lbl-comment-sticker-start');
+            const endLbl = document.getElementById('lbl-comment-sticker-end');
+            const rangeLbl = document.getElementById('comment-video-sticker-trim-label');
+            const startInp = document.getElementById('comment-sticker-trim-start');
+            const endInp = document.getElementById('comment-sticker-trim-end');
+            const s = Number(pendingCommentStickerTrimStart || 0);
+            const e = Number(pendingCommentStickerTrimEnd || 5);
+            const clipLen = Math.max(0.5, e - s);
+            if (startLbl) startLbl.innerText = s.toFixed(1) + 's';
+            if (endLbl) endLbl.innerText = e.toFixed(1) + 's';
+            if (rangeLbl) rangeLbl.innerText = `${s.toFixed(1)}s - ${e.toFixed(1)}s (${clipLen.toFixed(1)}s)`;
+            if (startInp) startInp.value = String(s);
+            if (endInp) endInp.value = String(e);
+        }
+
+        window.onCommentVideoStickerTrimInput = (which, rawVal) => {
+            const maxDur = Math.max(0.5, Number(pendingCommentStickerDuration) || 5);
+            let s = Number(pendingCommentStickerTrimStart) || 0;
+            let e = Number(pendingCommentStickerTrimEnd) || Math.min(5, maxDur);
+            const val = Math.max(0, Math.min(maxDur, parseFloat(rawVal) || 0));
+
+            if (which === 'start') {
+                s = Math.min(val, Math.max(0, maxDur - 0.5));
+                if (e <= s + 0.5) {
+                    e = Math.min(maxDur, s + 5);
+                    if (e <= s + 0.5) e = Math.min(maxDur, s + 0.5);
+                } else if (e - s > 5) {
+                    e = Math.min(maxDur, s + 5);
+                }
+            } else {
+                e = Math.max(0.5, Math.min(maxDur, val));
+                if (e <= s + 0.5) {
+                    s = Math.max(0, e - 0.5);
+                } else if (e - s > 5) {
+                    s = Math.max(0, e - 5);
+                }
+            }
+            pendingCommentStickerTrimStart = Number(s.toFixed(1));
+            pendingCommentStickerTrimEnd = Number(e.toFixed(1));
+            updateCommentVideoStickerTrimUI();
+
+            const vid = document.getElementById('comment-pending-sticker-video');
+            if (vid && !vid.classList.contains('hidden')) {
+                try { vid.currentTime = pendingCommentStickerTrimStart; } catch (err) {}
+                if (vid.paused) vid.play().catch(() => {});
+            }
+        };
+
+        function showPendingCommentStickerBar(previewUrl, isVideo = false, showTrimmer = false) {
             const bar = document.getElementById('comment-pending-sticker-bar');
             const img = document.getElementById('comment-pending-sticker-img');
             const vid = document.getElementById('comment-pending-sticker-video');
             const titleEl = document.getElementById('comment-pending-sticker-title');
+            const trimmerBox = document.getElementById('comment-video-sticker-trimmer');
             if (isVideo) {
                 if (img) img.classList.add('hidden');
                 if (vid) {
                     vid.src = previewUrl;
                     vid.classList.remove('hidden');
+                    vid.ontimeupdate = () => {
+                        const s = Number(pendingCommentStickerTrimStart) || 0;
+                        const e = Number(pendingCommentStickerTrimEnd) || 5;
+                        if (vid.currentTime < s - 0.1 || vid.currentTime >= e) {
+                            try { vid.currentTime = s; } catch (err) {}
+                            if (vid.paused) vid.play().catch(() => {});
+                        }
+                    };
+                    vid.onloadedmetadata = () => {
+                        try { vid.currentTime = Number(pendingCommentStickerTrimStart) || 0; } catch (err) {}
+                        vid.play().catch(() => {});
+                    };
                     vid.play().catch(() => {});
                 }
-                if (titleEl) titleEl.innerText = "Sticker animé (vidéo ≤ 5s) prêt 🎞️";
+                if (titleEl) titleEl.innerText = "Sticker animé (rogné en 5s max) prêt 🎞️";
+                if (trimmerBox) {
+                    trimmerBox.classList.toggle('hidden', !showTrimmer);
+                    trimmerBox.classList.toggle('flex', !!showTrimmer);
+                }
             } else {
                 if (vid) {
+                    vid.ontimeupdate = null;
+                    vid.onloadedmetadata = null;
                     vid.pause();
                     vid.removeAttribute('src');
                     vid.classList.add('hidden');
@@ -14794,6 +14952,10 @@
                     img.classList.remove('hidden');
                 }
                 if (titleEl) titleEl.innerText = "Sticker photo prêt";
+                if (trimmerBox) {
+                    trimmerBox.classList.add('hidden');
+                    trimmerBox.classList.remove('flex');
+                }
             }
             if (bar) {
                 bar.classList.remove('hidden');
@@ -14811,20 +14973,31 @@
             pendingCommentStickerDataUrl = rawUrl;
             pendingCommentStickerFile = null;
             pendingCommentStickerIsVideo = isVid;
-            showPendingCommentStickerBar(rawUrl, isVid);
+            pendingCommentStickerTrimStart = 0;
+            pendingCommentStickerTrimEnd = 5;
+            showPendingCommentStickerBar(rawUrl, isVid, false);
         };
 
         window.clearPendingCommentSticker = () => {
             pendingCommentStickerDataUrl = null;
             pendingCommentStickerFile = null;
             pendingCommentStickerIsVideo = false;
+            pendingCommentStickerTrimStart = 0;
+            pendingCommentStickerTrimEnd = 5;
             const bar = document.getElementById('comment-pending-sticker-bar');
             if (bar) {
                 bar.classList.add('hidden');
                 bar.classList.remove('flex');
             }
+            const trimmerBox = document.getElementById('comment-video-sticker-trimmer');
+            if (trimmerBox) {
+                trimmerBox.classList.add('hidden');
+                trimmerBox.classList.remove('flex');
+            }
             const vid = document.getElementById('comment-pending-sticker-video');
             if (vid) {
+                vid.ontimeupdate = null;
+                vid.onloadedmetadata = null;
                 vid.pause();
                 vid.removeAttribute('src');
                 vid.classList.add('hidden');
@@ -14839,7 +15012,7 @@
             if (!inputEl || !inputEl.files || !inputEl.files[0]) return;
             const file = inputEl.files[0];
             if (!file.type.startsWith('video/')) {
-                showToast("Veuillez sélectionner une courte vidéo (max 5 secondes)", "error");
+                showToast("Veuillez sélectionner une vidéo (maximum 1 minute)", "error");
                 return;
             }
             const tempUrl = URL.createObjectURL(file);
@@ -14850,23 +15023,42 @@
 
             testVid.onloadedmetadata = () => {
                 const dur = Number(testVid.duration || 0);
-                // Strict check: video must be <= 5.5s (5s max tolerance)
-                if (dur > 5.5) {
+                // La vidéo choisie dans la galerie ne doit pas dépasser 1 minute (60s) pour plus de fluidité
+                if (dur > 60.5) {
                     URL.revokeObjectURL(tempUrl);
                     inputEl.value = "";
-                    showToast(`Cette vidéo dure ${dur.toFixed(1)}s. Choisis une vidéo de 5 secondes maximum pour créer un sticker animé !`, "error");
+                    showToast(`Cette vidéo dure ${Math.round(dur)}s. Choisissez une vidéo de 1 minute (60s) maximum pour plus de fluidité !`, "error");
                     return;
                 }
+                const cleanDur = Math.max(0.5, Number(dur.toFixed(1)));
+                pendingCommentStickerDuration = cleanDur;
+                pendingCommentStickerTrimStart = 0;
+                pendingCommentStickerTrimEnd = Number(Math.min(5, cleanDur).toFixed(1));
+
+                const startInp = document.getElementById('comment-sticker-trim-start');
+                const endInp = document.getElementById('comment-sticker-trim-end');
+                if (startInp) {
+                    startInp.min = 0;
+                    startInp.max = Math.max(0, Number((cleanDur - 0.5).toFixed(1)));
+                    startInp.value = 0;
+                }
+                if (endInp) {
+                    endInp.min = 0.5;
+                    endInp.max = cleanDur;
+                    endInp.value = pendingCommentStickerTrimEnd;
+                }
+                updateCommentVideoStickerTrimUI();
+
                 pendingCommentStickerDataUrl = tempUrl;
                 pendingCommentStickerFile = file;
                 pendingCommentStickerIsVideo = true;
-                showPendingCommentStickerBar(tempUrl, true);
+                showPendingCommentStickerBar(tempUrl, true, true);
                 const tray = document.getElementById('comment-sticker-tray');
                 if (tray) {
                     tray.classList.add('hidden');
                     tray.classList.remove('flex');
                 }
-                showToast("Sticker animé (≤ 5s) prêt ! Appuie sur envoyer 🎞️", "success");
+                showToast(cleanDur > 5 ? "Rognez votre extrait de 5 secondes puis appuyez sur envoyer ✂️🎞️" : "Sticker animé prêt ! Vous pouvez ajuster le rognage (≤ 5s) 🎞️", "success");
             };
 
             testVid.onerror = () => {
@@ -14971,6 +15163,7 @@
         };
         
         window.replyToUser = (username, parentCommentId = null, targetUid = null, replyToCommentId = null) => {
+            if (!checkAuth()) return;
             replyingToCommentState = {
                 username: username || '',
                 parentCommentId: parentCommentId || null,
@@ -14992,6 +15185,7 @@
         };
 
         window.appendCommentEmoji = (emoji) => {
+            if (!checkAuth()) return;
             const inp = document.getElementById('comment-input');
             if (!inp) return;
             inp.value += emoji;
@@ -15315,6 +15509,8 @@
             const stickerDataUrlSnapshot = pendingCommentStickerDataUrl;
             const stickerFileSnapshot = pendingCommentStickerFile;
             const stickerIsVideoSnapshot = pendingCommentStickerIsVideo;
+            const stickerTrimStartSnap = Math.max(0, Number(pendingCommentStickerTrimStart || 0));
+            const stickerTrimEndSnap = Math.max(stickerTrimStartSnap + 0.5, Math.min(stickerTrimStartSnap + 5, Number(pendingCommentStickerTrimEnd || (stickerTrimStartSnap + 5))));
 
             if (inp) inp.value = ""; 
             window.cancelCommentReply();
@@ -15367,8 +15563,10 @@
                     let uploadedUrl = await uploadToCloudinary(stickerFileSnapshot);
                     if (uploadedUrl) {
                         if (stickerIsVideoSnapshot && uploadedUrl.includes('/upload/')) {
-                            // Optimize as lightweight looping 5s max animated video sticker (muted, 260px, eo_5)
-                            uploadedUrl = uploadedUrl.replace('/upload/', '/upload/so_0,eo_5,w_260,c_scale,q_auto:eco,ac_none,f_mp4/');
+                            // Optimize as lightweight looping 5s max animated video sticker with user's exact 5s trim range
+                            const soVal = Number(stickerTrimStartSnap.toFixed(1));
+                            const eoVal = Number(stickerTrimEndSnap.toFixed(1));
+                            uploadedUrl = uploadedUrl.replace('/upload/', `/upload/so_${soVal},eo_${eoVal},w_260,c_scale,q_auto:eco,ac_none,f_mp4/`);
                             saveUserPhotoStickerToLocal(uploadedUrl, true);
                         }
                         finalStickerUrl = uploadedUrl;
@@ -18255,16 +18453,220 @@
                 sendNotification(targetUid, "follow", "a commencé à vous suivre");
             }
         };
-        window.openEditProfile = () => { document.getElementById('edit-username').value = currentUserData.username; document.getElementById('edit-bio').value = currentUserData.bio; document.getElementById('edit-modal').classList.add('open'); };
+        let profileAvatarCropState = {
+            img: null,
+            hasNewFile: false,
+            scale: 1,
+            offsetX: 0,
+            offsetY: 0,
+            isDragging: false,
+            startX: 0,
+            startY: 0,
+            bound: false
+        };
+
+        function renderProfileAvatarCropCanvas() {
+            const canvas = document.getElementById('profile-avatar-crop-canvas');
+            if (!canvas || !profileAvatarCropState.img) return;
+            const ctx = canvas.getContext('2d');
+            const cw = canvas.width;
+            const ch = canvas.height;
+            ctx.clearRect(0, 0, cw, ch);
+
+            const img = profileAvatarCropState.img;
+            const iw = img.naturalWidth || img.width || 1;
+            const ih = img.naturalHeight || img.height || 1;
+            const baseScale = Math.max(cw / iw, ch / ih);
+            const totalScale = baseScale * (profileAvatarCropState.scale || 1);
+
+            const drawW = iw * totalScale;
+            const drawH = ih * totalScale;
+
+            // Clamp offsets so the image always covers the circular avatar frame
+            const maxOffsetX = Math.max(0, (drawW - cw) / 2);
+            const maxOffsetY = Math.max(0, (drawH - ch) / 2);
+            profileAvatarCropState.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, profileAvatarCropState.offsetX || 0));
+            profileAvatarCropState.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, profileAvatarCropState.offsetY || 0));
+
+            const dx = (cw - drawW) / 2 + profileAvatarCropState.offsetX;
+            const dy = (ch - drawH) / 2 + profileAvatarCropState.offsetY;
+
+            ctx.drawImage(img, dx, dy, drawW, drawH);
+        }
+
+        function bindProfileAvatarCropGestures() {
+            const stage = document.getElementById('profile-avatar-crop-stage');
+            if (!stage || profileAvatarCropState.bound) return;
+            profileAvatarCropState.bound = true;
+
+            stage.addEventListener('pointerdown', (e) => {
+                if (!profileAvatarCropState.img) return;
+                if (e.cancelable) e.preventDefault();
+                profileAvatarCropState.isDragging = true;
+                profileAvatarCropState.startX = e.clientX;
+                profileAvatarCropState.startY = e.clientY;
+                try { stage.setPointerCapture(e.pointerId); } catch (err) {}
+            });
+
+            stage.addEventListener('pointermove', (e) => {
+                if (!profileAvatarCropState.isDragging || !profileAvatarCropState.img) return;
+                if (e.cancelable) e.preventDefault();
+                const rect = stage.getBoundingClientRect();
+                const canvas = document.getElementById('profile-avatar-crop-canvas');
+                const ratioX = (canvas ? canvas.width : 320) / Math.max(1, rect.width);
+                const ratioY = (canvas ? canvas.height : 320) / Math.max(1, rect.height);
+
+                const dx = (e.clientX - profileAvatarCropState.startX) * ratioX;
+                const dy = (e.clientY - profileAvatarCropState.startY) * ratioY;
+                profileAvatarCropState.startX = e.clientX;
+                profileAvatarCropState.startY = e.clientY;
+                profileAvatarCropState.offsetX += dx;
+                profileAvatarCropState.offsetY += dy;
+                renderProfileAvatarCropCanvas();
+            });
+
+            const endDrag = (e) => {
+                profileAvatarCropState.isDragging = false;
+                try { stage.releasePointerCapture(e.pointerId); } catch (err) {}
+            };
+            stage.addEventListener('pointerup', endDrag);
+            stage.addEventListener('pointercancel', endDrag);
+
+            stage.addEventListener('wheel', (e) => {
+                if (!profileAvatarCropState.img) return;
+                if (e.cancelable) e.preventDefault();
+                const delta = e.deltaY < 0 ? 0.1 : -0.1;
+                window.stepProfileAvatarZoom(delta);
+            }, { passive: false });
+        }
+
+        window.handleProfileAvatarFileSelect = (inputEl) => {
+            if (!inputEl || !inputEl.files || !inputEl.files[0]) return;
+            const file = inputEl.files[0];
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    profileAvatarCropState.img = img;
+                    profileAvatarCropState.hasNewFile = true;
+                    profileAvatarCropState.scale = 1;
+                    profileAvatarCropState.offsetX = 0;
+                    profileAvatarCropState.offsetY = 0;
+                    const slider = document.getElementById('profile-avatar-zoom-slider');
+                    const lbl = document.getElementById('profile-avatar-zoom-label');
+                    if (slider) slider.value = '1';
+                    if (lbl) lbl.innerText = '100%';
+                    const box = document.getElementById('profile-avatar-cropper-box');
+                    if (box) {
+                        box.classList.remove('hidden');
+                        box.classList.add('flex');
+                    }
+                    bindProfileAvatarCropGestures();
+                    renderProfileAvatarCropCanvas();
+                    if (window.lucide) lucide.createIcons();
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.onProfileAvatarZoomChange = (val) => {
+            const z = Math.max(1, Math.min(3.5, parseFloat(val) || 1));
+            profileAvatarCropState.scale = z;
+            const slider = document.getElementById('profile-avatar-zoom-slider');
+            const lbl = document.getElementById('profile-avatar-zoom-label');
+            if (slider) slider.value = String(z);
+            if (lbl) lbl.innerText = Math.round(z * 100) + '%';
+            renderProfileAvatarCropCanvas();
+        };
+
+        window.stepProfileAvatarZoom = (delta) => {
+            const next = Math.max(1, Math.min(3.5, (profileAvatarCropState.scale || 1) + delta));
+            window.onProfileAvatarZoomChange(next);
+        };
+
+        window.resetProfileAvatarCropPosition = () => {
+            profileAvatarCropState.scale = 1;
+            profileAvatarCropState.offsetX = 0;
+            profileAvatarCropState.offsetY = 0;
+            window.onProfileAvatarZoomChange(1);
+        };
+
+        function exportPositionedProfileAvatarFile() {
+            return new Promise((resolve) => {
+                const canvas = document.getElementById('profile-avatar-crop-canvas');
+                if (!canvas || !profileAvatarCropState.img) {
+                    resolve(null);
+                    return;
+                }
+                renderProfileAvatarCropCanvas();
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        resolve(new File([blob], `avatar_${Date.now()}.jpg`, { type: 'image/jpeg' }));
+                    } else {
+                        resolve(null);
+                    }
+                }, 'image/jpeg', 0.92);
+            });
+        }
+
+        window.openEditProfile = () => {
+            document.getElementById('edit-username').value = unescapeHtml(currentUserData.username || '');
+            document.getElementById('edit-bio').value = unescapeHtml(currentUserData.bio || '');
+            const fileInp = document.getElementById('edit-file-input');
+            if (fileInp) fileInp.value = '';
+            profileAvatarCropState.img = null;
+            profileAvatarCropState.hasNewFile = false;
+            const box = document.getElementById('profile-avatar-cropper-box');
+            if (box) {
+                box.classList.add('hidden');
+                box.classList.remove('flex');
+            }
+            if (currentUserData && currentUserData.photoURL && currentUserData.photoURL.length > 5) {
+                const existingImg = new Image();
+                existingImg.crossOrigin = 'anonymous';
+                existingImg.onload = () => {
+                    if (!profileAvatarCropState.hasNewFile) {
+                        profileAvatarCropState.img = existingImg;
+                        profileAvatarCropState.scale = 1;
+                        profileAvatarCropState.offsetX = 0;
+                        profileAvatarCropState.offsetY = 0;
+                        const slider = document.getElementById('profile-avatar-zoom-slider');
+                        const lbl = document.getElementById('profile-avatar-zoom-label');
+                        if (slider) slider.value = '1';
+                        if (lbl) lbl.innerText = '100%';
+                        if (box) {
+                            box.classList.remove('hidden');
+                            box.classList.add('flex');
+                        }
+                        bindProfileAvatarCropGestures();
+                        renderProfileAvatarCropCanvas();
+                        if (window.lucide) lucide.createIcons();
+                    }
+                };
+                existingImg.src = currentUserData.photoURL;
+            }
+            document.getElementById('edit-modal').classList.add('open');
+        };
         window.saveProfileChanges = async () => {
             const btn = document.getElementById('btn-save-profile');
             const originalText = btn.innerText;
             btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`;
             btn.disabled = true;
             try {
-                const file = document.getElementById('edit-file-input').files[0];
+                const rawFile = document.getElementById('edit-file-input').files[0];
                 let url = currentUserData.photoURL;
-                if (file) url = await uploadToCloudinary(file);
+                const shouldExportCropped = profileAvatarCropState.img && (profileAvatarCropState.hasNewFile || profileAvatarCropState.scale !== 1 || Math.abs(profileAvatarCropState.offsetX) > 0.5 || Math.abs(profileAvatarCropState.offsetY) > 0.5);
+                if (shouldExportCropped) {
+                    const croppedFile = await exportPositionedProfileAvatarFile();
+                    if (croppedFile) {
+                        url = await uploadToCloudinary(croppedFile);
+                    } else if (rawFile) {
+                        url = await uploadToCloudinary(rawFile);
+                    }
+                } else if (rawFile) {
+                    url = await uploadToCloudinary(rawFile);
+                }
                 const newUsername = escapeHtml(document.getElementById('edit-username').value.trim().replace(/^@+/, '')) || currentUserData.username;
                 const newBio = escapeHtml(document.getElementById('edit-bio').value);
                 const isCert = !!(currentUserData.isVerified || (currentUserData.email || auth.currentUser.email || '').toLowerCase().trim() === VIP_EMAIL.toLowerCase());
