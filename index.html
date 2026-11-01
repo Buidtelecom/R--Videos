@@ -287,24 +287,26 @@
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
-            gap: 2px;
+            gap: 3px;
             cursor: pointer;
             visibility: visible !important;
             opacity: 1 !important;
             transform: none !important;
             -webkit-transform: none !important;
             filter: none !important;
+            user-select: none;
         }
         .reaction-btn-item span {
-            font-size: 11px;
-            line-height: 1.1;
-            font-weight: 700;
+            font-size: 12.5px !important;
+            line-height: 1.15 !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.01em;
             color: #ffffff !important;
-            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 0 8px rgba(0, 0, 0, 0.85) !important;
+            text-shadow: 0 1.5px 3px rgba(0, 0, 0, 0.98), 0 0 7px rgba(0, 0, 0, 0.88), 0 0 2px rgba(0, 0, 0, 1) !important;
         }
         .action-circle {
-            width: 28px !important;
-            height: 28px !important;
+            width: 32px !important;
+            height: 32px !important;
             border-radius: 0 !important;
             background: transparent !important;
             border: none !important;
@@ -320,35 +322,38 @@
         }
         .action-circle svg,
         .action-circle i {
-            width: 24px !important;
-            height: 24px !important;
+            width: 28px !important;
+            height: 28px !important;
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
             flex-shrink: 0 !important;
-            filter: none !important;
-            paint-order: stroke fill;
+            overflow: visible !important;
+            filter: drop-shadow(0 1.5px 2.5px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 6px rgba(0, 0, 0, 0.78)) !important;
         }
         .reaction-btn-item:not(.liked):not(.favorited) .action-circle svg {
             color: #ffffff !important;
-            stroke: rgba(0, 0, 0, 0.65) !important;
-            stroke-width: 1.6px !important;
-        }
-        .reaction-btn-item:not(.liked):not(.favorited) .action-circle svg[fill="none"] {
             stroke: #ffffff !important;
-            stroke-width: 2.3px !important;
+            fill: none !important;
+            stroke-width: 2.25px !important;
+        }
+        .reaction-btn-item:not(.liked):not(.favorited) .action-circle svg circle {
+            fill: #ffffff !important;
+            stroke: none !important;
         }
         .reaction-btn-item.liked .action-circle svg {
             color: #ff2a5f !important;
             stroke: #ff2a5f !important;
             fill: #ff2a5f !important;
-            filter: none !important;
+            stroke-width: 2.25px !important;
+            filter: drop-shadow(0 1.5px 2.5px rgba(0, 0, 0, 0.92)) drop-shadow(0 0 6px rgba(0, 0, 0, 0.7)) !important;
         }
         .reaction-btn-item.favorited .action-circle svg {
             color: #facc15 !important;
             stroke: #facc15 !important;
             fill: #facc15 !important;
-            filter: none !important;
+            stroke-width: 2.25px !important;
+            filter: drop-shadow(0 1.5px 2.5px rgba(0, 0, 0, 0.92)) drop-shadow(0 0 6px rgba(0, 0, 0, 0.7)) !important;
         }
 
         /* Repost Frosted Pill (Sleek, Airy & Professional - GPU friendly) */
@@ -11071,33 +11076,33 @@
                             <!-- Heart / Like -->
                             <div class="reaction-btn-item group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${docId}', this, '${data.userId}')">
                                 <div class="action-circle">
-                                    <svg class="w-6 h-6 like-icon ${iLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-white fill-white/90'} transition-all" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
+                                    <svg class="w-7 h-7 like-icon ${iLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-white'} transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
                                 </div>
-                                <span class="text-[10.5px] font-semibold text-white text-shadow like-count">${formatCount(getRealLikesCount(data))}</span>
+                                <span class="text-xs font-bold text-white text-shadow like-count">${formatCount(getRealLikesCount(data))}</span>
                             </div>
 
                             <!-- Comment -->
                             <div class="reaction-btn-item" onclick="openComments('${docId}', ${data.allowComments})">
                                 <div class="action-circle">
-                                    <svg class="w-6 h-6 text-white fill-white/90" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
+                                    <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5c5.25 0 9.5 3.58 9.5 8 0 1.88-.77 3.61-2.06 4.98-.18.19-.26.46-.2.72l.66 2.84c.11.47-.36.86-.8.66l-3.03-1.36a.95.95 0 0 0-.65-.05c-1.08.27-2.23.41-3.42.41-5.25 0-9.5-3.58-9.5-8s4.25-8 9.5-8Z"></path><circle cx="8.25" cy="11.5" r="1.25" fill="currentColor" stroke="none"></circle><circle cx="12" cy="11.5" r="1.25" fill="currentColor" stroke="none"></circle><circle cx="15.75" cy="11.5" r="1.25" fill="currentColor" stroke="none"></circle></svg>
                                 </div>
-                                <span class="text-[10.5px] font-semibold text-white text-shadow comment-count">${formatCount(data.commentCount)}</span>
+                                <span class="text-xs font-bold text-white text-shadow comment-count">${formatCount(data.commentCount)}</span>
                             </div>
 
                             <!-- Bookmark / Favorite -->
                             <div class="reaction-btn-item ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${docId}', this)">
                                 <div class="action-circle">
-                                    <svg class="w-6 h-6 fav-icon ${iFav ? 'fill-yellow-400 text-yellow-400' : 'text-white fill-white/90'} transition-all" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path></svg>
+                                    <svg class="w-7 h-7 fav-icon ${iFav ? 'fill-yellow-400 text-yellow-400' : 'text-white'} transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4.5L5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16Z"></path></svg>
                                 </div>
-                                <span class="text-[10.5px] font-semibold text-white text-shadow fav-text">${formatCount(getRealFavoritesCount(data))}</span>
+                                <span class="text-xs font-bold text-white text-shadow fav-text">${formatCount(getRealFavoritesCount(data))}</span>
                             </div>
 
                             <!-- Share / More Options -->
                             <div class="reaction-btn-item" onclick="openOptions('${docId}', '${data.url}', '${safeUsername}', ${allowDL}, '${data.userId}', ${isPinned})">
                                 <div class="action-circle">
-                                    <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"></path><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13"></path></svg>
+                                    <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 4.5 21 11.8l-7.5 7.2v-4.3c-5.4 0-8.6 1.6-10.5 4.8.7-5.6 4.1-9.9 10.5-10.7V4.5Z"></path></svg>
                                 </div>
-                                <span class="text-[10.5px] font-semibold text-white text-shadow share-count">${formatCount(getRealSharesCount(data))}</span>
+                                <span class="text-xs font-bold text-white text-shadow share-count">${formatCount(getRealSharesCount(data))}</span>
                             </div>
 
                             <!-- Spinning Music Disc (Opens Sound Reuse Sheet) -->
@@ -16280,20 +16285,20 @@
                         <span data-story-badge-uid="${data.userId}" class="rv-story-mini-badge ${hasUserActiveStory(data.userId) ? '' : 'hidden'}">STORY</span>
                     </div>
                     <div class="reaction-btn-item group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${id}', this, '${data.userId}')">
-                        <div class="action-circle"><svg class="w-6 h-6 like-icon ${iLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-white fill-white/90'}" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg></div>
-                        <span class="text-[10.5px] font-semibold text-white text-shadow like-count">${formatCount(getRealLikesCount(data))}</span>
+                        <div class="action-circle"><svg class="w-7 h-7 like-icon ${iLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-white'} transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg></div>
+                        <span class="text-xs font-bold text-white text-shadow like-count">${formatCount(getRealLikesCount(data))}</span>
                     </div>
                     <div class="reaction-btn-item" onclick="openComments('${id}')">
-                        <div class="action-circle"><svg class="w-6 h-6 text-white fill-white/90" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg></div>
-                        <span class="text-[10.5px] font-semibold text-white text-shadow comment-count">${formatCount(data.commentCount)}</span>
+                        <div class="action-circle"><svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5c5.25 0 9.5 3.58 9.5 8 0 1.88-.77 3.61-2.06 4.98-.18.19-.26.46-.2.72l.66 2.84c.11.47-.36.86-.8.66l-3.03-1.36a.95.95 0 0 0-.65-.05c-1.08.27-2.23.41-3.42.41-5.25 0-9.5-3.58-9.5-8s4.25-8 9.5-8Z"></path><circle cx="8.25" cy="11.5" r="1.25" fill="currentColor" stroke="none"></circle><circle cx="12" cy="11.5" r="1.25" fill="currentColor" stroke="none"></circle><circle cx="15.75" cy="11.5" r="1.25" fill="currentColor" stroke="none"></circle></svg></div>
+                        <span class="text-xs font-bold text-white text-shadow comment-count">${formatCount(data.commentCount)}</span>
                     </div>
                     <div class="reaction-btn-item ${iFav ? 'favorited' : ''}" onclick="toggleFavorite('${id}', this)">
-                        <div class="action-circle"><svg class="w-6 h-6 fav-icon ${iFav ? 'fill-yellow-400 text-yellow-400' : 'text-white fill-white/90'}" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path></svg></div>
-                        <span class="text-[10.5px] font-semibold text-white text-shadow fav-text">${formatCount(getRealFavoritesCount(data))}</span>
+                        <div class="action-circle"><svg class="w-7 h-7 fav-icon ${iFav ? 'fill-yellow-400 text-yellow-400' : 'text-white'} transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4.5L5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16Z"></path></svg></div>
+                        <span class="text-xs font-bold text-white text-shadow fav-text">${formatCount(getRealFavoritesCount(data))}</span>
                     </div>
                     <div class="reaction-btn-item" onclick="openOptions('${id}', '${data.url}', '${escapeHtml(data.username)}', ${data.allowDownloads !== false}, '${data.userId}', ${!!data.isPinned})">
-                        <div class="action-circle"><svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"></path><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13"></path></svg></div>
-                        <span class="text-[10.5px] font-semibold text-white text-shadow share-count">${formatCount(getRealSharesCount(data))}</span>
+                        <div class="action-circle"><svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 4.5 21 11.8l-7.5 7.2v-4.3c-5.4 0-8.6 1.6-10.5 4.8.7-5.6 4.1-9.9 10.5-10.7V4.5Z"></path></svg></div>
+                        <span class="text-xs font-bold text-white text-shadow share-count">${formatCount(getRealSharesCount(data))}</span>
                     </div>
                     <div class="mt-0.5 cursor-pointer" onclick="openSoundSheet('${id}', event)">
                         <div class="w-8 h-8 bg-gray-900 rounded-full border-[3.5px] border-gray-800/90 flex items-center justify-center overflow-hidden shadow-lg animate-spin-slow">
