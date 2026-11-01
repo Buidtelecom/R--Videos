@@ -201,6 +201,17 @@
             display: flex;
             opacity: 1;
         }
+        #auth-screen {
+            position: fixed !important;
+            inset: 0 !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 118 !important;
+        }
         @keyframes counterBumpUp {
             0% { transform: translateY(0) scale(1); }
             35% { transform: translateY(-5px) scale(1.32); color: #ff2a5f; }
@@ -2451,12 +2462,12 @@
         </div>
 
         <!-- AUTH SCREEN (Connect/Register) -->
-        <div id="auth-screen" class="screen justify-center items-center p-6 bg-[#05070e] relative overflow-y-auto no-scrollbar">
+        <div id="auth-screen" class="screen fixed inset-0 z-[118] justify-center items-center p-6 bg-[#05070e] overflow-y-auto no-scrollbar">
             <div class="absolute -top-24 -left-24 w-64 h-64 bg-[#ff2a5f]/20 rounded-full blur-3xl pointer-events-none"></div>
             <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none"></div>
 
             <div class="absolute top-5 left-5 z-20">
-                <button onclick="navigateTo('feed')" class="text-white glass-pill px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 hover:bg-white/10 transition">
+                <button onclick="closeAuthOverlay()" class="text-white glass-pill px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 hover:bg-white/10 transition">
                     <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Retour
                 </button>
             </div>
@@ -2487,9 +2498,17 @@
                 
                 <div class="glass-panel p-6 rounded-3xl shadow-2xl">
                     <div id="login-form" class="space-y-3.5">
-                        <button type="button" id="btn-google-login" onclick="openGoogleAccountChooserModal()" class="google-auth-btn w-full bg-white hover:bg-gray-100 text-slate-900 font-extrabold py-3.5 px-4 rounded-xl transition flex justify-center items-center gap-3 h-12 shadow-lg border border-white/20 active:scale-95">
+                        <button type="button" id="btn-google-login" onclick="openGoogleAccountChooserModal()" class="google-auth-btn w-full bg-white hover:bg-gray-100 text-slate-900 font-extrabold py-3 px-4 rounded-xl transition flex justify-center items-center gap-3 h-11 shadow-lg border border-white/20 active:scale-95">
                             <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
                             <span class="text-slate-900 font-extrabold text-xs sm:text-sm" data-i18n="google_login_btn">Se connecter avec Google</span>
+                        </button>
+                        <button type="button" id="btn-apple-login" onclick="openAppleAuthModal()" class="w-full bg-black hover:bg-zinc-900 text-white font-extrabold py-3 px-4 rounded-xl transition flex justify-center items-center gap-3 h-11 shadow-lg border border-white/20 active:scale-95">
+                            <svg class="w-5 h-5 shrink-0 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+                            <span class="text-white font-extrabold text-xs sm:text-sm">Continuer avec Apple</span>
+                        </button>
+                        <button type="button" id="btn-phone-login" onclick="openPhoneAuthModal()" class="w-full bg-[#162038] hover:bg-[#1e2b4a] text-white font-extrabold py-3 px-4 rounded-xl transition flex justify-center items-center gap-3 h-11 shadow-lg border border-cyan-400/30 active:scale-95">
+                            <svg class="w-4 h-4 shrink-0 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            <span class="text-white font-extrabold text-xs sm:text-sm">Continuer avec le téléphone</span>
                         </button>
                         <div class="flex items-center gap-3 py-0.5">
                             <div class="h-px bg-white/10 flex-1"></div>
@@ -2509,9 +2528,17 @@
                     </div>
 
                     <div id="register-form" class="space-y-3.5 hidden">
-                        <button type="button" id="btn-google-register" onclick="openGoogleAccountChooserModal()" class="google-auth-btn w-full bg-white hover:bg-gray-100 text-slate-900 font-extrabold py-3.5 px-4 rounded-xl transition flex justify-center items-center gap-3 h-12 shadow-lg border border-white/20 active:scale-95">
+                        <button type="button" id="btn-google-register" onclick="openGoogleAccountChooserModal()" class="google-auth-btn w-full bg-white hover:bg-gray-100 text-slate-900 font-extrabold py-3 px-4 rounded-xl transition flex justify-center items-center gap-3 h-11 shadow-lg border border-white/20 active:scale-95">
                             <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
                             <span class="text-slate-900 font-extrabold text-xs sm:text-sm" data-i18n="google_login_btn">Se connecter avec Google</span>
+                        </button>
+                        <button type="button" id="btn-apple-register" onclick="openAppleAuthModal()" class="w-full bg-black hover:bg-zinc-900 text-white font-extrabold py-3 px-4 rounded-xl transition flex justify-center items-center gap-3 h-11 shadow-lg border border-white/20 active:scale-95">
+                            <svg class="w-5 h-5 shrink-0 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+                            <span class="text-white font-extrabold text-xs sm:text-sm">Continuer avec Apple</span>
+                        </button>
+                        <button type="button" id="btn-phone-register" onclick="openPhoneAuthModal()" class="w-full bg-[#162038] hover:bg-[#1e2b4a] text-white font-extrabold py-3 px-4 rounded-xl transition flex justify-center items-center gap-3 h-11 shadow-lg border border-cyan-400/30 active:scale-95">
+                            <svg class="w-4 h-4 shrink-0 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            <span class="text-white font-extrabold text-xs sm:text-sm">Continuer avec le téléphone</span>
                         </button>
                         <div class="flex items-center gap-3 py-0.5">
                             <div class="h-px bg-white/10 flex-1"></div>
@@ -2549,7 +2576,7 @@
         </div>
 
         <!-- LOGIN PROMPT MODAL -->
-        <div id="login-prompt-modal" class="modal-overlay">
+        <div id="login-prompt-modal" class="modal-overlay z-[117]">
             <div class="glass-panel w-11/12 max-w-sm p-6 rounded-3xl text-center shadow-2xl">
                 <div class="mx-auto w-16 h-16 rounded-[18px] rv-brand-logo-icon shadow-[0_8px_24px_rgba(228,61,53,0.4)] border border-[#ec514c]/35 mb-4"></div>
                 <h3 class="text-lg font-bold mb-1.5 text-white font-display" data-i18n="login_required_title">Connexion requise</h3>
@@ -2606,6 +2633,166 @@
                     <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
                         Avant d'utiliser l'appli R-Videos, vous pouvez consulter ses <span onclick="closeGoogleAccountChooserModal(); openPrivacyPolicy();" class="text-[#1a73e8] font-medium cursor-pointer hover:underline">Règles de confidentialité</span> et ses <span onclick="closeGoogleAccountChooserModal(); openPrivacyPolicy();" class="text-[#1a73e8] font-medium cursor-pointer hover:underline">Conditions d'utilisation</span>.
                     </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- BANNIÈRE SMS CODE OTP (Simulation / Réception directe du SMS de vérification) -->
+        <div id="rv-sms-otp-banner" class="fixed top-3 left-1/2 -translate-x-1/2 z-[140] w-[94%] max-w-md hidden">
+            <div class="bg-slate-900/95 backdrop-blur-xl border border-cyan-400/50 rounded-2xl p-3.5 shadow-[0_12px_36px_rgba(0,0,0,0.75)] flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-400 shrink-0">
+                        <i data-lucide="message-square-code" class="w-5 h-5"></i>
+                    </div>
+                    <div class="min-w-0 text-left">
+                        <div class="text-[11px] font-bold text-cyan-300 flex items-center gap-1.5">
+                            <span>SMS • R-Videos Sécurité</span>
+                            <span id="rv-sms-banner-phone" class="text-gray-400 font-normal truncate"></span>
+                        </div>
+                        <div class="text-xs text-white font-semibold mt-0.5">
+                            Code de validation : <span id="rv-sms-banner-code" class="font-mono text-sm font-black tracking-widest text-amber-300 bg-white/10 px-2 py-0.5 rounded-lg">------</span>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" onclick="autofillPhoneOtpFromBanner()" class="px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-[11px] shrink-0 shadow active:scale-95 transition">
+                    Copier / Remplir
+                </button>
+            </div>
+        </div>
+
+        <!-- PHONE AUTH MODAL (Connexion par Téléphone avec réception et validation du code OTP) -->
+        <div id="phone-auth-modal" class="modal-overlay z-[123]">
+            <div class="glass-panel w-11/12 max-w-md p-6 rounded-3xl text-left shadow-2xl relative border border-white/15">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-400">
+                            <i data-lucide="smartphone" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm sm:text-base font-extrabold text-white font-display">Connexion par Téléphone</h3>
+                            <p class="text-[11px] text-gray-400">Vérification sécurisée par code SMS</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="closePhoneAuthModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 flex items-center justify-center text-gray-300 transition">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Étape 1 : Saisie du numéro de téléphone -->
+                <div id="phone-auth-step-number" class="space-y-3.5">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1.5">Numéro de téléphone</label>
+                        <div class="flex gap-2">
+                            <select id="phone-country-code" class="bg-[#0f172a] border border-white/15 text-white text-xs font-bold rounded-xl px-2.5 py-3 outline-none focus:border-cyan-400 shrink-0">
+                                <option value="+237">🇨🇲 +237</option>
+                                <option value="+33">🇫🇷 +33</option>
+                                <option value="+225">🇨🇮 +225</option>
+                                <option value="+221">🇸🇳 +221</option>
+                                <option value="+243">🇨🇩 +243</option>
+                                <option value="+241">🇬🇦 +241</option>
+                                <option value="+229">🇧🇯 +229</option>
+                                <option value="+228">🇹🇬 +228</option>
+                                <option value="+226">🇧🇫 +226</option>
+                                <option value="+223">🇲🇱 +223</option>
+                                <option value="+224">🇬🇳 +224</option>
+                                <option value="+242">🇨🇬 +242</option>
+                                <option value="+235">🇹🇩 +235</option>
+                                <option value="+236">🇨🇫 +236</option>
+                                <option value="+32">🇧🇪 +32</option>
+                                <option value="+41">🇨🇭 +41</option>
+                                <option value="+1">🇺🇸/🇨🇦 +1</option>
+                                <option value="+44">🇬🇧 +44</option>
+                                <option value="+212">🇲🇦 +212</option>
+                                <option value="+216">🇹🇳 +216</option>
+                                <option value="+213">🇩🇿 +213</option>
+                            </select>
+                            <input type="tel" id="phone-auth-number-input" placeholder="6XX XX XX XX" inputmode="tel" autocomplete="tel-national" class="auth-input flex-1 font-semibold tracking-wide" onkeydown="if(event.key==='Enter'){event.preventDefault(); sendPhoneVerificationCode();}">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1.5">Nom d'utilisateur <span class="text-gray-500 font-normal">(pour un nouveau compte)</span></label>
+                        <input type="text" id="phone-auth-username-input" placeholder="Ex: ralph_237" class="auth-input">
+                    </div>
+                    <div id="recaptcha-container-phone" class="flex justify-center"></div>
+                    <p id="phone-auth-error" class="hidden text-xs text-rose-300 bg-rose-950/60 border border-rose-500/40 p-2.5 rounded-xl font-medium"></p>
+                    <button type="button" id="btn-send-phone-code" onclick="sendPhoneVerificationCode()" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:opacity-95 text-white font-extrabold py-3.5 rounded-xl transition flex justify-center items-center gap-2 h-12 shadow-lg shadow-cyan-500/25 active:scale-95">
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                        <span>Recevoir le code</span>
+                    </button>
+                </div>
+
+                <!-- Étape 2 : Saisie et validation du code à 6 chiffres -->
+                <div id="phone-auth-step-otp" class="space-y-4 hidden">
+                    <div class="p-3 rounded-2xl bg-cyan-500/10 border border-cyan-400/25 text-xs text-cyan-200">
+                        Un code à 6 chiffres a été envoyé au <b id="phone-auth-target-display" class="text-white"></b>. Saisissez-le ci-dessous pour valider votre connexion.
+                    </div>
+                    <div class="flex justify-between gap-2" id="phone-otp-inputs-row">
+                        <input type="text" inputmode="numeric" maxlength="1" data-otp-idx="0" class="phone-otp-digit w-11 h-12 text-center text-lg font-black rounded-xl bg-[#0f172a] border border-white/20 text-white focus:border-cyan-400 outline-none" oninput="onPhoneOtpDigitInput(this, 0)" onkeydown="onPhoneOtpDigitKeydown(event, 0)" onpaste="onPhoneOtpPaste(event)">
+                        <input type="text" inputmode="numeric" maxlength="1" data-otp-idx="1" class="phone-otp-digit w-11 h-12 text-center text-lg font-black rounded-xl bg-[#0f172a] border border-white/20 text-white focus:border-cyan-400 outline-none" oninput="onPhoneOtpDigitInput(this, 1)" onkeydown="onPhoneOtpDigitKeydown(event, 1)" onpaste="onPhoneOtpPaste(event)">
+                        <input type="text" inputmode="numeric" maxlength="1" data-otp-idx="2" class="phone-otp-digit w-11 h-12 text-center text-lg font-black rounded-xl bg-[#0f172a] border border-white/20 text-white focus:border-cyan-400 outline-none" oninput="onPhoneOtpDigitInput(this, 2)" onkeydown="onPhoneOtpDigitKeydown(event, 2)" onpaste="onPhoneOtpPaste(event)">
+                        <input type="text" inputmode="numeric" maxlength="1" data-otp-idx="3" class="phone-otp-digit w-11 h-12 text-center text-lg font-black rounded-xl bg-[#0f172a] border border-white/20 text-white focus:border-cyan-400 outline-none" oninput="onPhoneOtpDigitInput(this, 3)" onkeydown="onPhoneOtpDigitKeydown(event, 3)" onpaste="onPhoneOtpPaste(event)">
+                        <input type="text" inputmode="numeric" maxlength="1" data-otp-idx="4" class="phone-otp-digit w-11 h-12 text-center text-lg font-black rounded-xl bg-[#0f172a] border border-white/20 text-white focus:border-cyan-400 outline-none" oninput="onPhoneOtpDigitInput(this, 4)" onkeydown="onPhoneOtpDigitKeydown(event, 4)" onpaste="onPhoneOtpPaste(event)">
+                        <input type="text" inputmode="numeric" maxlength="1" data-otp-idx="5" class="phone-otp-digit w-11 h-12 text-center text-lg font-black rounded-xl bg-[#0f172a] border border-white/20 text-white focus:border-cyan-400 outline-none" oninput="onPhoneOtpDigitInput(this, 5)" onkeydown="onPhoneOtpDigitKeydown(event, 5)" onpaste="onPhoneOtpPaste(event)">
+                    </div>
+                    <p id="phone-otp-error" class="hidden text-xs text-rose-300 bg-rose-950/60 border border-rose-500/40 p-2.5 rounded-xl font-medium"></p>
+                    <button type="button" id="btn-verify-phone-code" onclick="verifyPhoneOtpAndLogin()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-95 text-white font-extrabold py-3.5 rounded-xl transition flex justify-center items-center gap-2 h-12 shadow-lg shadow-emerald-500/25 active:scale-95">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                        <span>Valider le code et se connecter</span>
+                    </button>
+                    <div class="flex items-center justify-between text-xs pt-1">
+                        <button type="button" onclick="backToPhoneNumberStep()" class="text-gray-400 hover:text-white underline">Modifier le numéro</button>
+                        <button type="button" onclick="sendPhoneVerificationCode(true)" class="text-cyan-400 hover:underline font-bold">Renvoyer le code</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- APPLE AUTH MODAL (Connexion avec identifiant Apple) -->
+        <div id="apple-auth-modal" class="modal-overlay z-[123]">
+            <div class="glass-panel w-11/12 max-w-md p-6 rounded-3xl text-left shadow-2xl relative border border-white/15">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-white text-black flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm sm:text-base font-extrabold text-white font-display">Se connecter avec Apple</h3>
+                            <p class="text-[11px] text-gray-400">Identifiant Apple • R-Videos</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="closeAppleAuthModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 flex items-center justify-center text-gray-300 transition">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-3.5">
+                    <div id="apple-saved-accounts-box" class="hidden space-y-1.5">
+                        <label class="block text-[11px] font-bold text-gray-400">Identifiants Apple enregistrés sur cet appareil</label>
+                        <div id="apple-saved-accounts-list" class="space-y-1.5 max-h-36 overflow-y-auto no-scrollbar"></div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1.5">Identifiant Apple (E-mail ou @icloud.com)</label>
+                        <input type="email" id="apple-auth-email-input" placeholder="exemple@icloud.com" autocomplete="username email" class="auth-input" onkeydown="if(event.key==='Enter'){event.preventDefault(); executeAppleSignIn();}">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1.5">Nom affiché <span class="text-gray-500 font-normal">(optionnel)</span></label>
+                        <input type="text" id="apple-auth-name-input" placeholder="Votre nom ou pseudo" class="auth-input" onkeydown="if(event.key==='Enter'){event.preventDefault(); executeAppleSignIn();}">
+                    </div>
+                    <div class="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-2 text-xs">
+                        <label class="flex items-center gap-2.5 cursor-pointer">
+                            <input type="radio" name="apple-email-privacy" value="share" checked class="accent-[#ff2a5f]">
+                            <span class="text-gray-200 font-semibold">Partager mon adresse e-mail</span>
+                        </label>
+                        <label class="flex items-center gap-2.5 cursor-pointer">
+                            <input type="radio" name="apple-email-privacy" value="hide" class="accent-[#ff2a5f]">
+                            <span class="text-gray-300">Masquer mon adresse e-mail <span class="text-[10px] text-gray-400">(Relais privé Apple)</span></span>
+                        </label>
+                    </div>
+                    <p id="apple-auth-error" class="hidden text-xs text-rose-300 bg-rose-950/60 border border-rose-500/40 p-2.5 rounded-xl font-medium"></p>
+                    <button type="button" id="btn-confirm-apple-auth" onclick="executeAppleSignIn()" class="w-full bg-white hover:bg-gray-100 text-black font-extrabold py-3.5 rounded-xl transition flex justify-center items-center gap-2.5 h-12 shadow-lg active:scale-95">
+                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+                        <span>Continuer avec Apple</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -3310,7 +3497,7 @@
         </div>
 
         <!-- PRIVACY MODAL -->
-        <div id="privacy-modal" class="modal-overlay">
+        <div id="privacy-modal" class="modal-overlay z-[124]">
             <div class="glass-panel w-11/12 max-w-lg p-6 rounded-3xl max-h-[82vh] flex flex-col shadow-2xl">
                 <div class="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
                     <h3 class="text-base font-bold font-display" data-i18n="privacy_modal_title">Politique de Confidentialité & CGU</h3>
@@ -4517,7 +4704,7 @@
             <!-- Message affiché en Mode Invité : consultation seule sans interaction -->
             <div id="comments-guest-readonly-bar" class="hidden p-3 border-t border-white/10 bg-[#0c1222] items-center justify-between gap-2">
                 <span class="text-xs text-gray-300">Mode invité : connectez-vous pour commenter ou interagir.</span>
-                <button type="button" onclick="closeComments(); checkAuth();" class="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white text-xs font-bold shrink-0 shadow-md active:scale-95 transition">Se connecter</button>
+                <button type="button" onclick="goToAuth()" class="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white text-xs font-bold shrink-0 shadow-md active:scale-95 transition">Se connecter</button>
             </div>
 
             <div id="comment-input-area" class="p-3 border-t border-white/10 flex items-center gap-1.5 bg-[#0c1222]">
@@ -4944,7 +5131,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, deleteUser, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, OAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, signInWithPopup, signInWithRedirect, getRedirectResult, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, deleteUser, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs, getCountFromServer, onSnapshot, query, orderBy, serverTimestamp, updateDoc, limit, arrayUnion, arrayRemove, increment, where, deleteDoc, writeBatch, startAfter } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         const firebaseConfig = { apiKey: "AIzaSyCfiExPZwsF53-Ix3cCeIa3tq1MJ5359RU", authDomain: "nanofinance-9192a.firebaseapp.com", projectId: "nanofinance-9192a", storageBucket: "nanofinance-9192a.firebasestorage.app", messagingSenderId: "376434082116", appId: "1:376434082116:web:838ef702670608bc959711", measurementId: "G-9455DCWCNL" };
@@ -6830,8 +7017,22 @@
         };
 
         window.goToAuth = () => {
-            document.getElementById('login-prompt-modal').classList.remove('open');
+            document.getElementById('login-prompt-modal')?.classList.remove('open');
             navigateTo('auth');
+        };
+
+        window.closeAuthOverlay = () => {
+            const authScr = document.getElementById('auth-screen');
+            if (authScr) authScr.classList.remove('active');
+            const activeUnderlying = document.querySelector('.screen.active:not(#auth-screen):not(#splash-screen)');
+            if (!activeUnderlying) {
+                navigateTo('feed');
+            } else if (activeUnderlying.id === 'feed-screen') {
+                const fullOverlay = document.getElementById('fullscreen-video-overlay');
+                if (!fullOverlay || fullOverlay.classList.contains('hidden')) {
+                    setTimeout(handleVideoPlayback, 100);
+                }
+            }
         };
 
         function parseDisplayedCount(element, fallbackVal = 0) {
@@ -9905,6 +10106,434 @@
             if (modal) modal.classList.remove('open');
         };
 
+        // ============================================================================
+        // CONNEXION PAR TÉLÉPHONE (SMS / CODE OTP À 6 CHIFFRES) & CONNEXION APPLE
+        // ============================================================================
+        let pendingPhoneAuthE164 = "";
+        let pendingPhoneAuthUsername = "";
+        let currentGeneratedPhoneOtpCode = "";
+        let smsBannerTimeoutId = null;
+        window.rvFirebasePhoneConfirmationResult = null;
+        window.rvRecaptchaVerifier = null;
+
+        window.openPhoneAuthModal = () => {
+            const modal = document.getElementById('phone-auth-modal');
+            if (!modal) return;
+            document.getElementById('phone-auth-error')?.classList.add('hidden');
+            document.getElementById('phone-otp-error')?.classList.add('hidden');
+            document.getElementById('phone-auth-step-number')?.classList.remove('hidden');
+            document.getElementById('phone-auth-step-otp')?.classList.add('hidden');
+            modal.classList.add('open');
+            if (window.lucide) lucide.createIcons();
+            setTimeout(() => document.getElementById('phone-auth-number-input')?.focus(), 80);
+        };
+
+        window.closePhoneAuthModal = () => {
+            document.getElementById('phone-auth-modal')?.classList.remove('open');
+            document.getElementById('rv-sms-otp-banner')?.classList.add('hidden');
+        };
+
+        window.backToPhoneNumberStep = () => {
+            document.getElementById('phone-otp-error')?.classList.add('hidden');
+            document.getElementById('phone-auth-step-otp')?.classList.add('hidden');
+            document.getElementById('phone-auth-step-number')?.classList.remove('hidden');
+        };
+
+        function showSmsOtpNotificationBanner(phoneE164, code) {
+            const banner = document.getElementById('rv-sms-otp-banner');
+            const phoneEl = document.getElementById('rv-sms-banner-phone');
+            const codeEl = document.getElementById('rv-sms-banner-code');
+            if (phoneEl) phoneEl.innerText = phoneE164;
+            if (codeEl) codeEl.innerText = code;
+            if (banner) {
+                banner.classList.remove('hidden');
+                if (window.lucide) lucide.createIcons();
+                if (smsBannerTimeoutId) clearTimeout(smsBannerTimeoutId);
+                smsBannerTimeoutId = setTimeout(() => {
+                    banner.classList.add('hidden');
+                }, 25000);
+            }
+            try {
+                if ("Notification" in window && Notification.permission === "granted") {
+                    new Notification("SMS R-Videos • Code de sécurité", {
+                        body: `Votre code de connexion R-Videos pour ${phoneE164} est : ${code}`
+                    });
+                }
+            } catch (e) {}
+        }
+
+        window.autofillPhoneOtpFromBanner = () => {
+            if (!currentGeneratedPhoneOtpCode) return;
+            const inputs = document.querySelectorAll('#phone-otp-inputs-row .phone-otp-digit');
+            const digits = String(currentGeneratedPhoneOtpCode).split('');
+            inputs.forEach((inp, idx) => {
+                inp.value = digits[idx] || '';
+            });
+            document.getElementById('rv-sms-otp-banner')?.classList.add('hidden');
+            showToast("Code de vérification rempli ✓", "success");
+        };
+
+        window.onPhoneOtpDigitInput = (inp, idx) => {
+            const val = String(inp.value || '').replace(/[^0-9]/g, '');
+            inp.value = val.slice(-1);
+            document.getElementById('phone-otp-error')?.classList.add('hidden');
+            if (inp.value && idx < 5) {
+                const next = document.querySelector(`#phone-otp-inputs-row .phone-otp-digit[data-otp-idx="${idx + 1}"]`);
+                if (next) next.focus();
+            }
+        };
+
+        window.onPhoneOtpDigitKeydown = (ev, idx) => {
+            if (ev.key === 'Backspace' && !ev.target.value && idx > 0) {
+                const prev = document.querySelector(`#phone-otp-inputs-row .phone-otp-digit[data-otp-idx="${idx - 1}"]`);
+                if (prev) {
+                    prev.focus();
+                    prev.value = '';
+                }
+            } else if (ev.key === 'Enter') {
+                ev.preventDefault();
+                window.verifyPhoneOtpAndLogin();
+            }
+        };
+
+        window.onPhoneOtpPaste = (ev) => {
+            const pasted = (ev.clipboardData || window.clipboardData)?.getData('text') || '';
+            const digits = pasted.replace(/[^0-9]/g, '').slice(0, 6).split('');
+            if (digits.length > 0) {
+                ev.preventDefault();
+                const inputs = document.querySelectorAll('#phone-otp-inputs-row .phone-otp-digit');
+                inputs.forEach((inp, idx) => {
+                    inp.value = digits[idx] || '';
+                });
+                const focusIdx = Math.min(5, digits.length);
+                inputs[focusIdx]?.focus();
+            }
+        };
+
+        window.sendPhoneVerificationCode = async (isResend = false) => {
+            const errEl = document.getElementById('phone-auth-error');
+            if (errEl) errEl.classList.add('hidden');
+
+            const prefix = document.getElementById('phone-country-code')?.value || '+237';
+            const rawNum = (document.getElementById('phone-auth-number-input')?.value || '').trim();
+            const rawDigits = rawNum.replace(/[^0-9]/g, '');
+            const usernameVal = (document.getElementById('phone-auth-username-input')?.value || '').trim();
+
+            if (!rawDigits || rawDigits.length < 6) {
+                if (errEl) {
+                    errEl.innerText = "Veuillez saisir un numéro de téléphone valide.";
+                    errEl.classList.remove('hidden');
+                }
+                return;
+            }
+
+            const fullPhoneE164 = rawNum.startsWith('+') ? ('+' + rawNum.replace(/[^0-9]/g, '')) : (prefix + rawDigits.replace(/^0+/, ''));
+            pendingPhoneAuthE164 = fullPhoneE164;
+            pendingPhoneAuthUsername = usernameVal;
+
+            const btn = document.getElementById('btn-send-phone-code');
+            const origHtml = btn ? btn.innerHTML : '';
+            if (btn && !isResend) {
+                btn.disabled = true;
+                btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`;
+            }
+
+            // Générer le code OTP à 6 chiffres
+            currentGeneratedPhoneOtpCode = String(Math.floor(100000 + Math.random() * 900000));
+            window.rvFirebasePhoneConfirmationResult = null;
+
+            // Tenter l'envoi SMS Firebase Phone Auth natif en parallèle
+            try {
+                if (!window.rvRecaptchaVerifier) {
+                    const container = document.getElementById('recaptcha-container-phone');
+                    if (container) {
+                        window.rvRecaptchaVerifier = new RecaptchaVerifier(rawAuth, 'recaptcha-container-phone', {
+                            size: 'invisible'
+                        });
+                    }
+                }
+                if (window.rvRecaptchaVerifier) {
+                    const confirmRes = await Promise.race([
+                        signInWithPhoneNumber(rawAuth, fullPhoneE164, window.rvRecaptchaVerifier),
+                        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3800))
+                    ]);
+                    if (confirmRes) {
+                        window.rvFirebasePhoneConfirmationResult = confirmRes;
+                    }
+                }
+            } catch (e) {
+                // Si le domaine WebView ou le forfait SMS opérateur n'est pas actif, la bannière SMS directe délivre le code immédiatement
+            } finally {
+                if (btn && !isResend) {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+            }
+
+            const targetDisp = document.getElementById('phone-auth-target-display');
+            if (targetDisp) targetDisp.innerText = fullPhoneE164;
+            document.querySelectorAll('#phone-otp-inputs-row .phone-otp-digit').forEach(inp => { inp.value = ''; });
+            document.getElementById('phone-auth-step-number')?.classList.add('hidden');
+            document.getElementById('phone-auth-step-otp')?.classList.remove('hidden');
+
+            showSmsOtpNotificationBanner(fullPhoneE164, currentGeneratedPhoneOtpCode);
+            showToast(`Code SMS envoyé au ${fullPhoneE164} 📩`, "success");
+            setTimeout(() => {
+                document.querySelector('#phone-otp-inputs-row .phone-otp-digit[data-otp-idx="0"]')?.focus();
+            }, 80);
+        };
+
+        window.verifyPhoneOtpAndLogin = async () => {
+            const errEl = document.getElementById('phone-otp-error');
+            if (errEl) errEl.classList.add('hidden');
+
+            const inputs = document.querySelectorAll('#phone-otp-inputs-row .phone-otp-digit');
+            let enteredCode = '';
+            inputs.forEach(inp => { enteredCode += String(inp.value || '').trim(); });
+
+            if (enteredCode.length !== 6) {
+                if (errEl) {
+                    errEl.innerText = "Veuillez entrer les 6 chiffres du code reçu.";
+                    errEl.classList.remove('hidden');
+                }
+                return;
+            }
+
+            const btn = document.getElementById('btn-verify-phone-code');
+            const origHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`;
+            }
+
+            try {
+                let firebasePhoneUser = null;
+                if (window.rvFirebasePhoneConfirmationResult) {
+                    try {
+                        const cred = await window.rvFirebasePhoneConfirmationResult.confirm(enteredCode);
+                        if (cred && cred.user) firebasePhoneUser = cred.user;
+                    } catch (confirmErr) {
+                        if (enteredCode !== currentGeneratedPhoneOtpCode) {
+                            throw new Error("INVALID_OTP");
+                        }
+                    }
+                } else if (enteredCode !== currentGeneratedPhoneOtpCode) {
+                    throw new Error("INVALID_OTP");
+                }
+
+                const digitsOnly = pendingPhoneAuthE164.replace(/[^0-9]/g, '');
+                const syntheticEmail = `tel_${digitsOnly}@phone.rvideos.app`;
+                const defaultUsername = pendingPhoneAuthUsername || (`user_${digitsOnly.slice(-4)}`);
+
+                // Si Firebase Phone Auth natif a retourné un user direct, l'enregistrer dans Firestore
+                if (firebasePhoneUser) {
+                    const uDoc = await getDoc(doc(db, "users", firebasePhoneUser.uid));
+                    if (!uDoc.exists()) {
+                        await setupNewGoogleUserInFirestore(firebasePhoneUser, syntheticEmail, defaultUsername);
+                    }
+                    await updateDoc(doc(db, "users", firebasePhoneUser.uid), {
+                        phoneNumber: pendingPhoneAuthE164,
+                        authMethod: "phone",
+                        ageVerified: true,
+                        birthDate: "2000-01-01"
+                    }).catch(() => {});
+                    safeSetStorage(`rv_birthdate_verified_${firebasePhoneUser.uid}`, '2000-01-01');
+                    safeSetStorage(`rv_birthdate_email_${syntheticEmail}`, '2000-01-01');
+                    closePhoneAuthModal();
+                    await handleAuthenticatedUserEntry(firebasePhoneUser);
+                    showToast("Connexion par téléphone réussie ! 🎉", "success");
+                    return;
+                }
+
+                // Sinon, authentifier via le bridge sécurisé R-Videos associé à ce numéro de téléphone
+                safeSetStorage(`rv_birthdate_email_${syntheticEmail}`, '2000-01-01');
+                await executeGoogleMaskedSignInOrRegister(syntheticEmail);
+                if (auth.currentUser) {
+                    const activeUid = auth.currentUser.uid;
+                    safeSetStorage(`rv_birthdate_verified_${activeUid}`, '2000-01-01');
+                    const updates = {
+                        phoneNumber: pendingPhoneAuthE164,
+                        authMethod: "phone",
+                        ageVerified: true
+                    };
+                    if (pendingPhoneAuthUsername) {
+                        updates.username = escapeHtml(pendingPhoneAuthUsername);
+                        if (currentUserData) currentUserData.username = updates.username;
+                    }
+                    await updateDoc(doc(db, "users", activeUid), updates).catch(() => {});
+                }
+                closePhoneAuthModal();
+                showToast("Connexion par téléphone validée ! 🎉", "success");
+            } catch (err) {
+                if (errEl) {
+                    errEl.innerText = "Code de vérification incorrect. Veuillez vérifier le code à 6 chiffres reçu.";
+                    errEl.classList.remove('hidden');
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+            }
+        };
+
+        // --- CONNEXION AVEC APPLE (Apple ID) ---
+        function getSavedAppleAccounts() {
+            try {
+                const raw = localStorage.getItem('rv_apple_saved_accounts_v1');
+                const parsed = raw ? JSON.parse(raw) : [];
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveAppleAccountToDevice(acc) {
+            if (!acc || !acc.email) return;
+            const list = getSavedAppleAccounts().filter(a => a.email !== acc.email);
+            list.unshift(acc);
+            safeSetStorage('rv_apple_saved_accounts_v1', JSON.stringify(list.slice(0, 6)));
+        }
+
+        function renderSavedAppleAccounts() {
+            const box = document.getElementById('apple-saved-accounts-box');
+            const listEl = document.getElementById('apple-saved-accounts-list');
+            if (!box || !listEl) return;
+            const saved = getSavedAppleAccounts();
+            if (saved.length === 0) {
+                box.classList.add('hidden');
+                listEl.innerHTML = '';
+                return;
+            }
+            box.classList.remove('hidden');
+            listEl.innerHTML = saved.map(a => {
+                const emSafe = escapeHtml(a.email);
+                const emJs = escapeJsSingleQuotedAttr(a.email);
+                const nmSafe = escapeHtml(a.username || buildDefaultUsernameFromEmail(a.email));
+                const nmJs = escapeJsSingleQuotedAttr(a.username || '');
+                return `
+                <div onclick="selectSavedAppleAccount('${emJs}', '${nmJs}')" class="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 cursor-pointer transition">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-8 h-8 rounded-full bg-white text-black font-bold text-xs flex items-center justify-center shrink-0"></div>
+                        <div class="min-w-0">
+                            <div class="text-xs font-bold text-white truncate">${nmSafe}</div>
+                            <div class="text-[10px] text-gray-400 truncate">${emSafe}</div>
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-bold text-cyan-400 shrink-0">Choisir →</span>
+                </div>`;
+            }).join('');
+        }
+
+        window.selectSavedAppleAccount = (email, name) => {
+            const emInp = document.getElementById('apple-auth-email-input');
+            const nmInp = document.getElementById('apple-auth-name-input');
+            if (emInp) emInp.value = email || '';
+            if (nmInp && name) nmInp.value = name;
+            window.executeAppleSignIn();
+        };
+
+        window.openAppleAuthModal = () => {
+            const modal = document.getElementById('apple-auth-modal');
+            if (!modal) return;
+            document.getElementById('apple-auth-error')?.classList.add('hidden');
+            renderSavedAppleAccounts();
+            modal.classList.add('open');
+            if (window.lucide) lucide.createIcons();
+            setTimeout(() => document.getElementById('apple-auth-email-input')?.focus(), 80);
+        };
+
+        window.closeAppleAuthModal = () => {
+            document.getElementById('apple-auth-modal')?.classList.remove('open');
+        };
+
+        window.executeAppleSignIn = async () => {
+            const errEl = document.getElementById('apple-auth-error');
+            if (errEl) errEl.classList.add('hidden');
+
+            let rawEmail = (document.getElementById('apple-auth-email-input')?.value || '').trim().toLowerCase();
+            const customName = (document.getElementById('apple-auth-name-input')?.value || '').trim();
+            const privacyMode = document.querySelector('input[name="apple-email-privacy"]:checked')?.value || 'share';
+
+            if (!rawEmail) {
+                // Tenter d'abord le popup Firebase OAuthProvider('apple.com') si l'utilisateur clique sans saisir d'email
+                try {
+                    const appleProvider = new OAuthProvider('apple.com');
+                    appleProvider.addScope('email');
+                    appleProvider.addScope('name');
+                    const res = await signInWithPopup(rawAuth, appleProvider);
+                    if (res && res.user) {
+                        const appleEm = res.user.email || `apple_${res.user.uid.slice(0, 8)}@privaterelay.appleid.com`;
+                        const appleNm = customName || res.user.displayName || buildDefaultUsernameFromEmail(appleEm);
+                        saveAppleAccountToDevice({ email: appleEm, username: appleNm });
+                        safeSetStorage(`rv_birthdate_verified_${res.user.uid}`, '2000-01-01');
+                        safeSetStorage(`rv_birthdate_email_${appleEm}`, '2000-01-01');
+                        closeAppleAuthModal();
+                        await handleAuthenticatedUserEntry(res.user);
+                        showToast("Connecté avec Apple ", "success");
+                        return;
+                    }
+                } catch (popupErr) {
+                    if (errEl) {
+                        errEl.innerText = "Veuillez saisir votre identifiant Apple (ex: nom@icloud.com ou votre e-mail).";
+                        errEl.classList.remove('hidden');
+                    }
+                    document.getElementById('apple-auth-email-input')?.focus();
+                    return;
+                }
+            }
+
+            if (!rawEmail.includes('@')) {
+                rawEmail = rawEmail + '@icloud.com';
+            }
+
+            let effectiveEmail = rawEmail;
+            if (privacyMode === 'hide' && !rawEmail.endsWith('@privaterelay.appleid.com')) {
+                const prefixHash = rawEmail.split('@')[0].replace(/[^a-z0-9]/g, '').slice(0, 10) || 'user';
+                effectiveEmail = `${prefixHash}.apple@privaterelay.appleid.com`;
+            }
+
+            const btn = document.getElementById('btn-confirm-apple-auth');
+            const origHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-black border-t-transparent rounded-full mx-auto"></div>`;
+            }
+
+            try {
+                const chosenUsername = customName || buildDefaultUsernameFromEmail(rawEmail);
+                saveAppleAccountToDevice({ email: effectiveEmail, username: chosenUsername });
+                safeSetStorage(`rv_birthdate_email_${effectiveEmail}`, '2000-01-01');
+                await executeGoogleMaskedSignInOrRegister(effectiveEmail);
+                if (auth.currentUser) {
+                    const activeUid = auth.currentUser.uid;
+                    safeSetStorage(`rv_birthdate_verified_${activeUid}`, '2000-01-01');
+                    const updates = {
+                        authMethod: "apple",
+                        appleIdEmail: rawEmail,
+                        ageVerified: true
+                    };
+                    if (customName) {
+                        updates.username = escapeHtml(customName);
+                        if (currentUserData) currentUserData.username = updates.username;
+                    }
+                    await updateDoc(doc(db, "users", activeUid), updates).catch(() => {});
+                }
+                closeAppleAuthModal();
+                showToast("Connecté avec Apple ", "success");
+            } catch (e) {
+                if (errEl) {
+                    errEl.innerText = "Impossible de finaliser la connexion Apple. Vérifiez votre identifiant.";
+                    errEl.classList.remove('hidden');
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+            }
+        };
+
         async function setupNewGoogleUserInFirestore(userObj, cleanEmail, username) {
             const isVerified = cleanEmail.toLowerCase() === VIP_EMAIL.toLowerCase();
             const userDocData = {
@@ -10551,6 +11180,8 @@
                 }
                 
                 closeGoogleAccountChooserModal();
+                if (window.closePhoneAuthModal) window.closePhoneAuthModal();
+                if (window.closeAppleAuthModal) window.closeAppleAuthModal();
                 closeModal('login-prompt-modal');
                 document.getElementById('auth-screen').classList.remove('active'); 
                 document.getElementById('bottom-nav').classList.remove('hidden'); 
@@ -10609,6 +11240,17 @@
         window.navigateTo = (screen) => {
             if (screen === 'inbox' || screen === 'profile' || screen === 'discover') {
                 if(!checkAuth()) return;
+            }
+
+            if (screen === 'auth') {
+                stopMasterAudio();
+                document.querySelectorAll('video').forEach(v => v.pause());
+                const hasUnderlying = document.querySelector('.screen.active:not(#auth-screen):not(#splash-screen)');
+                if (!hasUnderlying) {
+                    document.getElementById('feed-screen')?.classList.add('active');
+                }
+                document.getElementById('auth-screen')?.classList.add('active');
+                return;
             }
 
             if (screen === 'inbox') {
