@@ -2106,8 +2106,37 @@
             text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 2px 8px rgba(0, 0, 0, 0.85) !important;
         }
         .transparent-reaction-rail .animate-spin-slow {
-            animation: none !important;
-            transform: none !important;
+            animation: spin 5.5s linear infinite !important;
+            will-change: transform;
+        }
+        #messages-tab-badge:not(.hidden) {
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            background: linear-gradient(135deg, #ff2a5f, #e11d48) !important;
+            color: #ffffff !important;
+            font-size: 10px !important;
+            font-weight: 800 !important;
+            min-width: 20px;
+            height: 18px;
+            padding: 0 6px !important;
+            border-radius: 9999px !important;
+            box-shadow: 0 0 10px rgba(255, 42, 95, 0.8), 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+            animation: rvMsgSignalPulse 1.5s infinite ease-in-out;
+        }
+        #messages-tab-badge:not(.hidden)::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 9999px;
+            background-color: #ffffff;
+            box-shadow: 0 0 6px #ffffff;
+            flex-shrink: 0;
+        }
+        @keyframes rvMsgSignalPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(255, 42, 95, 0.7); }
+            50% { transform: scale(1.08); box-shadow: 0 0 14px rgba(255, 42, 95, 1); }
         }
         .video-card button[onclick*="openEditVideoModal"],
         body.light-theme .video-card button[onclick*="openEditVideoModal"] {
@@ -8320,6 +8349,34 @@
             }
         }
         
+        let latestUnreadChatSignatures = {};
+
+        function getSeenMessagesTabMap(uid) {
+            if (!uid) return {};
+            try {
+                const raw = localStorage.getItem('rv_seen_msg_tab_' + uid);
+                return raw ? JSON.parse(raw) : {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function saveSeenMessagesTabMap(uid, mapObj) {
+            if (!uid) return;
+            try {
+                localStorage.setItem('rv_seen_msg_tab_' + uid, JSON.stringify(mapObj || {}));
+            } catch (e) {}
+        }
+
+        function acknowledgeMessagesTabSignal() {
+            const uid = auth.currentUser?.uid;
+            if (uid) {
+                saveSeenMessagesTabMap(uid, { ...latestUnreadChatSignatures });
+            }
+            totalUnreadChats = 0;
+            updateGlobalBadge();
+        }
+
         function updateGlobalBadge() {
             const total = totalUnreadNotifications + totalUnreadChats;
             const navBadge = document.getElementById('inbox-badge');
@@ -8905,14 +8962,35 @@
             const qChats = query(collection(db, "chats"), where("participants", "array-contains", myUid));
             unreadChatsObserver = onSnapshot(qChats, (snapshot) => {
                 if (!auth.currentUser || auth.currentUser.uid !== myUid) return;
-                let chatsUnread = 0;
+                const seenMap = getSeenMessagesTabMap(myUid);
+                let seenChanged = false;
+                let unacknowledgedUnread = 0;
+                const currentSigs = {};
                 snapshot.forEach(d => {
                     const c = d.data();
                     if (!Array.isArray(c.participants) || !c.participants.includes(myUid)) return;
-                    const myUnread = (c.unreadCounts && c.unreadCounts[myUid]) ? c.unreadCounts[myUid] : 0;
-                    chatsUnread += myUnread;
+                    const myUnread = (c.unreadCounts && c.unreadCounts[myUid]) ? Number(c.unreadCounts[myUid]) : (Number(c['unreadCounts.' + myUid]) || 0);
+                    if (myUnread > 0) {
+                        const sig = `${myUnread}_${c.lastMessage || ''}`;
+                        currentSigs[d.id] = sig;
+                        if (seenMap[d.id] !== sig) {
+                            unacknowledgedUnread += myUnread;
+                        }
+                    } else if (seenMap[d.id]) {
+                        delete seenMap[d.id];
+                        seenChanged = true;
+                    }
                 });
-                totalUnreadChats = chatsUnread;
+                if (seenChanged) saveSeenMessagesTabMap(myUid, seenMap);
+                latestUnreadChatSignatures = currentSigs;
+                const isMessagesTabActive = document.getElementById('inbox-screen')?.classList.contains('active') &&
+                    document.getElementById('tab-messages')?.classList.contains('border-b-2');
+                if (isMessagesTabActive && unacknowledgedUnread > 0) {
+                    saveSeenMessagesTabMap(myUid, { ...currentSigs });
+                    totalUnreadChats = 0;
+                } else {
+                    totalUnreadChats = unacknowledgedUnread;
+                }
                 updateGlobalBadge();
             });
             const q = query(collection(db, "users", myUid, "notifications"), limit(100));
@@ -10534,18 +10612,8 @@
             }
 
             if (screen === 'inbox') {
-                const navBadge = document.getElementById('inbox-badge');
-                if (navBadge) {
-                    navBadge.classList.add('hidden');
-                    navBadge.innerText = '0';
-                }
-                const msgBadge = document.getElementById('messages-tab-badge');
-                if (msgBadge) {
-                    msgBadge.classList.add('hidden');
-                    msgBadge.innerText = '0';
-                }
                 totalUnreadNotifications = 0;
-                totalUnreadChats = 0;
+                updateGlobalBadge();
             }
 
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
@@ -15703,6 +15771,7 @@
                 tabMsg.classList.remove('text-gray-400');
                 tabAct.classList.remove('border-b-2', 'border-[#ff2a5f]', 'text-white');
                 tabAct.classList.add('text-gray-400');
+                acknowledgeMessagesTabSignal();
                 loadConversations();
             }
         };
