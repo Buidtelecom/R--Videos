@@ -2445,11 +2445,6 @@
             </div>
 
             <div class="w-full max-w-md text-center my-auto py-12 z-10">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-400 uppercase tracking-[0.15em] mb-4">
-                    <span data-i18n="app_created_by">Application créée par</span>
-                    <span class="text-white font-bold" data-i18n="studio_name">"Le Studio Ralph Nyamè". 2025</span>
-                </div>
-
                 <div class="w-20 h-20 rounded-[20px] rv-brand-logo-icon mx-auto mb-3 shadow-[0_10px_28px_rgba(228,61,53,0.4)] border border-[#ec514c]/35"></div>
                 <h1 class="text-3xl font-black font-display mb-1 bg-gradient-to-r from-white via-[#ffd5d3] to-[#ec514c] bg-clip-text text-transparent tracking-tight">R-VIDEOS</h1>
                 <p class="text-gray-400 mb-6 text-xs font-medium" data-i18n="subtitle">Réseau Social Vidéo Nouvelle Génération</p>
@@ -11115,9 +11110,9 @@
 
                         <!-- TRANSPARENT BOTTOM-LEFT OVERLAY (Airy, Compact & Professional) -->
                         <div class="absolute bottom-14 left-3 right-14 z-20 text-left pointer-events-none flex flex-col items-start gap-1 max-w-[82%] sm:max-w-lg">
-                            <!-- Compact Meta Row: Location/Date + Quick Emoji Burst -->
+                            <!-- Compact Meta Row: Location + Quick Emoji Burst (Heure de publication masquée dans le fil d'actualité) -->
                             <div class="flex items-center gap-1.5 pointer-events-auto flex-wrap">
-                                ${data.location ? `<div class="creator-tag-chip"><svg class="w-2.5 h-2.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg> ${escapeHtml(data.location)}</div>` : `<div class="creator-tag-chip">${isPinned ? '📌 Épinglé • ' : ''}${dateStr}</div>`}
+                                ${data.location ? `<div class="creator-tag-chip"><svg class="w-2.5 h-2.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg> ${escapeHtml(data.location)}</div>` : (isPinned ? `<div class="creator-tag-chip">📌 Épinglé</div>` : '')}
                                 <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/38 border border-white/10 text-[10.5px]">
                                     <span onclick="triggerEmojiBurst('${docId}', '🔥', event)" class="cursor-pointer hover:scale-125 transition">🔥</span>
                                     <span onclick="triggerEmojiBurst('${docId}', '😍', event)" class="cursor-pointer hover:scale-125 transition">😍</span>
@@ -15221,7 +15216,8 @@
                         allComments.push({ id: d.id, ...cData });
                     }
                 });
-                await hydrateUserProfilesMap(allComments.map(c => c.userId));
+                const videoOwnerForHydration = currentVideoAuthorId || profileVideosData[id]?.userId || '';
+                await hydrateUserProfilesMap([...allComments.map(c => c.userId), videoOwnerForHydration].filter(Boolean));
 
                 const byId = new Map();
                 allComments.forEach(c => byId.set(c.id, c));
@@ -15261,6 +15257,25 @@
                 });
 
                 const resolvedVideoOwnerUid = currentVideoAuthorId || profileVideosData[id]?.userId || '';
+                const vDataForOwner = profileVideosData[id] || {};
+                const videoOwnerIdentity = resolvedVideoOwnerUid
+                    ? getResolvedProfileIdentity(resolvedVideoOwnerUid, vDataForOwner.username, vDataForOwner.isVerified, vDataForOwner.userPhotoURL, vDataForOwner.userEmail)
+                    : { username: 'createur', isVerified: false, photoURL: '' };
+
+                // Identifier le tout premier commentaire publié (le créateur de la publication étant exclu)
+                let firstNonCreatorCommentId = null;
+                let earliestNonCreatorTs = Infinity;
+                allComments.forEach((item, idx) => {
+                    if (resolvedVideoOwnerUid && item.userId === resolvedVideoOwnerUid) return;
+                    if (item.parentCommentId) return;
+                    const tsMs = getCommentTimestampMs(item.createdAt);
+                    const effectiveOrder = tsMs > 0 ? tsMs : (idx + 1);
+                    if (effectiveOrder < earliestNonCreatorTs) {
+                        earliestNonCreatorTs = effectiveOrder;
+                        firstNonCreatorCommentId = item.id;
+                    }
+                });
+
                 const hasOthersComments = topLevelComments.some(item => item.userId !== resolvedVideoOwnerUid);
 
                 topLevelComments.sort((a, b) => {
@@ -15279,6 +15294,24 @@
                 const currentLang = safeGetStorage('rv_lang', 'fr');
                 const replyText = translations[currentLang]?.reply || (currentLang === 'en' ? "Reply" : "Répondre");
                 const myUid = auth.currentUser?.uid || '';
+
+                const buildCreatorLikedBubbleHtml = (isLikedByCreator) => {
+                    if (!isLikedByCreator || !resolvedVideoOwnerUid) return '';
+                    return `
+                    <div class="creator-like-avatar-bubble relative w-4 h-4 rounded-full overflow-hidden border border-[#ff2a5f] shadow-md mt-1 shrink-0" title="Aimé par le créateur @${escapeHtml(videoOwnerIdentity.username)}">
+                        ${getAvatarHTML(videoOwnerIdentity.photoURL, "w-full h-full object-cover")}
+                        <span class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#ff2a5f] flex items-center justify-center text-[6px] text-white">♥</span>
+                    </div>`;
+                };
+
+                const buildCreatorLikedPillHtml = (isLikedByCreator) => {
+                    if (!isLikedByCreator || !resolvedVideoOwnerUid) return '';
+                    return `
+                    <span class="creator-liked-pill inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#ff2a5f]/15 border border-[#ff2a5f]/35 text-[9px] font-extrabold text-rose-300 shrink-0">
+                        <span class="w-3.5 h-3.5 rounded-full overflow-hidden inline-block shrink-0 border border-[#ff2a5f]/60">${getAvatarHTML(videoOwnerIdentity.photoURL, "w-full h-full object-cover")}</span>
+                        <span>Aimé par le créateur</span>
+                    </span>`;
+                };
 
                 const renderCommentBodyHTML = (c) => {
                     let body = '';
@@ -15368,6 +15401,7 @@
                                 ? `<span class="text-cyan-400 font-semibold text-[10px] ml-1">▸ @${escapeHtml(rep.replyToUsername)}</span>`
                                 : '';
 
+                            const repLikedByCreator = !!(resolvedVideoOwnerUid && Array.isArray(rep.likedBy) && rep.likedBy.includes(resolvedVideoOwnerUid));
                             repliesHtml += `
                             <div class="flex gap-2.5 p-2 rounded-xl bg-white/[0.03] border border-white/5 relative">
                                 <div class="flex-shrink-0 cursor-pointer" onclick="window.viewUserProfile('${rep.userId}'); window.closeComments()">
@@ -15375,16 +15409,17 @@
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center justify-between gap-2">
-                                        <div class="text-[11px] font-bold text-gray-200 cursor-pointer truncate flex items-center" onclick="window.viewUserProfile('${rep.userId}'); window.closeComments()">
+                                        <div class="text-[11px] font-bold text-gray-200 cursor-pointer truncate flex items-center flex-wrap gap-1" onclick="window.viewUserProfile('${rep.userId}'); window.closeComments()">
                                             <span>@${escapeHtml(rep.username)}</span>${repBadge}${replyTargetTag}
                                         </div>
                                         <span class="text-[9px] text-gray-500 shrink-0">${repDateStr}${rep.isEdited ? ' • modifié' : ''}</span>
                                     </div>
                                     ${renderCommentBodyHTML(rep)}
-                                    <div class="flex items-center gap-3 mt-1">
+                                    <div class="flex items-center flex-wrap gap-2.5 mt-1">
                                         <button onclick="replyToUser('${repSafeUserJs}', '${c.id}', '${rep.userId}', '${rep.id}')" class="text-[10px] text-cyan-400 font-bold hover:underline">
                                             ${replyText}
                                         </button>
+                                        ${buildCreatorLikedPillHtml(repLikedByCreator)}
                                         ${repIsMine && rep.text ? `<button onclick="openEditCommentModal('${id}', '${rep.id}', '${repSafeTextJs}')" class="text-[10px] text-gray-400 hover:text-white font-semibold">Modifier</button>` : ''}
                                         ${repCanDelete ? `<button onclick="deleteComment('${id}', '${rep.id}')" class="text-[10px] text-rose-400 hover:underline font-semibold">Supprimer</button>` : ''}
                                     </div>
@@ -15392,12 +15427,16 @@
                                 <div class="flex flex-col items-center justify-center cursor-pointer pl-1 comment-like-btn ${repLiked ? 'liked-comment' : ''}" data-cid="${rep.id}" onclick="toggleCommentLike('${id}', '${rep.id}', '${rep.userId}', this)">
                                     <i data-lucide="heart" class="w-3.5 h-3.5 transition-transform ${repLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-gray-500'}"></i>
                                     <span class="text-[9px] text-gray-400 mt-0.5 comment-like-count" data-raw-count="${rep.likes || 0}">${rep.likes || 0}</span>
+                                    ${buildCreatorLikedBubbleHtml(repLikedByCreator)}
                                 </div>
                             </div>`;
                         });
                         repliesHtml += `</div>`;
                     }
                     
+                    const isFirstNonCreatorComment = (firstNonCreatorCommentId && c.id === firstNonCreatorCommentId);
+                    const cLikedByCreator = !!(resolvedVideoOwnerUid && Array.isArray(c.likedBy) && c.likedBy.includes(resolvedVideoOwnerUid));
+
                     html += `
                     <div class="flex flex-col p-2.5 rounded-2xl border ${c.isPinned ? 'bg-amber-500/10 border-amber-500/30' : 'bg-white/[0.03] border-white/5'} relative">
                         <div class="flex gap-3">
@@ -15406,17 +15445,19 @@
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center justify-between gap-2">
-                                    <div class="text-xs font-bold text-gray-200 cursor-pointer truncate flex items-center" onclick="window.viewUserProfile('${c.userId}'); window.closeComments()">
+                                    <div class="text-xs font-bold text-gray-200 cursor-pointer truncate flex items-center flex-wrap gap-1" onclick="window.viewUserProfile('${c.userId}'); window.closeComments()">
                                         <span>@${escapeHtml(c.username)}</span>${cBadge}
-                                        ${c.isPinned ? `<span class="ml-1 text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">📌 Épinglé</span>` : ''}
+                                        ${isFirstNonCreatorComment ? `<span class="ml-0.5 text-[9px] px-1.5 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-extrabold shrink-0">🥇 1er commentaire</span>` : ''}
+                                        ${c.isPinned ? `<span class="ml-0.5 text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold shrink-0">📌 Épinglé</span>` : ''}
                                     </div>
                                     <span class="text-[9px] text-gray-500 shrink-0">${dateStr}${c.isEdited ? ' • modifié' : ''}</span>
                                 </div>
                                 ${renderCommentBodyHTML(c)}
-                                <div class="flex items-center gap-3 mt-1.5">
+                                <div class="flex items-center flex-wrap gap-2.5 mt-1.5">
                                     <button onclick="replyToUser('${safeUsernameJs}', '${c.id}', '${c.userId}', '${c.id}')" class="text-[10px] text-cyan-400 font-bold hover:underline">
                                         ${replyText}
                                     </button>
+                                    ${buildCreatorLikedPillHtml(cLikedByCreator)}
                                     ${isVideoOwner ? `<button onclick="togglePinComment('${id}', '${c.id}', ${!!c.isPinned})" class="text-[10px] text-amber-400 font-semibold hover:underline">${c.isPinned ? 'Désépingler' : 'Épingler'}</button>` : ''}
                                     ${isMyComment && c.text ? `<button onclick="openEditCommentModal('${id}', '${c.id}', '${safeTextForJs}')" class="text-[10px] text-gray-400 hover:text-white font-semibold">Modifier</button>` : ''}
                                     ${canDelete ? `<button onclick="deleteComment('${id}', '${c.id}')" class="text-[10px] text-rose-400 hover:underline font-semibold">Supprimer</button>` : ''}
@@ -15425,6 +15466,7 @@
                             <div class="flex flex-col items-center justify-center cursor-pointer pl-1 comment-like-btn ${isLiked ? 'liked-comment' : ''}" data-cid="${c.id}" onclick="toggleCommentLike('${id}', '${c.id}', '${c.userId}', this)">
                                 <i data-lucide="heart" class="w-4 h-4 transition-transform ${isLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-gray-500'}"></i>
                                 <span class="text-[10px] text-gray-400 mt-0.5 comment-like-count" data-raw-count="${c.likes || 0}">${c.likes || 0}</span>
+                                ${buildCreatorLikedBubbleHtml(cLikedByCreator)}
                             </div>
                         </div>
                         ${repliesHtml}
@@ -16260,9 +16302,7 @@
                     </div>
                 </div>
                 <div class="absolute bottom-12 left-3 right-14 z-20 text-left pointer-events-none flex flex-col items-start gap-1 max-w-[82%] sm:max-w-lg">
-                    <div class="flex items-center gap-1.5 pointer-events-auto flex-wrap">
-                        <div class="creator-tag-chip">${dateStr}</div>
-                    </div>
+                    ${document.getElementById('profile-screen')?.classList.contains('active') ? `<div class="flex items-center gap-1.5 pointer-events-auto flex-wrap"><div class="creator-tag-chip">${dateStr}</div></div>` : ''}
                     <div class="flex flex-col items-start gap-0.5 pointer-events-auto mt-0.5">
                         <button onclick="toggleRepostVideo('${id}', this, event)" class="repost-frosted-pill self-start ${iReposted ? 'reposted' : ''}">
                             <i data-lucide="repeat-2" class="w-3 h-3"></i>
@@ -17625,7 +17665,6 @@
                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30"></div>
                     <div class="absolute top-1.5 left-1.5 right-1.5 flex justify-between items-center">
                         ${count <= 3 ? `<span class="bg-[#ff2a5f] text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded">#${count}</span>` : '<span></span>'}
-                        <span class="text-[8px] text-gray-200 bg-black/50 px-1.5 py-0.5 rounded">${dateStr}</span>
                     </div>
                     <div class="absolute bottom-1.5 left-2 right-2 flex items-center justify-between text-[10px] font-bold text-white drop-shadow-md">
                         <span class="flex items-center gap-1"><i data-lucide="heart" class="w-3 h-3 fill-[#ff2a5f] text-[#ff2a5f]"></i> ${formatCount(v.likes)}</span>
