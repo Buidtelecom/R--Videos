@@ -5438,6 +5438,21 @@
         const db = getFirestore(app);
         let activeCanonicalUid = null;
         let activeCanonicalEmail = null;
+        try {
+            activeCanonicalUid = localStorage.getItem('rv_active_canonical_uid') || null;
+            activeCanonicalEmail = localStorage.getItem('rv_active_canonical_email') || null;
+        } catch (e) {}
+
+        function setPersistentCanonicalIdentity(uid, email) {
+            activeCanonicalUid = uid || null;
+            activeCanonicalEmail = email ? String(email).toLowerCase().trim().replace('+gauth@', '@').replace('+pwd@', '@') : null;
+            try {
+                if (activeCanonicalUid) localStorage.setItem('rv_active_canonical_uid', activeCanonicalUid);
+                else localStorage.removeItem('rv_active_canonical_uid');
+                if (activeCanonicalEmail) localStorage.setItem('rv_active_canonical_email', activeCanonicalEmail);
+                else localStorage.removeItem('rv_active_canonical_email');
+            } catch (e) {}
+        }
 
         const auth = new Proxy(rawAuth, {
             get(target, prop) {
@@ -5451,7 +5466,7 @@
                             }
                             if (uProp === 'email') {
                                 const rawEm = activeCanonicalEmail || uTarget.email || '';
-                                return rawEm.replace('+gauth@', '@');
+                                return rawEm.replace('+gauth@', '@').replace('+pwd@', '@');
                             }
                             if (uProp === 'displayName') {
                                 return (currentUserData && currentUserData.username) || uTarget.displayName;
@@ -9539,7 +9554,7 @@
             } catch (error) {
                 if (error.code === 'auth/requires-recent-login') {
                     showToast("Veuillez vous reconnecter avant de supprimer votre compte.", "error");
-                    activeCanonicalUid = null; activeCanonicalEmail = null; await signOut(rawAuth);
+                    setPersistentCanonicalIdentity(null, null); await signOut(rawAuth);
                 } else {
                     showToast("Erreur: " + error.message, "error");
                 }
@@ -10079,7 +10094,7 @@
 
         // Recherche le vrai compte original existant pour cet email lors de la connexion et supprime tout éventuel doublon parallèle
         async function findAndConsolidateExistingAccountByEmail(rawEmail) {
-            const cleanEmail = String(rawEmail || '').toLowerCase().trim().replace('+gauth@', '@');
+            const cleanEmail = String(rawEmail || '').toLowerCase().trim().replace('+gauth@', '@').replace('+pwd@', '@');
             if (!cleanEmail || !cleanEmail.includes('@')) return null;
 
             const candidatesMap = new Map();
@@ -10116,7 +10131,7 @@
                 snapAll.forEach(d => {
                     const data = d.data();
                     if (!data || !data.email || isVirtualBotIdOrUser(d.id, data.email, data.isBot)) return;
-                    const normEm = String(data.email).toLowerCase().trim().replace('+gauth@', '@');
+                    const normEm = String(data.email).toLowerCase().trim().replace('+gauth@', '@').replace('+pwd@', '@');
                     if (normEm === cleanEmail && !candidatesMap.has(d.id)) {
                         candidatesMap.set(d.id, { id: d.id, data });
                     }
@@ -11199,8 +11214,7 @@
                             customPassVerifier: passVerifier
                         }).catch(() => {});
                     }
-                    activeCanonicalUid = targetCanonicalUid;
-                    activeCanonicalEmail = cleanEmail;
+                    setPersistentCanonicalIdentity(targetCanonicalUid, cleanEmail);
                     currentUserData = finalUserData;
                     saveGoogleAccountToDevice({
                         email: cleanEmail,
@@ -11560,7 +11574,7 @@
                         await addDoc(collection(db, "chats", chatId, "messages"), { text: welcomeMsg, senderId: adminUid, createdAt: serverTimestamp(), read: false });
                     }
                 }
-                activeCanonicalUid = null; activeCanonicalEmail = null; await signOut(rawAuth); isRegistering = false; window.toggleAuthMode();
+                setPersistentCanonicalIdentity(null, null); await signOut(rawAuth); isRegistering = false; window.toggleAuthMode();
                 document.getElementById('auth-success').classList.remove('hidden'); document.getElementById('login-email').value = email;
             } catch (e) { 
                 isRegistering = false; showAuthError(e.message); 
@@ -11602,61 +11616,58 @@
             if (window.OneSignalDeferred && window.location.hostname === 'buidtelecom.github.io') {
                 window.OneSignalDeferred.push(function(OneSignal) { try { OneSignal.logout(); } catch(e) {} });
             }
-            activeCanonicalUid = null; activeCanonicalEmail = null; await signOut(rawAuth); 
+            setPersistentCanonicalIdentity(null, null); await signOut(rawAuth); 
             showToast("Vous êtes déconnecté", "info");
         };
         window.closeModal = (id) => document.getElementById(id).classList.remove('open');
 
         async function handleAuthenticatedUserEntry(user) {
             if (!user || isRegistering) return;
-            if (String(user.email || '').includes('+gauth@')) {
-                activeCanonicalUid = null;
-                activeCanonicalEmail = null;
-                await signOut(rawAuth).catch(() => {});
-                showToast("Pour votre sécurité, veuillez vous reconnecter avec votre mot de passe.", "info");
-                return;
-            }
             document.getElementById('splash-screen').classList.remove('active');
             updateFeedFitHeaderLabel();
             isGuestMode = false;
 
-            const rawUserEmail = String(user.email || activeCanonicalEmail || currentUserData?.email || '').toLowerCase().trim();
-            const isVerifiedOAuthProvider = Array.isArray(user.providerData) && user.providerData.some(p => p && (p.providerId === 'google.com' || p.providerId === 'apple.com')) && user.emailVerified;
+            const rawUserEmail = String(activeCanonicalEmail || user.email || currentUserData?.email || '')
+                .toLowerCase()
+                .trim()
+                .replace('+gauth@', '@')
+                .replace('+pwd@', '@');
 
-            const preferredUid = activeCanonicalUid || user.uid;
-            let userDoc = await getDoc(doc(db, "users", preferredUid));
-            if (userDoc.exists()) {
-                activeCanonicalUid = preferredUid;
-                activeCanonicalEmail = rawUserEmail;
-                currentUserData = userDoc.data();
-                currentUserData.uid = preferredUid;
+            const consolidated = await findAndConsolidateExistingAccountByEmail(rawUserEmail);
+
+            if (consolidated) {
+                setPersistentCanonicalIdentity(consolidated.id, rawUserEmail);
+                currentUserData = consolidated.data;
+                currentUserData.uid = consolidated.id;
                 if ('googlePassKey' in currentUserData) {
                     delete currentUserData.googlePassKey;
-                    updateDoc(doc(db, "users", preferredUid), { googlePassKey: deleteField() }).catch(() => {});
+                    updateDoc(doc(db, "users", consolidated.id), { googlePassKey: deleteField() }).catch(() => {});
                 }
-            } else if (rawUserEmail) {
-                const consolidated = await findAndConsolidateExistingAccountByEmail(rawUserEmail);
-                if (consolidated && (isVerifiedOAuthProvider || rawUserEmail.endsWith('@phone.rvideos.app') || String(user.email || '').includes('+pwd@'))) {
-                    activeCanonicalUid = consolidated.id;
-                    activeCanonicalEmail = rawUserEmail;
-                    currentUserData = consolidated.data;
-                    currentUserData.uid = consolidated.id;
+                if (currentUserData.authMethod !== 'google' && !currentUserData.isAgeBlocked) {
+                    currentUserData.ageVerified = true;
+                    safeSetStorage(`rv_birthdate_verified_${consolidated.id}`, currentUserData.birthDate || 'existing_user');
+                    if (rawUserEmail) safeSetStorage(`rv_birthdate_email_${rawUserEmail}`, currentUserData.birthDate || 'existing_user');
                 }
-            }
-
-            if (!currentUserData || currentUserData.uid !== (activeCanonicalUid || user.uid)) {
-                activeCanonicalUid = user.uid;
-                activeCanonicalEmail = rawUserEmail;
-                currentUserData = {
-                    uid: user.uid,
-                    email: rawUserEmail,
-                    username: user.displayName || buildDefaultUsernameFromEmail(rawUserEmail || "utilisateur"),
-                    photoURL: user.photoURL || "",
-                    followers: [],
-                    following: [],
-                    blockedUsers: [],
-                    blockedBy: []
-                };
+            } else {
+                const targetUid = activeCanonicalUid || user.uid;
+                const userDoc = await getDoc(doc(db, "users", targetUid));
+                if (userDoc.exists()) {
+                    currentUserData = userDoc.data();
+                    currentUserData.uid = targetUid;
+                    setPersistentCanonicalIdentity(targetUid, currentUserData.email || rawUserEmail);
+                } else {
+                    setPersistentCanonicalIdentity(targetUid, rawUserEmail);
+                    currentUserData = {
+                        uid: targetUid,
+                        email: rawUserEmail,
+                        username: user.displayName || buildDefaultUsernameFromEmail(rawUserEmail || "utilisateur"),
+                        photoURL: user.photoURL || "",
+                        followers: [],
+                        following: [],
+                        blockedUsers: [],
+                        blockedBy: []
+                    };
+                }
             }
 
             const effectiveUid = activeCanonicalUid || user.uid;
@@ -11693,7 +11704,7 @@
                             await clearUserSanctionState(effectiveUid, false);
                         } else if (isGravePermanent) {
                             showToast("Votre compte a été bloqué définitivement suite à une faute très grave.", "error");
-                            activeCanonicalUid = null; activeCanonicalEmail = null; await signOut(rawAuth);
+                            setPersistentCanonicalIdentity(null, null); await signOut(rawAuth);
                             return;
                         } else {
                             // Legacy non-grave ban converts to 24h temporary sanction
