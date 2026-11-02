@@ -2475,6 +2475,142 @@
             color: #0f172a !important;
         }
 
+        /* =====================================================================
+           1. ANIMATION LUMINEUSE SUR "AMIS" (#nav-discover) QUAND CONNECTÉ & SUR LE FIL
+           ===================================================================== */
+        @keyframes rvDiscoverNavGlow {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+                filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.85)) drop-shadow(0 0 14px rgba(255, 42, 95, 0.7));
+            }
+            50% {
+                transform: translateY(-2px) scale(1.09);
+                filter: drop-shadow(0 0 12px rgba(254, 240, 138, 1)) drop-shadow(0 0 22px rgba(255, 42, 95, 0.95));
+            }
+        }
+        @keyframes rvDiscoverOrbPulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 8px 2px rgba(251, 191, 36, 0.95), 0 0 16px 4px rgba(255, 42, 95, 0.8);
+            }
+            50% {
+                transform: scale(1.28);
+                box-shadow: 0 0 12px 4px rgba(254, 240, 138, 1), 0 0 24px 8px rgba(255, 42, 95, 0.95);
+            }
+        }
+        @keyframes rvDiscoverOrbHalo {
+            0% {
+                transform: scale(0.9);
+                opacity: 0.95;
+            }
+            80%, 100% {
+                transform: scale(2.6);
+                opacity: 0;
+            }
+        }
+        #bottom-nav #nav-discover.rv-nav-discover-event-active,
+        body.light-theme #bottom-nav #nav-discover.rv-nav-discover-event-active {
+            opacity: 1 !important;
+            animation: rvDiscoverNavGlow 1.9s ease-in-out infinite !important;
+        }
+        #bottom-nav #nav-discover.rv-nav-discover-event-active svg,
+        body.light-theme #bottom-nav #nav-discover.rv-nav-discover-event-active svg {
+            color: #fbbf24 !important;
+            stroke: #fbbf24 !important;
+            filter: drop-shadow(0 0 8px rgba(255, 42, 95, 0.85)) !important;
+        }
+        #bottom-nav #nav-discover.rv-nav-discover-event-active span[data-i18n="nav_discover"],
+        body.light-theme #bottom-nav #nav-discover.rv-nav-discover-event-active span[data-i18n="nav_discover"] {
+            color: #fde68a !important;
+            text-shadow: 0 0 8px rgba(255, 42, 95, 0.95), 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+        }
+        body.light-theme #bottom-nav #nav-discover.rv-nav-discover-event-active span[data-i18n="nav_discover"] {
+            color: #e11d48 !important;
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.95) !important;
+        }
+        .rv-discover-event-beacon {
+            position: absolute;
+            top: -3px;
+            right: -6px;
+            width: 9px;
+            height: 9px;
+            border-radius: 9999px;
+            background: radial-gradient(circle, #fef08a 0%, #f59e0b 55%, #ff2a5f 100%);
+            border: 1.5px solid #ffffff;
+            animation: rvDiscoverOrbPulse 1.6s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 25;
+        }
+        .rv-discover-event-beacon.hidden {
+            display: none !important;
+            animation: none !important;
+        }
+        .rv-discover-event-beacon::after {
+            content: "";
+            position: absolute;
+            inset: -3px;
+            border-radius: 9999px;
+            border: 1.5px solid #fbbf24;
+            background: radial-gradient(circle, rgba(251, 191, 36, 0.55) 0%, transparent 70%);
+            animation: rvDiscoverOrbHalo 1.6s ease-out infinite;
+            pointer-events: none;
+        }
+
+        /* =====================================================================
+           2. ANIMATION DU BOUTON DE PRÉ-INSCRIPTION (#btn-open-talent-prereg)
+           ===================================================================== */
+        @keyframes rvTalentPreregBtnPulse {
+            0%, 100% {
+                transform: scale(1) translateY(0);
+                box-shadow: 0 8px 22px rgba(255, 42, 95, 0.45), 0 0 0 0 rgba(251, 191, 36, 0.7), 0 0 18px rgba(245, 158, 11, 0.45);
+            }
+            50% {
+                transform: scale(1.055) translateY(-2px);
+                box-shadow: 0 12px 28px rgba(255, 42, 95, 0.75), 0 0 0 7px rgba(251, 191, 36, 0), 0 0 28px rgba(254, 240, 138, 0.85);
+            }
+        }
+        @keyframes rvTalentPreregSheen {
+            0% {
+                transform: translateX(-140%) skewX(-22deg);
+            }
+            45%, 100% {
+                transform: translateX(220%) skewX(-22deg);
+            }
+        }
+        @keyframes rvTalentSparkleSpin {
+            0%, 100% {
+                transform: rotate(0deg) scale(1);
+            }
+            25% {
+                transform: rotate(-14deg) scale(1.22);
+            }
+            75% {
+                transform: rotate(14deg) scale(1.18);
+            }
+        }
+        #btn-open-talent-prereg,
+        body.light-theme #btn-open-talent-prereg {
+            position: relative !important;
+            overflow: hidden !important;
+            animation: rvTalentPreregBtnPulse 2s cubic-bezier(0.22, 1, 0.36, 1) infinite !important;
+        }
+        #btn-open-talent-prereg::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 55%;
+            background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.48) 50%, transparent 100%);
+            transform: translateX(-140%) skewX(-22deg);
+            animation: rvTalentPreregSheen 2.8s ease-in-out infinite;
+            pointer-events: none;
+        }
+        #btn-open-talent-prereg svg,
+        #btn-open-talent-prereg i {
+            animation: rvTalentSparkleSpin 2s ease-in-out infinite;
+        }
+
     </style>
 </head>
 <body class="relative overflow-hidden bg-black light-theme">
@@ -5393,8 +5529,11 @@
                 <i data-lucide="home" class="w-5 h-5 fill-white"></i>
                 <span class="text-[10px] font-bold text-shadow" data-i18n="nav_home">Accueil</span>
             </div>
-            <div onclick="navigateTo('discover')" class="flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-70 transition-all" id="nav-discover">
-                <i data-lucide="users" class="w-5 h-5"></i>
+            <div onclick="navigateTo('discover')" class="relative flex flex-col items-center gap-0.5 cursor-pointer nav-item opacity-70 transition-all" id="nav-discover">
+                <div class="relative flex items-center justify-center">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                    <span id="nav-discover-event-glow" class="rv-discover-event-beacon hidden" aria-hidden="true"></span>
+                </div>
                 <span class="text-[10px] font-bold text-shadow" data-i18n="nav_discover">Amis</span>
             </div>
             <!-- Bouton Upload '+' Thème Officiel R-Videos (Bordeaux Profond & Corail-Cramoisi 3D) -->
@@ -11743,6 +11882,7 @@
                 startOnlinePresenceHeartbeat();
                 initBotSystem();
                 subscribeToUnreadCount();
+                updateDiscoverEventNavReminder();
                 
                 const currentActive = document.querySelector('.screen.active');
                 if (!hasUserVerifiedBirthDate(effectiveUid, cleanUserEmail)) {
@@ -11775,6 +11915,7 @@
                 if (inboxContent) inboxContent.innerHTML = "";
                 isGuestMode = true;
                 currentUserData = null;
+                updateDiscoverEventNavReminder('feed');
                 
                 document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
                 document.getElementById('feed-screen').classList.add('active');
@@ -11819,6 +11960,21 @@
             updateNavUI(screen);
         };
 
+        function updateDiscoverEventNavReminder(activeScreenOverride = null) {
+            const navDiscover = document.getElementById('nav-discover');
+            const glowBeacon = document.getElementById('nav-discover-event-glow');
+            if (!navDiscover) return;
+            const isFeedActive = activeScreenOverride
+                ? (activeScreenOverride === 'feed')
+                : !!(document.getElementById('feed-screen')?.classList.contains('active'));
+            const isUserLoggedIn = !isGuestMode && !!(auth && auth.currentUser);
+            const shouldGlow = isUserLoggedIn && isFeedActive;
+            navDiscover.classList.toggle('rv-nav-discover-event-active', shouldGlow);
+            if (glowBeacon) {
+                glowBeacon.classList.toggle('hidden', !shouldGlow);
+            }
+        }
+
         function updateNavUI(screen) {
             document.querySelectorAll('.nav-item').forEach(el => {
                 el.classList.add('opacity-70');
@@ -11831,6 +11987,7 @@
                 active.classList.add('opacity-100');
                 if(screen === 'feed') active.querySelector('svg')?.classList.add('fill-white');
             }
+            updateDiscoverEventNavReminder(screen);
         }
 
         window.switchProfileTab = (tab) => {
