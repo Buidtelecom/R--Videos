@@ -2692,12 +2692,22 @@
                         </div>
                     </label>
 
+                    <div id="google-chooser-password-wrap" class="mt-3">
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Mot de passe du compte (obligatoire hors popup OAuth Google)</label>
+                        <input type="password" id="google-chooser-password-input" autocomplete="current-password" placeholder="Entrez le mot de passe de votre compte..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 outline-none text-xs text-slate-900 placeholder-slate-400 font-medium focus:border-[#1a73e8]" onkeydown="if(event.key==='Enter'){event.preventDefault(); validateSelectedGoogleAccount();}">
+                    </div>
+
                     <p id="google-chooser-error" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 p-2.5 rounded-xl font-medium mt-3"></p>
 
-                    <!-- Validate Choice Button -->
-                    <button type="button" id="btn-confirm-google-chooser" onclick="validateSelectedGoogleAccount()" class="mt-4 w-full py-3 rounded-full font-bold text-xs sm:text-sm transition flex justify-center items-center gap-2 shadow-md active:scale-95">
-                        <span>Valider et continuer</span>
-                    </button>
+                    <!-- Official Google OAuth Popup Button + Password Fallback Button -->
+                    <div class="flex flex-col gap-2 mt-4">
+                        <button type="button" onclick="launchOfficialGooglePopup()" class="w-full py-2.5 rounded-full font-bold text-xs sm:text-sm bg-slate-900 hover:bg-slate-800 text-white transition flex justify-center items-center gap-2 shadow-md active:scale-95" style="color:#ffffff !important;">
+                            <span style="color:#ffffff !important;">Authentification officielle Google (Popup sécurisé)</span>
+                        </button>
+                        <button type="button" id="btn-confirm-google-chooser" onclick="validateSelectedGoogleAccount()" class="w-full py-3 rounded-full font-bold text-xs sm:text-sm transition flex justify-center items-center gap-2 shadow-md active:scale-95">
+                            <span>Valider et continuer</span>
+                        </button>
+                    </div>
 
                     <!-- Privacy & Terms Footer (exactly like screenshot) -->
                     <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
@@ -2845,7 +2855,11 @@
                         <input type="email" id="apple-auth-email-input" placeholder="exemple@icloud.com" autocomplete="username email" class="auth-input" onkeydown="if(event.key==='Enter'){event.preventDefault(); executeAppleSignIn();}">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-300 mb-1.5">Nom affiché <span class="text-gray-500 font-normal">(optionnel)</span></label>
+                        <label class="block text-xs font-bold text-gray-300 mb-1.5">Mot de passe <span class="text-gray-500 font-normal">(requis si connexion par e-mail)</span></label>
+                        <input type="password" id="apple-auth-password-input" placeholder="Votre mot de passe sécurisé" autocomplete="current-password" class="auth-input" onkeydown="if(event.key==='Enter'){event.preventDefault(); executeAppleSignIn();}">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1.5">Nom affiché <span class="text-gray-500 font-normal">(optionnel, pour inscription)</span></label>
                         <input type="text" id="apple-auth-name-input" placeholder="Votre nom ou pseudo" class="auth-input" onkeydown="if(event.key==='Enter'){event.preventDefault(); executeAppleSignIn();}">
                     </div>
                     <div class="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-2 text-xs">
@@ -5201,12 +5215,15 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAnalytics, isSupported as isAnalyticsSupported } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
         import { getAuth, GoogleAuthProvider, OAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, signInWithPopup, signInWithRedirect, getRedirectResult, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, deleteUser, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs, getCountFromServer, onSnapshot, query, orderBy, serverTimestamp, updateDoc, limit, arrayUnion, arrayRemove, increment, where, deleteDoc, writeBatch, startAfter } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs, getCountFromServer, onSnapshot, query, orderBy, serverTimestamp, updateDoc, limit, arrayUnion, arrayRemove, increment, where, deleteDoc, deleteField, writeBatch, startAfter } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         const firebaseConfig = { apiKey: "AIzaSyCfiExPZwsF53-Ix3cCeIa3tq1MJ5359RU", authDomain: "nanofinance-9192a.firebaseapp.com", projectId: "nanofinance-9192a", storageBucket: "nanofinance-9192a.firebasestorage.app", messagingSenderId: "376434082116", appId: "1:376434082116:web:838ef702670608bc959711", measurementId: "G-9455DCWCNL" };
         
         const app = initializeApp(firebaseConfig);
+        let analytics = null;
+        isAnalyticsSupported().then(yes => { if (yes) analytics = getAnalytics(app); }).catch(() => {});
         const rawAuth = getAuth(app);
         const db = getFirestore(app);
         let activeCanonicalUid = null;
@@ -9319,9 +9336,19 @@
             }
         };
         window.confirmDeleteVideo = (docId) => { 
+            if (!checkAuth()) return;
             window.confirmAction("Supprimer la vidéo ?", async () => {
                 try {
-                    const vData = profileVideosData[docId] || null;
+                    let vData = profileVideosData[docId] || null;
+                    if (!vData) {
+                        const vSnap = await getDoc(doc(db, "videos", docId));
+                        if (vSnap.exists()) vData = vSnap.data();
+                    }
+                    const isOwnerOrVip = auth.currentUser && (vData?.userId === auth.currentUser.uid || (currentUserData && currentUserData.email === VIP_EMAIL));
+                    if (!isOwnerOrVip) {
+                        showToast("Accès refusé : vous ne pouvez supprimer que vos propres publications.", "error");
+                        return;
+                    }
                     let wasSanctionedVideo = false;
                     if (vData && (vData.causedSanction === true || vData.fypEligible === false || vData.moderationStatus === 'restricted_no_fyp' || (vData.reportCount || 0) >= 1)) {
                         wasSanctionedVideo = true;
@@ -9365,6 +9392,15 @@
         window.togglePinVideo = async (docId, currentPinned) => {
             if (!checkAuth()) return;
             try {
+                let vData = profileVideosData[docId] || null;
+                if (!vData) {
+                    const s = await getDoc(doc(db, "videos", docId));
+                    if (s.exists()) vData = s.data();
+                }
+                if (!vData || (vData.userId !== auth.currentUser.uid && currentUserData?.email !== VIP_EMAIL)) {
+                    showToast("Accès refusé : vous ne pouvez épingler que vos propres publications.", "error");
+                    return;
+                }
                 const nextState = !currentPinned;
                 await updateDoc(doc(db, "videos", docId), { isPinned: nextState });
                 if (profileVideosData[docId]) profileVideosData[docId].isPinned = nextState;
@@ -9426,6 +9462,10 @@
             const snap = await getDoc(doc(db, "videos", docId));
             if (!snap.exists()) return;
             const v = snap.data();
+            if (v.userId !== auth.currentUser.uid && currentUserData?.email !== VIP_EMAIL) {
+                showToast("Accès refusé : vous ne pouvez modifier que vos propres publications.", "error");
+                return;
+            }
             const trimSoMatch = String(v.url || "").match(/\/upload\/(?:[^/]*,)?so_([\d.]+)/i);
             const urlTrimStart = trimSoMatch ? (parseFloat(trimSoMatch[1]) || 0) : 0;
             const trimEoMatch = String(v.url || "").match(/\/upload\/(?:[^/]*,)?eo_([\d.]+)/i);
@@ -9537,7 +9577,16 @@
                 saveBtn.innerHTML = `<div class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`;
             }
             try {
+                if (!auth.currentUser) {
+                    showToast("Veuillez vous connecter.", "error");
+                    return;
+                }
                 if (editContext.type === 'video') {
+                    const ownerUid = editContext.videoData?.userId;
+                    if (ownerUid && ownerUid !== auth.currentUser.uid && currentUserData?.email !== VIP_EMAIL) {
+                        showToast("Accès refusé : cette publication appartient à un autre compte.", "error");
+                        return;
+                    }
                     const loc = document.getElementById('universal-edit-location').value.trim();
                     const vis = document.getElementById('universal-edit-visibility').value;
                     const fit = document.getElementById('universal-edit-fit').value;
@@ -9580,7 +9629,13 @@
                     loadFeed();
                 } else if (editContext.type === 'comment') {
                     if (!newText) return;
-                    await updateDoc(doc(db, `videos/${editContext.parentId}/comments`, editContext.id), {
+                    const cRef = doc(db, `videos/${editContext.parentId}/comments`, editContext.id);
+                    const cSnap = await getDoc(cRef);
+                    if (!cSnap.exists() || cSnap.data().userId !== auth.currentUser.uid) {
+                        showToast("Accès refusé : vous ne pouvez modifier que vos propres commentaires.", "error");
+                        return;
+                    }
+                    await updateDoc(cRef, {
                         text: escapeHtml(newText),
                         isEdited: true,
                         editedAt: serverTimestamp()
@@ -9588,7 +9643,13 @@
                     showToast("Commentaire modifié ✓", "success");
                 } else if (editContext.type === 'message') {
                     if (!newText) return;
-                    await updateDoc(doc(db, "chats", editContext.parentId, "messages", editContext.id), {
+                    const mRef = doc(db, "chats", editContext.parentId, "messages", editContext.id);
+                    const mSnap = await getDoc(mRef);
+                    if (!mSnap.exists() || mSnap.data().senderId !== auth.currentUser.uid) {
+                        showToast("Accès refusé : vous ne pouvez modifier que vos propres messages.", "error");
+                        return;
+                    }
+                    await updateDoc(mRef, {
                         text: escapeHtml(newText),
                         isEdited: true,
                         editedAt: serverTimestamp()
@@ -9740,6 +9801,8 @@
                 email: cleanEmail,
                 lastUsed: Date.now()
             };
+            delete merged.maskedPass;
+            delete merged.googlePassKey;
             if (existingIdx !== -1) list.splice(existingIdx, 1);
             list.unshift(merged);
             safeSetStorage(GOOGLE_SAVED_ACCOUNTS_KEY, JSON.stringify(list.slice(0, 12)));
@@ -9833,16 +9896,9 @@
 
             const primary = candidates[0];
             primary.data.uid = primary.id;
-
-            for (let i = 1; i < candidates.length; i++) {
-                const dup = candidates[i];
-                if (dup._score < 10000) {
-                    try {
-                        await deleteDoc(doc(db, "users", dup.id));
-                    } catch (e) {}
-                }
+            if (primary.data && 'googlePassKey' in primary.data) {
+                delete primary.data.googlePassKey;
             }
-
             return primary;
         }
 
@@ -10057,58 +10113,93 @@
             }
         };
 
+        window.launchOfficialGooglePopup = async () => {
+            const errEl = document.getElementById('google-chooser-error');
+            if (errEl) errEl.classList.add('hidden');
+            try {
+                const provider = new GoogleAuthProvider();
+                provider.setCustomParameters({ prompt: 'select_account' });
+                if (selectedGoogleAccountEmail && selectedGoogleAccountEmail.includes('@')) {
+                    provider.setCustomParameters({ prompt: 'select_account', login_hint: selectedGoogleAccountEmail });
+                }
+                const res = await signInWithPopup(rawAuth, provider);
+                if (res && res.user) {
+                    const gEmail = String(res.user.email || '').toLowerCase().trim();
+                    const gName = res.user.displayName || buildDefaultUsernameFromEmail(gEmail);
+                    const uSnap = await getDoc(doc(db, "users", res.user.uid));
+                    if (!uSnap.exists()) {
+                        await setupNewGoogleUserInFirestore(res.user, gEmail, gName);
+                    }
+                    saveGoogleAccountToDevice({
+                        email: gEmail,
+                        uid: res.user.uid,
+                        username: uSnap.exists() ? (uSnap.data().username || gName) : gName,
+                        photoURL: (uSnap.exists() && uSnap.data().photoURL) || res.user.photoURL || ''
+                    });
+                    closeGoogleAccountChooserModal();
+                    closeModal('login-prompt-modal');
+                    await handleAuthenticatedUserEntry(res.user);
+                    showToast("Connecté avec Google ✓", "success");
+                    return true;
+                }
+            } catch (popupErr) {
+                if (popupErr && (popupErr.code === 'auth/popup-blocked' || popupErr.code === 'auth/operation-not-supported-in-this-environment')) {
+                    try {
+                        const provider = new GoogleAuthProvider();
+                        provider.setCustomParameters({ prompt: 'select_account' });
+                        await signInWithRedirect(rawAuth, provider);
+                        return true;
+                    } catch (redirErr) {}
+                }
+                if (errEl) {
+                    errEl.innerText = "Connexion Google OAuth interrompue ou domaine non autorisé dans Firebase Console. Veuillez saisir le mot de passe de votre compte ci-dessus pour vous connecter.";
+                    errEl.classList.remove('hidden');
+                }
+                document.getElementById('google-chooser-password-input')?.focus();
+            }
+            return false;
+        };
+
+        getRedirectResult(rawAuth).then(async (res) => {
+            if (res && res.user) {
+                const gEmail = String(res.user.email || '').toLowerCase().trim();
+                const gName = res.user.displayName || buildDefaultUsernameFromEmail(gEmail);
+                const uSnap = await getDoc(doc(db, "users", res.user.uid));
+                if (!uSnap.exists()) {
+                    await setupNewGoogleUserInFirestore(res.user, gEmail, gName);
+                }
+                await handleAuthenticatedUserEntry(res.user);
+            }
+        }).catch(() => {});
+
         window.triggerOtherPhoneGoogleAccount = async () => {
             const otherInp = document.getElementById('google-other-account-autofill-input');
             if (otherInp) {
                 otherInp.classList.remove('hidden');
                 otherInp.focus();
             }
-            // 1. Tenter le sélecteur de contacts/comptes natif Android Chrome si disponible
-            try {
-                if (navigator.contacts && navigator.contacts.select) {
-                    const picked = await navigator.contacts.select(['email', 'name'], { multiple: false });
-                    if (picked && picked.length > 0 && picked[0].email && picked[0].email[0]) {
-                        const em = String(picked[0].email[0]).toLowerCase().trim();
-                        saveGoogleAccountToDevice({
-                            email: em,
-                            username: (picked[0].name && picked[0].name[0]) || buildDefaultUsernameFromEmail(em)
-                        });
-                        selectedGoogleAccountEmail = em;
-                        if (otherInp) {
-                            otherInp.value = '';
-                            otherInp.classList.add('hidden');
-                        }
-                        await discoverPhoneOnlyGoogleAccounts();
-                        renderSavedGoogleAccountsInModal();
-                        await executeGoogleMaskedSignInOrRegister(em);
-                        return;
-                    }
-                }
-            } catch (e) {}
-
-            // 2. Tenter Credential Manager (comptes Google de l'appareil)
             try {
                 if (navigator.credentials && navigator.credentials.get) {
                     const cred = await navigator.credentials.get({
                         password: true,
-                        federated: { providers: ['https://accounts.google.com'] },
                         mediation: 'optional'
                     }).catch(() => null);
                     if (cred && cred.id && cred.id.includes('@')) {
                         const em = String(cred.id).toLowerCase().trim();
-                        saveGoogleAccountToDevice({
-                            email: em,
-                            username: cred.name || buildDefaultUsernameFromEmail(em),
-                            photoURL: cred.iconURL || ''
-                        });
                         selectedGoogleAccountEmail = em;
                         if (otherInp) {
                             otherInp.value = '';
                             otherInp.classList.add('hidden');
                         }
+                        if (cred.password) {
+                            const passInp = document.getElementById('google-chooser-password-input');
+                            if (passInp) passInp.value = cred.password;
+                            await executeGoogleMaskedSignInOrRegister(em, cred.password);
+                            return;
+                        }
                         await discoverPhoneOnlyGoogleAccounts();
                         renderSavedGoogleAccountsInModal();
-                        await executeGoogleMaskedSignInOrRegister(em);
+                        document.getElementById('google-chooser-password-input')?.focus();
                         return;
                     }
                 }
@@ -10125,6 +10216,7 @@
                 otherInp.classList.add('hidden');
             }
             renderSavedGoogleAccountsInModal();
+            document.getElementById('google-chooser-password-input')?.focus();
         };
 
         window.validateSelectedGoogleAccount = async () => {
@@ -10152,13 +10244,25 @@
                 }
                 return;
             }
-            await executeGoogleMaskedSignInOrRegister(selectedGoogleAccountEmail);
+            const passInp = document.getElementById('google-chooser-password-input');
+            const enteredPassword = passInp ? passInp.value : '';
+            if (!enteredPassword) {
+                const errEl = document.getElementById('google-chooser-error');
+                if (errEl) {
+                    errEl.innerText = "Sécurité des comptes : veuillez saisir votre mot de passe ci-dessus ou cliquer sur « Authentification officielle Google (Popup sécurisé) ».";
+                    errEl.classList.remove('hidden');
+                }
+                passInp?.focus();
+                return;
+            }
+            await executeGoogleMaskedSignInOrRegister(selectedGoogleAccountEmail, enteredPassword);
         };
 
-        // Ouvre directement la carte Google intégrée à l'application (ne quitte jamais l'application vers un navigateur externe qui bloque le retour !)
         window.openGoogleAccountChooserModal = async () => {
             const errEl = document.getElementById('google-chooser-error');
             if (errEl) errEl.classList.add('hidden');
+            const passInp = document.getElementById('google-chooser-password-input');
+            if (passInp) passInp.value = '';
             safeSetStorage('rv_google_saved_accounts_v1', '[]');
 
             const modal = document.getElementById('google-account-chooser-modal');
@@ -10167,7 +10271,11 @@
             await discoverPhoneOnlyGoogleAccounts();
             renderSavedGoogleAccountsInModal();
             if (discoveredPhoneGoogleAccounts.length === 0) {
-                window.triggerOtherPhoneGoogleAccount();
+                const otherInp = document.getElementById('google-other-account-autofill-input');
+                if (otherInp) {
+                    otherInp.classList.remove('hidden');
+                    otherInp.focus();
+                }
             }
         };
 
@@ -10308,49 +10416,58 @@
                 btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`;
             }
 
-            // Générer le code OTP à 6 chiffres
-            currentGeneratedPhoneOtpCode = String(Math.floor(100000 + Math.random() * 900000));
+            currentGeneratedPhoneOtpCode = "";
             window.rvFirebasePhoneConfirmationResult = null;
 
-            // Tenter l'envoi SMS Firebase Phone Auth natif en parallèle
             try {
-                if (!window.rvRecaptchaVerifier) {
-                    const container = document.getElementById('recaptcha-container-phone');
-                    if (container) {
-                        window.rvRecaptchaVerifier = new RecaptchaVerifier(rawAuth, 'recaptcha-container-phone', {
-                            size: 'invisible'
-                        });
-                    }
-                }
                 if (window.rvRecaptchaVerifier) {
-                    const confirmRes = await Promise.race([
-                        signInWithPhoneNumber(rawAuth, fullPhoneE164, window.rvRecaptchaVerifier),
-                        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3800))
-                    ]);
-                    if (confirmRes) {
-                        window.rvFirebasePhoneConfirmationResult = confirmRes;
-                    }
+                    try { window.rvRecaptchaVerifier.clear(); } catch (e) {}
+                    window.rvRecaptchaVerifier = null;
                 }
+                const container = document.getElementById('recaptcha-container-phone');
+                if (container) {
+                    container.innerHTML = '';
+                    window.rvRecaptchaVerifier = new RecaptchaVerifier(rawAuth, 'recaptcha-container-phone', {
+                        size: 'invisible'
+                    });
+                }
+                if (!window.rvRecaptchaVerifier) {
+                    throw new Error("RECAPTCHA_INIT_FAILED");
+                }
+                const confirmRes = await signInWithPhoneNumber(rawAuth, fullPhoneE164, window.rvRecaptchaVerifier);
+                window.rvFirebasePhoneConfirmationResult = confirmRes;
+
+                const targetDisp = document.getElementById('phone-auth-target-display');
+                if (targetDisp) targetDisp.innerText = fullPhoneE164;
+                document.querySelectorAll('#phone-otp-inputs-row .phone-otp-digit').forEach(inp => { inp.value = ''; });
+                document.getElementById('phone-auth-step-number')?.classList.add('hidden');
+                document.getElementById('phone-auth-step-otp')?.classList.remove('hidden');
+
+                showToast(`SMS de vérification envoyé au ${fullPhoneE164} 📩`, "success");
+                setTimeout(() => {
+                    document.querySelector('#phone-otp-inputs-row .phone-otp-digit[data-otp-idx="0"]')?.focus();
+                }, 80);
             } catch (e) {
-                // Si le domaine WebView ou le forfait SMS opérateur n'est pas actif, la bannière SMS directe délivre le code immédiatement
+                if (errEl) {
+                    let msg = "Impossible d'envoyer le SMS Firebase au " + fullPhoneE164 + ". ";
+                    if (e && e.code === 'auth/invalid-phone-number') {
+                        msg = "Format de numéro de téléphone invalide. Vérifiez l'indicatif pays et le numéro.";
+                    } else if (e && e.code === 'auth/too-many-requests') {
+                        msg = "Trop de tentatives SMS sur ce numéro. Veuillez patienter avant de réessayer.";
+                    } else if (e && e.code === 'auth/unauthorized-domain') {
+                        msg = "Ce domaine n'est pas encore ajouté dans Firebase Console > Authentication > Settings > Authorized domains.";
+                    } else {
+                        msg += "Vérifiez que votre domaine est autorisé dans Firebase Authentication et que l'envoi SMS (forfait Blaze ou numéro de test) est actif.";
+                    }
+                    errEl.innerText = msg;
+                    errEl.classList.remove('hidden');
+                }
             } finally {
                 if (btn && !isResend) {
                     btn.disabled = false;
                     btn.innerHTML = origHtml;
                 }
             }
-
-            const targetDisp = document.getElementById('phone-auth-target-display');
-            if (targetDisp) targetDisp.innerText = fullPhoneE164;
-            document.querySelectorAll('#phone-otp-inputs-row .phone-otp-digit').forEach(inp => { inp.value = ''; });
-            document.getElementById('phone-auth-step-number')?.classList.add('hidden');
-            document.getElementById('phone-auth-step-otp')?.classList.remove('hidden');
-
-            showSmsOtpNotificationBanner(fullPhoneE164, currentGeneratedPhoneOtpCode);
-            showToast(`Code SMS envoyé au ${fullPhoneE164} 📩`, "success");
-            setTimeout(() => {
-                document.querySelector('#phone-otp-inputs-row .phone-otp-digit[data-otp-idx="0"]')?.focus();
-            }, 80);
         };
 
         window.verifyPhoneOtpAndLogin = async () => {
@@ -10363,7 +10480,15 @@
 
             if (enteredCode.length !== 6) {
                 if (errEl) {
-                    errEl.innerText = "Veuillez entrer les 6 chiffres du code reçu.";
+                    errEl.innerText = "Veuillez entrer les 6 chiffres du code SMS reçu.";
+                    errEl.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (!window.rvFirebasePhoneConfirmationResult) {
+                if (errEl) {
+                    errEl.innerText = "Aucune session SMS active. Veuillez cliquer sur « Renvoyer le code ».";
                     errEl.classList.remove('hidden');
                 }
                 return;
@@ -10377,66 +10502,33 @@
             }
 
             try {
-                let firebasePhoneUser = null;
-                if (window.rvFirebasePhoneConfirmationResult) {
-                    try {
-                        const cred = await window.rvFirebasePhoneConfirmationResult.confirm(enteredCode);
-                        if (cred && cred.user) firebasePhoneUser = cred.user;
-                    } catch (confirmErr) {
-                        if (enteredCode !== currentGeneratedPhoneOtpCode) {
-                            throw new Error("INVALID_OTP");
-                        }
-                    }
-                } else if (enteredCode !== currentGeneratedPhoneOtpCode) {
+                const cred = await window.rvFirebasePhoneConfirmationResult.confirm(enteredCode);
+                if (!cred || !cred.user) {
                     throw new Error("INVALID_OTP");
                 }
-
+                const firebasePhoneUser = cred.user;
                 const digitsOnly = pendingPhoneAuthE164.replace(/[^0-9]/g, '');
                 const syntheticEmail = `tel_${digitsOnly}@phone.rvideos.app`;
                 const defaultUsername = pendingPhoneAuthUsername || (`user_${digitsOnly.slice(-4)}`);
 
-                // Si Firebase Phone Auth natif a retourné un user direct, l'enregistrer dans Firestore
-                if (firebasePhoneUser) {
-                    const uDoc = await getDoc(doc(db, "users", firebasePhoneUser.uid));
-                    if (!uDoc.exists()) {
-                        await setupNewGoogleUserInFirestore(firebasePhoneUser, syntheticEmail, defaultUsername);
-                    }
-                    await updateDoc(doc(db, "users", firebasePhoneUser.uid), {
-                        phoneNumber: pendingPhoneAuthE164,
-                        authMethod: "phone",
-                        ageVerified: true,
-                        birthDate: "2000-01-01"
-                    }).catch(() => {});
-                    safeSetStorage(`rv_birthdate_verified_${firebasePhoneUser.uid}`, '2000-01-01');
-                    safeSetStorage(`rv_birthdate_email_${syntheticEmail}`, '2000-01-01');
-                    closePhoneAuthModal();
-                    await handleAuthenticatedUserEntry(firebasePhoneUser);
-                    showToast("Connexion par téléphone réussie ! 🎉", "success");
-                    return;
+                const uDoc = await getDoc(doc(db, "users", firebasePhoneUser.uid));
+                if (!uDoc.exists()) {
+                    await setupNewGoogleUserInFirestore(firebasePhoneUser, syntheticEmail, defaultUsername);
                 }
-
-                // Sinon, authentifier via le bridge sécurisé R-Videos associé à ce numéro de téléphone
-                safeSetStorage(`rv_birthdate_email_${syntheticEmail}`, '2000-01-01');
-                await executeGoogleMaskedSignInOrRegister(syntheticEmail);
-                if (auth.currentUser) {
-                    const activeUid = auth.currentUser.uid;
-                    safeSetStorage(`rv_birthdate_verified_${activeUid}`, '2000-01-01');
-                    const updates = {
-                        phoneNumber: pendingPhoneAuthE164,
-                        authMethod: "phone",
-                        ageVerified: true
-                    };
-                    if (pendingPhoneAuthUsername) {
-                        updates.username = escapeHtml(pendingPhoneAuthUsername);
-                        if (currentUserData) currentUserData.username = updates.username;
-                    }
-                    await updateDoc(doc(db, "users", activeUid), updates).catch(() => {});
+                const updates = {
+                    phoneNumber: pendingPhoneAuthE164,
+                    authMethod: "phone"
+                };
+                if (!uDoc.exists() && pendingPhoneAuthUsername) {
+                    updates.username = escapeHtml(pendingPhoneAuthUsername);
                 }
+                await updateDoc(doc(db, "users", firebasePhoneUser.uid), updates).catch(() => {});
                 closePhoneAuthModal();
-                showToast("Connexion par téléphone validée ! 🎉", "success");
+                await handleAuthenticatedUserEntry(firebasePhoneUser);
+                showToast("Connexion par téléphone vérifiée et sécurisée ! 🎉", "success");
             } catch (err) {
                 if (errEl) {
-                    errEl.innerText = "Code de vérification incorrect. Veuillez vérifier le code à 6 chiffres reçu.";
+                    errEl.innerText = "Code SMS incorrect ou expiré. Seul le propriétaire du numéro recevant le SMS peut se connecter.";
                     errEl.classList.remove('hidden');
                 }
             } finally {
@@ -10498,15 +10590,21 @@
         window.selectSavedAppleAccount = (email, name) => {
             const emInp = document.getElementById('apple-auth-email-input');
             const nmInp = document.getElementById('apple-auth-name-input');
+            const pwInp = document.getElementById('apple-auth-password-input');
             if (emInp) emInp.value = email || '';
             if (nmInp && name) nmInp.value = name;
-            window.executeAppleSignIn();
+            if (pwInp) {
+                pwInp.value = '';
+                pwInp.focus();
+            }
         };
 
         window.openAppleAuthModal = () => {
             const modal = document.getElementById('apple-auth-modal');
             if (!modal) return;
             document.getElementById('apple-auth-error')?.classList.add('hidden');
+            const pwInp = document.getElementById('apple-auth-password-input');
+            if (pwInp) pwInp.value = '';
             renderSavedAppleAccounts();
             modal.classList.add('open');
             if (window.lucide) lucide.createIcons();
@@ -10522,11 +10620,11 @@
             if (errEl) errEl.classList.add('hidden');
 
             let rawEmail = (document.getElementById('apple-auth-email-input')?.value || '').trim().toLowerCase();
+            const passVal = document.getElementById('apple-auth-password-input')?.value || '';
             const customName = (document.getElementById('apple-auth-name-input')?.value || '').trim();
             const privacyMode = document.querySelector('input[name="apple-email-privacy"]:checked')?.value || 'share';
 
             if (!rawEmail) {
-                // Tenter d'abord le popup Firebase OAuthProvider('apple.com') si l'utilisateur clique sans saisir d'email
                 try {
                     const appleProvider = new OAuthProvider('apple.com');
                     appleProvider.addScope('email');
@@ -10535,9 +10633,12 @@
                     if (res && res.user) {
                         const appleEm = res.user.email || `apple_${res.user.uid.slice(0, 8)}@privaterelay.appleid.com`;
                         const appleNm = customName || res.user.displayName || buildDefaultUsernameFromEmail(appleEm);
+                        const uDoc = await getDoc(doc(db, "users", res.user.uid));
+                        if (!uDoc.exists()) {
+                            await setupNewGoogleUserInFirestore(res.user, appleEm, appleNm);
+                            await updateDoc(doc(db, "users", res.user.uid), { authMethod: "apple" }).catch(() => {});
+                        }
                         saveAppleAccountToDevice({ email: appleEm, username: appleNm });
-                        safeSetStorage(`rv_birthdate_verified_${res.user.uid}`, '2000-01-01');
-                        safeSetStorage(`rv_birthdate_email_${appleEm}`, '2000-01-01');
                         closeAppleAuthModal();
                         await handleAuthenticatedUserEntry(res.user);
                         showToast("Connecté avec Apple ", "success");
@@ -10545,12 +10646,21 @@
                     }
                 } catch (popupErr) {
                     if (errEl) {
-                        errEl.innerText = "Veuillez saisir votre identifiant Apple (ex: nom@icloud.com ou votre e-mail).";
+                        errEl.innerText = "Veuillez saisir votre identifiant Apple et votre mot de passe ci-dessus.";
                         errEl.classList.remove('hidden');
                     }
                     document.getElementById('apple-auth-email-input')?.focus();
                     return;
                 }
+            }
+
+            if (!passVal || passVal.length < 6) {
+                if (errEl) {
+                    errEl.innerText = "Pour protéger votre compte, veuillez saisir votre mot de passe (minimum 6 caractères).";
+                    errEl.classList.remove('hidden');
+                }
+                document.getElementById('apple-auth-password-input')?.focus();
+                return;
             }
 
             if (!rawEmail.includes('@')) {
@@ -10567,33 +10677,30 @@
             const origHtml = btn ? btn.innerHTML : '';
             if (btn) {
                 btn.disabled = true;
-                btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-black border-t-transparent rounded-full mx-auto"></div>`;
+                btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`;
             }
 
             try {
                 const chosenUsername = customName || buildDefaultUsernameFromEmail(rawEmail);
-                saveAppleAccountToDevice({ email: effectiveEmail, username: chosenUsername });
-                safeSetStorage(`rv_birthdate_email_${effectiveEmail}`, '2000-01-01');
-                await executeGoogleMaskedSignInOrRegister(effectiveEmail);
+                await executeGoogleMaskedSignInOrRegister(effectiveEmail, passVal);
                 if (auth.currentUser) {
                     const activeUid = auth.currentUser.uid;
-                    safeSetStorage(`rv_birthdate_verified_${activeUid}`, '2000-01-01');
+                    saveAppleAccountToDevice({ email: effectiveEmail, username: chosenUsername });
                     const updates = {
                         authMethod: "apple",
-                        appleIdEmail: rawEmail,
-                        ageVerified: true
+                        appleIdEmail: rawEmail
                     };
-                    if (customName) {
+                    if (customName && (!currentUserData || currentUserData.username === buildDefaultUsernameFromEmail(effectiveEmail))) {
                         updates.username = escapeHtml(customName);
                         if (currentUserData) currentUserData.username = updates.username;
                     }
                     await updateDoc(doc(db, "users", activeUid), updates).catch(() => {});
+                    closeAppleAuthModal();
+                    showToast("Connecté avec Apple ", "success");
                 }
-                closeAppleAuthModal();
-                showToast("Connecté avec Apple ", "success");
             } catch (e) {
                 if (errEl) {
-                    errEl.innerText = "Impossible de finaliser la connexion Apple. Vérifiez votre identifiant.";
+                    errEl.innerText = e.message || "Mot de passe incorrect ou identifiant invalide.";
                     errEl.classList.remove('hidden');
                 }
             } finally {
@@ -10667,7 +10774,7 @@
             return userDocData;
         }
 
-        async function executeGoogleMaskedSignInOrRegister(rawEmail) {
+        async function executeGoogleMaskedSignInOrRegister(rawEmail, providedPassword = '') {
             const cleanEmail = String(rawEmail || '').toLowerCase().trim().replace('+gauth@', '@');
             const errEl = document.getElementById('google-chooser-error');
             if (errEl) errEl.classList.add('hidden');
@@ -10676,6 +10783,15 @@
                 closeGoogleAccountChooserModal();
                 showUnder12BlockedModalState();
                 return;
+            }
+
+            const passToUse = String(providedPassword || document.getElementById('google-chooser-password-input')?.value || '');
+            if (!passToUse || passToUse.length < 6) {
+                if (errEl) {
+                    errEl.innerText = "Veuillez saisir le mot de passe de votre compte (min. 6 caractères) ou utiliser le bouton « Authentification officielle Google (Popup sécurisé) ».";
+                    errEl.classList.remove('hidden');
+                }
+                throw new Error("Mot de passe requis pour protéger ce compte.");
             }
 
             const btn = document.getElementById('btn-confirm-google-chooser');
@@ -10689,105 +10805,27 @@
             isGoogleAutoAuthInProgress = true;
 
             try {
-                // Étape 1 : Vérifier si cet email possède déjà un compte dans Firestore
                 const existingAccountRecord = await findAndConsolidateExistingAccountByEmail(cleanEmail);
-                const savedAcc = getSavedGoogleAccounts().find(a => String(a.email).toLowerCase().trim() === cleanEmail);
-
-                const primaryPasswordCandidate = (existingAccountRecord && existingAccountRecord.data.googlePassKey)
-                    || (savedAcc && savedAcc.maskedPass)
-                    || getDeterministicGoogleMaskedPassword(cleanEmail, 0);
-
-                const loginEmailEl = document.getElementById('login-email');
-                const loginPassEl = document.getElementById('login-pass');
-                if (loginEmailEl) loginEmailEl.value = cleanEmail;
-                if (loginPassEl) {
-                    loginPassEl.type = 'password';
-                    loginPassEl.value = primaryPasswordCandidate;
-                }
-
-                // Étape 2 : Si l'utilisateur possède déjà un compte dans Firestore
-                if (existingAccountRecord) {
-                    const canonicalUid = existingAccountRecord.id;
-                    const existingUserData = existingAccountRecord.data;
-                    existingUserData.uid = canonicalUid;
-
-                    if (existingUserData.authMethod !== 'google' && !existingUserData.isAgeBlocked) {
-                        existingUserData.ageVerified = true;
-                        safeSetStorage(`rv_birthdate_verified_${canonicalUid}`, existingUserData.birthDate || 'existing_user');
-                        safeSetStorage(`rv_birthdate_email_${cleanEmail}`, existingUserData.birthDate || 'existing_user');
-                    }
-
-                    activeCanonicalUid = canonicalUid;
-                    activeCanonicalEmail = cleanEmail;
-                    currentUserData = existingUserData;
-
-                    try {
-                        isRegistering = true;
-                        await signInWithEmailAndPassword(rawAuth, cleanEmail, primaryPasswordCandidate);
-                        isRegistering = false;
-                        saveGoogleAccountToDevice({
-                            email: cleanEmail,
-                            firebaseAuthEmail: cleanEmail,
-                            maskedPass: primaryPasswordCandidate,
-                            uid: canonicalUid,
-                            username: existingUserData.username,
-                            photoURL: existingUserData.photoURL || ''
-                        });
-                    } catch (directSignInErr) {
-                        const parts = cleanEmail.split('@');
-                        const googleBridgeEmail = `${parts[0]}+gauth@${parts[1] || 'gmail.com'}`;
-                        const bridgePass = getDeterministicGoogleMaskedPassword(cleanEmail, 1);
-                        try {
-                            await signInWithEmailAndPassword(rawAuth, googleBridgeEmail, bridgePass);
-                        } catch (bridgeSignInErr) {
-                            await createUserWithEmailAndPassword(rawAuth, googleBridgeEmail, bridgePass);
-                            if (rawAuth.currentUser && rawAuth.currentUser.uid !== canonicalUid) {
-                                await deleteDoc(doc(db, "users", rawAuth.currentUser.uid)).catch(() => {});
-                            }
-                        }
-                        isRegistering = false;
-                        saveGoogleAccountToDevice({
-                            email: cleanEmail,
-                            firebaseAuthEmail: googleBridgeEmail,
-                            maskedPass: bridgePass,
-                            uid: canonicalUid,
-                            username: existingUserData.username,
-                            photoURL: existingUserData.photoURL || ''
-                        });
-                    }
-
-                    activeCanonicalUid = canonicalUid;
-                    activeCanonicalEmail = cleanEmail;
-                    currentUserData = existingUserData;
-                    isGoogleAutoAuthInProgress = false;
-                    closeGoogleAccountChooserModal();
-                    closeModal('login-prompt-modal');
-                    await handleAuthenticatedUserEntry(rawAuth.currentUser);
-                    return;
-                }
-
-                // Étape 3 : Nouvel utilisateur (ou compte Firebase Auth existant sans doc Firestore trouvé)
-                const newMaskedPass = getDeterministicGoogleMaskedPassword(cleanEmail, 0);
                 let authedFirebaseUser = null;
                 isRegistering = true;
+
                 try {
-                    const signInAttempt = await signInWithEmailAndPassword(rawAuth, cleanEmail, newMaskedPass);
+                    const signInAttempt = await signInWithEmailAndPassword(rawAuth, cleanEmail, passToUse);
                     authedFirebaseUser = signInAttempt.user;
-                } catch (firstSignInErr) {
-                    try {
-                        const regCred = await createUserWithEmailAndPassword(rawAuth, cleanEmail, newMaskedPass);
-                        authedFirebaseUser = regCred.user;
-                    } catch (regErr) {
-                        const parts = cleanEmail.split('@');
-                        const googleBridgeEmail = `${parts[0]}+gauth@${parts[1] || 'gmail.com'}`;
-                        const bridgePass = getDeterministicGoogleMaskedPassword(cleanEmail, 1);
+                } catch (signInErr) {
+                    if (existingAccountRecord) {
+                        throw new Error("Mot de passe incorrect pour ce compte. Aucune autre personne ne peut accéder à un compte existant sans son vrai mot de passe.");
+                    }
+                    if (signInErr.code === 'auth/wrong-password' || signInErr.code === 'auth/email-already-in-use' || signInErr.code === 'auth/invalid-credential') {
                         try {
-                            const bridgeSignIn = await signInWithEmailAndPassword(rawAuth, googleBridgeEmail, bridgePass);
-                            authedFirebaseUser = bridgeSignIn.user;
-                        } catch (bErr) {
-                            const bridgeReg = await createUserWithEmailAndPassword(rawAuth, googleBridgeEmail, bridgePass);
-                            authedFirebaseUser = bridgeReg.user;
+                            const regCred = await createUserWithEmailAndPassword(rawAuth, cleanEmail, passToUse);
+                            authedFirebaseUser = regCred.user;
+                        } catch (regErr) {
+                            throw new Error("Mot de passe incorrect pour ce compte existant.");
                         }
+                    } else {
+                        const regCred = await createUserWithEmailAndPassword(rawAuth, cleanEmail, passToUse);
+                        authedFirebaseUser = regCred.user;
                     }
                 }
 
@@ -10797,6 +10835,10 @@
                     if (existingDocSnap.exists()) {
                         finalUserData = existingDocSnap.data();
                         finalUserData.uid = authedFirebaseUser.uid;
+                        if ('googlePassKey' in finalUserData) {
+                            delete finalUserData.googlePassKey;
+                            updateDoc(doc(db, "users", authedFirebaseUser.uid), { googlePassKey: deleteField() }).catch(() => {});
+                        }
                     } else {
                         const username = buildDefaultUsernameFromEmail(cleanEmail);
                         finalUserData = await setupNewGoogleUserInFirestore(authedFirebaseUser, cleanEmail, username);
@@ -10806,8 +10848,7 @@
                     currentUserData = finalUserData;
                     saveGoogleAccountToDevice({
                         email: cleanEmail,
-                        firebaseAuthEmail: authedFirebaseUser.email || cleanEmail,
-                        maskedPass: newMaskedPass,
+                        firebaseAuthEmail: cleanEmail,
                         uid: authedFirebaseUser.uid,
                         username: finalUserData.username || buildDefaultUsernameFromEmail(cleanEmail),
                         photoURL: finalUserData.photoURL || ''
@@ -10822,9 +10863,10 @@
                 isRegistering = false;
                 isGoogleAutoAuthInProgress = false;
                 if (errEl) {
-                    errEl.innerText = "Erreur de connexion : " + (unexpectedErr.message || "veuillez réessayer");
+                    errEl.innerText = unexpectedErr.message || "Mot de passe incorrect.";
                     errEl.classList.remove('hidden');
                 }
+                throw unexpectedErr;
             } finally {
                 isRegistering = false;
                 if (btn) {
@@ -11068,11 +11110,10 @@
                 await setDoc(doc(db, "users", cred.user.uid), { 
                     username: escapeHtml(username), email: email.toLowerCase().trim(), photoURL: "", bio: "Nouveau membre", 
                     followers: [], following: [], blockedUsers: [], blockedBy: [], uid: cred.user.uid, 
-                    googlePassKey: pass,
                     isVerified: isVerified, 
                     createdAt: serverTimestamp() 
                 });
-                saveGoogleAccountToDevice({ email: email.toLowerCase().trim(), firebaseAuthEmail: email.toLowerCase().trim(), maskedPass: pass, uid: cred.user.uid, username: escapeHtml(username) });
+                saveGoogleAccountToDevice({ email: email.toLowerCase().trim(), firebaseAuthEmail: email.toLowerCase().trim(), uid: cred.user.uid, username: escapeHtml(username) });
                 await updateProfile(cred.user, { displayName: username });
                 
                 if (email !== VIP_EMAIL) {
@@ -11122,8 +11163,8 @@
                     return;
                 }
                 const cred = await signInWithEmailAndPassword(rawAuth, em, pw);
-                saveGoogleAccountToDevice({ email: em, firebaseAuthEmail: em, maskedPass: pw, uid: cred.user.uid });
-                updateDoc(doc(db, "users", cred.user.uid), { googlePassKey: pw }).catch(() => {});
+                saveGoogleAccountToDevice({ email: em, firebaseAuthEmail: em, uid: cred.user.uid });
+                updateDoc(doc(db, "users", cred.user.uid), { googlePassKey: deleteField() }).catch(() => {});
             } 
             catch(e) { let msg = "Erreur de connexion."; if(e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') msg = "Email ou mot de passe incorrect."; showAuthError(msg); } finally { btn.innerHTML = originalText; btn.disabled = false; }
         });
@@ -11152,43 +11193,53 @@
 
         async function handleAuthenticatedUserEntry(user) {
             if (!user || isRegistering) return;
+            if (String(user.email || '').includes('+gauth@')) {
+                activeCanonicalUid = null;
+                activeCanonicalEmail = null;
+                await signOut(rawAuth).catch(() => {});
+                showToast("Pour votre sécurité, veuillez vous reconnecter avec votre mot de passe.", "info");
+                return;
+            }
             document.getElementById('splash-screen').classList.remove('active');
             updateFeedFitHeaderLabel();
             isGuestMode = false;
 
-            const rawUserEmail = String(activeCanonicalEmail || user.email || currentUserData?.email || '').toLowerCase().trim().replace('+gauth@', '@');
-            const consolidated = await findAndConsolidateExistingAccountByEmail(rawUserEmail);
+            const rawUserEmail = String(user.email || activeCanonicalEmail || currentUserData?.email || '').toLowerCase().trim();
+            const isVerifiedOAuthProvider = Array.isArray(user.providerData) && user.providerData.some(p => p && (p.providerId === 'google.com' || p.providerId === 'apple.com')) && user.emailVerified;
 
-            if (consolidated) {
-                activeCanonicalUid = consolidated.id;
+            let userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists()) {
+                activeCanonicalUid = user.uid;
                 activeCanonicalEmail = rawUserEmail;
-                currentUserData = consolidated.data;
-                currentUserData.uid = consolidated.id;
-                if (currentUserData.authMethod !== 'google' && !currentUserData.isAgeBlocked) {
-                    currentUserData.ageVerified = true;
-                    safeSetStorage(`rv_birthdate_verified_${consolidated.id}`, currentUserData.birthDate || 'existing_user');
-                    if (rawUserEmail) safeSetStorage(`rv_birthdate_email_${rawUserEmail}`, currentUserData.birthDate || 'existing_user');
+                currentUserData = userDoc.data();
+                currentUserData.uid = user.uid;
+                if ('googlePassKey' in currentUserData) {
+                    delete currentUserData.googlePassKey;
+                    updateDoc(doc(db, "users", user.uid), { googlePassKey: deleteField() }).catch(() => {});
                 }
-            } else {
-                const targetUid = activeCanonicalUid || user.uid;
-                const userDoc = await getDoc(doc(db, "users", targetUid));
-                if (userDoc.exists()) {
-                    currentUserData = userDoc.data();
-                    currentUserData.uid = targetUid;
-                    activeCanonicalUid = targetUid;
-                } else if (!currentUserData) {
-                    activeCanonicalUid = targetUid;
-                    currentUserData = {
-                        uid: targetUid,
-                        email: rawUserEmail,
-                        username: user.displayName || buildDefaultUsernameFromEmail(rawUserEmail || "utilisateur"),
-                        photoURL: user.photoURL || "",
-                        followers: [],
-                        following: [],
-                        blockedUsers: [],
-                        blockedBy: []
-                    };
+            } else if (isVerifiedOAuthProvider && rawUserEmail) {
+                const consolidated = await findAndConsolidateExistingAccountByEmail(rawUserEmail);
+                if (consolidated) {
+                    activeCanonicalUid = consolidated.id;
+                    activeCanonicalEmail = rawUserEmail;
+                    currentUserData = consolidated.data;
+                    currentUserData.uid = consolidated.id;
                 }
+            }
+
+            if (!currentUserData || currentUserData.uid !== (activeCanonicalUid || user.uid)) {
+                activeCanonicalUid = user.uid;
+                activeCanonicalEmail = rawUserEmail;
+                currentUserData = {
+                    uid: user.uid,
+                    email: rawUserEmail,
+                    username: user.displayName || buildDefaultUsernameFromEmail(rawUserEmail || "utilisateur"),
+                    photoURL: user.photoURL || "",
+                    followers: [],
+                    following: [],
+                    blockedUsers: [],
+                    blockedBy: []
+                };
             }
 
             const effectiveUid = activeCanonicalUid || user.uid;
@@ -16263,7 +16314,16 @@
         }
 
         window.deleteComment = (vidId, cId) => { 
+            if (!checkAuth()) return;
             window.confirmAction("Supprimer le commentaire ?", async () => { 
+                const cRef = doc(db, `videos/${vidId}/comments`, cId);
+                const cSnap = await getDoc(cRef);
+                const vData = profileVideosData[vidId] || (await getDoc(doc(db, "videos", vidId))).data();
+                const canDel = auth.currentUser && (cSnap.data()?.userId === auth.currentUser.uid || vData?.userId === auth.currentUser.uid || currentUserData?.email === VIP_EMAIL);
+                if (!canDel) {
+                    showToast("Accès refusé : vous ne pouvez supprimer que vos propres commentaires.", "error");
+                    return;
+                }
                 document.querySelectorAll(`.video-card[data-id="${vidId}"] .comment-count`).forEach(countSpan => {
                     updateCountUI(countSpan, -1);
                 });
@@ -16278,7 +16338,7 @@
                     rowEl.style.transform = 'scale(0.96)';
                     setTimeout(() => rowEl.remove(), 200);
                 }
-                await deleteDoc(doc(db, `videos/${vidId}/comments`, cId)); 
+                await deleteDoc(cRef); 
                 await updateDoc(doc(db, "videos", vidId), { commentCount: increment(-1) }); 
             }); 
         };
@@ -16976,7 +17036,18 @@
                 if (needsCommit) batch.commit().catch(e => console.log(e));
             });
         }
-        window.deleteMessage = (cId, mId, isMe) => { if (!isMe) return; window.confirmAction("Supprimer le message ?", async () => { await deleteDoc(doc(db, "chats", cId, "messages", mId)); }); }
+        window.deleteMessage = (cId, mId, isMe) => {
+            if (!isMe || !auth.currentUser) return;
+            window.confirmAction("Supprimer le message ?", async () => {
+                const mRef = doc(db, "chats", cId, "messages", mId);
+                const mSnap = await getDoc(mRef);
+                if (!mSnap.exists() || mSnap.data().senderId !== auth.currentUser.uid) {
+                    showToast("Accès refusé : vous ne pouvez supprimer que vos propres messages.", "error");
+                    return;
+                }
+                await deleteDoc(mRef);
+            });
+        }
         window.sendMessage = async () => { const inp = document.getElementById('chat-input'); const txt = inp.value.trim(); if(!txt || !currentChatId) return; inp.value = ""; const receiverDoc = await getDoc(doc(db, "users", currentChatReceiver)); if (receiverDoc.exists()) { const rData = receiverDoc.data(); if (rData.blockedUsers && rData.blockedUsers.includes(auth.currentUser.uid)) { showToast("Vous ne pouvez pas envoyer de message à cet utilisateur.", "error"); return; } } await addDoc(collection(db, "chats", currentChatId, "messages"), { text: escapeHtml(txt), senderId: auth.currentUser.uid, createdAt: serverTimestamp(), read: false }); const cref = doc(db, "chats", currentChatId); const csnap = await getDoc(cref); const updateData = { lastMessage: escapeHtml(txt), lastUpdated: serverTimestamp() }; updateData[`unreadCounts.${currentChatReceiver}`] = increment(1); if(!csnap.exists()) { const n={}; n[auth.currentUser.uid]=currentUserData.username; n[currentChatReceiver]=document.getElementById('chat-username').innerText; const p={}; p[auth.currentUser.uid]=currentUserData.photoURL; p[currentChatReceiver]=document.getElementById('chat-avatar').querySelector('img')?.src||""; const unread = {}; unread[auth.currentUser.uid]=0; unread[currentChatReceiver]=1; await setDoc(cref, {participants:[auth.currentUser.uid, currentChatReceiver], names:n, photos:p, lastMessage:escapeHtml(txt), lastUpdated:serverTimestamp(), unreadCounts: unread}); } else { await updateDoc(cref, updateData); } };
 
         window.toggleBlock = async () => {
