@@ -2217,6 +2217,31 @@
             border-color: rgba(255, 255, 255, 0.24) !important;
             color: #ffffff !important;
         }
+        body.light-theme #upload-preview-area #upload-selected-sound-bar {
+            background-color: rgba(15, 23, 42, 0.92) !important;
+            border-color: rgba(251, 191, 36, 0.65) !important;
+        }
+        body.light-theme #upload-preview-area #upload-selected-sound-bar button:not(#btn-studio-top-sound-play) {
+            background-color: rgba(8, 145, 178, 0.35) !important;
+            border: 1px solid rgba(34, 211, 238, 0.75) !important;
+            color: #67e8f9 !important;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35) !important;
+        }
+        body.light-theme #upload-preview-area #upload-selected-sound-bar button[onclick*="clearSelectedUploadSound"]:not(#btn-studio-top-sound-play) {
+            background-color: rgba(225, 29, 72, 0.38) !important;
+            border: 1px solid rgba(251, 113, 133, 0.75) !important;
+            color: #fecdd3 !important;
+        }
+        body.light-theme #studio-active-sound-editor-card :is(.bg-black\/25, .bg-black\/30) {
+            background-color: #ffffff !important;
+            border: 1px solid rgba(15, 23, 42, 0.14) !important;
+            color: #0f172a !important;
+        }
+        body.light-theme #studio-active-sound-editor-card :is(.bg-white\/5, .bg-white\/10, .bg-white\/15) {
+            background-color: #e2e8f0 !important;
+            border: 1px solid rgba(15, 23, 42, 0.22) !important;
+            color: #0f172a !important;
+        }
 
         /* Guarantee high-contrast visibility for all buttons on video stages (#feed-screen, .video-card, #fullscreen-video-overlay, #story-viewer-modal, #story-creator-modal) in BOTH themes */
         #feed-screen > div.absolute.top-0 button,
