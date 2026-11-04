@@ -575,37 +575,15 @@
             background-size: 1.4em 1.4em;
         }
 
-        /* Video Progress Bar: zero white track line at the bottom */
-        .video-progress-container {
-            position: absolute;
-            bottom: 56px;
-            left: 0;
-            right: 0;
-            height: 10px;
-            display: flex;
-            align-items: flex-end;
-            z-index: 28;
-            cursor: pointer;
-        }
-        .video-progress-track {
-            width: 100%;
-            height: 2px;
-            background: transparent;
-            transition: height 0.15s ease;
-            overflow: hidden;
-        }
-        .video-progress-container:hover .video-progress-track,
-        .video-progress-container:active .video-progress-track {
-            height: 5px;
-            background: rgba(255, 42, 95, 0.18);
-        }
+        /* Video Progress Bar: hidden during playback as requested */
+        .video-progress-container,
+        .video-progress-track,
         .video-progress-fill {
-            height: 100%;
-            width: 100%;
-            background: #ff2a5f;
-            transform-origin: left center;
-            transform: scaleX(0);
-            will-change: transform;
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            height: 0 !important;
         }
 
         /* ============================================================================
@@ -2085,6 +2063,7 @@
             #btn-confirm-apple-auth,
             #btn-confirm-google-chooser,
             #btn-submit-birthdate,
+            #btn-submit-first-time-photo,
             #btn-reset-pass,
             #btn-save-profile,
             #btn-confirm-delete,
@@ -2122,6 +2101,7 @@
             #btn-confirm-apple-auth,
             #btn-confirm-google-chooser,
             #btn-submit-birthdate,
+            #btn-submit-first-time-photo,
             #btn-reset-pass,
             #btn-save-profile,
             #btn-confirm-delete,
@@ -3184,6 +3164,48 @@
                         Retourner à l'écran de connexion
                     </button>
                 </div>
+
+                <!-- State 3: Mandatory First-Time Profile Photo Step (with Cancel / Skip option) -->
+                <div id="birthdate-photo-view" class="hidden space-y-4 py-1">
+                    <div>
+                        <span class="inline-block text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 mb-1">Première connexion • Étape 2/2</span>
+                        <h3 class="text-lg font-extrabold text-white font-display">Ajoutez votre photo de profil</h3>
+                        <p class="text-xs text-gray-300 mt-1 leading-relaxed">Veuillez mettre une photo pour votre profil avant d'entrer dans le fil d'actualité.</p>
+                    </div>
+
+                    <div class="flex flex-col items-center gap-3 py-1">
+                        <input type="file" id="first-time-photo-input" accept="image/*" class="hidden" onchange="handleFirstTimePhotoSelect(this)">
+                        <div id="first-time-photo-preview-wrap" onclick="document.getElementById('first-time-photo-input').click()" class="relative w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-[#ff2a5f] via-amber-400 to-cyan-400 cursor-pointer shadow-xl group active:scale-95 transition">
+                            <div class="w-full h-full rounded-full overflow-hidden bg-[#0c1222] flex items-center justify-center relative">
+                                <img id="first-time-photo-preview-img" src="" alt="Aperçu photo de profil" class="hidden w-full h-full object-cover">
+                                <div id="first-time-photo-placeholder" class="flex flex-col items-center justify-center text-gray-300 gap-1">
+                                    <i data-lucide="camera" class="w-8 h-8 text-[#ff2a5f]"></i>
+                                    <span class="text-[9.5px] font-bold">Ajouter</span>
+                                </div>
+                            </div>
+                            <span class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#ff2a5f] border-2 border-[#0c1222] text-white flex items-center justify-center shadow-md">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </span>
+                        </div>
+
+                        <button type="button" onclick="document.getElementById('first-time-photo-input').click()" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-cyan-300 font-bold text-xs flex items-center justify-center gap-2 transition active:scale-95">
+                            <i data-lucide="image-plus" class="w-4 h-4"></i>
+                            <span id="first-time-photo-pick-label">Choisir une photo dans la galerie</span>
+                        </button>
+                    </div>
+
+                    <p id="first-time-photo-error-msg" class="hidden text-xs text-rose-300 bg-rose-950/60 border border-rose-500/40 p-2.5 rounded-xl font-medium"></p>
+
+                    <div class="space-y-2 pt-1">
+                        <button type="button" id="btn-submit-first-time-photo" onclick="submitFirstTimeProfilePhoto()" class="w-full bg-gradient-to-r from-[#ff2a5f] to-rose-600 hover:opacity-95 text-white font-extrabold py-3.5 rounded-xl transition flex justify-center items-center gap-2 h-12 shadow-lg shadow-rose-600/30 active:scale-95">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            <span>Valider ma photo et entrer</span>
+                        </button>
+                        <button type="button" id="btn-skip-first-time-photo" onclick="skipFirstTimeProfilePhoto()" class="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-gray-300 hover:text-white font-bold text-xs transition active:scale-95">
+                            Annuler et passer
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -3780,7 +3802,7 @@
                         </div>
                         <input type="checkbox" id="setting-profile-views-enabled" onchange="toggleProfileViewsVisibility(this.checked)" class="custom-checkbox shrink-0" checked>
                     </div>
-                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10">
+                    <div class="hidden items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10">
                         <div class="pr-2">
                             <div class="text-xs font-bold text-white">Statut d'activité en ligne (En ligne / Hors ligne)</div>
                             <div class="text-[10px] text-gray-400">Afficher sur ton profil quand tu es en ligne ou depuis combien de temps tu ne l'es plus. Désactive pour masquer.</div>
@@ -6146,9 +6168,7 @@
         }, true);
 
         function setProgressBarRatio(pf, ratio) {
-            if (!pf) return;
-            const clamped = Math.max(0, Math.min(1, ratio || 0));
-            pf.style.transform = `scaleX(${clamped})`;
+            return;
         }
 
         function stripCloudinaryTrimFromUrl(url) {
@@ -11474,6 +11494,9 @@
             return false;
         }
 
+        let firstTimeSelectedPhotoFile = null;
+        let firstTimeSelectedPhotoDataUrl = '';
+
         function openFirstTimeBirthDateModal() {
             populateBirthDateSelectors();
             stopMasterAudio();
@@ -11481,13 +11504,133 @@
             const modal = document.getElementById('birthdate-verification-modal');
             const formView = document.getElementById('birthdate-form-view');
             const blockedView = document.getElementById('birthdate-blocked-view');
+            const photoView = document.getElementById('birthdate-photo-view');
             const errEl = document.getElementById('birthdate-error-msg');
             if (errEl) errEl.classList.add('hidden');
             if (formView) formView.classList.remove('hidden');
             if (blockedView) blockedView.classList.add('hidden');
+            if (photoView) photoView.classList.add('hidden');
             if (modal) modal.classList.add('open');
             if (window.lucide) lucide.createIcons();
         }
+
+        function openFirstTimeProfilePhotoStep() {
+            stopMasterAudio();
+            document.querySelectorAll('video').forEach(v => v.pause());
+            firstTimeSelectedPhotoFile = null;
+            firstTimeSelectedPhotoDataUrl = '';
+            const modal = document.getElementById('birthdate-verification-modal');
+            const formView = document.getElementById('birthdate-form-view');
+            const blockedView = document.getElementById('birthdate-blocked-view');
+            const photoView = document.getElementById('birthdate-photo-view');
+            const errEl = document.getElementById('first-time-photo-error-msg');
+            const prevImg = document.getElementById('first-time-photo-preview-img');
+            const placeholder = document.getElementById('first-time-photo-placeholder');
+            const pickLbl = document.getElementById('first-time-photo-pick-label');
+            const fileInp = document.getElementById('first-time-photo-input');
+            if (fileInp) fileInp.value = '';
+            if (errEl) errEl.classList.add('hidden');
+            if (prevImg) { prevImg.src = ''; prevImg.classList.add('hidden'); }
+            if (placeholder) placeholder.classList.remove('hidden');
+            if (pickLbl) pickLbl.innerText = "Choisir une photo dans la galerie";
+            if (formView) formView.classList.add('hidden');
+            if (blockedView) blockedView.classList.add('hidden');
+            if (photoView) photoView.classList.remove('hidden');
+            if (modal) modal.classList.add('open');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        window.handleFirstTimePhotoSelect = (inputEl) => {
+            if (!inputEl || !inputEl.files || !inputEl.files[0]) return;
+            const file = inputEl.files[0];
+            firstTimeSelectedPhotoFile = file;
+            const errEl = document.getElementById('first-time-photo-error-msg');
+            if (errEl) errEl.classList.add('hidden');
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                firstTimeSelectedPhotoDataUrl = String(ev.target?.result || '');
+                const prevImg = document.getElementById('first-time-photo-preview-img');
+                const placeholder = document.getElementById('first-time-photo-placeholder');
+                const pickLbl = document.getElementById('first-time-photo-pick-label');
+                if (prevImg && firstTimeSelectedPhotoDataUrl) {
+                    prevImg.src = firstTimeSelectedPhotoDataUrl;
+                    prevImg.classList.remove('hidden');
+                }
+                if (placeholder) placeholder.classList.add('hidden');
+                if (pickLbl) pickLbl.innerText = "Changer de photo";
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.submitFirstTimeProfilePhoto = async () => {
+            const errEl = document.getElementById('first-time-photo-error-msg');
+            if (errEl) errEl.classList.add('hidden');
+            if (!firstTimeSelectedPhotoFile) {
+                if (errEl) {
+                    errEl.innerText = "Veuillez choisir une photo de profil avant de valider, ou appuyez sur « Annuler et passer ».";
+                    errEl.classList.remove('hidden');
+                }
+                document.getElementById('first-time-photo-input')?.click();
+                return;
+            }
+            const btn = document.getElementById('btn-submit-first-time-photo');
+            const origHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`;
+            }
+            try {
+                let uploadedUrl = '';
+                try {
+                    uploadedUrl = await uploadToCloudinary(firstTimeSelectedPhotoFile);
+                } catch (uploadErr) {
+                    uploadedUrl = firstTimeSelectedPhotoDataUrl || '';
+                }
+                const user = auth.currentUser;
+                const uid = user ? user.uid : (currentUserData?.uid || '');
+                const cleanEmail = String(currentUserData?.email || user?.email || '').toLowerCase().trim();
+                if (uploadedUrl) {
+                    if (currentUserData) currentUserData.photoURL = uploadedUrl;
+                    if (uid) {
+                        await updateDoc(doc(db, "users", uid), { photoURL: uploadedUrl }).catch(() => {});
+                        userProfileCache.set(uid, {
+                            username: currentUserData?.username || "utilisateur",
+                            isVerified: !!(currentUserData?.isVerified),
+                            photoURL: uploadedUrl
+                        });
+                    }
+                    if (cleanEmail) {
+                        saveGoogleAccountToDevice({
+                            email: cleanEmail,
+                            uid: uid,
+                            photoURL: uploadedUrl
+                        });
+                    }
+                }
+                if (uid) safeSetStorage(`rv_first_time_photo_pending_${uid}`, 'done');
+                const modal = document.getElementById('birthdate-verification-modal');
+                if (modal) modal.classList.remove('open');
+                showToast("Photo de profil enregistrée ! Bienvenue sur R-Videos 🎉", "success");
+                window.navigateTo('feed');
+                loadFeed();
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+            }
+        };
+
+        window.skipFirstTimeProfilePhoto = () => {
+            const user = auth.currentUser;
+            const uid = user ? user.uid : (currentUserData?.uid || '');
+            if (uid) safeSetStorage(`rv_first_time_photo_pending_${uid}`, 'done');
+            const modal = document.getElementById('birthdate-verification-modal');
+            if (modal) modal.classList.remove('open');
+            showToast("Bienvenue sur R-Videos 🎉", "info");
+            window.navigateTo('feed');
+            loadFeed();
+        };
 
         function showUnder12BlockedModalState() {
             stopMasterAudio();
@@ -11500,7 +11643,9 @@
             const modal = document.getElementById('birthdate-verification-modal');
             const formView = document.getElementById('birthdate-form-view');
             const blockedView = document.getElementById('birthdate-blocked-view');
+            const photoView = document.getElementById('birthdate-photo-view');
             if (formView) formView.classList.add('hidden');
+            if (photoView) photoView.classList.add('hidden');
             if (blockedView) blockedView.classList.remove('hidden');
             if (modal) modal.classList.add('open');
             if (window.lucide) lucide.createIcons();
@@ -11612,11 +11757,9 @@
                     });
                 }
 
-                const modal = document.getElementById('birthdate-verification-modal');
-                if (modal) modal.classList.remove('open');
-                showToast("Date de naissance validée ! Bienvenue sur R-Videos 🎉", "success");
-                window.navigateTo('feed');
-                loadFeed();
+                if (uid) safeSetStorage(`rv_first_time_photo_pending_${uid}`, 'true');
+                showToast("Date de naissance validée ! Ajoutez une photo de profil 📸", "success");
+                openFirstTimeProfilePhotoStep();
             } finally {
                 if (btn) {
                     btn.disabled = false;
@@ -11912,8 +12055,9 @@
                 const currentActive = document.querySelector('.screen.active');
                 if (!hasUserVerifiedBirthDate(effectiveUid, cleanUserEmail)) {
                     // Première connexion : demander obligatoirement la date de naissance (12 ans requis)
-                    window.navigateTo('feed');
                     openFirstTimeBirthDateModal();
+                } else if (effectiveUid && safeGetStorage(`rv_first_time_photo_pending_${effectiveUid}`, '') === 'true') {
+                    openFirstTimeProfilePhotoStep();
                 } else if (!currentActive || currentActive.id === 'auth-screen' || currentActive.id === 'splash-screen') { 
                     window.navigateTo('feed'); 
                     loadFeed(); 
@@ -19337,40 +19481,10 @@
 
         function updateProfileOnlineStatusUI(data, isMe) {
             const badge = document.getElementById('profile-online-status');
-            if (!badge || !data) return;
-
-            // If current user disabled their own online status OR target user hid their online status
-            const viewerAllowsStatus = isOnlineStatusEnabledForCurrentUser();
-            const targetAllowsStatus = data.showOnlineStatus !== false;
-
-            if (!viewerAllowsStatus || !targetAllowsStatus) {
-                if (isMe && !viewerAllowsStatus) {
-                    badge.className = "inline-flex text-[10px] font-bold mb-1.5 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-400 items-center gap-1.5";
-                    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-gray-500"></span><span>Statut en ligne masqué</span>`;
-                    return;
-                }
-                badge.classList.add('hidden');
-                badge.classList.remove('inline-flex', 'flex');
-                badge.innerHTML = "";
-                return;
-            }
-
-            let lastMs = 0;
-            const rawTs = data.lastSeenAt || data.lastActiveAt || data.updatedAt || data.createdAt;
-            if (typeof rawTs === 'number') lastMs = rawTs;
-            else if (rawTs?.toMillis) lastMs = rawTs.toMillis();
-            else if (rawTs?.seconds) lastMs = rawTs.seconds * 1000;
-
-            const isCurrentlyOnline = isMe || (data.isOnline === true && lastMs > 0 && (Date.now() - lastMs) <= ONLINE_THRESHOLD_MS) || (lastMs > 0 && (Date.now() - lastMs) <= 90000 && data.isOnline !== false);
-
-            if (isCurrentlyOnline) {
-                badge.className = "inline-flex text-[11px] font-extrabold mb-1.5 px-3 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/35 text-emerald-300 items-center gap-1.5 shadow-sm";
-                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]"></span><span>En ligne</span>`;
-            } else {
-                const offlineLabel = formatOfflineDurationSince(rawTs) || "Hors ligne récemment";
-                badge.className = "inline-flex text-[11px] font-semibold mb-1.5 px-3 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300 items-center gap-1.5";
-                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-gray-500"></span><span>${escapeHtml(offlineLabel)}</span>`;
-            }
+            if (!badge) return;
+            badge.classList.add('hidden');
+            badge.classList.remove('inline-flex', 'flex');
+            badge.innerHTML = "";
         }
 
         function isProfileViewsEnabledForCurrentUser() {
