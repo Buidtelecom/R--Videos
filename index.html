@@ -2818,7 +2818,7 @@
                             <span class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">ou</span>
                             <div class="h-px bg-white/10 flex-1"></div>
                         </div>
-                        <input type="text" id="reg-username" placeholder="Nom d'utilisateur" class="auth-input" data-i18n-placeholder="username_placeholder">
+                        <input type="text" id="reg-username" maxlength="25" placeholder="Nom d'utilisateur (max 25 car.)" class="auth-input" data-i18n-placeholder="username_placeholder">
                         <input type="email" id="reg-email" placeholder="Email (Gmail requis)" class="auth-input" data-i18n-placeholder="email_placeholder">
                         <div class="relative">
                             <input type="password" id="reg-pass" placeholder="Mot de passe" class="auth-input pr-10" data-i18n-placeholder="pass_placeholder">
@@ -2993,7 +2993,7 @@
                                 <option value="+216">🇹🇳 +216</option>
                                 <option value="+213">🇩🇿 +213</option>
                             </select>
-                            <input type="tel" id="phone-auth-number-input" placeholder="6XX XX XX XX" inputmode="tel" autocomplete="tel-national" class="auth-input flex-1 font-semibold tracking-wide" oninput="refreshPhoneAccountPasswordPrompt()" onkeydown="if(event.key==='Enter'){event.preventDefault(); sendPhoneVerificationCode();}">
+                            <input type="tel" id="phone-auth-number-input" maxlength="15" placeholder="6XX XX XX XX" inputmode="tel" autocomplete="tel-national" class="auth-input flex-1 font-semibold tracking-wide" oninput="refreshPhoneAccountPasswordPrompt()" onkeydown="if(event.key==='Enter'){event.preventDefault(); sendPhoneVerificationCode();}">
                         </div>
                     </div>
                     <div>
@@ -3002,7 +3002,7 @@
                     </div>
                     <div id="phone-auth-username-wrap">
                         <label class="block text-xs font-bold text-gray-300 mb-1.5">Nom d'utilisateur <span class="text-gray-500 font-normal">(pour un nouveau compte)</span></label>
-                        <input type="text" id="phone-auth-username-input" placeholder="Ex: ralph_237" class="auth-input" onkeydown="if(event.key==='Enter'){event.preventDefault(); sendPhoneVerificationCode();}">
+                        <input type="text" id="phone-auth-username-input" maxlength="25" placeholder="Ex: ralph_237 (max 25 car.)" class="auth-input" onkeydown="if(event.key==='Enter'){event.preventDefault(); sendPhoneVerificationCode();}">
                     </div>
                     <div id="recaptcha-container-phone" class="hidden"></div>
                     <p id="phone-auth-error" class="hidden text-xs text-rose-300 bg-rose-950/60 border border-rose-500/40 p-2.5 rounded-xl font-medium"></p>
@@ -3072,7 +3072,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-300 mb-1.5">Nom affiché <span class="text-gray-500 font-normal">(optionnel, pour inscription)</span></label>
-                        <input type="text" id="apple-auth-name-input" placeholder="Votre nom ou pseudo" class="auth-input" onkeydown="if(event.key==='Enter'){event.preventDefault(); executeAppleSignIn();}">
+                        <input type="text" id="apple-auth-name-input" maxlength="25" placeholder="Votre nom ou pseudo (max 25 car.)" class="auth-input" onkeydown="if(event.key==='Enter'){event.preventDefault(); executeAppleSignIn();}">
                     </div>
                     <div class="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-2 text-xs">
                         <label class="flex items-center gap-2.5 cursor-pointer">
@@ -3294,7 +3294,7 @@
                 <!-- Search Bar -->
                 <div class="relative mb-4">
                     <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4"></i>
-                    <input type="text" id="search-input" placeholder="Rechercher des créateurs (@nom)..." class="w-full bg-[#0c1222] border border-white/10 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white outline-none focus:border-[#ff2a5f] transition" oninput="searchUsers(this.value)" data-i18n-placeholder="search_placeholder">
+                    <input type="text" id="search-input" maxlength="40" placeholder="Rechercher des créateurs (@nom)..." class="w-full bg-[#0c1222] border border-white/10 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white outline-none focus:border-[#ff2a5f] transition" oninput="searchUsers(this.value)" data-i18n-placeholder="search_placeholder">
                 </div>
 
                 <!-- Category Chips -->
@@ -3439,8 +3439,8 @@
                             <span id="profile-badge-container"></span>
                         </div>
                         <div id="profile-online-status" class="hidden text-[11px] font-bold mb-1 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 items-center gap-1.5"></div>
-                        <div id="profile-joined-date" class="text-[10px] text-gray-400 mb-2 flex items-center gap-1"></div>
-                        <p id="profile-bio" class="text-gray-300 text-xs mb-4 text-center max-w-md leading-relaxed">...</p>
+                        <div id="profile-joined-date" class="hidden text-[10px] text-gray-400 mb-2 items-center gap-1"></div>
+                        <p id="profile-bio" class="text-gray-300 text-xs mb-4 text-center max-w-md leading-relaxed whitespace-pre-line break-words">...</p>
 
                         <!-- Stats Card (Clickable: Abonnements, Abonnés, J'aime, Vues du profil) -->
                         <div class="grid grid-cols-4 gap-1.5 w-full max-w-md glass-panel rounded-2xl p-3 text-center">
@@ -3623,7 +3623,7 @@
             </div>
             <div class="p-3 bg-[#0c1222] flex items-center gap-2 border-t border-white/10">
                 <div class="max-w-4xl mx-auto w-full flex items-center gap-2">
-                    <input type="text" id="chat-input" placeholder="Envoyer un message..." class="flex-1 bg-[#162038] border border-white/10 rounded-full px-4 py-2.5 text-sm text-white outline-none focus:border-[#ff2a5f]" onkeydown="if(event.key==='Enter') sendMessage()">
+                    <input type="text" id="chat-input" maxlength="500" placeholder="Envoyer un message..." class="flex-1 bg-[#162038] border border-white/10 rounded-full px-4 py-2.5 text-sm text-white outline-none focus:border-[#ff2a5f]" onkeydown="if(event.key==='Enter') sendMessage()">
                     <button onclick="sendMessage()" class="bg-gradient-to-r from-[#ff2a5f] to-rose-600 p-2.5 rounded-full shadow-lg shadow-rose-600/30 active:scale-90 transition"><i data-lucide="send" class="w-4 h-4 text-white"></i></button>
                 </div>
             </div>
@@ -3830,9 +3830,10 @@
                     </h3>
                     <i data-lucide="x" class="w-4 h-4 text-gray-400 cursor-pointer" onclick="closeModal('universal-edit-modal')"></i>
                 </div>
-                <textarea id="universal-edit-textarea" rows="3" class="auth-input text-xs" placeholder="Contenu..."></textarea>
+                <div class="flex justify-end text-[10px] font-mono text-cyan-300 -mb-2"><span id="universal-edit-textarea-counter">0 / 300</span></div>
+                <textarea id="universal-edit-textarea" maxlength="300" oninput="updateInputCharCounter(this, 'universal-edit-textarea-counter', 300)" rows="3" class="auth-input text-xs" placeholder="Contenu..."></textarea>
                 <div id="universal-edit-video-fields" class="hidden space-y-2.5">
-                    <input type="text" id="universal-edit-location" class="auth-input text-xs py-2" placeholder="Lieu (optionnel)">
+                    <input type="text" id="universal-edit-location" maxlength="50" class="auth-input text-xs py-2" placeholder="Lieu (optionnel, max 50 car.)">
                     <div class="grid grid-cols-2 gap-2">
                         <select id="universal-edit-visibility" class="auth-input bg-[#0c1222] text-xs py-2">
                             <option value="public">🌍 Public</option>
@@ -4037,8 +4038,16 @@
                         <span id="profile-avatar-zoom-label" class="text-[10px] font-mono font-bold text-cyan-300 min-w-[36px] text-right">100%</span>
                     </div>
                 </div>
-                <input type="text" id="edit-username" placeholder="Nom d'utilisateur" class="auth-input mb-3" data-i18n-placeholder="username_placeholder">
-                <textarea id="edit-bio" placeholder="Bio" class="auth-input mb-4" rows="3"></textarea>
+                <div class="flex items-center justify-between text-[10px] text-gray-400 mb-1 px-0.5">
+                    <span>Nom d'utilisateur</span>
+                    <span id="edit-username-counter" class="font-mono font-bold text-cyan-300">0 / 25</span>
+                </div>
+                <input type="text" id="edit-username" maxlength="25" oninput="updateInputCharCounter(this, 'edit-username-counter', 25)" placeholder="Nom d'utilisateur" class="auth-input mb-3" data-i18n-placeholder="username_placeholder">
+                <div class="flex items-center justify-between text-[10px] text-gray-400 mb-1 px-0.5">
+                    <span>Bio</span>
+                    <span id="edit-bio-counter" class="font-mono font-bold text-cyan-300">0 / 150</span>
+                </div>
+                <textarea id="edit-bio" maxlength="150" oninput="updateInputCharCounter(this, 'edit-bio-counter', 150)" placeholder="Bio" class="auth-input mb-4" rows="3"></textarea>
                 <div class="flex gap-2.5 mb-4">
                     <button onclick="closeModal('edit-modal')" class="flex-1 py-2.5 bg-white/10 rounded-xl text-xs font-semibold">Annuler</button>
                     <button id="btn-save-profile" onclick="saveProfileChanges()" class="flex-1 py-2.5 bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white font-bold rounded-xl text-xs flex justify-center items-center shadow-lg shadow-rose-600/25">Enregistrer</button>
@@ -4081,7 +4090,7 @@
                     <option value="Violation des droits d'auteur">Violation des droits d'auteur</option>
                     <option value="Autre raison">Autre motif</option>
                 </select>
-                <textarea id="report-reason-details" rows="2" placeholder="Détails supplémentaires (optionnel)..." class="auth-input text-xs mb-4"></textarea>
+                <textarea id="report-reason-details" maxlength="250" rows="2" placeholder="Détails supplémentaires (optionnel, max 250 car.)..." class="auth-input text-xs mb-4"></textarea>
                 <div class="flex gap-2.5">
                     <button onclick="closeModal('report-modal')" class="flex-1 py-2.5 bg-white/10 rounded-xl text-xs font-semibold">Annuler</button>
                     <button onclick="submitVideoReport()" class="flex-1 py-2.5 bg-[#ff2a5f] text-white rounded-xl text-xs font-bold shadow-lg shadow-rose-600/30">Envoyer</button>
@@ -4682,7 +4691,7 @@
                                         <span class="text-xs font-bold text-white">Texte incrusté sur la vidéo</span>
                                         <span class="text-[10px] text-cyan-400">Glisse le texte sur l'écran pour le placer</span>
                                     </div>
-                                    <input type="text" id="studio-overlay-text-input" placeholder="Écris un titre ou sous-titre à afficher sur la vidéo..." class="auth-input text-xs py-2" oninput="updateStudioOverlayPreview()">
+                                    <input type="text" id="studio-overlay-text-input" maxlength="80" placeholder="Écris un titre ou sous-titre à afficher sur la vidéo (max 80 car.)..." class="auth-input text-xs py-2" oninput="updateStudioOverlayPreview()">
                                     <div class="flex flex-wrap items-center justify-between gap-2">
                                         <div class="flex items-center gap-1.5">
                                             <button type="button" onclick="setStudioTextStyle('glass')" class="px-2.5 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-white">Bulle Glass</button>
@@ -4880,7 +4889,7 @@
 
                                     <div class="relative">
                                         <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-cyan-400"></i>
-                                        <input type="text" id="studio-sound-search-input" placeholder="Rechercher un son, une musique ou @utilisateur..." class="auth-input pl-8 pr-8 text-xs py-2" oninput="filterStudioCommunitySounds(this.value)">
+                                        <input type="text" id="studio-sound-search-input" maxlength="60" placeholder="Rechercher un son, une musique ou @utilisateur..." class="auth-input pl-8 pr-8 text-xs py-2" oninput="filterStudioCommunitySounds(this.value)">
                                         <button type="button" id="studio-sound-search-clear" onclick="clearStudioSoundSearch()" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
                                             <i data-lucide="x" class="w-3.5 h-3.5"></i>
                                         </button>
@@ -4894,7 +4903,7 @@
                                         <span class="text-[11px] font-bold text-gray-300 block">Nom du son affiché sur ta publication</span>
                                         <div class="relative">
                                             <i data-lucide="music" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-cyan-400"></i>
-                                            <input type="text" id="video-sound-title" placeholder="Titre du son (ex: Son original ou musique choisie)" class="auth-input pl-8 text-xs py-2" oninput="syncTimelinePillsUI()">
+                                            <input type="text" id="video-sound-title" maxlength="60" placeholder="Titre du son (ex: Son original ou musique choisie)" class="auth-input pl-8 text-xs py-2" oninput="syncTimelinePillsUI()">
                                         </div>
                                     </div>
                                 </div>
@@ -4957,7 +4966,8 @@
 
                     <!-- TAB 5: DESCRIPTION, HASHTAGS, LIEU & CONFIDENTIALITÉ -->
                     <div id="studio-tab-publish" class="flex-1 space-y-3">
-                        <textarea id="video-desc" placeholder="Décris ta vidéo... #Hashtags @Amis" class="auth-input h-20 resize-none text-xs" data-i18n-placeholder="desc_placeholder"></textarea>
+                        <div class="flex items-center justify-between text-[10px] text-gray-400 -mb-1.5 px-0.5"><span>Description de la vidéo</span><span id="video-desc-counter" class="font-mono font-bold text-cyan-300">0 / 300</span></div>
+                        <textarea id="video-desc" maxlength="300" oninput="updateInputCharCounter(this, 'video-desc-counter', 300)" placeholder="Décris ta vidéo... #Hashtags @Amis" class="auth-input h-20 resize-none text-xs" data-i18n-placeholder="desc_placeholder"></textarea>
 
                         <!-- Quick Viral Hashtags -->
                         <div class="flex gap-1.5 overflow-x-auto no-scrollbar">
@@ -4972,11 +4982,11 @@
                         <div class="grid grid-cols-2 gap-2">
                             <div class="relative">
                                 <i data-lucide="map-pin" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400"></i>
-                                <input type="text" id="video-location" placeholder="Ajouter un lieu" class="auth-input pl-8 text-xs py-2.5">
+                                <input type="text" id="video-location" maxlength="50" placeholder="Ajouter un lieu (max 50)" class="auth-input pl-8 text-xs py-2.5">
                             </div>
                             <div class="relative">
                                 <i data-lucide="users" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400"></i>
-                                <input type="text" id="video-tags" placeholder="Tag (@ami)" class="auth-input pl-8 text-xs py-2.5">
+                                <input type="text" id="video-tags" maxlength="60" placeholder="Tag (@ami, max 60)" class="auth-input pl-8 text-xs py-2.5">
                             </div>
                         </div>
 
@@ -5086,7 +5096,7 @@
                         <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 </div>
-                <input type="text" id="comment-poll-question-input" placeholder="Pose ta question à ta communauté..." class="w-full bg-[#162038] border border-white/15 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-400">
+                <input type="text" id="comment-poll-question-input" maxlength="120" placeholder="Pose ta question à ta communauté (max 120 car.)..." class="w-full bg-[#162038] border border-white/15 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-400">
                 <div id="comment-poll-options-container" class="space-y-1.5"></div>
                 <div class="flex items-center justify-between gap-2 pt-1">
                     <button type="button" id="btn-add-comment-poll-option" onclick="addCommentPollOptionField()" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-[11px] font-bold text-amber-300 flex items-center gap-1 transition">
@@ -5191,7 +5201,7 @@
                 <button type="button" onclick="triggerCommentVideoSticker()" class="bg-[#162038] hover:bg-white/15 border border-white/10 text-purple-400 p-2.5 rounded-full shrink-0 active:scale-90 transition" title="Ajouter un sticker animé à partir d'une courte vidéo (5s max)">
                     <i data-lucide="clapperboard" class="w-4 h-4"></i>
                 </button>
-                <input type="text" id="comment-input" class="flex-1 bg-[#162038] border border-white/10 text-white text-xs rounded-full px-4 py-2.5 outline-none focus:border-[#ff2a5f]" placeholder="Ajouter un commentaire..." data-i18n-placeholder="comment_placeholder" onkeydown="if(event.key==='Enter') sendComment()">
+                <input type="text" id="comment-input" maxlength="250" class="flex-1 bg-[#162038] border border-white/10 text-white text-xs rounded-full px-4 py-2.5 outline-none focus:border-[#ff2a5f]" placeholder="Ajouter un commentaire..." data-i18n-placeholder="comment_placeholder" onkeydown="if(event.key==='Enter') sendComment()">
                 <button id="btn-send-comment" onclick="sendComment()" class="bg-[#ff2a5f] text-white font-bold p-2.5 rounded-full shadow-md active:scale-90 transition shrink-0">
                     <i data-lucide="send" class="w-4 h-4"></i>
                 </button>
@@ -5450,7 +5460,7 @@
                 <div class="p-3.5 bg-[#0b1020] border-t border-white/10 space-y-2.5 max-h-[46%] overflow-y-auto no-scrollbar shrink-0">
                     <!-- Text / Caption Input -->
                     <div class="flex items-center gap-2">
-                        <input type="text" id="story-text-input" placeholder="Écris le texte ou la légende de ta story..." class="auth-input text-xs py-2.5 flex-1" oninput="updateStoryCreatorLivePreview()">
+                        <input type="text" id="story-text-input" maxlength="150" placeholder="Écris le texte ou la légende de ta story (max 150 car.)..." class="auth-input text-xs py-2.5 flex-1" oninput="updateStoryCreatorLivePreview()">
                         <button type="button" id="story-change-media-btn" onclick="triggerStoryGalleryPicker()" class="hidden px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-bold text-cyan-300 shrink-0 items-center gap-1">
                             <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Changer
                         </button>
@@ -5499,7 +5509,7 @@
                         </div>
                         <div class="relative">
                             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-cyan-400"></i>
-                            <input type="text" id="story-sound-search-input" placeholder="Rechercher un son ou @utilisateur..." class="auth-input pl-8 text-xs py-1.5" oninput="renderStoryCommunitySoundsList(this.value)">
+                            <input type="text" id="story-sound-search-input" maxlength="60" placeholder="Rechercher un son ou @utilisateur..." class="auth-input pl-8 text-xs py-1.5" oninput="renderStoryCommunitySoundsList(this.value)">
                         </div>
                         <div id="story-sounds-list" class="max-h-36 overflow-y-auto no-scrollbar space-y-1.5"></div>
                         <div class="flex items-center justify-between gap-3 pt-1">
@@ -7608,13 +7618,23 @@
         }
 
         function unescapeHtml(text) {
-            if (!text) return "";
-            return String(text)
-                .replace(/&quot;/g, '"')
-                .replace(/&#039;/g, "'")
-                .replace(/&lt;/g, '<')
-                .replace(/&gt;/g, '>')
-                .replace(/&amp;/g, '&');
+            if (text === null || text === undefined) return "";
+            let s = String(text);
+            for (let i = 0; i < 3; i++) {
+                const next = s
+                    .replace(/&quot;/gi, '"')
+                    .replace(/&#0*39;/gi, "'")
+                    .replace(/&#x0*27;/gi, "'")
+                    .replace(/&apos;/gi, "'")
+                    .replace(/&lt;/gi, '<')
+                    .replace(/&gt;/gi, '>')
+                    .replace(/&nbsp;/gi, ' ')
+                    .replace(/&amp;/gi, '&')
+                    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)));
+                if (next === s) break;
+                s = next;
+            }
+            return s;
         }
 
         function escapeHtml(text) {
@@ -9893,7 +9913,7 @@
                 clearCustomCover: false
             };
             document.getElementById('universal-edit-title').innerText = "Modifier la publication";
-            document.getElementById('universal-edit-textarea').value = unescapeHtml(v.description || "");
+            const ueTa = document.getElementById('universal-edit-textarea'); ueTa.value = unescapeHtml(v.description || "").slice(0, 300); window.updateInputCharCounter?.(ueTa, 'universal-edit-textarea-counter', 300);
             document.getElementById('universal-edit-location').value = unescapeHtml(v.location || "");
             document.getElementById('universal-edit-visibility').value = v.visibility || "public";
             document.getElementById('universal-edit-fit').value = v.aspectMode || "contain";
@@ -9962,7 +9982,7 @@
             if (!checkAuth()) return;
             editContext = { type: 'comment', id: commentId, parentId: vidId };
             document.getElementById('universal-edit-title').innerText = "Modifier le commentaire";
-            document.getElementById('universal-edit-textarea').value = unescapeHtml(currentText || "");
+            const ueTa = document.getElementById('universal-edit-textarea'); ueTa.value = unescapeHtml(currentText || "").slice(0, 300); window.updateInputCharCounter?.(ueTa, 'universal-edit-textarea-counter', 300);
             document.getElementById('universal-edit-video-fields').classList.add('hidden');
             document.getElementById('universal-edit-modal').classList.add('open');
         };
@@ -9971,7 +9991,7 @@
             if (!checkAuth()) return;
             editContext = { type: 'message', id: msgId, parentId: chatId };
             document.getElementById('universal-edit-title').innerText = "Modifier le message";
-            document.getElementById('universal-edit-textarea').value = unescapeHtml(currentText || "");
+            const ueTa = document.getElementById('universal-edit-textarea'); ueTa.value = unescapeHtml(currentText || "").slice(0, 300); window.updateInputCharCounter?.(ueTa, 'universal-edit-textarea-counter', 300);
             document.getElementById('universal-edit-video-fields').classList.add('hidden');
             document.getElementById('universal-edit-modal').classList.add('open');
         };
@@ -16186,7 +16206,7 @@
             container.innerHTML = commentPollDraftOptions.map((val, idx) => `
                 <div class="flex items-center gap-1.5">
                     <span class="w-5 h-5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[10px] font-extrabold flex items-center justify-center shrink-0">${idx + 1}</span>
-                    <input type="text" value="${escapeHtml(val)}" oninput="updateCommentPollDraftOption(${idx}, this.value)" placeholder="Choix ${idx + 1}..." class="flex-1 bg-[#162038] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white outline-none focus:border-amber-400">
+                    <input type="text" maxlength="50" value="${escapeHtml(val)}" oninput="updateCommentPollDraftOption(${idx}, this.value)" placeholder="Choix ${idx + 1} (max 50 car.)..." class="flex-1 bg-[#162038] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white outline-none focus:border-amber-400">
                     ${commentPollDraftOptions.length > 2 ? `<button type="button" onclick="removeCommentPollOptionField(${idx})" class="p-1 text-rose-400 hover:text-rose-300" title="Retirer ce choix"><i data-lucide="minus-circle" class="w-4 h-4"></i></button>` : ''}
                 </div>
             `).join('');
@@ -17638,7 +17658,7 @@
                             </button>
                         </div>
                         <div id="notif-reply-box-${n.id}" class="hidden items-center gap-1.5 mt-2 pt-1.5 border-t border-white/10" onclick="event.stopPropagation()">
-                            <input type="text" id="notif-reply-input-${n.id}" placeholder="Répondre à @${escapeHtml(senderIdentity.username)}..." class="flex-1 bg-[#162038] border border-white/15 rounded-full px-3 py-1.5 text-[11px] text-white outline-none focus:border-[#ff2a5f]" onkeydown="if(event.key==='Enter') sendDirectReplyFromNotification('${n.id}', '${safeVidIdJs}', '${safeCommentIdJs}', '${safeParentCommentIdJs}', '${n.fromUid}', '${safeSenderUserJs}', '${safeNotifTextJs}', event)">
+                            <input type="text" id="notif-reply-input-${n.id}" maxlength="250" placeholder="Répondre à @${escapeHtml(senderIdentity.username)}..." class="flex-1 bg-[#162038] border border-white/15 rounded-full px-3 py-1.5 text-[11px] text-white outline-none focus:border-[#ff2a5f]" onkeydown="if(event.key==='Enter') sendDirectReplyFromNotification('${n.id}', '${safeVidIdJs}', '${safeCommentIdJs}', '${safeParentCommentIdJs}', '${n.fromUid}', '${safeSenderUserJs}', '${safeNotifTextJs}', event)">
                             <button type="button" onclick="sendDirectReplyFromNotification('${n.id}', '${safeVidIdJs}', '${safeCommentIdJs}', '${safeParentCommentIdJs}', '${n.fromUid}', '${safeSenderUserJs}', '${safeNotifTextJs}', event)" class="bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white p-1.5 rounded-full shadow-md active:scale-90 transition shrink-0" title="Envoyer">
                                 <i data-lucide="send" class="w-3.5 h-3.5"></i>
                             </button>
@@ -19930,8 +19950,27 @@
             if (typeof ingestUserStoriesFromDoc === 'function') {
                 ingestUserStoriesFromDoc(data.uid, data);
             }
-            document.getElementById('profile-handle').textContent = "@" + data.username;
-            document.getElementById('profile-bio').textContent = data.bio || "Pas de bio";
+            const handleEl = document.getElementById('profile-handle');
+            if (handleEl) {
+                handleEl.textContent = "@" + unescapeHtml(data.username || "utilisateur").replace(/^@+/, '');
+                delete handleEl.__rvFrText;
+                delete handleEl.__rvLastTranslated;
+                if (handleEl.firstChild) {
+                    delete handleEl.firstChild.__rvFrText;
+                    delete handleEl.firstChild.__rvLastTranslated;
+                }
+            }
+            const bioEl = document.getElementById('profile-bio');
+            if (bioEl) {
+                const rawBioStr = (data.bio !== undefined && data.bio !== null) ? unescapeHtml(String(data.bio)) : "";
+                bioEl.textContent = rawBioStr.trim().length > 0 ? rawBioStr : "Pas de bio";
+                delete bioEl.__rvFrText;
+                delete bioEl.__rvLastTranslated;
+                if (bioEl.firstChild) {
+                    delete bioEl.firstChild.__rvFrText;
+                    delete bioEl.firstChild.__rvLastTranslated;
+                }
+            }
             document.getElementById('profile-avatar-container').innerHTML = getAvatarHTML(data.photoURL, "w-full h-full");
             if (typeof updateProfileStoryUI === 'function') {
                 updateProfileStoryUI(data.uid, isMe);
@@ -19939,7 +19978,8 @@
             updateProfileOnlineStatusUI(data, isMe);
             const joinedEl = document.getElementById('profile-joined-date');
             if (joinedEl) {
-                joinedEl.innerHTML = `<i data-lucide="calendar" class="w-3 h-3 text-cyan-400"></i> Membre • ${formatDateStamp(data.createdAt)}`;
+                joinedEl.classList.add('hidden');
+                joinedEl.innerHTML = '';
             }
             const isCertif = !!(data.isVerified || (data.email || '').toLowerCase().trim() === VIP_EMAIL.toLowerCase());
             if (data.uid) {
@@ -20242,9 +20282,28 @@
             });
         }
 
+        window.updateInputCharCounter = (inputEl, counterId, maxLen) => {
+            if (!inputEl) return;
+            if (maxLen && inputEl.value.length > maxLen) {
+                inputEl.value = inputEl.value.slice(0, maxLen);
+            }
+            const cEl = counterId ? document.getElementById(counterId) : null;
+            if (cEl && maxLen) {
+                cEl.textContent = `${inputEl.value.length} / ${maxLen}`;
+            }
+        };
+
         window.openEditProfile = () => {
-            document.getElementById('edit-username').value = unescapeHtml(currentUserData.username || '');
-            document.getElementById('edit-bio').value = unescapeHtml(currentUserData.bio || '');
+            const editUserEl = document.getElementById('edit-username');
+            const editBioEl = document.getElementById('edit-bio');
+            if (editUserEl) {
+                editUserEl.value = unescapeHtml(currentUserData.username || '').slice(0, 25);
+                window.updateInputCharCounter?.(editUserEl, 'edit-username-counter', 25);
+            }
+            if (editBioEl) {
+                editBioEl.value = unescapeHtml(currentUserData.bio || '').slice(0, 150);
+                window.updateInputCharCounter?.(editBioEl, 'edit-bio-counter', 150);
+            }
             const fileInp = document.getElementById('edit-file-input');
             if (fileInp) fileInp.value = '';
             profileAvatarCropState.img = null;
@@ -20299,8 +20358,9 @@
                 } else if (rawFile) {
                     url = await uploadToCloudinary(rawFile);
                 }
-                const newUsername = escapeHtml(document.getElementById('edit-username').value.trim().replace(/^@+/, '')) || currentUserData.username;
-                const newBio = escapeHtml(document.getElementById('edit-bio').value);
+                const rawEditName = document.getElementById('edit-username').value.trim().replace(/^@+/, '').slice(0, 25);
+                const newUsername = rawEditName || unescapeHtml(currentUserData.username || '').replace(/^@+/, '').slice(0, 25);
+                const newBio = document.getElementById('edit-bio').value.slice(0, 150);
                 const isCert = !!(currentUserData.isVerified || (currentUserData.email || auth.currentUser.email || '').toLowerCase().trim() === VIP_EMAIL.toLowerCase());
                 await updateDoc(doc(db, "users", auth.currentUser.uid), {
                     username: newUsername,
@@ -20308,7 +20368,11 @@
                     photoURL: url,
                     isVerified: isCert
                 });
-                currentUserData = (await getDoc(doc(db, "users", auth.currentUser.uid))).data();
+                const refreshedDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
+                currentUserData = refreshedDoc.exists() ? refreshedDoc.data() : (currentUserData || {});
+                currentUserData.username = newUsername;
+                currentUserData.bio = newBio;
+                currentUserData.photoURL = url;
                 currentUserData.isVerified = isCert;
                 userProfileCache.set(auth.currentUser.uid, {
                     username: newUsername,
@@ -20815,11 +20879,11 @@
                         if (p.classList && (p.classList.contains('like-count') || p.classList.contains('comment-count') || p.classList.contains('fav-text') || p.classList.contains('share-count') || p.classList.contains('comment-like-count') || p.id === 'profile-followers' || p.id === 'profile-following' || p.id === 'profile-likes' || p.id === 'profile-views-count')) {
                             return NodeFilter.FILTER_REJECT;
                         }
-                        if (p.classList && (p.classList.contains('video-desc-text') || p.id === 'profile-handle' || p.id === 'profile-bio' || p.id === 'chat-username' || p.id === 'story-viewer-text-content' || p.id === 'story-creator-live-text')) {
-                            const valTrim = node.nodeValue ? node.nodeValue.trim() : '';
-                            if (valTrim !== 'Pas de bio' && (!node.__rvFrText || node.__rvFrText.trim() !== 'Pas de bio')) {
-                                return NodeFilter.FILTER_REJECT;
-                            }
+                        if (p.id === 'profile-handle' || p.id === 'profile-bio' || p.id === 'edit-bio' || p.id === 'edit-username') {
+                            return NodeFilter.FILTER_REJECT;
+                        }
+                        if (p.classList && (p.classList.contains('video-desc-text') || p.id === 'chat-username' || p.id === 'story-viewer-text-content' || p.id === 'story-creator-live-text')) {
+                            return NodeFilter.FILTER_REJECT;
                         }
                         return NodeFilter.FILTER_ACCEPT;
                     }
