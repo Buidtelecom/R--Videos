@@ -8169,8 +8169,8 @@
         // - Commentaires des comptes réels affichés en premier et toujours les plus likés
         // ============================================================================
         const RV_CM_TOTAL_ACCOUNTS = 5000;
-        const RV_CM_MIN_LIKES = 15;
-        const RV_CM_MAX_LIKES = 2345;
+        const RV_CM_MIN_LIKES = 18;
+        const RV_CM_MAX_LIKES = 1645;
         const RV_CM_MAX_VIRTUAL_COMMENTS = 20;
         const RV_CM_MAX_TOTAL_COMMENTS = 64;
 
@@ -8210,7 +8210,7 @@
             "Passion vidéo & cinéma 🎬",
             "Simple & authentique 👌",
             "Musique & partage 🎶",
-            " ❤️✨",
+            "✨❤️",
             "Juste pour le fun 😂"
         ];
 
@@ -8252,6 +8252,8 @@
         const rvSessionFrozenMetrics = new Map();
         const rvAssignedLikesByVideoId = new Map();
         const rvUsedLikeValues = new Set();
+        const rvGraduatedQuotaByVideoId = new Map();
+        const rvAllKnownVideosCatalog = new Map();
 
         function rvHashStr(str) {
             const s = String(str || "rv_default");
@@ -8299,7 +8301,7 @@
                 isVerified: false,
                 followersCount: 25 + ((idx * 29) % 420),
                 followingCount: 18 + ((idx * 17) % 210),
-                likes: 65 + ((idx * 53) % 1850)
+                likes: 65 + ((idx * 53) % 1250)
             };
             userProfileCache.set(uid, {
                 username: acct.username,
@@ -8342,6 +8344,71 @@
             } catch (e) {}
         }
 
+        // Répartit les quotas cibles de l'ensemble des vidéos de la moins populaire (18 likes) à la plus populaire (max 1645 likes)
+        // pour que même si toutes les vidéos ont beaucoup de vues, elles soient échelonnées avec des nombres de likes tous différents.
+        function assignGraduatedPopularityQuotas(videosList) {
+            if (!Array.isArray(videosList) || videosList.length === 0) return;
+            videosList.forEach(item => {
+                const v = item?.data ? { id: item.id, ...item.data } : item;
+                const vidId = String(v?.id || v?.url || '');
+                if (vidId && !rvAllKnownVideosCatalog.has(vidId)) {
+                    rvAllKnownVideosCatalog.set(vidId, v);
+                }
+            });
+
+            const allEntries = Array.from(rvAllKnownVideosCatalog.entries()).map(([vidId, v]) => {
+                const h = rvHashStr(vidId);
+                const realHumanLikes = Array.isArray(v.likedBy)
+                    ? new Set(v.likedBy.filter(u => !isVirtualBotIdOrUser(u) && !String(u).startsWith('cm_auto_'))).size
+                    : 0;
+                const rewatches = Math.max(0, Number(v.rewatches || 0));
+                const completions = Math.max(0, Number(v.completions || 0));
+                const realComments = Math.max(0, Number(v.commentCount || 0));
+                const views = Math.max(0, Number(v.views || 0));
+                const persisted = getPersistedVideoStepBoost(vidId);
+                // Score de popularité combinant rewatches, complétions, interactions réelles et départage déterministe
+                const popularityScore =
+                    (rewatches * 140) +
+                    (completions * 55) +
+                    (realHumanLikes * 110) +
+                    (realComments * 65) +
+                    (Math.log1p(views) * 24) +
+                    (persisted * 12) +
+                    ((h % 10000) * 0.015);
+                return { vidId, h, popularityScore };
+            });
+
+            // Trier de la moins populaire (rang 0 -> 18 likes) à la plus populaire (rang N-1 -> jusqu'à 1645 likes)
+            allEntries.sort((a, b) => a.popularityScore - b.popularityScore);
+            const total = allEntries.length;
+
+            // Réinitialiser les snapshots non figés pour appliquer l'échelonnement proprement
+            rvAssignedLikesByVideoId.clear();
+            rvUsedLikeValues.clear();
+            rvSessionFrozenMetrics.clear();
+
+            allEntries.forEach((entry, rankIdx) => {
+                let quota;
+                if (total <= 1) {
+                    quota = 18 + (entry.h % 620);
+                } else if (rankIdx === 0) {
+                    // La moins populaire démarre à 18 likes
+                    quota = RV_CM_MIN_LIKES + (entry.h % 4); // 18..21
+                } else if (rankIdx === total - 1) {
+                    // La plus populaire monte jusqu'à 1645 likes max
+                    quota = RV_CM_MAX_LIKES - (entry.h % 19); // 1627..1645
+                } else {
+                    const ratio = rankIdx / (total - 1);
+                    const curved = Math.pow(ratio, 1.38);
+                    const span = (RV_CM_MAX_LIKES - 25) - (RV_CM_MIN_LIKES + 5);
+                    const jitter = ((entry.h % 17) - 8);
+                    quota = Math.round((RV_CM_MIN_LIKES + 6) + span * curved + jitter);
+                }
+                quota = Math.max(RV_CM_MIN_LIKES, Math.min(RV_CM_MAX_LIKES, quota));
+                rvGraduatedQuotaByVideoId.set(entry.vidId, quota);
+            });
+        }
+
         function computeVideoAutonomousMetricsSnapshot(videoData) {
             if (!videoData) return { baseLikes: 0, baseComments: 0, baseFavs: 0, baseShares: 0 };
             const vidId = String(videoData.id || videoData.url || videoData.description || 'vid_default');
@@ -8363,13 +8430,17 @@
 
             const rewatches = Math.max(0, Number(videoData.rewatches || 0));
             const completions = Math.max(0, Number(videoData.completions || 0));
-            const realViews = Math.max(0, Number(videoData.views || 0));
-            const persistedBoost = getPersistedVideoStepBoost(vidId);
 
-            // Taux de réactions virtuel réduit : plafond strict à 2 345 likes maxi
-            const organicPotential = 28 + (h % 680); // 28..707 de base
-            const rewatchViralityBoost = (rewatches * 115) + (completions * 42) + (realHumanLikes * 65) + (realViews * 8) + (persistedBoost * 6);
-            const targetQuotaLikes = Math.min(RV_CM_MAX_LIKES, Math.max(RV_CM_MIN_LIKES, organicPotential + rewatchViralityBoost));
+            // Quota cible échelonné de 18 likes (moins populaire) à 1645 likes (plus populaire)
+            let targetQuotaLikes;
+            if (rvGraduatedQuotaByVideoId.has(vidId)) {
+                targetQuotaLikes = rvGraduatedQuotaByVideoId.get(vidId);
+            } else {
+                const u = (h % 10000) / 10000;
+                const baseSpread = RV_CM_MIN_LIKES + Math.round(Math.pow(u, 1.65) * (RV_CM_MAX_LIKES - RV_CM_MIN_LIKES - 120));
+                const rewatchBoost = Math.min(120, (rewatches * 28) + (completions * 10));
+                targetQuotaLikes = Math.min(RV_CM_MAX_LIKES, Math.max(RV_CM_MIN_LIKES, baseSpread + rewatchBoost));
+            }
 
             // Montée progressive en fonction des heures (aucun spawn direct : 0 à t=0, 4h maxi pour atteindre le quota maximum)
             let ageHours = 0;
@@ -8382,35 +8453,42 @@
                 }
             }
 
-            // Progression horaire : 0h -> 0%, monte progressivement minute par minute / heure par heure jusqu'à 4h -> 100% du quota
             const hourlyRatio = Math.min(1, Math.max(0, ageHours / 4.0));
             const progressiveCurve = Math.pow(hourlyRatio, 1.1);
             let desiredVirtualLikes = Math.floor(targetQuotaLikes * progressiveCurve);
 
-            // Si la vidéo a atteint ou dépassé 4h, garantir au moins le minimum de 15 likes
             if (ageHours >= 4.0) {
                 desiredVirtualLikes = Math.max(RV_CM_MIN_LIKES, targetQuotaLikes);
             }
             let desiredTotalLikes = Math.min(RV_CM_MAX_LIKES, desiredVirtualLikes + realHumanLikes);
 
-            // Garantir qu'aucune publication active n'a un nombre de likes identique
+            // Garantir qu'aucune publication n'a un nombre de likes identique (avec écart franc entre les vidéos)
             let uniqueLikes = desiredTotalLikes;
             if (uniqueLikes > 0) {
                 if (rvAssignedLikesByVideoId.has(vidId)) {
                     uniqueLikes = rvAssignedLikesByVideoId.get(vidId);
                 } else {
-                    let offset = 0;
+                    let step = 0;
                     const minFloor = ageHours >= 4.0 ? RV_CM_MIN_LIKES : 1;
-                    while (rvUsedLikeValues.has(uniqueLikes) && offset < RV_CM_MAX_LIKES) {
-                        offset++;
-                        const up = desiredTotalLikes + offset;
-                        const down = desiredTotalLikes - offset;
+                    while (rvUsedLikeValues.has(uniqueLikes) && step < RV_CM_MAX_LIKES) {
+                        step++;
+                        const delta = step * 3;
+                        const down = desiredTotalLikes - delta;
+                        const up = desiredTotalLikes + delta;
+                        if (down >= minFloor && !rvUsedLikeValues.has(down)) {
+                            uniqueLikes = down;
+                            break;
+                        }
                         if (up <= RV_CM_MAX_LIKES && !rvUsedLikeValues.has(up)) {
                             uniqueLikes = up;
                             break;
                         }
-                        if (down >= minFloor && !rvUsedLikeValues.has(down)) {
-                            uniqueLikes = down;
+                        if (desiredTotalLikes - step >= minFloor && !rvUsedLikeValues.has(desiredTotalLikes - step)) {
+                            uniqueLikes = desiredTotalLikes - step;
+                            break;
+                        }
+                        if (desiredTotalLikes + step <= RV_CM_MAX_LIKES && !rvUsedLikeValues.has(desiredTotalLikes + step)) {
+                            uniqueLikes = desiredTotalLikes + step;
                             break;
                         }
                     }
@@ -8421,14 +8499,14 @@
 
             const baseLikes = Math.max(0, uniqueLikes - realHumanLikes);
 
-            // Taux réduits & hiérarchie stricte : Likes >> Commentaires (<= 20 virtuels, <= 64 total) >> Favoris >> Partages
+            // Hiérarchie stricte : Likes >> Commentaires (<= 20 virtuels, <= 64 total) >> Favoris >> Partages
             const maxAllowedAutoComments = Math.min(
                 RV_CM_MAX_VIRTUAL_COMMENTS,
                 Math.max(0, RV_CM_MAX_TOTAL_COMMENTS - realComments),
                 Math.max(0, Math.floor(baseLikes * (0.022 + ((h >>> 5) % 18) / 1000)))
             );
             let baseComments = maxAllowedAutoComments;
-            if (baseLikes >= 15 && baseComments < 3 && (RV_CM_MAX_TOTAL_COMMENTS - realComments) >= 3) {
+            if (baseLikes >= RV_CM_MIN_LIKES && baseComments < 3 && (RV_CM_MAX_TOTAL_COMMENTS - realComments) >= 3) {
                 baseComments = Math.min(RV_CM_MAX_VIRTUAL_COMMENTS, 3 + (h % 4));
             }
             const totalComments = Math.min(RV_CM_MAX_TOTAL_COMMENTS, realComments + baseComments);
@@ -9585,10 +9663,11 @@
         }
 
         function formatCount(num) {
-            if(!num) return "0";
-            if(num >= 1000000) return (num/1000000).toFixed(1) + 'M';
-            if(num >= 1000) return (num/1000).toFixed(1) + 'k';
-            return num;
+            const n = Math.max(0, Math.floor(Number(num) || 0));
+            if (!n) return "0";
+            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+            if (n >= 10000) return (n / 1000).toFixed(1) + 'k';
+            return String(n);
         }
 
         function getOptimizedVideoUrl(url, ignoredWidth, trimStart = 0, trimEnd = 0) {
@@ -12936,6 +13015,8 @@
                         }
                     }
                 }
+
+                assignGraduatedPopularityQuotas(videos);
 
                 if (currentFeedMode === 'foryou') {
                     if (!isGuestMode && auth.currentUser) {
@@ -19777,7 +19858,7 @@
                         ${count <= 3 ? `<span class="bg-[#ff2a5f] text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded">#${count}</span>` : '<span></span>'}
                     </div>
                     <div class="absolute bottom-1.5 left-2 right-2 flex items-center justify-between text-[10px] font-bold text-white drop-shadow-md">
-                        <span class="flex items-center gap-1"><i data-lucide="heart" class="w-3 h-3 fill-[#ff2a5f] text-[#ff2a5f]"></i> ${formatCount(v.likes)}</span>
+                        <span class="flex items-center gap-1"><i data-lucide="heart" class="w-3 h-3 fill-[#ff2a5f] text-[#ff2a5f]"></i> ${formatCount(getRealLikesCount(v))}</span>
                         <span class="text-gray-200 truncate max-w-[80px] flex items-center">@${escapeHtml(pIdentity.username)}${getBadgeHtml(pIdentity.isVerified)}</span>
                     </div>`;
                 grid.appendChild(div);
@@ -19798,11 +19879,13 @@
                 
                 cachedTrendingVideos = [];
                 snap.forEach(d => {
-                   const v = d.data();
+                   const v = { id: d.id, ...d.data() };
                    if (v.visibility === 'private' && (!auth.currentUser || v.userId !== auth.currentUser.uid)) return;
                    profileVideosData[d.id] = v; 
                    cachedTrendingVideos.push({ id: d.id, data: v });
                 });
+                assignGraduatedPopularityQuotas(cachedTrendingVideos);
+                cachedTrendingVideos.sort((a, b) => getRealLikesCount(b.data) - getRealLikesCount(a.data));
                 await hydrateUserProfilesMap(cachedTrendingVideos.map(item => item.data.userId));
                 renderTrendingGrid('all');
             } catch (e) {
@@ -20510,8 +20593,11 @@
             grid.innerHTML = "";
             let items = [];
             const likerUidSet = new Set();
-            snap.forEach(d => { 
-                const v = d.data();
+            const allProfileSnapVideos = [];
+            snap.forEach(d => { allProfileSnapVideos.push({ id: d.id, ...d.data() }); });
+            assignGraduatedPopularityQuotas(allProfileSnapVideos);
+            allProfileSnapVideos.forEach(v => { 
+                const d = { id: v.id };
                 if (v.userId === data.uid) {
                     likes += getRealLikesCount(v);
                     if (Array.isArray(v.likedBy)) {
