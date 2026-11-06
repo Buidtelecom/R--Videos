@@ -8174,17 +8174,21 @@
         const RV_CM_MAX_VIRTUAL_COMMENTS = 20;
         const RV_CM_MAX_TOTAL_COMMENTS = 64;
 
-        const RV_CM_FIRST_NAMES = [
-            "ulrich", "mireille", "franck", "stella", "junior", "ornella", "cedric", "raissa", "boris", "vanessa",
-            "idriss", "aissatou", "emmanuel", "audrey", "stephane", "cynthia", "kevin", "nadine", "yvan", "laetitia",
-            "samuel", "carine", "gael", "sorelle", "loic", "manuella", "patrick", "christelle", "fabrice", "ariane",
-            "christian", "brenda", "lionel", "tatiana", "wilfried", "danielle", "serge", "murielle", "arnaud", "melissa",
-            "herve", "josiane", "thierry", "sandrine", "michel", "valerie", "georges", "chantal", "alain", "solange",
-            "marc", "ines", "achille", "pamela", "martial", "darline", "romaric", "flore", "landry", "astrid",
-            "blaise", "bernice", "diego", "prisca", "steve", "ange", "maxime", "estelle", "rodrigue", "kelly",
-            "claude", "grace", "donald", "maeva", "gilles", "diane", "parfait", "noelle", "etienne", "larissa",
-            "joel", "sonia", "pascal", "nina", "alex", "doriane", "yannick", "karene", "charles", "elsie",
-            "arthur", "paule", "ivan", "lydie", "cyril", "fiona", "bruno", "claire", "olivier", "naomie"
+        // Listes strictement séparées par SEXE (Homme / Femme) et par ORIGINE (Camerounais / Occidental)
+        const RV_CM_MALE_FIRST_NAMES = [
+            "ulrich", "franck", "junior", "cedric", "boris", "idriss", "emmanuel", "stephane", "kevin", "yvan",
+            "samuel", "gael", "loic", "patrick", "fabrice", "christian", "lionel", "wilfried", "serge", "arnaud",
+            "herve", "thierry", "michel", "georges", "alain", "achille", "martial", "romaric", "landry", "blaise",
+            "diego", "steve", "maxime", "rodrigue", "claude", "donald", "gilles", "parfait", "etienne", "joel",
+            "pascal", "alex", "yannick", "charles", "arthur", "ivan", "cyril", "bruno", "olivier", "marc"
+        ];
+
+        const RV_CM_FEMALE_FIRST_NAMES = [
+            "mireille", "stella", "ornella", "raissa", "vanessa", "aissatou", "audrey", "cynthia", "nadine", "laetitia",
+            "carine", "sorelle", "manuella", "christelle", "ariane", "brenda", "tatiana", "danielle", "murielle", "melissa",
+            "josiane", "sandrine", "valerie", "chantal", "solange", "ines", "pamela", "darline", "flore", "astrid",
+            "bernice", "prisca", "ange", "estelle", "kelly", "grace", "maeva", "diane", "noelle", "larissa",
+            "sonia", "nina", "doriane", "karene", "elsie", "paule", "lydie", "fiona", "claire", "naomie"
         ];
 
         const RV_CM_LAST_NAMES = [
@@ -8193,6 +8197,21 @@
             "ebogo", "simo", "kenfack", "epopa", "zogo", "atanga", "mbah", "ndam", "etchu", "bong",
             "fezeu", "njike", "kotto", "priso", "onana", "bassong", "matip", "toko", "choupo", "aboubakar",
             "mbia", "song", "etoo", "milla", "ndom", "wandji", "kouam", "pokam", "tagne", "wafo"
+        ];
+
+        const RV_WEST_MALE_FIRST_NAMES = [
+            "lucas", "thomas", "hugo", "nathan", "leo", "julien", "antoine", "nicolas", "enzo", "alexandre",
+            "mathieu", "romain", "florian", "quentin", "valentin", "clement", "baptiste", "maxence", "adrien", "benjamin"
+        ];
+
+        const RV_WEST_FEMALE_FIRST_NAMES = [
+            "emma", "chloe", "lea", "manon", "camille", "sarah", "laura", "julie", "pauline", "marine",
+            "clara", "jade", "louise", "alice", "lina", "mila", "eva", "anna", "romane", "lucie"
+        ];
+
+        const RV_WEST_LAST_NAMES = [
+            "martin", "bernard", "dubois", "moreau", "laurent", "simon", "leroy", "roux", "david", "morel",
+            "fournier", "girard", "bonnet", "dupont", "lambert", "fontaine", "rousseau", "vincent", "muller", "lefevre"
         ];
 
         const RV_CM_CITIES_AND_BIOS = [
@@ -8214,39 +8233,59 @@
             "Juste pour le fun 😂"
         ];
 
-        const RV_REAL_PORTRAIT_PHOTOS = [
-            "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+        // 1. Photos 100% Hommes Noirs / Camerounais / Africains
+        const RV_PHOTOS_CM_MEN = [
+            "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
             "https://images.unsplash.com/photo-1522529599102-193c0d76b5b6?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
             "https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1539701938214-0d9736e1c16b?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1578774296842-c45e472b3028?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1583195764036-6dc248ac07d9?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1618077360395-f3068be8e001?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=160&h=160&fit=crop&crop=faces&auto=format&q=80"
+        ];
+
+        // 2. Photos 100% Femmes Noires / Camerounaises / Africaines
+        const RV_PHOTOS_CM_WOMEN = [
+            "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
             "https://images.unsplash.com/photo-1523824921871-d6f1a15151f1?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
             "https://images.unsplash.com/photo-1589156280159-27698a70f29e?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1548142813-c348350df52b?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
             "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1589156191108-c762ff4b96ab?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1611432579699-484f7990b127?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=160&h=160&fit=crop&crop=faces&auto=format&q=80"
+        ];
+
+        // 3. Photos 100% Hommes Blancs / Occidentaux
+        const RV_PHOTOS_WEST_MEN = [
+            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
             "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1513956589380-bad6acb9b9d4?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1463453091185-61582044d556?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1504257432389-52343af06ae3?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
             "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=160&h=160&fit=crop&crop=faces&auto=format&q=80"
+        ];
+
+        // 4. Photos 100% Femmes Blanches / Occidentales
+        const RV_PHOTOS_WEST_WOMEN = [
+            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1548142813-c348350df52b?w=160&h=160&fit=crop&crop=faces&auto=format&q=80"
+        ];
+
+        const RV_REAL_PORTRAIT_PHOTOS = [
+            ...RV_PHOTOS_CM_MEN,
+            ...RV_PHOTOS_CM_WOMEN,
+            ...RV_PHOTOS_WEST_MEN,
+            ...RV_PHOTOS_WEST_WOMEN
         ];
 
         const rvSessionFrozenMetrics = new Map();
@@ -8271,27 +8310,41 @@
             return Math.min(RV_CM_TOTAL_ACCOUNTS, raw);
         }
 
-        function buildRealPortraitPhotoUrl(idx) {
-            const i = Math.max(1, Number(idx) || 1);
-            if (i % 3 !== 0) {
-                return RV_REAL_PORTRAIT_PHOTOS[(i * 7) % RV_REAL_PORTRAIT_PHOTOS.length];
-            }
-            const isFemale = (i % 2 === 1);
-            const num = ((i * 13) % 90) + 1;
-            return `https://randomuser.me/api/portraits/${isFemale ? 'women' : 'men'}/${num}.jpg`;
-        }
-
         function getAutonomousCameroonianAccountByIndex(index1Based) {
             const idx = Math.max(1, Math.min(RV_CM_TOTAL_ACCOUNTS, Number(index1Based) || 1)) - 1;
-            const fIdx = idx % RV_CM_FIRST_NAMES.length;
-            const lIdx = Math.floor(idx / RV_CM_FIRST_NAMES.length) % RV_CM_LAST_NAMES.length;
-            const firstName = RV_CM_FIRST_NAMES[fIdx];
-            const lastName = RV_CM_LAST_NAMES[lIdx];
+            const isFemale = (idx % 2 === 1);
+            // ~85% de profils camerounais (photos noires H/F) et ~15% de profils occidentaux (photos blanches H/F)
+            const isWestern = (idx % 7 === 6);
+
+            let firstName = "";
+            let lastName = "";
+            let photoPool = RV_PHOTOS_CM_MEN;
+
+            if (isWestern) {
+                if (isFemale) {
+                    firstName = RV_WEST_FEMALE_FIRST_NAMES[Math.floor(idx / 2) % RV_WEST_FEMALE_FIRST_NAMES.length];
+                    photoPool = RV_PHOTOS_WEST_WOMEN;
+                } else {
+                    firstName = RV_WEST_MALE_FIRST_NAMES[Math.floor(idx / 2) % RV_WEST_MALE_FIRST_NAMES.length];
+                    photoPool = RV_PHOTOS_WEST_MEN;
+                }
+                lastName = RV_WEST_LAST_NAMES[Math.floor(idx / 7) % RV_WEST_LAST_NAMES.length];
+            } else {
+                if (isFemale) {
+                    firstName = RV_CM_FEMALE_FIRST_NAMES[Math.floor(idx / 2) % RV_CM_FEMALE_FIRST_NAMES.length];
+                    photoPool = RV_PHOTOS_CM_WOMEN;
+                } else {
+                    firstName = RV_CM_MALE_FIRST_NAMES[Math.floor(idx / 2) % RV_CM_MALE_FIRST_NAMES.length];
+                    photoPool = RV_PHOTOS_CM_MEN;
+                }
+                lastName = RV_CM_LAST_NAMES[Math.floor(idx / 5) % RV_CM_LAST_NAMES.length];
+            }
+
             const suffixes = ["", "_off", "01", "_pro", "_vibes", "99", "_real", "12", "_star", ""];
             const suf = suffixes[(idx * 7) % suffixes.length];
             const rawHandle = `${firstName}_${lastName}${suf}`.slice(0, 25);
             const uid = `cm_auto_${String(idx + 1).padStart(4, '0')}`;
-            const photoURL = buildRealPortraitPhotoUrl(idx + 1);
+            const photoURL = photoPool[Math.floor(idx / 2) % photoPool.length];
             const bio = RV_CM_CITIES_AND_BIOS[(idx * 11) % RV_CM_CITIES_AND_BIOS.length];
             const acct = {
                 uid,
