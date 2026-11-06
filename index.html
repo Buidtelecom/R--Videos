@@ -8602,6 +8602,19 @@
             return Math.min(RV_CM_MAX_LIKES, snap.baseLikes + realHumanLikes);
         }
 
+        // Les vues sur les pubs sont pratiquement les 3/2 (1.48 à 1.54) des likes de la pub
+        function getRealVideoViewsCount(videoData) {
+            if (!videoData) return 0;
+            const lk = getRealLikesCount(videoData);
+            if (lk <= 0) return Math.max(0, Number(videoData.views || 0));
+            const vidId = String(videoData.id || videoData.url || 'vid_v');
+            const h = rvHashStr(vidId);
+            const ratio = 1.48 + ((h % 7) * 0.01); // 1.48 .. 1.54 (pratiquement 3/2 = 1.50)
+            const naturalJitter = (h % 5) - 2;
+            const calculatedViews = Math.max(lk + 1, Math.round(lk * ratio) + naturalJitter);
+            return Math.max(calculatedViews, Number(videoData.views || 0));
+        }
+
         function getEffectiveCommentsCount(videoData) {
             if (!videoData) return 0;
             const realComments = Math.max(0, Number(videoData.commentCount || 0));
@@ -20226,18 +20239,40 @@
         }
 
         function getDeduplicatedRecentViewers(userData) {
-            if (!userData || !Array.isArray(userData.profileViewers)) return [];
             const seen = new Set();
-            const sorted = [...userData.profileViewers]
-                .filter(v => v && v.uid && !isVirtualBotIdOrUser(v.uid))
-                .sort((a, b) => (Number(b.ts) || 0) - (Number(a.ts) || 0));
             const unique = [];
-            for (const item of sorted) {
-                if (!seen.has(item.uid)) {
-                    seen.add(item.uid);
-                    unique.push(item);
+            if (userData && Array.isArray(userData.profileViewers)) {
+                const sorted = [...userData.profileViewers]
+                    .filter(v => v && v.uid && !isVirtualBotIdOrUser(v.uid))
+                    .sort((a, b) => (Number(b.ts) || 0) - (Number(a.ts) || 0));
+                for (const item of sorted) {
+                    if (!seen.has(item.uid)) {
+                        seen.add(item.uid);
+                        unique.push(item);
+                    }
+                    if (unique.length >= PROFILE_RECENT_LIMIT) break;
                 }
-                if (unique.length >= PROFILE_RECENT_LIMIT) break;
+            }
+            // Si le profil a des interactions ou des likes, compléter les visiteurs récents avec des comptes autonomes aux photos 100% uniques
+            const userLikes = Number(userData?.likes || 0);
+            if (unique.length < PROFILE_RECENT_LIMIT && (userLikes > 0 || userData?.uid)) {
+                const seedH = rvHashStr(String(userData?.uid || 'viewers_seed'));
+                const usedPhotos = new Set();
+                unique.forEach(u => { if (u.photoURL) usedPhotos.add(u.photoURL); });
+                const nowMs = Date.now();
+                for (let k = 0; k < 120 && unique.length < PROFILE_RECENT_LIMIT; k++) {
+                    const autoAcc = getAutonomousCameroonianAccountByIndex(((seedH + 31 + k * 47) % getSuccessiveCreatedCmAccountsCount()) + 1);
+                    if (autoAcc && autoAcc.uid !== userData?.uid && !seen.has(autoAcc.uid) && !usedPhotos.has(autoAcc.photoURL)) {
+                        seen.add(autoAcc.uid);
+                        usedPhotos.add(autoAcc.photoURL);
+                        unique.push({
+                            uid: autoAcc.uid,
+                            username: autoAcc.username,
+                            photoURL: autoAcc.photoURL,
+                            ts: nowMs - (k + 1) * 3600000 * 2
+                        });
+                    }
+                }
             }
             return unique;
         }
@@ -20646,7 +20681,23 @@
             const recentVisitors = getDeduplicatedRecentViewers(data);
             const viewsCountEl = document.getElementById('profile-views-count');
             if (viewsCountEl) {
-                viewsCountEl.innerText = isProfileViewsEnabledForCurrentUser() ? formatCount(recentVisitors.length) : "Off";
+                if (!isProfileViewsEnabledForCurrentUser()) {
+                    viewsCountEl.innerText = "Off";
+                } else {
+                    const profUid = String(data.uid || 'prof_v');
+                    const pH = rvHashStr(profUid);
+                    const profLikes = (typeof totalUserLikes === 'number' && totalUserLikes > 0)
+                        ? totalUserLikes
+                        : Math.max(0, Number(data.likes || 0));
+                    let computedProfileViews = recentVisitors.length;
+                    if (profLikes > 0) {
+                        // Les vues de profil représentent pratiquement les 3/2 (1.48 à 1.54) des likes du profil
+                        const pRatio = 1.48 + ((pH % 7) * 0.01);
+                        const pJitter = (pH % 7) - 3;
+                        computedProfileViews = Math.max(recentVisitors.length, Math.round(profLikes * pRatio) + pJitter);
+                    }
+                    viewsCountEl.innerText = formatCount(computedProfileViews);
+                }
             }
             updateProfileGhostStatusUI();
 
@@ -20747,7 +20798,7 @@
                 div.onclick = () => openFullVideo(id);
                 const profThumbUrl = getVideoThumbnail(v.url, (v.thumbnailOffset !== undefined && Number(v.thumbnailOffset) >= (Number(v.trimStart) || 0)) ? v.thumbnailOffset : (v.trimStart || 0), v.coverUrl || "");
                 const profFallbackThumb = getVideoFallbackThumbnail(v.url);
-                div.innerHTML = `${pinnedBadge}<img src="${escapeHtml(profThumbUrl)}" data-fb="${escapeHtml(profFallbackThumb)}" onerror="if(this.dataset.fb && this.src!==this.dataset.fb){this.src=this.dataset.fb;}" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition duration-300"><div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div><div class="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between text-[9px] font-bold text-white drop-shadow-md"><span class="flex items-center gap-0.5"><i data-lucide="play" class="w-2.5 h-2.5 fill-white"></i> ${formatCount(v.views)}</span><span class="text-gray-300 text-[8px]">${dateStr}</span></div>`;
+                div.innerHTML = `${pinnedBadge}<img src="${escapeHtml(profThumbUrl)}" data-fb="${escapeHtml(profFallbackThumb)}" onerror="if(this.dataset.fb && this.src!==this.dataset.fb){this.src=this.dataset.fb;}" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition duration-300"><div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div><div class="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between text-[9px] font-bold text-white drop-shadow-md"><span class="flex items-center gap-0.5"><i data-lucide="play" class="w-2.5 h-2.5 fill-white"></i> ${formatCount(getRealVideoViewsCount(v))}</span><span class="text-gray-300 text-[8px]">${dateStr}</span></div>`;
                 frag.appendChild(div);
             });
             grid.appendChild(frag);
