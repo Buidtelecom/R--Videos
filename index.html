@@ -20623,7 +20623,9 @@
             }
         }
 
+        let rvProfileRenderSeq = 0;
         async function renderProfile(data, isMe) { 
+            const myRenderSeq = ++rvProfileRenderSeq;
             if (data && isMe && auth.currentUser && !data.uid) {
                 data.uid = auth.currentUser.uid;
             }
@@ -20676,29 +20678,29 @@
             const realFollowingList = Array.isArray(data.following) ? data.following.filter(fUid => !isVirtualBotIdOrUser(fUid)) : [];
             document.getElementById('profile-followers').innerText = formatCount(realFollowersList.length);
             document.getElementById('profile-following').innerText = formatCount(realFollowingList.length);
-            document.getElementById('profile-likes').innerText = formatCount((data.likes || 0)); 
+            const initialLikesFallback = Math.max(0, Number(data.likes || 0));
+            document.getElementById('profile-likes').innerText = formatCount(initialLikesFallback); 
 
             const recentVisitors = getDeduplicatedRecentViewers(data);
             const viewsCountEl = document.getElementById('profile-views-count');
-            if (viewsCountEl) {
+            const applyProfileViewsFromLikes = (likesTotal) => {
+                if (!viewsCountEl) return;
                 if (!isProfileViewsEnabledForCurrentUser()) {
                     viewsCountEl.innerText = "Off";
                 } else {
                     const profUid = String(data.uid || 'prof_v');
                     const pH = rvHashStr(profUid);
-                    const profLikes = (typeof totalUserLikes === 'number' && totalUserLikes > 0)
-                        ? totalUserLikes
-                        : Math.max(0, Number(data.likes || 0));
                     let computedProfileViews = recentVisitors.length;
-                    if (profLikes > 0) {
+                    if (likesTotal > 0) {
                         // Les vues de profil représentent pratiquement les 3/2 (1.48 à 1.54) des likes du profil
                         const pRatio = 1.48 + ((pH % 7) * 0.01);
                         const pJitter = (pH % 7) - 3;
-                        computedProfileViews = Math.max(recentVisitors.length, Math.round(profLikes * pRatio) + pJitter);
+                        computedProfileViews = Math.max(recentVisitors.length, Math.round(likesTotal * pRatio) + pJitter);
                     }
                     viewsCountEl.innerText = formatCount(computedProfileViews);
                 }
-            }
+            };
+            applyProfileViewsFromLikes(initialLikesFallback);
             updateProfileGhostStatusUI();
 
             const adminContainer = document.getElementById('admin-actions');
@@ -20714,8 +20716,13 @@
                     adminContainer.innerHTML = `<button onclick="toggleBan('${data.uid}')" class="w-full bg-rose-950 hover:bg-rose-900 text-rose-200 font-bold py-2.5 rounded-xl mt-2 border border-rose-500/40 uppercase tracking-widest text-[11px]">⚠️ Bannir cet utilisateur</button>`;
                 }
             } 
-            const grid = document.getElementById('profile-videos-grid'); grid.innerHTML = "<div class='col-span-3 sm:col-span-4 md:col-span-5 text-center text-gray-500 text-xs py-8'>Chargement...</div>"; 
-            let likes = 0; const snap = await getDocs(query(collection(db, "videos"), orderBy("createdAt", "desc"))); 
+            const grid = document.getElementById('profile-videos-grid');
+            if (grid && grid.children.length === 0) {
+                grid.innerHTML = "<div class='col-span-3 sm:col-span-4 md:col-span-5 text-center text-gray-500 text-xs py-8'>Chargement...</div>";
+            }
+            let likes = 0;
+            const snap = await getDocs(query(collection(db, "videos"), orderBy("createdAt", "desc")));
+            if (myRenderSeq !== rvProfileRenderSeq) return;
             grid.innerHTML = "";
             let items = [];
             const likerUidSet = new Set();
@@ -20742,6 +20749,11 @@
                 }
             });
             const totalUserLikes = likes > 0 ? likes : Math.max(0, Number(data.likes || 0));
+            if (currentProfileViewedData) {
+                currentProfileViewedData.likes = totalUserLikes;
+            }
+            applyProfileViewsFromLikes(totalUserLikes);
+
             const seedH = rvHashStr(data.uid || 'prof');
             if ((items.length > 0 || totalUserLikes > 0) && likerUidSet.size < PROFILE_RECENT_LIMIT) {
                 const usedLikerPhotos = new Set();
@@ -20804,7 +20816,6 @@
             grid.appendChild(frag);
 
             if(items.length === 0) grid.innerHTML = "<div class='col-span-3 sm:col-span-4 md:col-span-5 text-center text-gray-500 text-xs py-10'>Aucune vidéo dans cet onglet.</div>";
-            document.getElementById('profile-likes').innerText = formatCount(likes);
             lucide.createIcons(); 
         }
 
