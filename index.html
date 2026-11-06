@@ -8350,15 +8350,20 @@
             const uid = `cm_auto_${String(idx + 1).padStart(4, '0')}`;
             const photoURL = photoPool[Math.floor(idx / 2) % photoPool.length];
             const bio = RV_CM_CITIES_AND_BIOS[(idx * 11) % RV_CM_CITIES_AND_BIOS.length];
+            // Les comptes autonomes ne publient pas : 0 like, abonnements très réduits ou nuls (0 à 4), abonnés très réduits (0 à 3) et vues de profil réduites (0 à 5)
+            const rawFollowings = (idx % 5 <= 1) ? 0 : ((idx * 3) % 4) + 1; // 0 (40% des cas) ou 1..4
+            const rawFollowers = (idx % 4 === 0) ? 0 : (idx % 3) + 1;       // 0..3
+            const rawProfileViews = (idx * 7) % 6;                           // 0..5
             const acct = {
                 uid,
                 username: rawHandle,
                 photoURL,
                 bio,
                 isVerified: false,
-                followersCount: 25 + ((idx * 29) % 420),
-                followingCount: 18 + ((idx * 17) % 210),
-                likes: 65 + ((idx * 53) % 1250)
+                followersCount: rawFollowers,
+                followingCount: rawFollowings,
+                profileViewsCount: rawProfileViews,
+                likes: 0
             };
             userProfileCache.set(uid, {
                 username: acct.username,
@@ -19847,15 +19852,31 @@
             if (String(uid || '').startsWith('cm_auto_')) {
                 const autoAcct = getAutonomousCameroonianAccount(uid);
                 if (autoAcct) {
+                    const seedH = rvHashStr(autoAcct.uid);
+                    const maxAcc = getSuccessiveCreatedCmAccountsCount();
+                    const buildUniqueAutoUids = (count, offsetSeed) => {
+                        const list = [];
+                        const usedPhotos = new Set([autoAcct.photoURL]);
+                        for (let k = 0; k < 120 && list.length < count; k++) {
+                            const cand = getAutonomousCameroonianAccountByIndex(((seedH + offsetSeed + k * 37) % maxAcc) + 1);
+                            if (cand && cand.uid !== autoAcct.uid && !usedPhotos.has(cand.photoURL)) {
+                                usedPhotos.add(cand.photoURL);
+                                list.push(cand.uid);
+                            }
+                        }
+                        return list;
+                    };
                     renderProfile({
                         uid: autoAcct.uid,
                         username: autoAcct.username,
                         photoURL: autoAcct.photoURL,
                         bio: autoAcct.bio,
                         isVerified: false,
-                        followers: [],
-                        following: Array.from({ length: Math.min(15, autoAcct.followingCount) }, (_, k) => `cm_auto_${String(((k * 29) % 500) + 1).padStart(4, '0')}`),
-                        likes: autoAcct.likes
+                        isAutonomousProfile: true,
+                        followers: buildUniqueAutoUids(autoAcct.followersCount || 0, 11),
+                        following: buildUniqueAutoUids(autoAcct.followingCount || 0, 73),
+                        profileViewsCount: autoAcct.profileViewsCount ?? 2,
+                        likes: 0
                     }, false);
                     return;
                 }
@@ -20253,14 +20274,17 @@
                     if (unique.length >= PROFILE_RECENT_LIMIT) break;
                 }
             }
-            // Si le profil a des interactions ou des likes, compléter les visiteurs récents avec des comptes autonomes aux photos 100% uniques
-            const userLikes = Number(userData?.likes || 0);
-            if (unique.length < PROFILE_RECENT_LIMIT && (userLikes > 0 || userData?.uid)) {
+            const isAutoProf = String(userData?.uid || '').startsWith('cm_auto_') || !!userData?.isAutonomousProfile;
+            const userLikes = isAutoProf ? 0 : Number(userData?.likes || 0);
+            const targetVisitorsCap = isAutoProf
+                ? Math.max(0, Math.min(5, Number(userData?.profileViewsCount ?? 2)))
+                : (userLikes > 0 ? PROFILE_RECENT_LIMIT : unique.length);
+            if (unique.length < targetVisitorsCap) {
                 const seedH = rvHashStr(String(userData?.uid || 'viewers_seed'));
                 const usedPhotos = new Set();
                 unique.forEach(u => { if (u.photoURL) usedPhotos.add(u.photoURL); });
                 const nowMs = Date.now();
-                for (let k = 0; k < 120 && unique.length < PROFILE_RECENT_LIMIT; k++) {
+                for (let k = 0; k < 120 && unique.length < targetVisitorsCap; k++) {
                     const autoAcc = getAutonomousCameroonianAccountByIndex(((seedH + 31 + k * 47) % getSuccessiveCreatedCmAccountsCount()) + 1);
                     if (autoAcc && autoAcc.uid !== userData?.uid && !seen.has(autoAcc.uid) && !usedPhotos.has(autoAcc.photoURL)) {
                         seen.add(autoAcc.uid);
@@ -20683,10 +20707,14 @@
 
             const recentVisitors = getDeduplicatedRecentViewers(data);
             const viewsCountEl = document.getElementById('profile-views-count');
+            const isAutonomousProfile = String(data.uid || '').startsWith('cm_auto_') || !!data.isAutonomousProfile;
             const applyProfileViewsFromLikes = (likesTotal) => {
                 if (!viewsCountEl) return;
                 if (!isProfileViewsEnabledForCurrentUser()) {
                     viewsCountEl.innerText = "Off";
+                } else if (isAutonomousProfile) {
+                    const reducedViews = Math.max(recentVisitors.length, Math.min(5, Number(data.profileViewsCount ?? recentVisitors.length)));
+                    viewsCountEl.innerText = formatCount(reducedViews);
                 } else {
                     const profUid = String(data.uid || 'prof_v');
                     const pH = rvHashStr(profUid);
@@ -20748,7 +20776,7 @@
                     items.push({ id: d.id, data: v });
                 }
             });
-            const totalUserLikes = likes > 0 ? likes : Math.max(0, Number(data.likes || 0));
+            const totalUserLikes = isAutonomousProfile ? 0 : (likes > 0 ? likes : Math.max(0, Number(data.likes || 0)));
             if (currentProfileViewedData) {
                 currentProfileViewedData.likes = totalUserLikes;
             }
