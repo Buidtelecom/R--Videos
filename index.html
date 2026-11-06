@@ -8233,7 +8233,7 @@
             "Juste pour le fun 😂"
         ];
 
-        // 1. Photos 100% Hommes Noirs / Camerounais / Africains
+        // 1. Photos 100% Hommes Noirs / Camerounais / Africains (10 portraits distincts)
         const RV_PHOTOS_CM_MEN = [
             "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
             "https://images.unsplash.com/photo-1522529599102-193c0d76b5b6?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
@@ -8242,10 +8242,12 @@
             "https://images.unsplash.com/photo-1578774296842-c45e472b3028?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
             "https://images.unsplash.com/photo-1583195764036-6dc248ac07d9?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
             "https://images.unsplash.com/photo-1618077360395-f3068be8e001?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=160&h=160&fit=crop&crop=faces&auto=format&q=80"
+            "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1504257432389-52343af06ae3?w=160&h=160&fit=crop&crop=faces&auto=format&q=80"
         ];
 
-        // 2. Photos 100% Femmes Noires / Camerounaises / Africaines
+        // 2. Photos 100% Femmes Noires / Camerounaises / Africaines (10 portraits distincts)
         const RV_PHOTOS_CM_WOMEN = [
             "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
             "https://images.unsplash.com/photo-1523824921871-d6f1a15151f1?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
@@ -8254,10 +8256,12 @@
             "https://images.unsplash.com/photo-1589156191108-c762ff4b96ab?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
             "https://images.unsplash.com/photo-1611432579699-484f7990b127?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
             "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=160&h=160&fit=crop&crop=faces&auto=format&q=80"
+            "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1596815064285-45ed8a9c0463?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=160&h=160&fit=crop&crop=faces&auto=format&q=80"
         ];
 
-        // 3. Photos 100% Hommes Blancs / Occidentaux
+        // 3. Photos 100% Hommes Blancs / Occidentaux (8 portraits distincts)
         const RV_PHOTOS_WEST_MEN = [
             "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
             "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
@@ -8269,7 +8273,7 @@
             "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=160&h=160&fit=crop&crop=faces&auto=format&q=80"
         ];
 
-        // 4. Photos 100% Femmes Blanches / Occidentales
+        // 4. Photos 100% Femmes Blanches / Occidentales (8 portraits distincts)
         const RV_PHOTOS_WEST_WOMEN = [
             "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
             "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
@@ -8682,16 +8686,30 @@
 
             const result = [];
             const usedAccIndices = new Set();
+            const usedPhotoUrls = new Set();
+            const usedUsernames = new Set();
             for (let i = 0; i < visibleCount; i++) {
                 const cId = `cm_auto_c_${vidId}_${i}`;
                 if (deletedSet.has(cId)) continue;
 
                 let accIdx = ((h + i * 193) % maxActiveAcc) + 1;
-                while (usedAccIndices.has(accIdx) && usedAccIndices.size < maxActiveAcc) {
+                let acct = getAutonomousCameroonianAccountByIndex(accIdx);
+                let attempts = 0;
+                while (
+                    (usedAccIndices.has(accIdx) || usedPhotoUrls.has(acct.photoURL) || usedUsernames.has(acct.username)) &&
+                    attempts < 400
+                ) {
                     accIdx = (accIdx % maxActiveAcc) + 1;
+                    acct = getAutonomousCameroonianAccountByIndex(accIdx);
+                    attempts++;
+                }
+                // Si une photo a déjà été utilisée dans ce fil de commentaires, ne jamais la réutiliser sous un second nom
+                if (usedPhotoUrls.has(acct.photoURL) || usedUsernames.has(acct.username)) {
+                    continue;
                 }
                 usedAccIndices.add(accIdx);
-                const acct = getAutonomousCameroonianAccountByIndex(accIdx);
+                usedPhotoUrls.add(acct.photoURL);
+                usedUsernames.add(acct.username);
                 const reactionText = RV_CM_EMOJI_REACTIONS_POOL[(h + i * 5) % RV_CM_EMOJI_REACTIONS_POOL.length];
                 const commentTsMs = Math.min(nowMs - 60000 - (i * 25000), baseCreatedMs + Math.floor((spanMs * (i + 1)) / (visibleCount + 2)));
                 // Likes modestes (0 à 4) sur les commentaires virtuels pour que les vrais comptes soient toujours les plus likés
@@ -19822,7 +19840,7 @@
                         photoURL: autoAcct.photoURL,
                         bio: autoAcct.bio,
                         isVerified: false,
-                        followers: Array.from({ length: Math.min(20, autoAcct.followersCount) }, (_, k) => `cm_auto_${String((( k * 17) % 500) + 1).padStart(4, '0')}`),
+                        followers: [],
                         following: Array.from({ length: Math.min(15, autoAcct.followingCount) }, (_, k) => `cm_auto_${String(((k * 29) % 500) + 1).padStart(4, '0')}`),
                         likes: autoAcct.likes
                     }, false);
@@ -20434,9 +20452,13 @@
 
             try {
                 if (tab === 'followers') {
-                    const followersUids = Array.isArray(currentProfileViewedData.followers)
+                    const realFollowersUids = Array.isArray(currentProfileViewedData.followers)
                         ? currentProfileViewedData.followers.filter(id => !isVirtualBotIdOrUser(id))
                         : [];
+                    const autoFollowersUids = Array.isArray(currentProfileViewedData.__autoFollowerUids)
+                        ? currentProfileViewedData.__autoFollowerUids
+                        : [];
+                    const followersUids = [...autoFollowersUids, ...realFollowersUids];
                     const users = await fetchRecentUsersByUids(followersUids);
                     if (users.length === 0) {
                         listEl.innerHTML = "<div class='text-center text-xs text-gray-500 py-10'>Aucun abonné pour le moment.</div>";
@@ -20668,17 +20690,52 @@
                     items.push({ id: d.id, data: v });
                 }
             });
-            if (items.length > 0 && likerUidSet.size < PROFILE_RECENT_LIMIT) {
-                const seedH = rvHashStr(data.uid || 'prof');
-                for (let k = 0; k < PROFILE_RECENT_LIMIT; k++) {
+            const totalUserLikes = likes > 0 ? likes : Math.max(0, Number(data.likes || 0));
+            const seedH = rvHashStr(data.uid || 'prof');
+            if ((items.length > 0 || totalUserLikes > 0) && likerUidSet.size < PROFILE_RECENT_LIMIT) {
+                const usedLikerPhotos = new Set();
+                for (let k = 0; k < 120; k++) {
                     const autoAcc = getAutonomousCameroonianAccountByIndex(((seedH + k * 41) % getSuccessiveCreatedCmAccountsCount()) + 1);
-                    if (autoAcc && autoAcc.uid !== data.uid) likerUidSet.add(autoAcc.uid);
+                    if (autoAcc && autoAcc.uid !== data.uid && !usedLikerPhotos.has(autoAcc.photoURL)) {
+                        usedLikerPhotos.add(autoAcc.photoURL);
+                        likerUidSet.add(autoAcc.uid);
+                    }
                     if (likerUidSet.size >= PROFILE_RECENT_LIMIT) break;
                 }
             }
             currentProfileVideoLikers = Array.from(likerUidSet).slice(0, PROFILE_RECENT_LIMIT);
             const profLikesEl = document.getElementById('profile-likes');
-            if (profLikesEl && likes > 0) profLikesEl.innerText = formatCount(likes);
+            if (profLikesEl) profLikesEl.innerText = formatCount(totalUserLikes);
+
+            // Les abonnés autonomes sur un profil représentent pratiquement la moitié (~48% à 52%) des likes totaux de l'utilisateur
+            let autoFollowersCount = 0;
+            if (totalUserLikes >= 2) {
+                const halfFactor = 0.47 + ((seedH % 55) / 1000); // 47% à 52.4% des likes totaux
+                autoFollowersCount = Math.max(1, Math.round(totalUserLikes * halfFactor));
+            }
+            const totalFollowersDisplayed = realFollowersList.length + autoFollowersCount;
+            const profFollowersEl = document.getElementById('profile-followers');
+            if (profFollowersEl) {
+                profFollowersEl.dataset.rawCount = String(totalFollowersDisplayed);
+                profFollowersEl.innerText = formatCount(totalFollowersDisplayed);
+            }
+            // Peupler les abonnés autonomes récents (avec photos 100% distinctes) pour la modale "Abonnés"
+            const autoFollowerUids = [];
+            if (autoFollowersCount > 0) {
+                const usedFollowerPhotos = new Set();
+                const targetSample = Math.min(PROFILE_RECENT_LIMIT, autoFollowersCount);
+                for (let k = 0; k < 120 && autoFollowerUids.length < targetSample; k++) {
+                    const autoAcc = getAutonomousCameroonianAccountByIndex(((seedH + 17 + k * 53) % getSuccessiveCreatedCmAccountsCount()) + 1);
+                    if (autoAcc && autoAcc.uid !== data.uid && !usedFollowerPhotos.has(autoAcc.photoURL)) {
+                        usedFollowerPhotos.add(autoAcc.photoURL);
+                        autoFollowerUids.push(autoAcc.uid);
+                    }
+                }
+            }
+            if (currentProfileViewedData) {
+                currentProfileViewedData.__autoFollowerUids = autoFollowerUids;
+                currentProfileViewedData.__totalFollowersDisplayed = totalFollowersDisplayed;
+            }
             items.sort((a, b) => (b.data.isPinned ? 1 : 0) - (a.data.isPinned ? 1 : 0));
 
             const frag = document.createDocumentFragment();
