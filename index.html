@@ -8161,16 +8161,18 @@
         }
 
         // ============================================================================
-        // MOTEUR COMMUNAUTAIRE AUTONOME CAMEROUNAIS (5 000 COMPTES SUCCESSIFS 237)
-        // - 5 000 comptes camerounais avec photos de profil (aucune notif à virgulemili@gmail.com)
-        // - Likes min 15, max 4845, aucun nombre de likes identique entre les pubs
-        // - Progression successive selon l'ancienneté et les rewatches/viralité des vrais utilisateurs
-        // - Hiérarchie stricte : Likes >> Commentaires >> Favoris >> Partages
-        // - Invisible en direct pendant le visionnage (figé durant la session d'écoute)
+        // MOTEUR COMMUNAUTAIRE AUTONOME (5 000 COMPTES SUCCESSIFS AVEC PHOTOS RÉELLES)
+        // - 5 000 comptes avec vraies photos de profil (aucune notif à virgulemili@gmail.com)
+        // - Likes max 2345, montée progressive sur 4h maxi (aucun spawn direct à la publication)
+        // - Pas plus de 20 commentaires virtuels par pub, pas plus de 64 commentaires au total
+        // - Commentaires virtuels : émotions (❤️, 😂, 💋, 👌) et très rarement 1-2 mots (sans parler du Cameroun)
+        // - Commentaires des comptes réels affichés en premier et toujours les plus likés
         // ============================================================================
         const RV_CM_TOTAL_ACCOUNTS = 5000;
         const RV_CM_MIN_LIKES = 15;
-        const RV_CM_MAX_LIKES = 4845;
+        const RV_CM_MAX_LIKES = 2345;
+        const RV_CM_MAX_VIRTUAL_COMMENTS = 20;
+        const RV_CM_MAX_TOTAL_COMMENTS = 64;
 
         const RV_CM_FIRST_NAMES = [
             "ulrich", "mireille", "franck", "stella", "junior", "ornella", "cedric", "raissa", "boris", "vanessa",
@@ -8194,29 +8196,59 @@
         ];
 
         const RV_CM_CITIES_AND_BIOS = [
-            "Douala 🇨🇲 • Bonne humeur & musique",
-            "Yaoundé 237 ✨ Créateur de contenu",
-            "Bafoussam -> Douala 🔥 Vibe 237",
-            "Kribi vibes 🌊🇨🇲 La belle vie",
-            "Buea • Mountain Boy 🇨🇲✨",
-            "Bamenda 237 • Toujours positif 🙏",
-            "Garoua ☀️ Fier d'être Camerounais 🇨🇲",
-            "Dschang • Étudiant & passionné de musique 🎵",
-            "Limbe Coast 🌴🇨🇲 Good energy only",
-            "Akwa, Douala • Humour & Danse 😂💃",
-            "Bastos, Yaoundé ✨ Mode & Lifestyle",
-            "Bonamoussadi 237 • On ensemble 💪🇨🇲",
-            "Ngaoundéré 🇨🇲 Sourire au quotidien",
-            "Ebolowa • Sud 237 en force 🔥",
-            "Bertoua 🇨🇲 Soleil de l'Est ✨",
-            "Maroua • Culture & authenticité 🇨🇲",
-            "Deïdo, Douala • Musique urbaine & Mbole 🎶",
-            "Mvan, Yaoundé • Rire c'est la santé 😄",
-            "Edéa 237 • Force tranquille ⚡",
-            "Nkongsamba • Passion vidéo & talent 🎬"
+            "Bonne humeur & musique 🎵",
+            "Créateur de contenu ✨",
+            "Good vibes only 🔥",
+            "La belle vie 🌊✨",
+            "Toujours positif 🙏",
+            "Passionné de musique 🎧",
+            "Humour & Danse 😂💃",
+            "Mode & Lifestyle ✨",
+            "Sourire au quotidien ❤️",
+            "Rire c'est la santé 😄",
+            "Force tranquille ⚡",
+            "Passion vidéo & cinéma 🎬",
+            "Simple & authentique 👌",
+            "Musique & partage 🎶",
+            " ❤️✨",
+            "Juste pour le fun 😂"
         ];
 
-        const RV_CM_AVATAR_Cache = new Map();
+        const RV_REAL_PORTRAIT_PHOTOS = [
+            "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1522529599102-193c0d76b5b6?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1523824921871-d6f1a15151f1?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1589156280159-27698a70f29e?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1548142813-c348350df52b?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1513956589380-bad6acb9b9d4?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1463453091185-61582044d556?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1504257432389-52343af06ae3?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=160&h=160&fit=crop&crop=faces&auto=format&q=80"
+        ];
+
         const rvSessionFrozenMetrics = new Map();
         const rvAssignedLikesByVideoId = new Map();
         const rvUsedLikeValues = new Set();
@@ -8237,46 +8269,14 @@
             return Math.min(RV_CM_TOTAL_ACCOUNTS, raw);
         }
 
-        function buildCameroonianAvatarSvgDataUri(idx) {
-            if (RV_CM_AVATAR_Cache.has(idx)) return RV_CM_AVATAR_Cache.get(idx);
-            const bgPalettes = [
-                ["#0f172a", "#1e3a8a"], ["#1f2937", "#065f46"], ["#31102f", "#9d174d"],
-                ["#1e1b4b", "#4338ca"], ["#27272a", "#b45309"], ["#042f2e", "#0d9488"],
-                ["#3b0764", "#7e22ce"], ["#172554", "#0284c7"], ["#450a0a", "#dc2626"]
-            ];
-            const skinTones = ["#5c3824", "#6f452c", "#4a2c1b", "#7d4e32", "#3d2314", "#8a583a", "#52301e"];
-            const shirtColors = ["#ff2a5f", "#10b981", "#f59e0b", "#06b6d4", "#8b5cf6", "#ec4899", "#3b82f6", "#eab308", "#ef4444"];
-            const bg = bgPalettes[idx % bgPalettes.length];
-            const skin = skinTones[(idx * 3) % skinTones.length];
-            const shirt = shirtColors[(idx * 7) % shirtColors.length];
-            const isFemale = (idx % 2 === 1);
-            const hairStyle = idx % 4;
-            let hairSvg = "";
-            if (isFemale) {
-                if (hairStyle === 0) {
-                    hairSvg = `<circle cx="60" cy="40" r="24" fill="#18181b"/><circle cx="60" cy="20" r="11" fill="#18181b"/>`;
-                } else if (hairStyle === 1) {
-                    hairSvg = `<path d="M35 46 C34 22, 86 22, 85 46 C87 62, 82 72, 77 74 L43 74 C38 72, 33 62, 35 46 Z" fill="#1c1917"/>`;
-                } else if (hairStyle === 2) {
-                    hairSvg = `<path d="M36 42 C36 20, 84 20, 84 42 Z" fill="${shirt}"/><circle cx="60" cy="24" r="9" fill="${shirt}"/>`;
-                } else {
-                    hairSvg = `<circle cx="42" cy="36" r="13" fill="#18181b"/><circle cx="78" cy="36" r="13" fill="#18181b"/><circle cx="60" cy="34" r="21" fill="#18181b"/>`;
-                }
-            } else {
-                if (hairStyle === 0) {
-                    hairSvg = `<path d="M40 38 C40 23, 80 23, 80 38 L78 43 L42 43 Z" fill="#111827"/>`;
-                } else if (hairStyle === 1) {
-                    hairSvg = `<circle cx="60" cy="36" r="22" fill="#111827"/>`;
-                } else if (hairStyle === 2) {
-                    hairSvg = `<rect x="41" y="24" width="38" height="16" rx="7" fill="#18181b"/>`;
-                } else {
-                    hairSvg = `<path d="M39 40 C41 24, 79 24, 81 40 Z" fill="#1c1917"/>`;
-                }
+        function buildRealPortraitPhotoUrl(idx) {
+            const i = Math.max(1, Number(idx) || 1);
+            if (i % 3 !== 0) {
+                return RV_REAL_PORTRAIT_PHOTOS[(i * 7) % RV_REAL_PORTRAIT_PHOTOS.length];
             }
-            const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120"><defs><linearGradient id="g${idx}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${bg[0]}"/><stop offset="100%" stop-color="${bg[1]}"/></linearGradient></defs><rect width="120" height="120" rx="60" fill="url(#g${idx})"/>${hairSvg}<path d="M24 120 C26 88, 94 88, 96 120 Z" fill="${shirt}"/><rect x="52" y="64" width="16" height="16" rx="6" fill="${skin}"/><ellipse cx="60" cy="49" rx="19" ry="21" fill="${skin}"/><circle cx="53" cy="47" r="2.2" fill="#111827"/><circle cx="67" cy="47" r="2.2" fill="#111827"/><path d="M54 57 Q60 62 66 57" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="102" cy="18" r="7" fill="#10b981" stroke="#0f172a" stroke-width="2"/></svg>`;
-            const uri = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
-            RV_CM_AVATAR_Cache.set(idx, uri);
-            return uri;
+            const isFemale = (i % 2 === 1);
+            const num = ((i * 13) % 90) + 1;
+            return `https://randomuser.me/api/portraits/${isFemale ? 'women' : 'men'}/${num}.jpg`;
         }
 
         function getAutonomousCameroonianAccountByIndex(index1Based) {
@@ -8285,11 +8285,11 @@
             const lIdx = Math.floor(idx / RV_CM_FIRST_NAMES.length) % RV_CM_LAST_NAMES.length;
             const firstName = RV_CM_FIRST_NAMES[fIdx];
             const lastName = RV_CM_LAST_NAMES[lIdx];
-            const suffixes = ["", "237", "_cmr", "_dla", "_yde", "_officiel", "_237", "01", "_pro", "_vibes"];
+            const suffixes = ["", "_off", "01", "_pro", "_vibes", "99", "_real", "12", "_star", ""];
             const suf = suffixes[(idx * 7) % suffixes.length];
             const rawHandle = `${firstName}_${lastName}${suf}`.slice(0, 25);
             const uid = `cm_auto_${String(idx + 1).padStart(4, '0')}`;
-            const photoURL = buildCameroonianAvatarSvgDataUri(idx + 1);
+            const photoURL = buildRealPortraitPhotoUrl(idx + 1);
             const bio = RV_CM_CITIES_AND_BIOS[(idx * 11) % RV_CM_CITIES_AND_BIOS.length];
             const acct = {
                 uid,
@@ -8297,9 +8297,9 @@
                 photoURL,
                 bio,
                 isVerified: false,
-                followersCount: 45 + ((idx * 37) % 890),
-                followingCount: 30 + ((idx * 19) % 340),
-                likes: 120 + ((idx * 83) % 4200)
+                followersCount: 25 + ((idx * 29) % 420),
+                followingCount: 18 + ((idx * 17) % 210),
+                likes: 65 + ((idx * 53) % 1850)
             };
             userProfileCache.set(uid, {
                 username: acct.username,
@@ -8337,13 +8337,13 @@
             if (!vidId) return;
             try {
                 const map = JSON.parse(safeGetStorage('rv_cm_vid_steps_v1', '{}') || '{}');
-                map[vidId] = Math.min(4845, (Number(map[vidId]) || 0) + deltaSteps);
+                map[vidId] = Math.min(RV_CM_MAX_LIKES, (Number(map[vidId]) || 0) + deltaSteps);
                 safeSetStorage('rv_cm_vid_steps_v1', JSON.stringify(map));
             } catch (e) {}
         }
 
         function computeVideoAutonomousMetricsSnapshot(videoData) {
-            if (!videoData) return { baseLikes: 15, baseComments: 5, baseFavs: 3, baseShares: 1 };
+            if (!videoData) return { baseLikes: 0, baseComments: 0, baseFavs: 0, baseShares: 0 };
             const vidId = String(videoData.id || videoData.url || videoData.description || 'vid_default');
             if (rvSessionFrozenMetrics.has(vidId)) {
                 return rvSessionFrozenMetrics.get(vidId);
@@ -8366,106 +8366,131 @@
             const realViews = Math.max(0, Number(videoData.views || 0));
             const persistedBoost = getPersistedVideoStepBoost(vidId);
 
-            // Quota cible selon la viralité et les rewatches des vrais utilisateurs (entre 45 et 4845)
-            const activeAccountsRatio = Math.max(0.25, getSuccessiveCreatedCmAccountsCount() / RV_CM_TOTAL_ACCOUNTS);
-            const organicPotential = 65 + (h % 2150);
-            const rewatchViralityBoost = (rewatches * 265) + (completions * 95) + (realHumanLikes * 155) + (realViews * 19) + (persistedBoost * 14);
-            const rawQuota = Math.round((organicPotential + rewatchViralityBoost) * (0.55 + 0.45 * activeAccountsRatio));
-            const targetQuotaLikes = Math.min(RV_CM_MAX_LIKES, Math.max(32, rawQuota));
+            // Taux de réactions virtuel réduit : plafond strict à 2 345 likes maxi
+            const organicPotential = 28 + (h % 680); // 28..707 de base
+            const rewatchViralityBoost = (rewatches * 115) + (completions * 42) + (realHumanLikes * 65) + (realViews * 8) + (persistedBoost * 6);
+            const targetQuotaLikes = Math.min(RV_CM_MAX_LIKES, Math.max(RV_CM_MIN_LIKES, organicPotential + rewatchViralityBoost));
 
-            // Progression successive avant d'atteindre le quota maximum
-            let ageMinutes = 45;
+            // Montée progressive en fonction des heures (aucun spawn direct : 0 à t=0, 4h maxi pour atteindre le quota maximum)
+            let ageHours = 0;
             if (videoData.createdAt) {
                 const createdMs = videoData.createdAt.toMillis
                     ? videoData.createdAt.toMillis()
-                    : (videoData.createdAt.seconds ? videoData.createdAt.seconds * 1000 : Date.now() - 1800000);
-                ageMinutes = Math.max(1, (Date.now() - createdMs) / 60000);
-            }
-            const viralityAccel = 1 + (rewatches * 0.35) + (completions * 0.15) + (persistedBoost * 0.08);
-            const effectiveAge = ageMinutes * viralityAccel;
-            const progressCurve = Math.min(1, 0.06 + Math.tanh(effectiveAge / 110) * 0.94);
-
-            const initialFloor = RV_CM_MIN_LIKES + (h % 12); // 15..26
-            let desiredTotalLikes = Math.round(initialFloor + (targetQuotaLikes - initialFloor) * progressCurve);
-            desiredTotalLikes = Math.max(RV_CM_MIN_LIKES, Math.min(RV_CM_MAX_LIKES, Math.max(desiredTotalLikes, realHumanLikes + RV_CM_MIN_LIKES)));
-
-            // Garantir qu'aucune publication n'a un nombre de likes identique [15 .. 4845]
-            let uniqueLikes = desiredTotalLikes;
-            if (rvAssignedLikesByVideoId.has(vidId)) {
-                uniqueLikes = rvAssignedLikesByVideoId.get(vidId);
-            } else {
-                let offset = 0;
-                while (rvUsedLikeValues.has(uniqueLikes) && offset < 4850) {
-                    offset++;
-                    const up = desiredTotalLikes + offset;
-                    const down = desiredTotalLikes - offset;
-                    if (up <= RV_CM_MAX_LIKES && !rvUsedLikeValues.has(up)) {
-                        uniqueLikes = up;
-                        break;
-                    }
-                    if (down >= RV_CM_MIN_LIKES && !rvUsedLikeValues.has(down)) {
-                        uniqueLikes = down;
-                        break;
-                    }
+                    : (videoData.createdAt.seconds ? videoData.createdAt.seconds * 1000 : new Date(videoData.createdAt).getTime());
+                if (!isNaN(createdMs) && createdMs > 0) {
+                    ageHours = Math.max(0, (Date.now() - createdMs) / 3600000);
                 }
-                rvUsedLikeValues.add(uniqueLikes);
-                rvAssignedLikesByVideoId.set(vidId, uniqueLikes);
+            }
+
+            // Progression horaire : 0h -> 0%, monte progressivement minute par minute / heure par heure jusqu'à 4h -> 100% du quota
+            const hourlyRatio = Math.min(1, Math.max(0, ageHours / 4.0));
+            const progressiveCurve = Math.pow(hourlyRatio, 1.1);
+            let desiredVirtualLikes = Math.floor(targetQuotaLikes * progressiveCurve);
+
+            // Si la vidéo a atteint ou dépassé 4h, garantir au moins le minimum de 15 likes
+            if (ageHours >= 4.0) {
+                desiredVirtualLikes = Math.max(RV_CM_MIN_LIKES, targetQuotaLikes);
+            }
+            let desiredTotalLikes = Math.min(RV_CM_MAX_LIKES, desiredVirtualLikes + realHumanLikes);
+
+            // Garantir qu'aucune publication active n'a un nombre de likes identique
+            let uniqueLikes = desiredTotalLikes;
+            if (uniqueLikes > 0) {
+                if (rvAssignedLikesByVideoId.has(vidId)) {
+                    uniqueLikes = rvAssignedLikesByVideoId.get(vidId);
+                } else {
+                    let offset = 0;
+                    const minFloor = ageHours >= 4.0 ? RV_CM_MIN_LIKES : 1;
+                    while (rvUsedLikeValues.has(uniqueLikes) && offset < RV_CM_MAX_LIKES) {
+                        offset++;
+                        const up = desiredTotalLikes + offset;
+                        const down = desiredTotalLikes - offset;
+                        if (up <= RV_CM_MAX_LIKES && !rvUsedLikeValues.has(up)) {
+                            uniqueLikes = up;
+                            break;
+                        }
+                        if (down >= minFloor && !rvUsedLikeValues.has(down)) {
+                            uniqueLikes = down;
+                            break;
+                        }
+                    }
+                    rvUsedLikeValues.add(uniqueLikes);
+                    rvAssignedLikesByVideoId.set(vidId, uniqueLikes);
+                }
             }
 
             const baseLikes = Math.max(0, uniqueLikes - realHumanLikes);
 
-            // Hiérarchie stricte : Likes >> Commentaires >> Favoris >> Partages
-            const L = uniqueLikes;
-            const ratioC = 0.13 + ((h >>> 5) % 65) / 1000; // 13% - 19.5%
-            let targetComments = Math.max(4, Math.floor(L * ratioC));
-            targetComments = Math.min(L - 4, Math.max(targetComments, realComments + 3));
-            if (targetComments >= L) targetComments = Math.max(3, L - 3);
+            // Taux réduits & hiérarchie stricte : Likes >> Commentaires (<= 20 virtuels, <= 64 total) >> Favoris >> Partages
+            const maxAllowedAutoComments = Math.min(
+                RV_CM_MAX_VIRTUAL_COMMENTS,
+                Math.max(0, RV_CM_MAX_TOTAL_COMMENTS - realComments),
+                Math.max(0, Math.floor(baseLikes * (0.022 + ((h >>> 5) % 18) / 1000)))
+            );
+            let baseComments = maxAllowedAutoComments;
+            if (baseLikes >= 15 && baseComments < 3 && (RV_CM_MAX_TOTAL_COMMENTS - realComments) >= 3) {
+                baseComments = Math.min(RV_CM_MAX_VIRTUAL_COMMENTS, 3 + (h % 4));
+            }
+            const totalComments = Math.min(RV_CM_MAX_TOTAL_COMMENTS, realComments + baseComments);
 
-            const ratioF = 0.46 + ((h >>> 11) % 160) / 1000; // 46% - 62% of comments
-            let targetFavs = Math.max(2, Math.floor(targetComments * ratioF));
-            targetFavs = Math.min(targetComments - 1, Math.max(targetFavs, realHumanFavs + 2));
-            if (targetFavs >= targetComments) targetFavs = Math.max(2, targetComments - 1);
+            let targetFavs = 0;
+            if (totalComments >= 2) {
+                const ratioF = 0.42 + ((h >>> 11) % 140) / 1000;
+                targetFavs = Math.max(1, Math.min(totalComments - 1, Math.floor(totalComments * ratioF)));
+            }
+            const baseFavs = Math.max(0, targetFavs - realHumanFavs);
+            const effectiveFavs = realHumanFavs + baseFavs;
 
-            const ratioS = 0.40 + ((h >>> 17) % 180) / 1000; // 40% - 58% of favorites
-            let targetShares = Math.max(1, Math.floor(targetFavs * ratioS));
-            targetShares = Math.min(targetFavs - 1, Math.max(targetShares, realHumanShares + 1));
-            if (targetShares >= targetFavs) targetShares = Math.max(1, targetFavs - 1);
+            let targetShares = 0;
+            if (effectiveFavs >= 2) {
+                const ratioS = 0.38 + ((h >>> 17) % 150) / 1000;
+                targetShares = Math.max(1, Math.min(effectiveFavs - 1, Math.floor(effectiveFavs * ratioS)));
+            }
+            const baseShares = Math.max(0, targetShares - realHumanShares);
 
             const snap = {
                 baseLikes,
-                baseComments: Math.max(0, targetComments - realComments),
-                baseFavs: Math.max(0, targetFavs - realHumanFavs),
-                baseShares: Math.max(0, targetShares - realHumanShares)
+                baseComments,
+                baseFavs,
+                baseShares
             };
             rvSessionFrozenMetrics.set(vidId, snap);
             return snap;
         }
 
         function getRealLikesCount(videoData) {
-            if (!videoData) return RV_CM_MIN_LIKES;
+            if (!videoData) return 0;
             const realHumanLikes = Array.isArray(videoData.likedBy)
                 ? new Set(videoData.likedBy.filter(uid => !isVirtualBotIdOrUser(uid) && !String(uid).startsWith('cm_auto_'))).size
                 : 0;
             const snap = computeVideoAutonomousMetricsSnapshot(videoData);
-            return Math.min(RV_CM_MAX_LIKES, Math.max(RV_CM_MIN_LIKES, snap.baseLikes + realHumanLikes));
+            return Math.min(RV_CM_MAX_LIKES, snap.baseLikes + realHumanLikes);
         }
 
         function getEffectiveCommentsCount(videoData) {
-            if (!videoData) return 4;
+            if (!videoData) return 0;
             const realComments = Math.max(0, Number(videoData.commentCount || 0));
             const snap = computeVideoAutonomousMetricsSnapshot(videoData);
             const likes = getRealLikesCount(videoData);
-            return Math.min(Math.max(3, likes - 2), snap.baseComments + realComments);
+            const rawTotal = Math.min(RV_CM_MAX_TOTAL_COMMENTS, realComments + snap.baseComments);
+            if (likes > 1 && rawTotal >= likes) {
+                return Math.max(realComments, likes - 1);
+            }
+            return rawTotal;
         }
 
         function getRealFavoritesCount(videoData) {
-            if (!videoData) return 2;
+            if (!videoData) return 0;
             const realHumanFavs = Array.isArray(videoData.favorites)
                 ? new Set(videoData.favorites.filter(uid => !isVirtualBotIdOrUser(uid) && !String(uid).startsWith('cm_auto_'))).size
                 : 0;
             const snap = computeVideoAutonomousMetricsSnapshot(videoData);
             const comments = getEffectiveCommentsCount(videoData);
-            return Math.min(Math.max(2, comments - 1), snap.baseFavs + realHumanFavs);
+            const rawFavs = snap.baseFavs + realHumanFavs;
+            if (comments > 1 && rawFavs >= comments) {
+                return Math.max(realHumanFavs, comments - 1);
+            }
+            return rawFavs;
         }
 
         function getRealRepostsCount(videoData) {
@@ -8478,100 +8503,34 @@
         }
 
         function getRealSharesCount(videoData) {
-            if (!videoData) return 1;
+            if (!videoData) return 0;
             const realHumanShares = Array.isArray(videoData.sharedBy)
                 ? new Set(videoData.sharedBy.filter(uid => !isVirtualBotIdOrUser(uid) && !String(uid).startsWith('cm_auto_'))).size
                 : 0;
             const snap = computeVideoAutonomousMetricsSnapshot(videoData);
             const favs = getRealFavoritesCount(videoData);
-            return Math.min(Math.max(1, favs - 1), Math.max(1, snap.baseShares + realHumanShares));
+            const rawShares = snap.baseShares + realHumanShares;
+            if (favs > 1 && rawShares >= favs) {
+                return Math.max(realHumanShares, favs - 1);
+            }
+            return rawShares;
         }
 
-        const RV_CM_SMART_COMMENTS_POOL = {
-            talent: [
-                "Franchement tu mérites ta place pour le #rvideostalent2026 🔥🇨🇲",
-                "Le niveau du concours cette année au 237 est incroyable 👏",
-                "Je valide fort ! Tu as mon like pour le challenge 🏆",
-                "Ça c'est du vrai talent camerounais, continue comme ça 💪",
-                "Le montage est super propre, bonne chance pour le prix !",
-                "On soutient le 237 jusqu'au bout ❤️🇨🇲",
-                "J'ai regardé 3 fois tellement c'est bien fait 🔥",
-                "Si tu ne gagnes pas avec ça je ne comprends plus rien 😂👏"
-            ],
-            music_dance: [
-                "Le son là me donne toujours la joie de vivre 🎶🔥",
-                "Les pas de danse sont trop fluides, respect ! 💃✨",
-                "Quelqu'un a le titre exact du son svp ? Trop lourd 🎵",
-                "La synchronisation avec le rythme est parfaite 👌",
-                "Le Cameroun a vraiment le rythme dans le sang 🇨🇲🔥",
-                "J'ai essayé de refaire le pas chez moi j'ai failli tomber 😂",
-                "Ce son passe en boucle dans ma tête depuis ce matin 🎧",
-                "L'énergie sur cette vidéo est contagieuse ✨"
-            ],
-            humour: [
-                "Pardon j'ai ri jusqu'aux larmes 😂😂",
-                "Mais qui t'a donné cette idée là ? Trop fort 😭😂",
-                "La chute de la vidéo m'a complètement tué 💀😂",
-                "Au Cameroun on ne s'ennuie jamais, vous êtes des génies 😂🇨🇲",
-                "J'ai direct mis en favoris pour revoir ça quand je suis triste 😂",
-                "Ton visage à la fin là c'est toute une histoire 😭",
-                "Impossible de regarder ça une seule fois sans rigoler 😂👏",
-                "Tu viens de refaire ma journée wallah 😂✨"
-            ],
-            general: [
-                "Superbe qualité vidéo, franchement bravo 👏✨",
-                "Toujours un plaisir de tomber sur tes publications ici ❤️",
-                "Depuis Douala on valide fort le contenu 🇨🇲🔥",
-                "Le cadrage et la lumière sont vraiment au top 👌",
-                "Force à toi, continue de nous régaler comme ça 💪",
-                "Simple, naturel et super agréable à regarder ✨",
-                "Yaoundé valide à 100% ce genre de publication 🙌🇨🇲",
-                "Hop, direct dans mes favoris ⭐",
-                "On voit qu'il y a du travail derrière, chapeau ! 👏",
-                "La communauté R-Videos grandit tellement bien 🔥",
-                "J'adore l'ambiance de cette vidéo, très réussi 💯",
-                "Le 237 toujours au sommet, rien à dire 🇨🇲❤️",
-                "C'est exactement pour ça que j'aime cette appli ✨",
-                "Très belle inspiration, continue sur cette lancée 🚀",
-                "Validé du début à la fin 👌🔥",
-                "Je partage ça direct, tout le monde doit voir ça 🙌"
-            ],
-            replies: [
-                "Je suis totalement d'accord avec toi 💯",
-                "Grave ! J'allais écrire exactement la même chose 😂",
-                "On est ensemble, le 237 ne déçoit jamais 🇨🇲🔥",
-                "Mais tellement vrai 👏",
-                "Haha pareil j'ai revu la vidéo plusieurs fois !"
-            ]
-        };
+        // Pool de réactions virtuelles : quasi exclusivement des émotions (❤️, 😂, 💋, 👌), très rarement 1-2 mots, zéro mention du Cameroun
+        const RV_CM_EMOJI_REACTIONS_POOL = [
+            "❤️", "❤️❤️", "❤️❤️❤️", "😂", "😂😂", "😂😂😂", "💋", "💋💋", "👌", "👌👌",
+            "❤️👌", "😂👌", "💋❤️", "❤️😂", "👌❤️", "😂😂👌", "❤️❤️💋", "👌💋", "😂❤️", "💋👌",
+            "❤️", "😂", "👌", "💋", "❤️❤️", "😂😂", "👌👌", "💋💋",
+            "Top 👌", "Validé 👌", "Magnifique ❤️", "Trop fort 😂"
+        ];
 
         function generateSmartAutonomousCommentsForVideo(vidId, vData) {
             if (!vidId) return [];
-            const effectiveTotal = getEffectiveCommentsCount(vData || { id: vidId });
-            const realCount = Math.max(0, Number(vData?.commentCount || 0));
-            const neededAuto = Math.max(0, effectiveTotal - realCount);
-            if (neededAuto <= 0) return [];
+            const snap = computeVideoAutonomousMetricsSnapshot(vData || { id: vidId });
+            const visibleCount = Math.min(RV_CM_MAX_VIRTUAL_COMMENTS, Math.max(0, snap.baseComments || 0));
+            if (visibleCount <= 0) return [];
 
-            // Afficher un échantillon riche et naturel (jusqu'à 28 commentaires visibles dans la feuille)
-            const visibleCount = Math.min(neededAuto, 28);
             const h = rvHashStr(vidId);
-            const descLower = String((vData?.description || '') + ' ' + (vData?.soundTitle || '')).toLowerCase();
-
-            let primaryPool = [...RV_CM_SMART_COMMENTS_POOL.general];
-            if (descLower.includes('talent') || descLower.includes('2026') || descLower.includes('concours')) {
-                primaryPool = [...RV_CM_SMART_COMMENTS_POOL.talent, ...primaryPool];
-            } else if (descLower.includes('humour') || descLower.includes('rire') || descLower.includes('drôle') || descLower.includes('😂')) {
-                primaryPool = [...RV_CM_SMART_COMMENTS_POOL.humour, ...primaryPool];
-            } else if (descLower.includes('danse') || descLower.includes('musique') || descLower.includes('son') || descLower.includes('mbole') || descLower.includes('beat')) {
-                primaryPool = [...RV_CM_SMART_COMMENTS_POOL.music_dance, ...primaryPool];
-            } else {
-                primaryPool = [
-                    ...RV_CM_SMART_COMMENTS_POOL.general,
-                    ...RV_CM_SMART_COMMENTS_POOL.music_dance.slice(0, 4),
-                    ...RV_CM_SMART_COMMENTS_POOL.humour.slice(0, 3)
-                ];
-            }
-
             let deletedSet = new Set();
             try {
                 const rawDel = JSON.parse(safeGetStorage('rv_deleted_auto_comments_v1', '[]') || '[]');
@@ -8587,8 +8546,8 @@
             const nowMs = Date.now();
             const baseCreatedMs = vData?.createdAt?.toMillis
                 ? vData.createdAt.toMillis()
-                : (vData?.createdAt?.seconds ? vData.createdAt.seconds * 1000 : (nowMs - 7200000));
-            const spanMs = Math.max(600000, Math.min(nowMs - baseCreatedMs, 86400000 * 3));
+                : (vData?.createdAt?.seconds ? vData.createdAt.seconds * 1000 : (nowMs - 3600000));
+            const spanMs = Math.max(120000, Math.min(nowMs - baseCreatedMs, 3600000 * 4));
 
             const result = [];
             const usedAccIndices = new Set();
@@ -8602,16 +8561,11 @@
                 }
                 usedAccIndices.add(accIdx);
                 const acct = getAutonomousCameroonianAccountByIndex(accIdx);
-                const text = primaryPool[(h + i * 7) % primaryPool.length];
-                const commentTsMs = Math.min(nowMs - 120000 - (i * 45000), baseCreatedMs + Math.floor((spanMs * (i + 1)) / (visibleCount + 2)));
-                const baseCommentLikes = ((h + i * 13) % 19) + (i === 0 ? 6 : 0);
+                const reactionText = RV_CM_EMOJI_REACTIONS_POOL[(h + i * 5) % RV_CM_EMOJI_REACTIONS_POOL.length];
+                const commentTsMs = Math.min(nowMs - 60000 - (i * 25000), baseCreatedMs + Math.floor((spanMs * (i + 1)) / (visibleCount + 2)));
+                // Likes modestes (0 à 4) sur les commentaires virtuels pour que les vrais comptes soient toujours les plus likés
+                const baseCommentLikes = (h + i * 3) % 5;
                 const userLikedThis = !!(auth.currentUser && likedMap[cId] === auth.currentUser.uid);
-
-                const isReply = (i > 2 && i % 5 === 0 && result.length > 0);
-                const parentComment = isReply ? result[result.length - 1] : null;
-                const replyText = isReply
-                    ? RV_CM_SMART_COMMENTS_POOL.replies[(h + i) % RV_CM_SMART_COMMENTS_POOL.replies.length]
-                    : text;
 
                 result.push({
                     id: cId,
@@ -8619,9 +8573,10 @@
                     username: acct.username,
                     userPhotoURL: acct.photoURL,
                     isVerified: false,
-                    text: replyText,
-                    parentCommentId: parentComment ? (parentComment.parentCommentId || parentComment.id) : null,
-                    replyToUsername: parentComment ? parentComment.username : null,
+                    isVirtualAuto: true,
+                    text: reactionText,
+                    parentCommentId: null,
+                    replyToUsername: null,
                     createdAt: { toMillis: () => commentTsMs, seconds: Math.floor(commentTsMs / 1000) },
                     likes: baseCommentLikes + (userLikedThis ? 1 : 0),
                     likedBy: userLikedThis && auth.currentUser ? [auth.currentUser.uid] : []
@@ -9623,7 +9578,8 @@
         function getAvatarHTML(photoURL, sizeClass = "w-full h-full") {
             if (photoURL && photoURL.length > 5) {
                 const optimizedUrl = photoURL.includes('cloudinary') ? photoURL.replace('/upload/', '/upload/w_100,c_fill,q_auto:eco,f_auto/') : photoURL;
-                return `<img src="${optimizedUrl}" loading="lazy" decoding="async" class="${sizeClass} rounded-full object-cover">`;
+                const fallbackReal = RV_REAL_PORTRAIT_PHOTOS[0];
+                return `<img src="${optimizedUrl}" onerror="if(this.src!=='${fallbackReal}'){this.src='${fallbackReal}';}" loading="lazy" decoding="async" class="${sizeClass} rounded-full object-cover">`;
             }
             return `<div class="${sizeClass} rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center"><svg class="text-gray-300 w-1/2 h-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>`;
         }
@@ -17322,12 +17278,30 @@
                     ? getResolvedProfileIdentity(resolvedVideoOwnerUid, vDataForOwner.username, vDataForOwner.isVerified, vDataForOwner.userPhotoURL, vDataForOwner.userEmail)
                     : { username: 'createur', isVerified: false, photoURL: '' };
 
-                // Identifier le tout premier commentaire publié (le créateur de la publication étant exclu)
+                const isVirtComment = (item) => !!(item && (item.isVirtualAuto || String(item.id || '').startsWith('cm_auto_c_') || String(item.userId || '').startsWith('cm_auto_')));
+
+                // S'assurer que les commentaires des comptes réels sont toujours les plus likés (au-dessus de tous les commentaires virtuels)
+                let maxVirtLikes = 4;
+                allComments.forEach(item => {
+                    if (isVirtComment(item)) {
+                        maxVirtLikes = Math.max(maxVirtLikes, Number(item.likes || 0));
+                    }
+                });
+                allComments.forEach((item, idx) => {
+                    if (!isVirtComment(item)) {
+                        const minRealBoost = maxVirtLikes + 4 + ((rvHashStr(String(item.id || idx)) % 9));
+                        item.likes = Math.max(Number(item.likes || 0), minRealBoost);
+                    }
+                });
+
+                // Identifier le tout premier commentaire publié (priorité aux comptes réels, créateur exclu)
                 let firstNonCreatorCommentId = null;
                 let earliestNonCreatorTs = Infinity;
+                const hasRealNonCreator = allComments.some(item => !isVirtComment(item) && (!resolvedVideoOwnerUid || item.userId !== resolvedVideoOwnerUid) && !item.parentCommentId);
                 allComments.forEach((item, idx) => {
                     if (resolvedVideoOwnerUid && item.userId === resolvedVideoOwnerUid) return;
                     if (item.parentCommentId) return;
+                    if (hasRealNonCreator && isVirtComment(item)) return;
                     const tsMs = getCommentTimestampMs(item.createdAt);
                     const effectiveOrder = tsMs > 0 ? tsMs : (idx + 1);
                     if (effectiveOrder < earliestNonCreatorTs) {
@@ -17336,17 +17310,26 @@
                     }
                 });
 
-                const hasOthersComments = topLevelComments.some(item => item.userId !== resolvedVideoOwnerUid);
+                const hasOthersRealComments = topLevelComments.some(item => !isVirtComment(item) && item.userId !== resolvedVideoOwnerUid);
 
                 topLevelComments.sort((a, b) => {
-                    const aIsOwner = !!(resolvedVideoOwnerUid && a.userId === resolvedVideoOwnerUid);
-                    const bIsOwner = !!(resolvedVideoOwnerUid && b.userId === resolvedVideoOwnerUid);
-                    // Règle : Dans la propre pub d'un utilisateur, son commentaire à lui ne doit pas être affiché comme le premier
-                    // dès lors qu'il existe au moins un commentaire d'un autre utilisateur : les commentaires des spectateurs passent devant.
-                    if (hasOthersComments && aIsOwner !== bIsOwner) {
-                        return aIsOwner ? 1 : -1;
+                    const aVirt = isVirtComment(a);
+                    const bVirt = isVirtComment(b);
+                    // Règle 1 : Les commentaires des comptes réels apparaissent TOUJOURS en premier devant les commentaires virtuels
+                    if (aVirt !== bVirt) {
+                        return aVirt ? 1 : -1;
+                    }
+                    if (!aVirt && !bVirt) {
+                        const aIsOwner = !!(resolvedVideoOwnerUid && a.userId === resolvedVideoOwnerUid);
+                        const bIsOwner = !!(resolvedVideoOwnerUid && b.userId === resolvedVideoOwnerUid);
+                        if (hasOthersRealComments && aIsOwner !== bIsOwner) {
+                            return aIsOwner ? 1 : -1;
+                        }
                     }
                     if ((b.isPinned ? 1 : 0) !== (a.isPinned ? 1 : 0)) return (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0);
+                    // Règle 2 : Parmi leur groupe, les plus likés passent en premier
+                    const likeDiff = (Number(b.likes || 0)) - (Number(a.likes || 0));
+                    if (likeDiff !== 0) return likeDiff;
                     return getCommentTimestampMs(a.createdAt) - getCommentTimestampMs(b.createdAt);
                 });
 
