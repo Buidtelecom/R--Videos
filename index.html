@@ -5977,19 +5977,52 @@
                     <div id="story-viewer-text-content" class="hidden relative z-20 max-w-[88%] px-5 py-3 text-center break-words text-xl font-extrabold shadow-2xl pointer-events-none" style="--rv-overlay-text-color:#ffffff;color:#ffffff !important;"></div>
                 </div>
 
-                <!-- Left / Right Navigation Tap Zones -->
-                <div class="absolute inset-y-20 left-0 w-1/3 z-20 cursor-pointer" onclick="prevUserStory()"></div>
-                <div class="absolute inset-y-20 right-0 w-2/3 z-20 cursor-pointer" onclick="nextUserStory()"></div>
+                <!-- Left / Right Navigation Tap Zones (Maintenir pour mettre en pause) -->
+                <div class="absolute inset-y-20 left-0 w-1/3 z-20 cursor-pointer select-none" style="-webkit-touch-callout:none;" onpointerdown="handleStoryHoldStart(event)" onpointerup="handleStoryHoldEnd(event)" onpointercancel="handleStoryHoldEnd(event)" onpointerleave="handleStoryHoldEnd(event)" ontouchstart="handleStoryHoldStart(event)" ontouchend="handleStoryHoldEnd(event)" ontouchcancel="handleStoryHoldEnd(event)" oncontextmenu="if(event.cancelable) event.preventDefault(); return false;" onclick="handleStoryTapNavigation('prev', event)" ondblclick="toggleCurrentStoryLike(event, true)"></div>
+                <div class="absolute inset-y-20 right-0 w-2/3 z-20 cursor-pointer select-none" style="-webkit-touch-callout:none;" onpointerdown="handleStoryHoldStart(event)" onpointerup="handleStoryHoldEnd(event)" onpointercancel="handleStoryHoldEnd(event)" onpointerleave="handleStoryHoldEnd(event)" ontouchstart="handleStoryHoldStart(event)" ontouchend="handleStoryHoldEnd(event)" ontouchcancel="handleStoryHoldEnd(event)" oncontextmenu="if(event.cancelable) event.preventDefault(); return false;" onclick="handleStoryTapNavigation('next', event)" ondblclick="toggleCurrentStoryLike(event, true)"></div>
 
-                <!-- Bottom Music & Story Counter Footer -->
-                <div class="relative z-30 px-4 pb-5 pt-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent flex items-center justify-between gap-2 pointer-events-none">
-                    <div id="story-viewer-music-bar" class="hidden items-center gap-2 bg-black/65 border border-white/15 rounded-full px-3.5 py-1.5 max-w-[75%]">
-                        <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-[#ff2a5f] to-amber-400 flex items-center justify-center animate-spin-slow shrink-0">
-                            <i data-lucide="music" class="w-3 h-3 text-white"></i>
+                <!-- Story Activity Sheet (Qui a vu & Qui a liké la story) -->
+                <div id="story-viewer-activity-sheet" class="hidden absolute inset-x-0 bottom-0 z-40 bg-[#0b101e]/95 backdrop-blur-xl border-t border-white/15 rounded-t-3xl p-4 max-h-[68%] flex-col shadow-2xl" onclick="event.stopPropagation()">
+                    <div class="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-extrabold text-white flex items-center gap-1.5">
+                                <i data-lucide="eye" class="w-4 h-4 text-cyan-400"></i>
+                                <span id="story-sheet-views-title">Vues (0)</span>
+                            </span>
+                            <span class="text-white/25">•</span>
+                            <span class="text-xs font-extrabold text-white flex items-center gap-1.5">
+                                <i data-lucide="heart" class="w-4 h-4 text-[#ff2a5f] fill-[#ff2a5f]"></i>
+                                <span id="story-sheet-likes-title">J'aime (0)</span>
+                            </span>
                         </div>
-                        <span id="story-viewer-music-title" class="text-xs font-bold text-white truncate">♫ Son original</span>
+                        <button type="button" onclick="closeStoryActivitySheet(event)" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-gray-300 hover:text-white transition">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
                     </div>
-                    <span id="story-viewer-counter" class="text-[11px] font-bold text-white/80 ml-auto bg-black/50 px-2.5 py-1 rounded-full border border-white/10">1 / 1</span>
+                    <div id="story-viewer-activity-list" class="overflow-y-auto space-y-2 pr-1 max-h-72"></div>
+                </div>
+
+                <!-- Bottom Music, Views/Likes & Story Counter Footer -->
+                <div class="relative z-30 px-4 pb-5 pt-3 bg-gradient-to-t from-black/90 via-black/45 to-transparent flex items-center justify-between gap-2 pointer-events-auto">
+                    <div class="flex items-center gap-2 min-w-0 flex-1">
+                        <div id="story-viewer-music-bar" class="hidden items-center gap-2 bg-black/65 border border-white/15 rounded-full px-3 py-1.5 max-w-[58%] shrink min-w-0">
+                            <div class="w-5 h-5 rounded-full bg-gradient-to-tr from-[#ff2a5f] to-amber-400 flex items-center justify-center animate-spin-slow shrink-0">
+                                <i data-lucide="music" class="w-3 h-3 text-white"></i>
+                            </div>
+                            <span id="story-viewer-music-title" class="text-[11px] font-bold text-white truncate">♫ Son original</span>
+                        </div>
+                        <button type="button" id="btn-story-viewer-activity" onclick="openStoryActivitySheet(event)" class="flex items-center gap-1.5 bg-black/60 hover:bg-black/80 border border-white/15 rounded-full px-3 py-1.5 text-white text-[11px] font-extrabold active:scale-95 transition shrink-0" title="Voir qui a vu et aimé cette story">
+                            <i data-lucide="eye" class="w-3.5 h-3.5 text-cyan-400"></i>
+                            <span id="story-viewer-views-count">0</span>
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0 ml-auto">
+                        <button type="button" id="btn-story-viewer-like" onclick="toggleCurrentStoryLike(event)" class="flex items-center gap-1.5 bg-black/65 hover:bg-black/80 border border-white/20 rounded-full px-3.5 py-1.5 text-white text-xs font-extrabold active:scale-90 transition shadow-lg" title="Aimer cette story">
+                            <i id="story-viewer-like-icon" data-lucide="heart" class="w-4 h-4 transition-transform"></i>
+                            <span id="story-viewer-like-count">0</span>
+                        </button>
+                        <span id="story-viewer-counter" class="text-[11px] font-bold text-white/80 bg-black/50 px-2.5 py-1.5 rounded-full border border-white/10">1 / 1</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -10515,6 +10548,19 @@
             unreadObserver = onSnapshot(q, (snapshot) => {
                 if (!auth.currentUser || auth.currentUser.uid !== myUid) return;
                 let notifUnread = 0;
+                if (!isInitialLoad) {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === "added") {
+                            const nData = change.doc.data();
+                            if (nData && nData.read === false && isNotificationStrictlyForUser(nData, myUid)) {
+                                if (nData.type === "story_like" || nData.type === "story_view") {
+                                    const senderName = String(nData.fromUsername || "utilisateur").replace(/^@+/, "");
+                                    showToast(`@${senderName} ${nData.text || (nData.type === "story_like" ? "a aimé votre story ❤️" : "a vu votre story 👀")}`, nData.type === "story_like" ? "success" : "info");
+                                }
+                            }
+                        }
+                    });
+                }
                 snapshot.forEach(docSnap => {
                     const nData = docSnap.data();
                     if (!isNotificationStrictlyForUser(nData, myUid)) {
@@ -19388,7 +19434,8 @@
                     if(!n.read) updateDoc(doc(db, "users", auth.currentUser.uid, "notifications", n.id), {read: true}).catch(()=>{});
                     const senderIdentity = getResolvedProfileIdentity(n.fromUid, n.fromUsername, n.fromVerified, n.fromPhoto);
                     let icon = "bell"; let color = "text-yellow-400";
-                    if(n.type === 'like' || n.type === 'comment_like') { icon = "heart"; color = "text-[#ff2a5f]"; }
+                    if(n.type === 'like' || n.type === 'comment_like' || n.type === 'story_like') { icon = "heart"; color = "text-[#ff2a5f]"; }
+                    if(n.type === 'story_view') { icon = "eye"; color = "text-cyan-400"; }
                     if(n.type === 'follow') { icon = "user-plus"; color = "text-cyan-400"; }
                     if(n.type === 'comment') { icon = "message-circle"; color = "text-emerald-400"; }
                     if(n.type === 'reply') { icon = "message-square"; color = "text-indigo-400"; }
@@ -19408,8 +19455,10 @@
                     const safeCommentIdJs = escapeJsSingleQuotedAttr(n.commentId || "");
                     const safeParentCommentIdJs = escapeJsSingleQuotedAttr(n.parentCommentId || n.commentId || "");
 
+                    const isStoryNotif = (n.type === 'story_like' || n.type === 'story_view');
+                    const safeStoryOwnerJs = escapeJsSingleQuotedAttr(n.storyOwnerUid || (auth.currentUser ? auth.currentUser.uid : ""));
                     const thumbHtml = thumbUrl ? `
-                        <div onclick="event.stopPropagation(); ${vId ? `openFullVideo('${safeVidIdJs}')` : `viewUserProfile('${n.fromUid}')`}" class="relative w-12 h-16 rounded-xl overflow-hidden bg-[#0c1222] border border-white/15 shrink-0 shadow-md group cursor-pointer" title="Voir la publication">
+                        <div onclick="event.stopPropagation(); ${isStoryNotif && safeStoryOwnerJs ? `openStoryViewer('${safeStoryOwnerJs}')` : (vId ? `openFullVideo('${safeVidIdJs}')` : `viewUserProfile('${n.fromUid}')`)}" class="relative w-12 h-16 rounded-xl overflow-hidden bg-[#0c1222] border border-white/15 shrink-0 shadow-md group cursor-pointer" title="${isStoryNotif ? 'Voir la story' : 'Voir la publication'}">
                             <img src="${escapeHtml(thumbUrl)}" loading="lazy" decoding="async" alt="Miniature" class="w-full h-full object-cover group-hover:scale-110 transition duration-200">
                             <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
                                 <i data-lucide="play" class="w-3.5 h-3.5 text-white fill-white opacity-90 drop-shadow"></i>
@@ -19821,6 +19870,13 @@
             progressInterval: null,
             slideStartMs: 0,
             slideDurationMs: 6000,
+            accumulatedElapsedMs: 0,
+            lastResumeMs: 0,
+            isHoldingPause: false,
+            holdStartMs: 0,
+            holdTimer: null,
+            wasHoldGesture: false,
+            lastHoldEndMs: 0,
             isMuted: false
         };
 
@@ -20633,6 +20689,12 @@
                     soundAuthor: String(storyCreatorState.selectedMusic?.soundAuthor || ''),
                     soundUrl: String(finalSoundUrl || ''),
                     musicVolume: Number(storyCreatorState.musicVolume ?? 90),
+                    likedBy: [],
+                    likes: 0,
+                    likers: [],
+                    viewedBy: [],
+                    views: 0,
+                    viewers: [],
                     createdAtMs: nowMs,
                     expiresAtMs: nowMs + STORY_DURATION_MS
                 };
@@ -20682,6 +20744,11 @@
                 clearInterval(storyViewerState.progressInterval);
                 storyViewerState.progressInterval = null;
             }
+            if (storyViewerState.holdTimer) {
+                clearTimeout(storyViewerState.holdTimer);
+                storyViewerState.holdTimer = null;
+            }
+            storyViewerState.isHoldingPause = false;
         }
 
         function stopStoryViewerMedia() {
@@ -20800,6 +20867,14 @@
             const counterEl = document.getElementById('story-viewer-counter');
             if (counterEl) counterEl.innerText = `${idx + 1} / ${stories.length}`;
 
+            const actSheet = document.getElementById('story-viewer-activity-sheet');
+            if (actSheet) {
+                actSheet.classList.add('hidden');
+                actSheet.classList.remove('flex');
+            }
+            recordCurrentStoryView(storyViewerState.uid, st);
+            updateStoryViewerLikeAndViewUI(st);
+
             // 3. Stage Content (Text, Photo, or Video)
             const stageEl = document.getElementById('story-viewer-stage');
             const imgEl = document.getElementById('story-viewer-img');
@@ -20847,27 +20922,38 @@
                 if (musicBar) { musicBar.classList.add('hidden'); musicBar.classList.remove('flex'); }
             }
 
-            // 5. Slide Duration & Auto-Advance Progress
+            // 5. Slide Duration & Auto-Advance Progress (avec support du maintien pour mettre en pause)
             const startSlideProgressTimer = (durationMs) => {
                 clearStoryViewerTimers();
                 const currentModal = document.getElementById('story-viewer-modal');
                 if (!currentModal || !currentModal.classList.contains('open')) return;
                 storyViewerState.slideDurationMs = durationMs;
                 storyViewerState.slideStartMs = performance.now();
+                storyViewerState.accumulatedElapsedMs = 0;
+                storyViewerState.lastResumeMs = performance.now();
+                storyViewerState.isHoldingPause = false;
                 const fillEl = document.getElementById(`story-prog-fill-${idx}`);
                 storyViewerState.progressInterval = setInterval(() => {
                     if (!currentModal.classList.contains('open')) {
                         clearStoryViewerTimers();
                         return;
                     }
-                    const elapsed = performance.now() - storyViewerState.slideStartMs;
+                    const nowPerf = performance.now();
+                    if (storyViewerState.isHoldingPause) {
+                        storyViewerState.lastResumeMs = nowPerf;
+                        return;
+                    }
+                    const delta = Math.max(0, nowPerf - (storyViewerState.lastResumeMs || nowPerf));
+                    storyViewerState.lastResumeMs = nowPerf;
+                    storyViewerState.accumulatedElapsedMs += delta;
+                    const elapsed = storyViewerState.accumulatedElapsedMs;
                     const pct = Math.max(0, Math.min(100, (elapsed / durationMs) * 100));
                     if (fillEl) fillEl.style.width = `${pct}%`;
                     if (elapsed >= durationMs) {
                         clearStoryViewerTimers();
                         window.nextUserStory();
                     }
-                }, 60);
+                }, 50);
             };
 
             if (st.mediaType === 'photo' && isPlayableStoryUrl(st.mediaUrl) && imgEl) {
@@ -20899,6 +20985,91 @@
             if (window.lucide) lucide.createIcons();
         }
 
+        window.handleStoryHoldStart = (ev) => {
+            const modal = document.getElementById('story-viewer-modal');
+            if (!modal || !modal.classList.contains('open')) return;
+            const actSheet = document.getElementById('story-viewer-activity-sheet');
+            if (actSheet && !actSheet.classList.contains('hidden')) return;
+
+            if (!storyViewerState.isHoldingPause) {
+                const nowPerf = performance.now();
+                if (storyViewerState.lastResumeMs) {
+                    storyViewerState.accumulatedElapsedMs += Math.max(0, nowPerf - storyViewerState.lastResumeMs);
+                }
+                storyViewerState.lastResumeMs = nowPerf;
+                storyViewerState.isHoldingPause = true;
+                storyViewerState.holdStartMs = nowPerf;
+                storyViewerState.wasHoldGesture = false;
+            }
+
+            if (storyViewerState.holdTimer) {
+                clearTimeout(storyViewerState.holdTimer);
+            }
+            storyViewerState.holdTimer = setTimeout(() => {
+                if (storyViewerState.isHoldingPause) {
+                    storyViewerState.wasHoldGesture = true;
+                }
+            }, 180);
+
+            const vidEl = document.getElementById('story-viewer-video');
+            if (vidEl && !vidEl.classList.contains('hidden') && !vidEl.paused) {
+                try { vidEl.pause(); } catch (e) {}
+            }
+            const audEl = document.getElementById('story-music-audio');
+            if (audEl && !audEl.paused) {
+                try { audEl.pause(); } catch (e) {}
+            }
+        };
+
+        window.handleStoryHoldEnd = (ev) => {
+            if (storyViewerState.holdTimer) {
+                clearTimeout(storyViewerState.holdTimer);
+                storyViewerState.holdTimer = null;
+            }
+            if (!storyViewerState.isHoldingPause) return;
+
+            const nowPerf = performance.now();
+            const holdDuration = nowPerf - (storyViewerState.holdStartMs || nowPerf);
+            if (holdDuration >= 180) {
+                storyViewerState.wasHoldGesture = true;
+                storyViewerState.lastHoldEndMs = nowPerf;
+            }
+
+            storyViewerState.isHoldingPause = false;
+            storyViewerState.lastResumeMs = nowPerf;
+
+            const modal = document.getElementById('story-viewer-modal');
+            const actSheet = document.getElementById('story-viewer-activity-sheet');
+            if (!modal || !modal.classList.contains('open') || (actSheet && !actSheet.classList.contains('hidden'))) {
+                return;
+            }
+
+            const stories = storyViewerState.stories || [];
+            const st = stories[storyViewerState.currentIndex];
+            const vidEl = document.getElementById('story-viewer-video');
+            if (vidEl && !vidEl.classList.contains('hidden') && vidEl.paused) {
+                vidEl.play().catch(() => {});
+            }
+            const audEl = document.getElementById('story-music-audio');
+            if (audEl && st && (st.soundTitle || st.soundUrl) && isPlayableStoryUrl(st.soundUrl) && audEl.paused) {
+                audEl.play().catch(() => {});
+            }
+        };
+
+        window.handleStoryTapNavigation = (direction, ev) => {
+            const nowPerf = performance.now();
+            if (storyViewerState.wasHoldGesture || (storyViewerState.lastHoldEndMs && (nowPerf - storyViewerState.lastHoldEndMs) < 320)) {
+                storyViewerState.wasHoldGesture = false;
+                if (ev && ev.stopPropagation) ev.stopPropagation();
+                return;
+            }
+            if (direction === 'prev') {
+                window.prevUserStory();
+            } else {
+                window.nextUserStory();
+            }
+        };
+
         window.nextUserStory = () => {
             const stories = storyViewerState.stories || [];
             if (storyViewerState.currentIndex + 1 < stories.length) {
@@ -20928,6 +21099,273 @@
             const iconEl = document.getElementById('story-viewer-mute-icon');
             if (iconEl) iconEl.setAttribute('data-lucide', storyViewerState.isMuted ? 'volume-x' : 'volume-2');
             if (window.lucide) lucide.createIcons();
+        };
+
+        function getStoryNotificationThumb(st) {
+            if (!st) return "";
+            if (st.mediaType === 'photo' && st.mediaUrl && !String(st.mediaUrl).startsWith('blob:')) {
+                return st.mediaUrl;
+            }
+            if (st.mediaType === 'video' && st.mediaUrl && !String(st.mediaUrl).startsWith('blob:')) {
+                return getVideoThumbnail(st.mediaUrl, 0);
+            }
+            return "";
+        }
+
+        async function persistUpdatedUserStories(targetUid, storiesList) {
+            if (!targetUid || !Array.isArray(storiesList)) return;
+            userStoriesMap.set(targetUid, storiesList);
+            if (auth.currentUser && auth.currentUser.uid === targetUid && currentUserData) {
+                currentUserData.activeStories = storiesList;
+            }
+            if (currentProfileViewedData && currentProfileViewedData.uid === targetUid) {
+                currentProfileViewedData.activeStories = storiesList;
+            }
+            saveCachedStoriesToStorage();
+            try {
+                const firestoreSafe = storiesList.map(stItem => ({
+                    ...stItem,
+                    mediaUrl: String(stItem.mediaUrl || '').startsWith('blob:') ? '' : String(stItem.mediaUrl || ''),
+                    soundUrl: String(stItem.soundUrl || '').startsWith('blob:') ? '' : String(stItem.soundUrl || '')
+                })).filter(stItem => stItem.mediaType === 'text' || stItem.mediaUrl);
+                if (firestoreSafe.length > 0) {
+                    await setDoc(doc(db, "users", targetUid), {
+                        activeStories: firestoreSafe
+                    }, { merge: true });
+                }
+            } catch (e) {}
+        }
+
+        function updateStoryViewerLikeAndViewUI(st) {
+            if (!st) return;
+            const myUid = auth.currentUser ? auth.currentUser.uid : null;
+            const likedBy = Array.isArray(st.likedBy) ? st.likedBy : [];
+            const viewedBy = Array.isArray(st.viewedBy) ? st.viewedBy : [];
+            const isLiked = !!(myUid && likedBy.includes(myUid));
+            const likeCount = Math.max(likedBy.length, Number(st.likes) || 0);
+            const viewCount = Math.max(viewedBy.length, Number(st.views) || 0);
+
+            const likeBtn = document.getElementById('btn-story-viewer-like');
+            const likeIcon = document.getElementById('story-viewer-like-icon');
+            const likeCountEl = document.getElementById('story-viewer-like-count');
+            const viewsCountEl = document.getElementById('story-viewer-views-count');
+
+            if (likeCountEl) likeCountEl.innerText = formatNumber(likeCount);
+            if (viewsCountEl) viewsCountEl.innerText = formatNumber(viewCount);
+
+            if (likeBtn) {
+                likeBtn.classList.toggle('border-[#ff2a5f]/60', isLiked);
+                likeBtn.classList.toggle('bg-[#ff2a5f]/20', isLiked);
+            }
+            if (likeIcon) {
+                if (isLiked) {
+                    likeIcon.classList.add('fill-[#ff2a5f]', 'text-[#ff2a5f]');
+                } else {
+                    likeIcon.classList.remove('fill-[#ff2a5f]', 'text-[#ff2a5f]');
+                }
+            }
+        }
+
+        async function recordCurrentStoryView(targetUid, st) {
+            if (!auth.currentUser || !targetUid || !st || !st.id) return;
+            const myUid = auth.currentUser.uid;
+            if (myUid === targetUid) return;
+
+            if (!Array.isArray(st.viewedBy)) st.viewedBy = [];
+            if (!Array.isArray(st.viewers)) st.viewers = [];
+
+            const alreadyInStory = st.viewedBy.includes(myUid);
+            if (!alreadyInStory) {
+                st.viewedBy.push(myUid);
+                st.views = Math.max(st.viewedBy.length, (Number(st.views) || 0) + 1);
+                const myUsername = String(currentUserData?.username || auth.currentUser.displayName || "utilisateur").replace(/^@+/, "");
+                const myPhoto = String(currentUserData?.photoURL || auth.currentUser.photoURL || "");
+                const myVerified = !!(currentUserData?.isVerified || currentUserData?.email === VIP_EMAIL);
+                if (!st.viewers.some(v => v && v.uid === myUid)) {
+                    st.viewers.push({
+                        uid: myUid,
+                        username: myUsername,
+                        photoURL: myPhoto,
+                        isVerified: myVerified,
+                        ts: Date.now()
+                    });
+                }
+                updateStoryViewerLikeAndViewUI(st);
+                await persistUpdatedUserStories(targetUid, storyViewerState.stories || getUserActiveStories(targetUid));
+            }
+
+            if (markUserInteractionOnce('story_view_notif', `${st.id}_${myUid}`)) {
+                const snippet = st.text ? ` : "${String(st.text).slice(0, 40)}"` : "";
+                sendNotification(targetUid, "story_view", `a vu votre story 👀${snippet}`, {
+                    storyId: st.id,
+                    storyOwnerUid: targetUid,
+                    storyMediaType: st.mediaType || 'text',
+                    videoThumb: getStoryNotificationThumb(st)
+                });
+            }
+        }
+
+        window.toggleCurrentStoryLike = async (ev, forceLikeOnly = false) => {
+            if (ev && ev.stopPropagation) ev.stopPropagation();
+            if (!checkAuth()) return;
+            const targetUid = storyViewerState.uid;
+            const stories = storyViewerState.stories || getUserActiveStories(targetUid);
+            const st = stories[storyViewerState.currentIndex];
+            if (!targetUid || !st || !st.id) return;
+
+            const myUid = auth.currentUser.uid;
+            if (!Array.isArray(st.likedBy)) st.likedBy = [];
+            if (!Array.isArray(st.likers)) st.likers = [];
+
+            const alreadyLiked = st.likedBy.includes(myUid);
+            if (forceLikeOnly && alreadyLiked) {
+                const likeIcon = document.getElementById('story-viewer-like-icon');
+                if (likeIcon) {
+                    likeIcon.classList.remove('like-animation');
+                    void likeIcon.offsetWidth;
+                    likeIcon.classList.add('like-animation');
+                }
+                return;
+            }
+
+            const myUsername = String(currentUserData?.username || auth.currentUser.displayName || "utilisateur").replace(/^@+/, "");
+            const myPhoto = String(currentUserData?.photoURL || auth.currentUser.photoURL || "");
+            const myVerified = !!(currentUserData?.isVerified || currentUserData?.email === VIP_EMAIL);
+
+            let isNowLiked = false;
+            if (alreadyLiked) {
+                st.likedBy = st.likedBy.filter(id => id !== myUid);
+                st.likers = st.likers.filter(u => u && u.uid !== myUid);
+                st.likes = Math.max(0, st.likedBy.length);
+                isNowLiked = false;
+            } else {
+                st.likedBy.push(myUid);
+                if (!st.likers.some(u => u && u.uid === myUid)) {
+                    st.likers.push({
+                        uid: myUid,
+                        username: myUsername,
+                        photoURL: myPhoto,
+                        isVerified: myVerified,
+                        ts: Date.now()
+                    });
+                }
+                st.likes = st.likedBy.length;
+                isNowLiked = true;
+            }
+
+            updateStoryViewerLikeAndViewUI(st);
+            const likeIcon = document.getElementById('story-viewer-like-icon');
+            if (likeIcon && isNowLiked) {
+                likeIcon.classList.remove('like-animation');
+                void likeIcon.offsetWidth;
+                likeIcon.classList.add('like-animation');
+            }
+
+            await persistUpdatedUserStories(targetUid, stories);
+
+            if (isNowLiked && targetUid !== myUid) {
+                if (markUserInteractionOnce('story_like_notif', `${st.id}_${myUid}`)) {
+                    const snippet = st.text ? ` : "${String(st.text).slice(0, 40)}"` : "";
+                    sendNotification(targetUid, "story_like", `a aimé votre story ❤️${snippet}`, {
+                        storyId: st.id,
+                        storyOwnerUid: targetUid,
+                        storyMediaType: st.mediaType || 'text',
+                        videoThumb: getStoryNotificationThumb(st)
+                    });
+                }
+            }
+        };
+
+        window.openStoryActivitySheet = (ev) => {
+            if (ev && ev.stopPropagation) ev.stopPropagation();
+            const sheet = document.getElementById('story-viewer-activity-sheet');
+            const listEl = document.getElementById('story-viewer-activity-list');
+            if (!sheet || !listEl) return;
+
+            const stories = storyViewerState.stories || getUserActiveStories(storyViewerState.uid);
+            const st = stories[storyViewerState.currentIndex];
+            if (!st) return;
+
+            clearStoryViewerTimers();
+            const vidEl = document.getElementById('story-viewer-video');
+            const audEl = document.getElementById('story-music-audio');
+            if (vidEl && !vidEl.paused) { try { vidEl.pause(); } catch (e) {} }
+            if (audEl && !audEl.paused) { try { audEl.pause(); } catch (e) {} }
+
+            const likedBy = Array.isArray(st.likedBy) ? st.likedBy : [];
+            const viewedBy = Array.isArray(st.viewedBy) ? st.viewedBy : [];
+            const likers = Array.isArray(st.likers) ? st.likers : [];
+            const viewers = Array.isArray(st.viewers) ? st.viewers : [];
+
+            const viewsTitle = document.getElementById('story-sheet-views-title');
+            const likesTitle = document.getElementById('story-sheet-likes-title');
+            if (viewsTitle) viewsTitle.innerText = `Vues (${Math.max(viewedBy.length, Number(st.views) || 0)})`;
+            if (likesTitle) likesTitle.innerText = `J'aime (${Math.max(likedBy.length, Number(st.likes) || 0)})`;
+
+            const combinedMap = new Map();
+            viewers.forEach(v => {
+                if (v && v.uid) combinedMap.set(v.uid, { ...v, viewed: true, liked: likedBy.includes(v.uid) });
+            });
+            viewedBy.forEach(uid => {
+                if (uid && !combinedMap.has(uid)) {
+                    const idInfo = getResolvedProfileIdentity(uid, "utilisateur", false, "");
+                    combinedMap.set(uid, { uid, username: idInfo.username, photoURL: idInfo.photoURL, isVerified: idInfo.isVerified, viewed: true, liked: likedBy.includes(uid) });
+                }
+            });
+            likers.forEach(l => {
+                if (l && l.uid) {
+                    const existing = combinedMap.get(l.uid) || {};
+                    combinedMap.set(l.uid, { ...existing, ...l, liked: true, viewed: true });
+                }
+            });
+            likedBy.forEach(uid => {
+                if (uid && !combinedMap.has(uid)) {
+                    const idInfo = getResolvedProfileIdentity(uid, "utilisateur", false, "");
+                    combinedMap.set(uid, { uid, username: idInfo.username, photoURL: idInfo.photoURL, isVerified: idInfo.isVerified, viewed: true, liked: true });
+                }
+            });
+
+            const entries = Array.from(combinedMap.values()).sort((a, b) => (b.liked ? 1 : 0) - (a.liked ? 1 : 0) || (b.ts || 0) - (a.ts || 0));
+            if (entries.length === 0) {
+                listEl.innerHTML = `<div class="text-center text-xs text-gray-400 py-6">Aucune vue ni mention J'aime sur cette story pour le moment.</div>`;
+            } else {
+                listEl.innerHTML = entries.map(u => {
+                    const resolved = getResolvedProfileIdentity(u.uid, u.username, u.isVerified, u.photoURL);
+                    const safeUidJs = escapeJsSingleQuotedAttr(u.uid);
+                    return `
+                    <div onclick="closeStoryViewer(); viewUserProfile('${safeUidJs}')" class="flex items-center justify-between gap-3 p-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 cursor-pointer transition">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="w-9 h-9 rounded-full overflow-hidden shrink-0 border border-white/15">
+                                ${getAvatarHTML(resolved.photoURL || u.photoURL, "w-full h-full object-cover")}
+                            </div>
+                            <div class="min-w-0">
+                                <div class="text-xs font-extrabold text-white truncate flex items-center gap-1">@${escapeHtml(String(resolved.username || u.username || 'utilisateur').replace(/^@+/, ''))}${getBadgeHtml(resolved.isVerified)}</div>
+                                <div class="text-[10px] text-gray-400 truncate">${u.liked ? 'A vu et aimé votre story ❤️' : 'A vu votre story 👀'}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <span class="w-6 h-6 rounded-full bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center" title="A vu la story">
+                                <i data-lucide="eye" class="w-3.5 h-3.5 text-cyan-400"></i>
+                            </span>
+                            ${u.liked ? `<span class="w-6 h-6 rounded-full bg-[#ff2a5f]/20 border border-[#ff2a5f]/40 flex items-center justify-center" title="A aimé la story"><i data-lucide="heart" class="w-3.5 h-3.5 text-[#ff2a5f] fill-[#ff2a5f]"></i></span>` : ''}
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+
+            sheet.classList.remove('hidden');
+            sheet.classList.add('flex');
+            if (window.lucide) lucide.createIcons();
+        };
+
+        window.closeStoryActivitySheet = (ev) => {
+            if (ev && ev.stopPropagation) ev.stopPropagation();
+            const sheet = document.getElementById('story-viewer-activity-sheet');
+            if (sheet) {
+                sheet.classList.add('hidden');
+                sheet.classList.remove('flex');
+            }
+            renderCurrentStorySlide();
         };
 
         window.deleteCurrentStory = async () => {
