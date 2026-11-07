@@ -6011,7 +6011,7 @@
                             </div>
                             <span id="story-viewer-music-title" class="text-[11px] font-bold text-white truncate">♫ Son original</span>
                         </div>
-                        <button type="button" id="btn-story-viewer-activity" onclick="openStoryActivitySheet(event)" class="flex items-center gap-1.5 bg-black/60 hover:bg-black/80 border border-white/15 rounded-full px-3 py-1.5 text-white text-[11px] font-extrabold active:scale-95 transition shrink-0" title="Voir qui a vu et aimé cette story">
+                        <button type="button" id="btn-story-viewer-activity" onclick="openStoryActivitySheet(event)" class="hidden items-center gap-1.5 bg-black/60 hover:bg-black/80 border border-white/15 rounded-full px-3 py-1.5 text-white text-[11px] font-extrabold active:scale-95 transition shrink-0" title="Voir qui a vu et aimé cette story">
                             <i data-lucide="eye" class="w-3.5 h-3.5 text-cyan-400"></i>
                             <span id="story-viewer-views-count">0</span>
                         </button>
@@ -21142,11 +21142,18 @@
         function updateStoryViewerLikeAndViewUI(st) {
             if (!st) return;
             const myUid = auth.currentUser ? auth.currentUser.uid : null;
+            const isStrictlyStoryOwner = !!(myUid && storyViewerState.uid && myUid === storyViewerState.uid);
             const likedBy = Array.isArray(st.likedBy) ? st.likedBy : [];
             const viewedBy = Array.isArray(st.viewedBy) ? st.viewedBy : [];
             const isLiked = !!(myUid && likedBy.includes(myUid));
             const likeCount = Math.max(likedBy.length, Number(st.likes) || 0);
             const viewCount = Math.max(viewedBy.length, Number(st.views) || 0);
+
+            const actBtn = document.getElementById('btn-story-viewer-activity');
+            if (actBtn) {
+                actBtn.classList.toggle('hidden', !isStrictlyStoryOwner);
+                actBtn.classList.toggle('flex', isStrictlyStoryOwner);
+            }
 
             const likeBtn = document.getElementById('btn-story-viewer-like');
             const likeIcon = document.getElementById('story-viewer-like-icon');
@@ -21281,6 +21288,8 @@
 
         window.openStoryActivitySheet = (ev) => {
             if (ev && ev.stopPropagation) ev.stopPropagation();
+            const isStrictlyStoryOwner = !!(auth.currentUser && storyViewerState.uid && auth.currentUser.uid === storyViewerState.uid);
+            if (!isStrictlyStoryOwner) return;
             const sheet = document.getElementById('story-viewer-activity-sheet');
             const listEl = document.getElementById('story-viewer-activity-list');
             if (!sheet || !listEl) return;
