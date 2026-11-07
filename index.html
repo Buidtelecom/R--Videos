@@ -8167,7 +8167,8 @@
         // ============================================================================
         function isVirtualBotIdOrUser(uid, email = '', isBotFlag = false) {
             if (isBotFlag === true) return true;
-            if (uid && String(uid).startsWith('bot_')) return true;
+            const s = String(uid || '');
+            if (s.startsWith('bot_') || s.startsWith('cm_auto_')) return true;
             if (email && String(email).toLowerCase().endsWith('@bot.local')) return true;
             return false;
         }
@@ -8404,320 +8405,43 @@
         }
 
         function getSuccessiveCreatedCmAccountsCount() {
-            const raw = parseInt(safeGetStorage('rv_cm_auto_created_count_v1', '1250'), 10);
-            if (isNaN(raw) || raw < 300) return 1250;
-            return Math.min(RV_CM_TOTAL_ACCOUNTS, raw);
+            return 0;
         }
 
-        function getAutonomousCameroonianAccountByIndex(index1Based) {
-            const idx = Math.max(1, Math.min(RV_CM_TOTAL_ACCOUNTS, Number(index1Based) || 1)) - 1;
-            const isFemale = (idx % 2 === 1);
-            // ~85% de profils camerounais (photos noires H/F) et ~15% de profils occidentaux (photos blanches H/F)
-            const isWestern = (idx % 7 === 6);
-
-            let firstName = "";
-            let lastName = "";
-            let photoPool = RV_PHOTOS_CM_MEN;
-
-            if (isWestern) {
-                if (isFemale) {
-                    firstName = RV_WEST_FEMALE_FIRST_NAMES[Math.floor(idx / 2) % RV_WEST_FEMALE_FIRST_NAMES.length];
-                    photoPool = RV_PHOTOS_WEST_WOMEN;
-                } else {
-                    firstName = RV_WEST_MALE_FIRST_NAMES[Math.floor(idx / 2) % RV_WEST_MALE_FIRST_NAMES.length];
-                    photoPool = RV_PHOTOS_WEST_MEN;
-                }
-                lastName = RV_WEST_LAST_NAMES[Math.floor(idx / 7) % RV_WEST_LAST_NAMES.length];
-            } else {
-                if (isFemale) {
-                    firstName = RV_CM_FEMALE_FIRST_NAMES[Math.floor(idx / 2) % RV_CM_FEMALE_FIRST_NAMES.length];
-                    photoPool = RV_PHOTOS_CM_WOMEN;
-                } else {
-                    firstName = RV_CM_MALE_FIRST_NAMES[Math.floor(idx / 2) % RV_CM_MALE_FIRST_NAMES.length];
-                    photoPool = RV_PHOTOS_CM_MEN;
-                }
-                lastName = RV_CM_LAST_NAMES[Math.floor(idx / 5) % RV_CM_LAST_NAMES.length];
-            }
-
-            const suffixes = ["", "_off", "01", "_pro", "_vibes", "99", "_real", "12", "_star", ""];
-            const suf = suffixes[(idx * 7) % suffixes.length];
-            const rawHandle = `${firstName}_${lastName}${suf}`.slice(0, 25);
-            const uid = `cm_auto_${String(idx + 1).padStart(4, '0')}`;
-            const photoURL = photoPool[Math.floor(idx / 2) % photoPool.length];
-            const bio = RV_CM_CITIES_AND_BIOS[(idx * 11) % RV_CM_CITIES_AND_BIOS.length];
-            // Les comptes autonomes ne publient pas : 0 like, abonnements très réduits ou nuls (0 à 4), abonnés très réduits (0 à 3) et vues de profil réduites (0 à 5)
-            const rawFollowings = (idx % 5 <= 1) ? 0 : ((idx * 3) % 4) + 1; // 0 (40% des cas) ou 1..4
-            const rawFollowers = (idx % 4 === 0) ? 0 : (idx % 3) + 1;       // 0..3
-            const rawProfileViews = (idx * 7) % 6;                           // 0..5
-            const acct = {
-                uid,
-                username: rawHandle,
-                photoURL,
-                bio,
-                isVerified: false,
-                followersCount: rawFollowers,
-                followingCount: rawFollowings,
-                profileViewsCount: rawProfileViews,
-                likes: 0
-            };
-            userProfileCache.set(uid, {
-                username: acct.username,
-                isVerified: false,
-                photoURL: acct.photoURL
-            });
-            return acct;
-        }
-
-        function getAutonomousCameroonianAccount(uidOrIndex) {
-            if (typeof uidOrIndex === 'number') {
-                return getAutonomousCameroonianAccountByIndex(uidOrIndex);
-            }
-            const s = String(uidOrIndex || '');
-            if (s.startsWith('cm_auto_')) {
-                const n = parseInt(s.replace('cm_auto_', ''), 10);
-                if (!isNaN(n) && n >= 1 && n <= RV_CM_TOTAL_ACCOUNTS) {
-                    return getAutonomousCameroonianAccountByIndex(n);
-                }
-            }
+        function getAutonomousCameroonianAccountByIndex() {
             return null;
         }
 
-        function getPersistedVideoStepBoost(vidId) {
-            if (!vidId) return 0;
-            try {
-                const map = JSON.parse(safeGetStorage('rv_cm_vid_steps_v1', '{}') || '{}');
-                return Math.max(0, Number(map[vidId]) || 0);
-            } catch (e) {
-                return 0;
-            }
+        function getAutonomousCameroonianAccount() {
+            return null;
         }
 
-        function incrementPersistedVideoStepBoost(vidId, deltaSteps = 1) {
-            if (!vidId) return;
-            try {
-                const map = JSON.parse(safeGetStorage('rv_cm_vid_steps_v1', '{}') || '{}');
-                map[vidId] = Math.min(RV_CM_MAX_LIKES, (Number(map[vidId]) || 0) + deltaSteps);
-                safeSetStorage('rv_cm_vid_steps_v1', JSON.stringify(map));
-            } catch (e) {}
+        function getPersistedVideoStepBoost() {
+            return 0;
         }
 
-        // Répartit les quotas cibles de l'ensemble des vidéos de la moins populaire (18 likes) à la plus populaire (max 1645 likes)
-        // pour que même si toutes les vidéos ont beaucoup de vues, elles soient échelonnées avec des nombres de likes tous différents.
-        function assignGraduatedPopularityQuotas(videosList) {
-            if (!Array.isArray(videosList) || videosList.length === 0) return;
-            videosList.forEach(item => {
-                const v = item?.data ? { id: item.id, ...item.data } : item;
-                const vidId = String(v?.id || v?.url || '');
-                if (vidId && !rvAllKnownVideosCatalog.has(vidId)) {
-                    rvAllKnownVideosCatalog.set(vidId, v);
-                }
-            });
+        function incrementPersistedVideoStepBoost() {}
 
-            const allEntries = Array.from(rvAllKnownVideosCatalog.entries()).map(([vidId, v]) => {
-                const h = rvHashStr(vidId);
-                const realHumanLikes = Array.isArray(v.likedBy)
-                    ? new Set(v.likedBy.filter(u => !isVirtualBotIdOrUser(u) && !String(u).startsWith('cm_auto_'))).size
-                    : 0;
-                const rewatches = Math.max(0, Number(v.rewatches || 0));
-                const completions = Math.max(0, Number(v.completions || 0));
-                const realComments = Math.max(0, Number(v.commentCount || 0));
-                const views = Math.max(0, Number(v.views || 0));
-                const persisted = getPersistedVideoStepBoost(vidId);
-                // Score de popularité combinant rewatches, complétions, interactions réelles et départage déterministe
-                const popularityScore =
-                    (rewatches * 140) +
-                    (completions * 55) +
-                    (realHumanLikes * 110) +
-                    (realComments * 65) +
-                    (Math.log1p(views) * 24) +
-                    (persisted * 12) +
-                    ((h % 10000) * 0.015);
-                return { vidId, h, popularityScore };
-            });
+        function assignGraduatedPopularityQuotas() {}
 
-            // Trier de la moins populaire (rang 0 -> 18 likes) à la plus populaire (rang N-1 -> jusqu'à 1645 likes)
-            allEntries.sort((a, b) => a.popularityScore - b.popularityScore);
-            const total = allEntries.length;
-
-            // Réinitialiser les snapshots non figés pour appliquer l'échelonnement proprement
-            rvAssignedLikesByVideoId.clear();
-            rvUsedLikeValues.clear();
-            rvSessionFrozenMetrics.clear();
-
-            allEntries.forEach((entry, rankIdx) => {
-                let quota;
-                if (total <= 1) {
-                    quota = 18 + (entry.h % 620);
-                } else if (rankIdx === 0) {
-                    // La moins populaire démarre à 18 likes
-                    quota = RV_CM_MIN_LIKES + (entry.h % 4); // 18..21
-                } else if (rankIdx === total - 1) {
-                    // La plus populaire monte jusqu'à 1645 likes max
-                    quota = RV_CM_MAX_LIKES - (entry.h % 19); // 1627..1645
-                } else {
-                    const ratio = rankIdx / (total - 1);
-                    const curved = Math.pow(ratio, 1.38);
-                    const span = (RV_CM_MAX_LIKES - 25) - (RV_CM_MIN_LIKES + 5);
-                    const jitter = ((entry.h % 17) - 8);
-                    quota = Math.round((RV_CM_MIN_LIKES + 6) + span * curved + jitter);
-                }
-                quota = Math.max(RV_CM_MIN_LIKES, Math.min(RV_CM_MAX_LIKES, quota));
-                rvGraduatedQuotaByVideoId.set(entry.vidId, quota);
-            });
-        }
-
-        function computeVideoAutonomousMetricsSnapshot(videoData, explicitId = '') {
-            if (!videoData && !explicitId) return { baseLikes: 0, baseComments: 0, baseFavs: 0, baseShares: 0 };
-            const vidId = resolveCanonicalVideoId(videoData, explicitId);
-            if (rvSessionFrozenMetrics.has(vidId)) {
-                return rvSessionFrozenMetrics.get(vidId);
-            }
-
-            const h = rvHashStr(vidId);
-            const realHumanLikes = Array.isArray(videoData?.likedBy)
-                ? new Set(videoData.likedBy.filter(u => !isVirtualBotIdOrUser(u) && !String(u).startsWith('cm_auto_'))).size
-                : 0;
-            const realHumanFavs = Array.isArray(videoData?.favorites)
-                ? new Set(videoData.favorites.filter(u => !isVirtualBotIdOrUser(u) && !String(u).startsWith('cm_auto_'))).size
-                : 0;
-            const realHumanShares = Array.isArray(videoData?.sharedBy)
-                ? new Set(videoData.sharedBy.filter(u => !isVirtualBotIdOrUser(u) && !String(u).startsWith('cm_auto_'))).size
-                : 0;
-            const realComments = getVerifiedRealCommentsCount(vidId, videoData);
-
-            const rewatches = Math.max(0, Number(videoData.rewatches || 0));
-            const completions = Math.max(0, Number(videoData.completions || 0));
-
-            // Quota cible échelonné de 18 likes (moins populaire) à 1645 likes (plus populaire)
-            let targetQuotaLikes;
-            if (rvGraduatedQuotaByVideoId.has(vidId)) {
-                targetQuotaLikes = rvGraduatedQuotaByVideoId.get(vidId);
-            } else {
-                const u = (h % 10000) / 10000;
-                const baseSpread = RV_CM_MIN_LIKES + Math.round(Math.pow(u, 1.65) * (RV_CM_MAX_LIKES - RV_CM_MIN_LIKES - 120));
-                const rewatchBoost = Math.min(120, (rewatches * 28) + (completions * 10));
-                targetQuotaLikes = Math.min(RV_CM_MAX_LIKES, Math.max(RV_CM_MIN_LIKES, baseSpread + rewatchBoost));
-            }
-
-            // Montée progressive en fonction des heures (aucun spawn direct : 0 à t=0, 4h maxi pour atteindre le quota maximum)
-            let ageHours = 0;
-            if (videoData.createdAt) {
-                const createdMs = videoData.createdAt.toMillis
-                    ? videoData.createdAt.toMillis()
-                    : (videoData.createdAt.seconds ? videoData.createdAt.seconds * 1000 : new Date(videoData.createdAt).getTime());
-                if (!isNaN(createdMs) && createdMs > 0) {
-                    ageHours = Math.max(0, (Date.now() - createdMs) / 3600000);
-                }
-            }
-
-            const hourlyRatio = Math.min(1, Math.max(0, ageHours / 4.0));
-            const progressiveCurve = Math.pow(hourlyRatio, 1.1);
-            let desiredVirtualLikes = Math.floor(targetQuotaLikes * progressiveCurve);
-
-            if (ageHours >= 4.0) {
-                desiredVirtualLikes = Math.max(RV_CM_MIN_LIKES, targetQuotaLikes);
-            }
-            let desiredTotalLikes = Math.min(RV_CM_MAX_LIKES, desiredVirtualLikes + realHumanLikes);
-
-            // Garantir qu'aucune publication n'a un nombre de likes identique (avec écart franc entre les vidéos)
-            let uniqueLikes = desiredTotalLikes;
-            if (uniqueLikes > 0) {
-                if (rvAssignedLikesByVideoId.has(vidId)) {
-                    uniqueLikes = rvAssignedLikesByVideoId.get(vidId);
-                } else {
-                    let step = 0;
-                    const minFloor = ageHours >= 4.0 ? RV_CM_MIN_LIKES : 1;
-                    while (rvUsedLikeValues.has(uniqueLikes) && step < RV_CM_MAX_LIKES) {
-                        step++;
-                        const delta = step * 3;
-                        const down = desiredTotalLikes - delta;
-                        const up = desiredTotalLikes + delta;
-                        if (down >= minFloor && !rvUsedLikeValues.has(down)) {
-                            uniqueLikes = down;
-                            break;
-                        }
-                        if (up <= RV_CM_MAX_LIKES && !rvUsedLikeValues.has(up)) {
-                            uniqueLikes = up;
-                            break;
-                        }
-                        if (desiredTotalLikes - step >= minFloor && !rvUsedLikeValues.has(desiredTotalLikes - step)) {
-                            uniqueLikes = desiredTotalLikes - step;
-                            break;
-                        }
-                        if (desiredTotalLikes + step <= RV_CM_MAX_LIKES && !rvUsedLikeValues.has(desiredTotalLikes + step)) {
-                            uniqueLikes = desiredTotalLikes + step;
-                            break;
-                        }
-                    }
-                    rvUsedLikeValues.add(uniqueLikes);
-                    rvAssignedLikesByVideoId.set(vidId, uniqueLikes);
-                }
-            }
-
-            const baseLikes = Math.max(0, uniqueLikes - realHumanLikes);
-
-            // Hiérarchie stricte : Likes >> Commentaires (<= 20 virtuels, <= 64 total) >> Favoris >> Partages
-            const maxAllowedAutoComments = Math.min(
-                RV_CM_MAX_VIRTUAL_COMMENTS,
-                Math.max(0, RV_CM_MAX_TOTAL_COMMENTS - realComments),
-                Math.max(0, Math.floor(baseLikes * (0.022 + ((h >>> 5) % 18) / 1000)))
-            );
-            let baseComments = maxAllowedAutoComments;
-            if (baseLikes >= RV_CM_MIN_LIKES && baseComments < 3 && (RV_CM_MAX_TOTAL_COMMENTS - realComments) >= 3) {
-                baseComments = Math.min(RV_CM_MAX_VIRTUAL_COMMENTS, 3 + (h % 4));
-            }
-            if (rvFrozenAutoCommentTargetByVideoId.has(vidId)) {
-                baseComments = rvFrozenAutoCommentTargetByVideoId.get(vidId);
-            } else {
-                rvFrozenAutoCommentTargetByVideoId.set(vidId, baseComments);
-            }
-            const totalComments = Math.min(RV_CM_MAX_TOTAL_COMMENTS, realComments + baseComments);
-
-            let targetFavs = 0;
-            if (totalComments >= 2) {
-                const ratioF = 0.42 + ((h >>> 11) % 140) / 1000;
-                targetFavs = Math.max(1, Math.min(totalComments - 1, Math.floor(totalComments * ratioF)));
-            }
-            const baseFavs = Math.max(0, targetFavs - realHumanFavs);
-            const effectiveFavs = realHumanFavs + baseFavs;
-
-            let targetShares = 0;
-            if (effectiveFavs >= 2) {
-                const ratioS = 0.38 + ((h >>> 17) % 150) / 1000;
-                targetShares = Math.max(1, Math.min(effectiveFavs - 1, Math.floor(effectiveFavs * ratioS)));
-            }
-            const baseShares = Math.max(0, targetShares - realHumanShares);
-
-            const snap = {
-                baseLikes,
-                baseComments,
-                baseFavs,
-                baseShares
-            };
-            rvSessionFrozenMetrics.set(vidId, snap);
-            return snap;
+        function computeVideoAutonomousMetricsSnapshot() {
+            return { baseLikes: 0, baseComments: 0, baseFavs: 0, baseShares: 0 };
         }
 
         function getRealLikesCount(videoData) {
             if (!videoData) return 0;
-            const realHumanLikes = Array.isArray(videoData.likedBy)
-                ? new Set(videoData.likedBy.filter(uid => !isVirtualBotIdOrUser(uid) && !String(uid).startsWith('cm_auto_'))).size
-                : 0;
-            const snap = computeVideoAutonomousMetricsSnapshot(videoData);
-            return Math.min(RV_CM_MAX_LIKES, snap.baseLikes + realHumanLikes);
+            if (Array.isArray(videoData.likedBy)) {
+                return new Set(videoData.likedBy.filter(uid => uid && !isVirtualBotIdOrUser(uid))).size;
+            }
+            return 0;
         }
 
-        // Les vues sur les pubs sont pratiquement les 3/2 (1.48 à 1.54) des likes de la pub
         function getRealVideoViewsCount(videoData) {
             if (!videoData) return 0;
-            const lk = getRealLikesCount(videoData);
-            if (lk <= 0) return Math.max(0, Number(videoData.views || 0));
-            const vidId = String(videoData.id || videoData.url || 'vid_v');
-            const h = rvHashStr(vidId);
-            const ratio = 1.48 + ((h % 7) * 0.01); // 1.48 .. 1.54 (pratiquement 3/2 = 1.50)
-            const naturalJitter = (h % 5) - 2;
-            const calculatedViews = Math.max(lk + 1, Math.round(lk * ratio) + naturalJitter);
-            return Math.max(calculatedViews, Number(videoData.views || 0));
+            if (Array.isArray(videoData.viewedBy)) {
+                return new Set(videoData.viewedBy.filter(uid => uid && !isVirtualBotIdOrUser(uid))).size;
+            }
+            return Math.max(0, Number(videoData.views || 0));
         }
 
         function getEffectiveCommentsCount(videoData, explicitId = '') {
@@ -8729,143 +8453,35 @@
             if (vObj && typeof vObj === 'object' && !vObj.id && canonicalId && canonicalId !== 'vid_default') {
                 vObj.id = canonicalId;
             }
-            const realComments = getVerifiedRealCommentsCount(canonicalId, vObj);
-            const autoComments = canonicalId ? generateSmartAutonomousCommentsForVideo(canonicalId, vObj) : [];
-            return realComments + autoComments.length;
+            return getVerifiedRealCommentsCount(canonicalId, vObj);
         }
 
         function getRealFavoritesCount(videoData) {
             if (!videoData) return 0;
-            const realHumanFavs = Array.isArray(videoData.favorites)
-                ? new Set(videoData.favorites.filter(uid => !isVirtualBotIdOrUser(uid) && !String(uid).startsWith('cm_auto_'))).size
-                : 0;
-            const snap = computeVideoAutonomousMetricsSnapshot(videoData);
-            const comments = getEffectiveCommentsCount(videoData);
-            const rawFavs = snap.baseFavs + realHumanFavs;
-            if (comments > 1 && rawFavs >= comments) {
-                return Math.max(realHumanFavs, comments - 1);
+            if (Array.isArray(videoData.favorites)) {
+                return new Set(videoData.favorites.filter(uid => uid && !isVirtualBotIdOrUser(uid))).size;
             }
-            return rawFavs;
+            return 0;
         }
 
         function getRealRepostsCount(videoData) {
             if (!videoData) return 0;
             if (Array.isArray(videoData.repostedBy)) {
-                const uniqueRealUsers = new Set(videoData.repostedBy.filter(uid => !isVirtualBotIdOrUser(uid)));
-                return uniqueRealUsers.size;
+                return new Set(videoData.repostedBy.filter(uid => uid && !isVirtualBotIdOrUser(uid))).size;
             }
-            return Math.max(0, Number(videoData.reposts) || 0);
+            return 0;
         }
 
         function getRealSharesCount(videoData) {
             if (!videoData) return 0;
-            const realHumanShares = Array.isArray(videoData.sharedBy)
-                ? new Set(videoData.sharedBy.filter(uid => !isVirtualBotIdOrUser(uid) && !String(uid).startsWith('cm_auto_'))).size
-                : 0;
-            const snap = computeVideoAutonomousMetricsSnapshot(videoData);
-            const favs = getRealFavoritesCount(videoData);
-            const rawShares = snap.baseShares + realHumanShares;
-            if (favs > 1 && rawShares >= favs) {
-                return Math.max(realHumanShares, favs - 1);
+            if (Array.isArray(videoData.sharedBy)) {
+                return new Set(videoData.sharedBy.filter(uid => uid && !isVirtualBotIdOrUser(uid))).size;
             }
-            return rawShares;
+            return 0;
         }
 
-        // Pool de réactions virtuelles : quasi exclusivement des émotions (❤️, 😂, 💋, 👌), très rarement 1-2 mots, zéro mention du Cameroun
-        const RV_CM_EMOJI_REACTIONS_POOL = [
-            "❤️", "❤️❤️", "❤️❤️❤️", "😂", "😂😂", "😂😂😂", "💋", "💋💋", "👌", "👌👌",
-            "❤️👌", "😂👌", "💋❤️", "❤️😂", "👌❤️", "😂😂👌", "❤️❤️💋", "👌💋", "😂❤️", "💋👌",
-            "❤️", "😂", "👌", "💋", "❤️❤️", "😂😂", "👌👌", "💋💋",
-            "Top 👌", "Validé 👌", "Magnifique ❤️", "Trop fort 😂"
-        ];
-
-        function generateSmartAutonomousCommentsForVideo(vidId, vData) {
-            const canonicalId = resolveCanonicalVideoId(vData, vidId);
-            if (!canonicalId) return [];
-            const resolvedData = (vData && typeof vData === 'object')
-                ? (vData.id ? vData : { ...vData, id: canonicalId })
-                : ((typeof profileVideosData === 'object' && profileVideosData && profileVideosData[canonicalId])
-                    ? { ...profileVideosData[canonicalId], id: canonicalId }
-                    : { id: canonicalId });
-            const snap = computeVideoAutonomousMetricsSnapshot(resolvedData, canonicalId);
-            const realComments = getVerifiedRealCommentsCount(canonicalId, resolvedData);
-            const likes = getRealLikesCount(resolvedData);
-            let maxTotalAllowed = RV_CM_MAX_TOTAL_COMMENTS;
-            if (likes > 1) {
-                maxTotalAllowed = Math.min(RV_CM_MAX_TOTAL_COMMENTS, Math.max(realComments, likes - 1));
-            }
-            const maxVirtualAllowed = Math.max(0, Math.min(RV_CM_MAX_VIRTUAL_COMMENTS, maxTotalAllowed - realComments));
-            const visibleCount = Math.min(maxVirtualAllowed, Math.max(0, snap.baseComments || 0));
-            if (visibleCount <= 0) return [];
-
-            const h = rvHashStr(canonicalId);
-            let deletedSet = new Set();
-            try {
-                const rawDel = JSON.parse(safeGetStorage('rv_deleted_auto_comments_v1', '[]') || '[]');
-                if (Array.isArray(rawDel)) deletedSet = new Set(rawDel);
-            } catch (e) {}
-
-            let likedMap = {};
-            try {
-                likedMap = JSON.parse(safeGetStorage('rv_liked_auto_comments_v1', '{}') || '{}') || {};
-            } catch (e) {}
-
-            // Utiliser un pool déterministe fixe pour que la liste de commentaires autonomes d'une publication ne varie jamais d'un instant à l'autre
-            const maxActiveAcc = 1200;
-            const nowMs = Date.now();
-            const baseCreatedMs = vData?.createdAt?.toMillis
-                ? vData.createdAt.toMillis()
-                : (vData?.createdAt?.seconds ? vData.createdAt.seconds * 1000 : (nowMs - 3600000));
-            const spanMs = Math.max(120000, Math.min(nowMs - baseCreatedMs, 3600000 * 4));
-
-            const result = [];
-            const usedAccIndices = new Set();
-            const usedPhotoUrls = new Set();
-            const usedUsernames = new Set();
-            for (let i = 0; i < visibleCount; i++) {
-                const cId = `cm_auto_c_${canonicalId}_${i}`;
-                if (deletedSet.has(cId)) continue;
-
-                let accIdx = ((h + i * 193) % maxActiveAcc) + 1;
-                let acct = getAutonomousCameroonianAccountByIndex(accIdx);
-                let attempts = 0;
-                while (
-                    (usedAccIndices.has(accIdx) || usedPhotoUrls.has(acct.photoURL) || usedUsernames.has(acct.username)) &&
-                    attempts < 400
-                ) {
-                    accIdx = (accIdx % maxActiveAcc) + 1;
-                    acct = getAutonomousCameroonianAccountByIndex(accIdx);
-                    attempts++;
-                }
-                // Si une photo a déjà été utilisée dans ce fil de commentaires, ne jamais la réutiliser sous un second nom
-                if (usedPhotoUrls.has(acct.photoURL) || usedUsernames.has(acct.username)) {
-                    continue;
-                }
-                usedAccIndices.add(accIdx);
-                usedPhotoUrls.add(acct.photoURL);
-                usedUsernames.add(acct.username);
-                const reactionText = RV_CM_EMOJI_REACTIONS_POOL[(h + i * 5) % RV_CM_EMOJI_REACTIONS_POOL.length];
-                const commentTsMs = Math.min(nowMs - 60000 - (i * 25000), baseCreatedMs + Math.floor((spanMs * (i + 1)) / (visibleCount + 2)));
-                // Likes modestes (0 à 4) sur les commentaires virtuels pour que les vrais comptes soient toujours les plus likés
-                const baseCommentLikes = (h + i * 3) % 5;
-                const userLikedThis = !!(auth.currentUser && likedMap[cId] === auth.currentUser.uid);
-
-                result.push({
-                    id: cId,
-                    userId: acct.uid,
-                    username: acct.username,
-                    userPhotoURL: acct.photoURL,
-                    isVerified: false,
-                    isVirtualAuto: true,
-                    text: reactionText,
-                    parentCommentId: null,
-                    replyToUsername: null,
-                    createdAt: { toMillis: () => commentTsMs, seconds: Math.floor(commentTsMs / 1000) },
-                    likes: baseCommentLikes + (userLikedThis ? 1 : 0),
-                    likedBy: userLikedThis && auth.currentUser ? [auth.currentUser.uid] : []
-                });
-            }
-            return result;
+        function generateSmartAutonomousCommentsForVideo() {
+            return [];
         }
 
         function recordUniqueVideoView(vidId) {
@@ -17614,17 +17230,12 @@
 
                 const isVirtComment = (item) => !!(item && (item.isVirtualAuto || String(item.id || '').startsWith('cm_auto_c_') || String(item.userId || '').startsWith('cm_auto_')));
 
-                // S'assurer que les commentaires des comptes réels sont toujours les plus likés (au-dessus de tous les commentaires virtuels)
-                let maxVirtLikes = 4;
-                allComments.forEach(item => {
-                    if (isVirtComment(item)) {
-                        maxVirtLikes = Math.max(maxVirtLikes, Number(item.likes || 0));
-                    }
-                });
-                allComments.forEach((item, idx) => {
-                    if (!isVirtComment(item)) {
-                        const minRealBoost = maxVirtLikes + 4 + ((rvHashStr(String(item.id || idx)) % 9));
-                        item.likes = Math.max(Number(item.likes || 0), minRealBoost);
+                // Afficher uniquement les likes 100% réels et authentiques sur chaque commentaire
+                allComments.forEach((item) => {
+                    if (Array.isArray(item.likedBy)) {
+                        item.likes = new Set(item.likedBy.filter(u => u && !isVirtualBotIdOrUser(u))).size;
+                    } else {
+                        item.likes = Math.max(0, Number(item.likes || 0));
                     }
                 });
 
@@ -20031,38 +19642,9 @@
             if(uid === auth.currentUser.uid) return openMyProfile();
             setProfileScreenLoading(true);
             navigateTo('profile');
-            if (String(uid || '').startsWith('cm_auto_')) {
-                const autoAcct = getAutonomousCameroonianAccount(uid);
-                if (autoAcct) {
-                    const seedH = rvHashStr(autoAcct.uid);
-                    const maxAcc = getSuccessiveCreatedCmAccountsCount();
-                    const buildUniqueAutoUids = (count, offsetSeed) => {
-                        const list = [];
-                        const usedPhotos = new Set([autoAcct.photoURL]);
-                        for (let k = 0; k < 120 && list.length < count; k++) {
-                            const cand = getAutonomousCameroonianAccountByIndex(((seedH + offsetSeed + k * 37) % maxAcc) + 1);
-                            if (cand && cand.uid !== autoAcct.uid && !usedPhotos.has(cand.photoURL)) {
-                                usedPhotos.add(cand.photoURL);
-                                list.push(cand.uid);
-                            }
-                        }
-                        return list;
-                    };
-                    await new Promise(r => setTimeout(r, 180));
-                    await renderProfile({
-                        uid: autoAcct.uid,
-                        username: autoAcct.username,
-                        photoURL: autoAcct.photoURL,
-                        bio: autoAcct.bio,
-                        isVerified: false,
-                        isAutonomousProfile: true,
-                        followers: buildUniqueAutoUids(autoAcct.followersCount || 0, 11),
-                        following: buildUniqueAutoUids(autoAcct.followingCount || 0, 73),
-                        profileViewsCount: autoAcct.profileViewsCount ?? 2,
-                        likes: 0
-                    }, false);
-                    return;
-                }
+            if (isVirtualBotIdOrUser(uid)) {
+                setProfileScreenLoading(false);
+                return;
             }
             try {
                 const snap = await getDoc(doc(db, "users", uid));
@@ -20561,53 +20143,19 @@
         function getDeduplicatedRecentViewers(userData) {
             const seen = new Set();
             const realUnique = [];
-            const virtUnique = [];
             if (userData && Array.isArray(userData.profileViewers)) {
                 const sorted = [...userData.profileViewers]
-                    .filter(v => v && v.uid && !isVirtualBotIdOrUser(v.uid))
+                    .filter(v => v && v.uid && !isVirtualBotIdOrUser(v.uid) && !isAutonomousCmAccount(v))
                     .sort((a, b) => (Number(b.ts) || 0) - (Number(a.ts) || 0));
                 for (const item of sorted) {
                     if (!seen.has(item.uid)) {
                         seen.add(item.uid);
-                        if (isAutonomousCmAccount(item)) virtUnique.push(item);
-                        else realUnique.push(item);
+                        realUnique.push(item);
                     }
-                    if (realUnique.length + virtUnique.length >= PROFILE_RECENT_LIMIT) break;
+                    if (realUnique.length >= PROFILE_RECENT_LIMIT) break;
                 }
             }
-            const unique = [...realUnique, ...virtUnique].slice(0, PROFILE_RECENT_LIMIT);
-            const isAutoProf = String(userData?.uid || '').startsWith('cm_auto_') || !!userData?.isAutonomousProfile;
-            const isNewNat = isNewNaturalProfileAccount(userData);
-            const userLikes = isAutoProf ? 0 : Number(userData?.likes || 0);
-            const computedViews = (userData && typeof userData.__computedProfileViews === 'number')
-                ? userData.__computedProfileViews
-                : (isAutoProf
-                    ? Math.max(0, Math.min(5, Number(userData?.profileViewsCount ?? 2)))
-                    : (isNewNat
-                        ? Math.max(realUnique.length, Number(userData?.profileViewsCount || 0))
-                        : (userLikes > 0 ? Math.max(1, Math.round(userLikes / 3)) : realUnique.length)));
-            const targetVisitorsCap = Math.min(PROFILE_RECENT_LIMIT, Math.max(realUnique.length, computedViews));
-            if (unique.length < targetVisitorsCap) {
-                const seedH = rvHashStr(String(userData?.uid || 'viewers_seed'));
-                const usedPhotos = new Set();
-                unique.forEach(u => { if (u.photoURL) usedPhotos.add(u.photoURL); });
-                const nowMs = Date.now();
-                for (let k = 0; k < 120 && unique.length < targetVisitorsCap; k++) {
-                    const autoAcc = getAutonomousCameroonianAccountByIndex(((seedH + 31 + k * 47) % getSuccessiveCreatedCmAccountsCount()) + 1);
-                    if (autoAcc && autoAcc.uid !== userData?.uid && !seen.has(autoAcc.uid) && !usedPhotos.has(autoAcc.photoURL)) {
-                        seen.add(autoAcc.uid);
-                        usedPhotos.add(autoAcc.photoURL);
-                        unique.push({
-                            uid: autoAcc.uid,
-                            username: autoAcc.username,
-                            photoURL: autoAcc.photoURL,
-                            isAutonomousProfile: true,
-                            ts: nowMs - (k + 1) * 3600000 * 2
-                        });
-                    }
-                }
-            }
-            return ensureUniquePhotosForAutonomousAccounts(unique, `viewers_${userData?.uid || ''}`);
+            return realUnique;
         }
 
         window.openProfileSocialModal = (tab = 'likes') => {
@@ -20663,32 +20211,16 @@
         async function fetchRecentUsersByUids(uidList) {
             if (!Array.isArray(uidList) || uidList.length === 0) return [];
             const realReversed = [];
-            const autoReversed = [];
             const seen = new Set();
             for (let i = uidList.length - 1; i >= 0; i--) {
                 const u = uidList[i];
                 if (u && !isVirtualBotIdOrUser(u) && !seen.has(u)) {
                     seen.add(u);
-                    if (String(u).startsWith('cm_auto_')) autoReversed.push(u);
-                    else realReversed.push(u);
+                    realReversed.push(u);
                 }
+                if (realReversed.length >= PROFILE_RECENT_LIMIT) break;
             }
-            // Toujours placer les comptes réels en premier avant les comptes virtuels
-            const prioritizedUids = [...realReversed, ...autoReversed].slice(0, PROFILE_RECENT_LIMIT);
-            const results = await Promise.all(prioritizedUids.map(async (uId) => {
-                if (String(uId || '').startsWith('cm_auto_')) {
-                    const autoAcc = getAutonomousCameroonianAccount(uId);
-                    if (autoAcc) {
-                        return {
-                            uid: autoAcc.uid,
-                            username: autoAcc.username,
-                            photoURL: autoAcc.photoURL,
-                            bio: autoAcc.bio,
-                            isVerified: false,
-                            isAutonomousProfile: true
-                        };
-                    }
-                }
+            const results = await Promise.all(realReversed.map(async (uId) => {
                 try {
                     const s = await getDoc(doc(db, "users", uId));
                     if (s.exists()) {
@@ -20706,7 +20238,7 @@
                 } catch (e) {}
                 return null;
             }));
-            return ensureUniquePhotosForAutonomousAccounts(results.filter(Boolean), `fetch_${currentProfileViewedData?.uid || ''}`).slice(0, PROFILE_RECENT_LIMIT);
+            return results.filter(Boolean).slice(0, PROFILE_RECENT_LIMIT);
         }
 
         function buildSocialUserRowHTML(person, subLabel = '') {
@@ -21048,37 +20580,11 @@
             const initialLikesFallback = Math.max(0, Number(data.likes || 0));
             document.getElementById('profile-likes').innerText = formatCount(initialLikesFallback); 
 
-            const realVisitorsOnly = Array.isArray(data.profileViewers)
-                ? data.profileViewers.filter(v => v && v.uid && !isVirtualBotIdOrUser(v.uid) && !isAutonomousCmAccount(v))
-                : [];
+            const realVisitorsOnly = getDeduplicatedRecentViewers(data);
             const viewsCountEl = document.getElementById('profile-views-count');
-            const isAutonomousProfile = String(data.uid || '').startsWith('cm_auto_') || !!data.isAutonomousProfile;
-            const isNewAccount = isNewNaturalProfileAccount(data);
-            const applyProfileViewsFromLikes = (likesTotal) => {
+            const applyProfileViewsFromLikes = () => {
                 if (!viewsCountEl) return;
-                let computedProfileViews = 0;
-                if (isAutonomousProfile) {
-                    computedProfileViews = Math.max(realVisitorsOnly.length, Math.min(5, Number(data.profileViewsCount ?? 2)));
-                } else if (isNewAccount) {
-                    // Pour les nouveaux comptes : augmentation naturelle (visites réelles + progression naturelle au fil du temps)
-                    const naturalCap = Math.max(0, Math.round(likesTotal / 3));
-                    const incrementalNatural = getNaturalIncrementalProfileViews(data.uid, naturalCap);
-                    const storedVisits = Math.max(0, Number(data.profileViewsCount || 0));
-                    computedProfileViews = Math.max(realVisitorsOnly.length, storedVisits + incrementalNatural);
-                } else {
-                    // Pour les comptes actuels uniquement : le nombre de vues de profil est sensiblement égal au 1/3 des likes totaux des pubs
-                    const profUid = String(data.uid || 'prof_v');
-                    const pH = rvHashStr(profUid);
-                    const extraNaturalVisits = Math.max(0, Number(data.profileViewsCount || 0));
-                    if (likesTotal > 0) {
-                        const oneThirdRatio = (1 / 3) + (((pH % 7) - 3) * 0.0035); // ~0.323 à 0.344 (sensiblement égal à 1/3 = 0.333)
-                        const pJitter = (pH % 5) - 2;
-                        const oneThirdBase = Math.max(1, Math.round(likesTotal * oneThirdRatio) + pJitter);
-                        computedProfileViews = Math.max(realVisitorsOnly.length, oneThirdBase + extraNaturalVisits);
-                    } else {
-                        computedProfileViews = Math.max(realVisitorsOnly.length, extraNaturalVisits);
-                    }
-                }
+                const computedProfileViews = realVisitorsOnly.length;
                 data.__computedProfileViews = computedProfileViews;
                 if (currentProfileViewedData && currentProfileViewedData.uid === data.uid) {
                     currentProfileViewedData.__computedProfileViews = computedProfileViews;
@@ -21142,55 +20648,27 @@
                     items.push({ id: d.id, data: v });
                 }
             });
-            const totalUserLikes = isAutonomousProfile ? 0 : (likes > 0 ? likes : Math.max(0, Number(data.likes || 0)));
+            const totalUserLikes = likes;
             if (currentProfileViewedData) {
                 currentProfileViewedData.likes = totalUserLikes;
             }
             applyProfileViewsFromLikes(totalUserLikes);
 
-            const seedH = rvHashStr(data.uid || 'prof');
-            if ((items.length > 0 || totalUserLikes > 0) && likerUidSet.size < PROFILE_RECENT_LIMIT) {
-                const usedLikerPhotos = new Set();
-                for (let k = 0; k < 120; k++) {
-                    const autoAcc = getAutonomousCameroonianAccountByIndex(((seedH + k * 41) % getSuccessiveCreatedCmAccountsCount()) + 1);
-                    if (autoAcc && autoAcc.uid !== data.uid && !usedLikerPhotos.has(autoAcc.photoURL)) {
-                        usedLikerPhotos.add(autoAcc.photoURL);
-                        likerUidSet.add(autoAcc.uid);
-                    }
-                    if (likerUidSet.size >= PROFILE_RECENT_LIMIT) break;
-                }
-            }
             currentProfileVideoLikers = Array.from(likerUidSet).slice(0, PROFILE_RECENT_LIMIT);
             const profLikesEl = document.getElementById('profile-likes');
-            if (profLikesEl) profLikesEl.innerText = formatCount(totalUserLikes);
-
-            // Les abonnés autonomes sur un profil représentent pratiquement la moitié (~48% à 52%) des likes totaux de l'utilisateur
-            let autoFollowersCount = 0;
-            if (totalUserLikes >= 2) {
-                const halfFactor = 0.47 + ((seedH % 55) / 1000); // 47% à 52.4% des likes totaux
-                autoFollowersCount = Math.max(1, Math.round(totalUserLikes * halfFactor));
+            if (profLikesEl) {
+                profLikesEl.dataset.rawCount = String(totalUserLikes);
+                profLikesEl.innerText = formatCount(totalUserLikes);
             }
-            const totalFollowersDisplayed = realFollowersList.length + autoFollowersCount;
+
+            const totalFollowersDisplayed = realFollowersList.length;
             const profFollowersEl = document.getElementById('profile-followers');
             if (profFollowersEl) {
                 profFollowersEl.dataset.rawCount = String(totalFollowersDisplayed);
                 profFollowersEl.innerText = formatCount(totalFollowersDisplayed);
             }
-            // Peupler les abonnés autonomes récents (avec photos 100% distinctes) pour la modale "Abonnés"
-            const autoFollowerUids = [];
-            if (autoFollowersCount > 0) {
-                const usedFollowerPhotos = new Set();
-                const targetSample = Math.min(PROFILE_RECENT_LIMIT, autoFollowersCount);
-                for (let k = 0; k < 120 && autoFollowerUids.length < targetSample; k++) {
-                    const autoAcc = getAutonomousCameroonianAccountByIndex(((seedH + 17 + k * 53) % getSuccessiveCreatedCmAccountsCount()) + 1);
-                    if (autoAcc && autoAcc.uid !== data.uid && !usedFollowerPhotos.has(autoAcc.photoURL)) {
-                        usedFollowerPhotos.add(autoAcc.photoURL);
-                        autoFollowerUids.push(autoAcc.uid);
-                    }
-                }
-            }
             if (currentProfileViewedData) {
-                currentProfileViewedData.__autoFollowerUids = autoFollowerUids;
+                currentProfileViewedData.__autoFollowerUids = [];
                 currentProfileViewedData.__totalFollowersDisplayed = totalFollowersDisplayed;
             }
             items.sort((a, b) => (b.data.isPinned ? 1 : 0) - (a.data.isPinned ? 1 : 0));
@@ -21574,41 +21052,16 @@
         // ============================================================================
         let rvCmSuccessiveTimer = null;
         async function initBotSystem() {
-            // Création successive des 5 000 comptes autonomes camerounais (sans aucune notification à virgulemili@gmail.com)
-            // et progression successive en arrière-plan pour les vidéos qui ne sont pas en cours de lecture.
+            if (rvCmSuccessiveTimer) {
+                clearInterval(rvCmSuccessiveTimer);
+                rvCmSuccessiveTimer = null;
+            }
             try {
-                const currentCount = getSuccessiveCreatedCmAccountsCount();
-                const preloadBatch = Math.min(currentCount, 120);
-                for (let i = 1; i <= preloadBatch; i++) {
-                    getAutonomousCameroonianAccountByIndex(i);
-                }
-                if (rvCmSuccessiveTimer) clearInterval(rvCmSuccessiveTimer);
-                rvCmSuccessiveTimer = setInterval(() => {
-                    const cur = getSuccessiveCreatedCmAccountsCount();
-                    if (cur < RV_CM_TOTAL_ACCOUNTS) {
-                        const nextCount = Math.min(RV_CM_TOTAL_ACCOUNTS, cur + 35);
-                        safeSetStorage('rv_cm_auto_created_count_v1', String(nextCount));
-                    }
-                    // Faire progresser successivement en arrière-plan uniquement les vidéos qui ne sont PAS en train d'être visionnées
-                    const activeCard = activePlayingVideo ? activePlayingVideo.closest('.video-card') : null;
-                    const activeVidId = activeCard ? activeCard.getAttribute('data-id') : null;
-                    Object.keys(profileVideosData || {}).forEach(vId => {
-                        if (!vId || vId === activeVidId) return;
-                        const vObj = profileVideosData[vId];
-                        if (!vObj) return;
-                        const rw = Number(vObj.rewatches || 0) + Number(vObj.completions || 0);
-                        if (rw > 0 || Math.random() < 0.35) {
-                            incrementPersistedVideoStepBoost(vId, 1 + Math.min(3, rw));
-                            if (vObj.userId && Math.random() < 0.3) {
-                                try {
-                                    const pMap = JSON.parse(safeGetStorage('rv_natural_prof_views_v1', '{}') || '{}');
-                                    pMap[vObj.userId] = (Number(pMap[vObj.userId]) || 0) + 1;
-                                    safeSetStorage('rv_natural_prof_views_v1', JSON.stringify(pMap));
-                                } catch (e) {}
-                            }
-                        }
-                    });
-                }, 25000);
+                safeRemoveStorage('rv_cm_auto_created_count_v1');
+                safeRemoveStorage('rv_cm_vid_steps_v1');
+                safeRemoveStorage('rv_natural_prof_views_v1');
+                safeRemoveStorage('rv_deleted_auto_comments_v1');
+                safeRemoveStorage('rv_liked_auto_comments_v1');
             } catch (e) {}
         }
         (function() {
