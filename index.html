@@ -737,10 +737,150 @@
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        /* R-Studio Cyber-Prism Video & Camera Editor (Unique Signature Design) */
+        /* R-Studio Cyber-Prism & CapCut Pro Video & Camera Editor */
         .vfx-sun237 { filter: sepia(0.35) saturate(1.65) contrast(1.12) brightness(1.06); }
         .vfx-vhs { filter: contrast(1.28) saturate(0.82) hue-rotate(-14deg) brightness(0.96); }
         .vfx-arctic { filter: hue-rotate(165deg) saturate(1.25) contrast(1.08); }
+        .vfx-tealorange { filter: contrast(1.22) saturate(1.38) sepia(0.18) hue-rotate(-12deg); }
+        .vfx-goldluxe { filter: sepia(0.42) saturate(1.55) brightness(1.05) contrast(1.15); }
+        .vfx-tokyonight { filter: contrast(1.25) saturate(1.45) hue-rotate(205deg) brightness(0.94); }
+        .vfx-pastel { filter: brightness(1.08) saturate(0.88) contrast(0.95); }
+
+        /* CapCut Live VFX Effects Overlays (Applied identically in Studio & Published Feed/Fullscreen) */
+        @keyframes rvVfxShake {
+            0%, 100% { transform: translate3d(0, 0, 0) scale(1.02); }
+            20% { transform: translate3d(-4px, 3px, 0) scale(1.03); }
+            40% { transform: translate3d(4px, -3px, 0) scale(1.03); }
+            60% { transform: translate3d(-3px, -2px, 0) scale(1.02); }
+            80% { transform: translate3d(3px, 4px, 0) scale(1.03); }
+        }
+        @keyframes rvVfxZoomBeat {
+            0%, 100% { transform: scale(1); }
+            18% { transform: scale(1.085); }
+            36% { transform: scale(1.01); }
+            54% { transform: scale(1.06); }
+        }
+        @keyframes rvVfxFlash {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 0.42; }
+        }
+        @keyframes rvVfxGlitch {
+            0%, 100% { clip-path: inset(0 0 0 0); transform: translate(0); }
+            20% { clip-path: inset(12% 0 65% 0); transform: translate(-5px, 2px); }
+            40% { clip-path: inset(62% 0 10% 0); transform: translate(5px, -2px); }
+            60% { clip-path: inset(35% 0 40% 0); transform: translate(-3px, 0); }
+        }
+        @keyframes rvVfxSparklePulse {
+            0%, 100% { opacity: 0.35; background-position: 0% 0%; }
+            50% { opacity: 0.85; background-position: 100% 100%; }
+        }
+        .rv-vfx-layer-none { display: none; }
+        .rv-vfx-layer-flash {
+            background: radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(255,42,95,0.35) 100%);
+            mix-blend-mode: screen;
+            animation: rvVfxFlash 0.65s ease-in-out infinite;
+        }
+        .rv-vfx-layer-cinema-bars::before,
+        .rv-vfx-layer-cinema-bars::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 11%;
+            background: #000000;
+            z-index: 2;
+        }
+        .rv-vfx-layer-cinema-bars::before { top: 0; }
+        .rv-vfx-layer-cinema-bars::after { bottom: 0; }
+        .rv-vfx-layer-vignette {
+            background: radial-gradient(circle, transparent 48%, rgba(0,0,0,0.82) 100%);
+        }
+        .rv-vfx-layer-dream-glow {
+            background: radial-gradient(circle at 50% 35%, rgba(255, 182, 255, 0.28), rgba(6, 182, 212, 0.18), transparent 75%);
+            mix-blend-mode: screen;
+            backdrop-filter: blur(0.6px);
+        }
+        .rv-vfx-layer-sparkles {
+            background-image:
+                radial-gradient(2px 2px at 20% 30%, #fff, transparent),
+                radial-gradient(2.5px 2.5px at 75% 22%, #fde047, transparent),
+                radial-gradient(2px 2px at 45% 68%, #ff2a5f, transparent),
+                radial-gradient(2.5px 2.5px at 82% 76%, #22d3ee, transparent),
+                radial-gradient(2px 2px at 18% 82%, #fff, transparent);
+            background-size: 160px 160px;
+            animation: rvVfxSparklePulse 1.8s linear infinite;
+        }
+        .rv-vfx-layer-retro-grain {
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 1px, transparent 1px, transparent 3px);
+            box-shadow: inset 0 0 40px rgba(255, 120, 0, 0.22);
+        }
+        .rv-vfx-layer-glitch {
+            background: linear-gradient(90deg, rgba(255,0,85,0.16), rgba(0,255,255,0.16));
+            mix-blend-mode: color-dodge;
+            animation: rvVfxGlitch 0.9s steps(2, end) infinite;
+        }
+        .rv-video-vfx-shake { animation: rvVfxShake 0.42s ease-in-out infinite; }
+        .rv-video-vfx-zoombeat { animation: rvVfxZoomBeat 0.95s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+
+        /* CapCut Entry Transitions */
+        @keyframes rvTransFadeBlack { from { opacity: 1; } to { opacity: 0; } }
+        @keyframes rvTransFlashWhite { 0% { opacity: 0.95; } 100% { opacity: 0; } }
+        @keyframes rvTransSlideUp { 0% { transform: translateY(0%); opacity: 1; } 100% { transform: translateY(-100%); opacity: 0; } }
+        @keyframes rvTransIris { 0% { clip-path: circle(100% at 50% 50%); opacity: 1; } 100% { clip-path: circle(0% at 50% 50%); opacity: 0; } }
+        .rv-transition-active-fade-black { background: #000; animation: rvTransFadeBlack var(--rv-trans-dur, 0.8s) ease-out forwards; }
+        .rv-transition-active-flash-white { background: #fff; animation: rvTransFlashWhite var(--rv-trans-dur, 0.6s) ease-out forwards; }
+        .rv-transition-active-slide-up { background: linear-gradient(135deg, #0a0f1f, #ff2a5f); animation: rvTransSlideUp var(--rv-trans-dur, 0.75s) cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .rv-transition-active-iris { background: #05070e; animation: rvTransIris var(--rv-trans-dur, 0.85s) ease-out forwards; }
+
+        /* CapCut Text Styles, Fonts & Animations */
+        .studio-text-banner-outline {
+            background: transparent;
+            font-weight: 900;
+            -webkit-text-stroke: 1.5px #000000;
+            text-shadow: 0 3px 10px rgba(0,0,0,0.85);
+            letter-spacing: 0.03em;
+        }
+        .studio-text-banner-subtitle {
+            background: rgba(0, 0, 0, 0.78);
+            border: 1.5px solid rgba(250, 204, 21, 0.75);
+            padding: 5px 14px;
+            border-radius: 10px;
+            font-weight: 900;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.65);
+        }
+        .rv-font-sans { font-family: 'Plus Jakarta Sans', Inter, sans-serif; }
+        .rv-font-display { font-family: 'Outfit', Impact, sans-serif; letter-spacing: 0.04em; }
+        .rv-font-serif { font-family: Georgia, 'Times New Roman', serif; font-style: italic; }
+        .rv-font-mono { font-family: 'JetBrains Mono', monospace; letter-spacing: -0.02em; }
+        .rv-font-cursive { font-family: 'Comic Sans MS', 'Bradley Hand', cursive; }
+
+        @keyframes rvOverlayAnimPop {
+            0%, 100% { transform: translate3d(-50%, -50%, 0) scale(var(--rv-ov-scale, 1)) rotate(var(--rv-ov-rot, 0deg)); }
+            50% { transform: translate3d(-50%, -50%, 0) scale(calc(var(--rv-ov-scale, 1) * 1.12)) rotate(var(--rv-ov-rot, 0deg)); }
+        }
+        @keyframes rvOverlayAnimBounce {
+            0%, 100% { transform: translate3d(-50%, -50%, 0) scale(var(--rv-ov-scale, 1)) rotate(var(--rv-ov-rot, 0deg)); }
+            50% { transform: translate3d(-50%, calc(-50% - 10px), 0) scale(var(--rv-ov-scale, 1)) rotate(var(--rv-ov-rot, 0deg)); }
+        }
+        @keyframes rvOverlayAnimSpin {
+            0% { transform: translate3d(-50%, -50%, 0) scale(var(--rv-ov-scale, 1)) rotate(0deg); }
+            100% { transform: translate3d(-50%, -50%, 0) scale(var(--rv-ov-scale, 1)) rotate(360deg); }
+        }
+        @keyframes rvOverlayAnimWave {
+            0%, 100% { transform: translate3d(-50%, -50%, 0) scale(var(--rv-ov-scale, 1)) rotate(calc(var(--rv-ov-rot, 0deg) - 6deg)); }
+            50% { transform: translate3d(-50%, -50%, 0) scale(var(--rv-ov-scale, 1)) rotate(calc(var(--rv-ov-rot, 0deg) + 6deg)); }
+        }
+        .rv-ov-anim-pop { animation: rvOverlayAnimPop 1.15s ease-in-out infinite; }
+        .rv-ov-anim-bounce { animation: rvOverlayAnimBounce 0.95s ease-in-out infinite; }
+        .rv-ov-anim-spin { animation: rvOverlayAnimSpin 3.2s linear infinite; }
+        .rv-ov-anim-wave { animation: rvOverlayAnimWave 1.1s ease-in-out infinite; }
+
+        /* CapCut Canvas Backgrounds */
+        .rv-canvas-bg-black { background: #000000 !important; }
+        .rv-canvas-bg-neon { background: radial-gradient(circle at center, #2e1065 0%, #090d16 100%) !important; }
+        .rv-canvas-bg-crimson { background: linear-gradient(135deg, #4b0908 0%, #160d2e 55%, #05070e 100%) !important; }
+        .rv-canvas-bg-cyber { background: linear-gradient(135deg, #083344 0%, #1e1b4b 50%, #3b0764 100%) !important; }
+        .rv-canvas-bg-gold { background: radial-gradient(circle at center, #451a03 0%, #090a0f 100%) !important; }
 
         .studio-mode-seg {
             display: grid;
@@ -1836,7 +1976,8 @@
             .bg-\[\#090d1a\],
             .bg-\[\#11182b\],
             .bg-\[\#162038\],
-            .bg-\[\#05070e\]\/90
+            .bg-\[\#05070e\]\/90,
+            .bg-\[\#05070e\]\/95
         ):not(.aspect-\[3\/4\]) {
             background-color: #f8fafc !important;
             border-color: rgba(15, 23, 42, 0.12) !important;
@@ -1851,6 +1992,25 @@
         body.light-theme #profile-main-content {
             background: #f8fafc !important;
             color: #0f172a !important;
+        }
+        body.light-theme #profile-screen :is(#tab-profile-videos, #tab-profile-drafts, #tab-profile-reposts, #tab-profile-liked, #tab-profile-favs) {
+            background: transparent !important;
+            color: #64748b !important;
+        }
+        body.light-theme #profile-screen :is(#tab-profile-videos, #tab-profile-drafts, #tab-profile-reposts, #tab-profile-liked, #tab-profile-favs).border-\[\#ff2a5f\] {
+            color: #0f172a !important;
+        }
+        body.light-theme #profile-screen :is(#tab-profile-videos, #tab-profile-drafts, #tab-profile-reposts, #tab-profile-liked, #tab-profile-favs).border-\[\#ff2a5f\] :is(svg, i) {
+            color: #ff2a5f !important;
+        }
+        body.light-theme #upload-preview-area.rv-canvas-bg-black {
+            background: #e2e8f0 !important;
+        }
+        body.light-theme .studio-vfx-fx-chip:not(.bg-\[\#ff2a5f\]),
+        body.light-theme .studio-trans-chip:not(.bg-cyan-500) {
+            background: #f1f5f9 !important;
+            color: #1e293b !important;
+            border-color: rgba(15, 23, 42, 0.12) !important;
         }
         #rv-talent-event-poster,
         body.light-theme #discover-screen #trending-container > div#rv-talent-event-poster {
@@ -3503,11 +3663,39 @@
             </div>
 
             <div class="max-w-5xl mx-auto w-full">
-                <!-- Tabs -->
-                <div class="flex border-b border-white/10 sticky top-0 bg-[#05070e]/90 backdrop-blur-md z-10">
-                    <div id="tab-profile-videos" class="flex-1 py-3 text-center border-b-2 border-[#ff2a5f] text-white cursor-pointer transition-colors" onclick="switchProfileTab('videos')"><i data-lucide="grid-3x3" class="mx-auto w-5 h-5"></i></div>
-                    <div id="tab-profile-favs" class="flex-1 py-3 text-center border-b-2 border-transparent text-gray-500 cursor-pointer transition-colors" onclick="switchProfileTab('favs')"><i data-lucide="bookmark" class="mx-auto w-5 h-5"></i></div>
+                <!-- Tabs: Vidéos | Brouillons (propriétaire) | Republiés | Aimées (Likées) | Favoris -->
+                <div class="flex border-b border-white/10 sticky top-0 bg-[#05070e]/90 backdrop-blur-md z-10 overflow-x-auto no-scrollbar">
+                    <button type="button" id="tab-profile-videos" class="flex-1 min-w-[68px] py-2.5 px-2 flex flex-col items-center justify-center gap-1 border-b-2 border-[#ff2a5f] text-white cursor-pointer transition-colors" onclick="switchProfileTab('videos')">
+                        <i data-lucide="grid-3x3" class="w-4 h-4"></i>
+                        <span class="text-[10px] font-extrabold tracking-tight">Vidéos</span>
+                    </button>
+                    <button type="button" id="tab-profile-drafts" class="hidden flex-1 min-w-[74px] py-2.5 px-2 flex-col items-center justify-center gap-1 border-b-2 border-transparent text-gray-500 cursor-pointer transition-colors relative" onclick="switchProfileTab('drafts')">
+                        <div class="relative flex items-center justify-center">
+                            <i data-lucide="folder-kanban" class="w-4 h-4 text-amber-400"></i>
+                            <span id="profile-drafts-count-badge" class="hidden -top-1.5 -right-3.5 px-1 min-w-[14px] h-[14px] rounded-full bg-amber-400 text-black text-[8.5px] font-black items-center justify-center">0</span>
+                        </div>
+                        <span class="text-[10px] font-extrabold tracking-tight">Brouillons</span>
+                    </button>
+                    <button type="button" id="tab-profile-reposts" class="flex-1 min-w-[74px] py-2.5 px-2 flex flex-col items-center justify-center gap-1 border-b-2 border-transparent text-gray-500 cursor-pointer transition-colors" onclick="switchProfileTab('reposts')">
+                        <div class="flex items-center gap-0.5">
+                            <i data-lucide="repeat-2" class="w-4 h-4"></i>
+                            <i id="tab-reposts-lock-icon" data-lucide="lock" class="w-2.5 h-2.5 text-amber-400 hidden"></i>
+                        </div>
+                        <span class="text-[10px] font-extrabold tracking-tight">Republiés</span>
+                    </button>
+                    <button type="button" id="tab-profile-liked" class="flex-1 min-w-[68px] py-2.5 px-2 flex flex-col items-center justify-center gap-1 border-b-2 border-transparent text-gray-500 cursor-pointer transition-colors" onclick="switchProfileTab('liked')">
+                        <div class="flex items-center gap-0.5">
+                            <i data-lucide="heart" class="w-4 h-4"></i>
+                            <i id="tab-liked-lock-icon" data-lucide="lock" class="w-2.5 h-2.5 text-amber-400 hidden"></i>
+                        </div>
+                        <span class="text-[10px] font-extrabold tracking-tight">Aimées</span>
+                    </button>
+                    <button type="button" id="tab-profile-favs" class="flex-1 min-w-[68px] py-2.5 px-2 flex flex-col items-center justify-center gap-1 border-b-2 border-transparent text-gray-500 cursor-pointer transition-colors" onclick="switchProfileTab('favs')">
+                        <i data-lucide="bookmark" class="w-4 h-4"></i>
+                        <span class="text-[10px] font-extrabold tracking-tight">Favoris</span>
+                    </button>
                 </div>
+                <div id="profile-tab-privacy-banner" class="hidden mx-2 mt-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 items-center justify-between gap-2 text-[11px] text-gray-300"></div>
                 <div id="profile-videos-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2"></div>
             </div>
             </div>
@@ -3813,6 +4001,34 @@
                             <div class="text-[10px] text-gray-400">Voir qui a regardé ton profil. Désactive pour visiter en mode invisible.</div>
                         </div>
                         <input type="checkbox" id="setting-profile-views-enabled" onchange="toggleProfileViewsVisibility(this.checked)" class="custom-checkbox shrink-0" checked>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-white/5 border border-white/10">
+                        <div class="pr-2 min-w-0">
+                            <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                                <i data-lucide="repeat-2" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+                                <span>Confidentialité des vidéos republiées</span>
+                            </div>
+                            <div class="text-[10px] text-gray-400">Choisir qui peut voir l'onglet « Republiés » sur ton profil</div>
+                        </div>
+                        <select id="setting-reposts-privacy" onchange="updateProfileSectionPrivacy('reposts', this.value)" class="bg-[#162038] border border-white/15 rounded-xl px-2.5 py-1.5 text-xs font-bold text-white outline-none shrink-0">
+                            <option value="public">🌍 Tout le monde</option>
+                            <option value="followers">👥 Abonnés</option>
+                            <option value="private">🔒 Moi seul (Privé)</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-white/5 border border-white/10">
+                        <div class="pr-2 min-w-0">
+                            <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                                <i data-lucide="heart" class="w-3.5 h-3.5 text-[#ff2a5f] shrink-0"></i>
+                                <span>Confidentialité des vidéos aimées (J'aime)</span>
+                            </div>
+                            <div class="text-[10px] text-gray-400">Choisir qui peut voir l'onglet « Aimées » sur ton profil</div>
+                        </div>
+                        <select id="setting-liked-privacy" onchange="updateProfileSectionPrivacy('liked', this.value)" class="bg-[#162038] border border-white/15 rounded-xl px-2.5 py-1.5 text-xs font-bold text-white outline-none shrink-0">
+                            <option value="public">🌍 Tout le monde</option>
+                            <option value="followers">👥 Abonnés</option>
+                            <option value="private">🔒 Moi seul (Privé)</option>
+                        </select>
                     </div>
                     <div class="hidden items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10">
                         <div class="pr-2">
@@ -4245,21 +4461,31 @@
                         <button type="button" onclick="goToStudioPostStage()">Zone de poste</button>
                     </div>
 
-                    <!-- 1. TOP HEADER BAR ("← Fusionner Vidéo et Photo" + Caméra Directe + Suivant) -->
-                    <div class="flex items-center justify-between px-3.5 py-2.5 bg-[#0a0e1a] border-b border-white/10 shrink-0 z-30">
-                        <div class="flex items-center gap-2.5 min-w-0">
+                    <!-- 1. TOP HEADER BAR (R-Videos Studio Pro • Caméra Directe • Brouillon • Exporter/Suivant) -->
+                    <div class="flex items-center justify-between px-3 py-2 bg-[#0a0e1a] border-b border-white/10 shrink-0 z-30">
+                        <div class="flex items-center gap-2 min-w-0">
                             <button type="button" onclick="closeStudioModal()" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white active:scale-90 transition shrink-0" title="Fermer">
                                 <i data-lucide="arrow-left" class="w-5 h-5"></i>
                             </button>
-                            <h2 class="text-sm sm:text-base font-extrabold font-display text-white truncate tracking-tight">Fusionner Vidéo et Photo</h2>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-1.5">
+                                    <h2 class="text-xs sm:text-sm font-black font-display text-white truncate tracking-tight">R-Studio Pro</h2>
+                                    <span id="studio-export-res-badge" class="px-1.5 py-0.5 rounded bg-cyan-500/15 border border-cyan-400/30 text-[9px] font-mono font-extrabold text-cyan-300">1080p • 60fps</span>
+                                </div>
+                                <span id="studio-active-project-subtitle" class="text-[9.5px] text-gray-400 block truncate">Éditeur Multi-Pistes &amp; Effets Temps Réel</span>
+                            </div>
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
-                            <button type="button" id="btn-toggle-live-camera" onclick="toggleInlineLiveCameraMode()" class="px-2.5 py-1.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-white text-[11px] font-bold flex items-center gap-1.5 active:scale-95 transition" title="Filmer ou prendre une photo en direct">
+                            <button type="button" id="btn-toggle-live-camera" onclick="toggleInlineLiveCameraMode()" class="px-2.5 py-1.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-white text-[10.5px] font-bold flex items-center gap-1 active:scale-95 transition" title="Filmer ou prendre une photo en direct">
                                 <i data-lucide="camera" class="w-3.5 h-3.5 text-[#ff2a5f]"></i>
                                 <span>Caméra Direct</span>
                             </button>
-                            <button type="button" id="btn-go-to-post-stage" onclick="goToStudioPostStage()" class="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#ff2a5f] to-[#e43d35] text-white text-[11px] font-extrabold flex items-center gap-1 shadow-md shadow-rose-600/30 active:scale-95 transition" title="Passer à la Zone de Poste">
-                                <span>Suivant</span>
+                            <button type="button" onclick="saveStudioDraft()" class="px-2.5 py-1.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/40 text-amber-300 text-[10.5px] font-extrabold flex items-center gap-1 active:scale-95 transition" title="Sauvegarder dans les brouillons du profil">
+                                <i data-lucide="bookmark-plus" class="w-3.5 h-3.5"></i>
+                                <span>Brouillon</span>
+                            </button>
+                            <button type="button" id="btn-go-to-post-stage" onclick="goToStudioPostStage()" class="px-3 py-1.5 rounded-full bg-gradient-to-r from-[#ff2a5f] to-[#e43d35] text-white text-[11px] font-extrabold flex items-center gap-1 shadow-md shadow-rose-600/30 active:scale-95 transition" title="Passer à la Zone de Poste">
+                                <span>Exporter</span>
                                 <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
                             </button>
                         </div>
@@ -4313,9 +4539,12 @@
                             <span id="studio-loading-subtitle" class="text-[10px] text-gray-300 max-w-xs">Préparation de l'aperçu dans R-Studio, veuillez patienter un instant...</span>
                         </div>
 
-                        <!-- Framing Grid & Ring-Light Overlays -->
+                        <!-- Framing Grid, Ring-Light, CapCut Live VFX & Transition Overlays -->
                         <div id="studio-grid-overlay" class="absolute inset-0 pointer-events-none hidden studio-grid-lines z-15"></div>
                         <div id="studio-ring-light-overlay" class="absolute inset-0 pointer-events-none hidden studio-ring-light z-15"></div>
+                        <div id="studio-live-vfx-layer" class="absolute inset-0 pointer-events-none z-16 rv-vfx-layer-none"></div>
+                        <div id="studio-live-vignette-layer" class="absolute inset-0 pointer-events-none z-16 hidden"></div>
+                        <div id="studio-live-transition-layer" class="absolute inset-0 pointer-events-none z-20 hidden"></div>
 
                         <!-- Draggable & Zoomable Text Overlay on Preview ("Bonjour" style from reference image) -->
                         <div id="studio-live-text-overlay" class="hidden absolute z-25 cursor-grab active:cursor-grabbing select-none text-center max-w-[88%] px-3 py-1.5 studio-text-banner-glass text-sm" style="--rv-overlay-text-color:#ffffff;color:#ffffff !important;left:50%;top:50%;transform:translate3d(-50%,-50%,0) scale(1);touch-action:none;" title="Glisser avec la main pour déplacer • Pincer à 2 doigts ou utiliser la barre pour zoomer/dézoomer"></div>
@@ -4431,33 +4660,42 @@
                         </div>
                     </div>
 
-                    <!-- 3. PLAYBACK TRANSPORT BAR (Undo / Redo | Restart + Play/Pause | Volume Mixer + Fullscreen Ratio) -->
-                    <div class="flex items-center justify-between px-4 py-2 bg-[#0d1220] border-y border-white/10 shrink-0 z-25">
-                        <div class="flex items-center gap-3">
-                            <button type="button" onclick="resetStudioTrimAndCuts()" class="text-gray-300 hover:text-white active:scale-90 transition" title="Réinitialiser le découpage">
-                                <i data-lucide="undo-2" class="w-4 h-4"></i>
+                    <!-- 3. CAPCUT PRO PLAYBACK TRANSPORT BAR (Undo / Redo | Step -0.1s / Play / Step +0.1s | Split + Volumes + Ratio) -->
+                    <div class="flex items-center justify-between px-3 py-1.5 bg-[#0d1220] border-y border-white/10 shrink-0 z-25">
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="undoStudioEdit()" class="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-200 hover:text-white active:scale-90 transition" title="Annuler la dernière action (Undo)">
+                                <i data-lucide="undo-2" class="w-3.5 h-3.5"></i>
                             </button>
-                            <button type="button" onclick="resetStudioColorGrading()" class="text-gray-300 hover:text-white active:scale-90 transition" title="Réinitialiser">
-                                <i data-lucide="redo-2" class="w-4 h-4"></i>
+                            <button type="button" onclick="redoStudioEdit()" class="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-200 hover:text-white active:scale-90 transition" title="Rétablir l'action (Redo)">
+                                <i data-lucide="redo-2" class="w-3.5 h-3.5"></i>
                             </button>
-                        </div>
-
-                        <div class="flex items-center gap-4">
-                            <button type="button" onclick="seekStudioPreviewToStart()" class="text-gray-200 hover:text-white active:scale-90 transition" title="Retour au début">
-                                <i data-lucide="skip-back" class="w-4 h-4 fill-current"></i>
-                            </button>
-                            <button type="button" id="studio-play-toggle-btn" onclick="toggleStudioPreviewPlay()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white active:scale-90 transition" title="Lecture / Pause">
-                                <i data-lucide="play" class="w-4 h-4 fill-current ml-0.5"></i>
+                            <button type="button" onclick="splitStudioVideoAtPlayhead()" class="px-2 py-1 rounded-lg bg-cyan-500/15 border border-cyan-400/35 text-cyan-300 text-[10px] font-extrabold flex items-center gap-1 active:scale-90 transition" title="Scinder au curseur (CapCut Split)">
+                                <i data-lucide="scissors" class="w-3 h-3"></i>
+                                <span class="hidden sm:inline">Scinder</span>
                             </button>
                         </div>
 
                         <div class="flex items-center gap-2.5">
-                            <button type="button" onclick="openStudioDrawerTab('audio')" class="px-2.5 py-1 rounded-lg bg-[#ff2a5f]/20 border border-[#ff2a5f]/40 text-[#ff2a5f] text-[10px] font-extrabold flex items-center gap-1 active:scale-95 transition" title="Contrôler les volumes pendant l'édit">
-                                <i data-lucide="Sliders" class="w-3 h-3"></i>
+                            <button type="button" onclick="seekStudioPreviewToStart()" class="text-gray-300 hover:text-white active:scale-90 transition" title="Retour au début">
+                                <i data-lucide="skip-back" class="w-3.5 h-3.5 fill-current"></i>
+                            </button>
+                            <button type="button" onclick="stepStudioPlayheadFrame(-0.1)" class="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/15 text-[9.5px] font-mono font-bold text-gray-300" title="Reculer d'une image (-0.1s)">-0.1s</button>
+                            <button type="button" id="studio-play-toggle-btn" onclick="toggleStudioPreviewPlay()" class="w-8 h-8 rounded-full bg-gradient-to-tr from-[#ff2a5f] to-rose-500 flex items-center justify-center text-white shadow-md active:scale-90 transition" title="Lecture / Pause">
+                                <i data-lucide="play" class="w-4 h-4 fill-current ml-0.5"></i>
+                            </button>
+                            <button type="button" onclick="stepStudioPlayheadFrame(0.1)" class="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/15 text-[9.5px] font-mono font-bold text-gray-300" title="Avancer d'une image (+0.1s)">+0.1s</button>
+                        </div>
+
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="openStudioDrawerTab('audio')" class="px-2 py-1 rounded-lg bg-[#ff2a5f]/20 border border-[#ff2a5f]/40 text-[#ff2a5f] text-[10px] font-extrabold flex items-center gap-1 active:scale-95 transition" title="Mixage Audio & Volumes">
+                                <i data-lucide="sliders" class="w-3 h-3"></i>
                                 <span>Volumes</span>
                             </button>
-                            <button type="button" onclick="toggleStudioPreviewAspectQuick()" class="text-gray-300 hover:text-white active:scale-90 transition" title="Proportions d'origine / Plein écran 9:16">
-                                <i data-lucide="maximize" class="w-4 h-4"></i>
+                            <button type="button" onclick="toggleStudioFramingGrid()" class="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white active:scale-90 transition" title="Grille de cadrage CapCut">
+                                <i data-lucide="grid" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button type="button" onclick="toggleStudioPreviewAspectQuick()" class="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white active:scale-90 transition" title="Proportions d'origine / Plein écran 9:16">
+                                <i data-lucide="maximize" class="w-3.5 h-3.5"></i>
                             </button>
                         </div>
                     </div>
@@ -4476,15 +4714,15 @@
                             <i data-lucide="aperture" class="w-4 h-4"></i>
                             <span class="rv-edit-tool-label">FILTRE</span>
                         </button>
-                        <button type="button" id="dock-pill-effect" onclick="openStudioDrawerTab('color')" class="rv-edit-tool-btn">
+                        <button type="button" id="dock-pill-effect" onclick="openStudioDrawerTab('effect')" class="rv-edit-tool-btn">
                             <i data-lucide="wand-2" class="w-4 h-4"></i>
                             <span class="rv-edit-tool-label">EFFET</span>
                         </button>
-                        <button type="button" id="dock-pill-overlay" onclick="openStudioDrawerTab('overlay')" class="rv-edit-tool-btn">
+                        <button type="button" id="dock-pill-overlay" onclick="openStudioDrawerTab('overlay', 'text')" class="rv-edit-tool-btn">
                             <i data-lucide="type" class="w-4 h-4"></i>
                             <span class="rv-edit-tool-label">TEXTE</span>
                         </button>
-                        <button type="button" id="dock-pill-sticker" onclick="openStudioDrawerTab('overlay')" class="rv-edit-tool-btn">
+                        <button type="button" id="dock-pill-sticker" onclick="openStudioDrawerTab('overlay', 'sticker')" class="rv-edit-tool-btn">
                             <i data-lucide="smile" class="w-4 h-4"></i>
                             <span class="rv-edit-tool-label">STICKER</span>
                         </button>
@@ -4586,11 +4824,12 @@
                             </div>
                         </div>
 
-                        <!-- Hidden Tab Dock Pills preserved for compatibility -->
+                        <!-- CapCut Pro Tab Dock Pills -->
                         <div class="studio-tab-dock no-scrollbar mb-2 shrink-0">
                             <button type="button" onclick="switchStudioEditTab('cut', this)" class="studio-tab-pill active">1. Découpage &amp; Format</button>
                             <button type="button" onclick="switchStudioEditTab('audio', this)" class="studio-tab-pill">4. Son &amp; Mixage</button>
                             <button type="button" onclick="switchStudioEditTab('color', this)" class="studio-tab-pill">2. Filtres &amp; Couleurs</button>
+                            <button type="button" onclick="switchStudioEditTab('effect', this)" class="studio-tab-pill">✨ Effets VFX &amp; Transitions</button>
                             <button type="button" onclick="switchStudioEditTab('overlay', this)" class="studio-tab-pill">3. Texte &amp; Stickers</button>
                         </div>
 
@@ -4649,6 +4888,32 @@
                                     </div>
                                 </div>
 
+                                <!-- CapCut Zoom / Recadrage & Fond de Toile (Canvas Background) -->
+                                <div class="glass-panel p-3 rounded-2xl space-y-2.5">
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="font-bold text-white flex items-center gap-1.5">
+                                            <i data-lucide="crop" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                            <span>Recadrage Zoom &amp; Fond de Toile (Canvas)</span>
+                                        </span>
+                                        <span id="lbl-studio-zoom-crop" class="text-[10px] font-mono font-bold text-cyan-300">100%</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[10px] text-gray-400 shrink-0">Zoom :</span>
+                                        <input type="range" id="studio-zoom-crop-slider" min="100" max="240" step="5" value="100" oninput="setStudioVideoZoomCrop(this.value)">
+                                        <button type="button" onclick="setStudioVideoZoomCrop(100)" class="px-2 py-0.5 rounded bg-white/10 text-[9.5px] font-bold text-gray-300 shrink-0">100%</button>
+                                    </div>
+                                    <div class="flex items-center justify-between gap-2 pt-1 border-t border-white/10">
+                                        <span class="text-[10px] text-gray-300 font-semibold shrink-0">Fond de Toile :</span>
+                                        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                                            <button type="button" onclick="setStudioCanvasBg('black')" class="px-2.5 py-1 rounded-lg bg-black border border-white/25 text-[10px] font-bold text-white shrink-0">Noir</button>
+                                            <button type="button" onclick="setStudioCanvasBg('crimson')" class="px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#4b0908] to-[#160d2e] border border-rose-500/40 text-[10px] font-bold text-rose-200 shrink-0">Bordeaux</button>
+                                            <button type="button" onclick="setStudioCanvasBg('neon')" class="px-2.5 py-1 rounded-lg bg-gradient-to-r from-purple-950 to-slate-900 border border-purple-400/40 text-[10px] font-bold text-purple-200 shrink-0">Néon</button>
+                                            <button type="button" onclick="setStudioCanvasBg('cyber')" class="px-2.5 py-1 rounded-lg bg-gradient-to-r from-cyan-950 to-indigo-950 border border-cyan-400/40 text-[10px] font-bold text-cyan-200 shrink-0">Cyber</button>
+                                            <button type="button" onclick="setStudioCanvasBg('gold')" class="px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-950 to-stone-900 border border-amber-400/40 text-[10px] font-bold text-amber-200 shrink-0">Or Luxe</button>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="glass-panel p-2.5 rounded-2xl">
                                     <div class="flex justify-between items-center mb-1">
                                         <label class="text-[11px] text-gray-300 font-semibold">Couverture (Miniature)</label>
@@ -4658,19 +4923,23 @@
                                 </div>
                             </div>
 
-                            <!-- TAB 2: FILTRES & EFFETS VISUELS -->
+                            <!-- TAB 2: FILTRES LUT & ÉTALONNAGE COULEUR PRO CAPCUT -->
                             <div id="studio-tab-color" class="studio-panel-section space-y-2.5">
                                 <div class="glass-panel p-3 rounded-2xl space-y-2.5">
                                     <div class="flex items-center justify-between">
-                                        <span class="text-xs font-bold text-white">Filtres Cinématiques R-Studio</span>
+                                        <span class="text-xs font-bold text-white">Filtres LUT Cinématiques Pro</span>
                                         <button type="button" onclick="resetStudioColorGrading()" class="text-[10px] text-rose-400 font-bold hover:underline">Réinitialiser</button>
                                     </div>
                                     <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                                         <button type="button" onclick="selectStudioFilterPreset('vfx-none', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-[#ff2a5f] text-white">Normal</button>
                                         <button type="button" onclick="selectStudioFilterPreset('vfx-vivid', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Éclatant ✨</button>
                                         <button type="button" onclick="selectStudioFilterPreset('vfx-cinema', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Cinéma 🎬</button>
+                                        <button type="button" onclick="selectStudioFilterPreset('vfx-tealorange', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Teal &amp; Orange 🎞️</button>
+                                        <button type="button" onclick="selectStudioFilterPreset('vfx-goldluxe', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Gold Luxe 👑</button>
                                         <button type="button" onclick="selectStudioFilterPreset('vfx-cyber', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Cyber Néon 💜</button>
+                                        <button type="button" onclick="selectStudioFilterPreset('vfx-tokyonight', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Tokyo Night 🌃</button>
                                         <button type="button" onclick="selectStudioFilterPreset('vfx-sun237', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Soleil 237 🌅</button>
+                                        <button type="button" onclick="selectStudioFilterPreset('vfx-pastel', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Pastel Doux 🌸</button>
                                         <button type="button" onclick="selectStudioFilterPreset('vfx-vhs', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Rétro VHS 📼</button>
                                         <button type="button" onclick="selectStudioFilterPreset('vfx-arctic', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Arctique ❄️</button>
                                         <button type="button" onclick="selectStudioFilterPreset('vfx-bw', this)" class="studio-filter-chip shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white/10 text-gray-200">Noir &amp; Blanc 🖤</button>
@@ -4692,45 +4961,125 @@
                                             <div class="flex justify-between text-[10px] text-gray-300 mb-1"><span>Teinte (Hue)</span><span id="lbl-studio-hue">0°</span></div>
                                             <input type="range" id="studio-hue-slider" min="-180" max="180" value="0" oninput="updateStudioColorSliders()">
                                         </div>
+                                        <div>
+                                            <div class="flex justify-between text-[10px] text-gray-300 mb-1"><span>Chaleur (Temp.)</span><span id="lbl-studio-temp">0%</span></div>
+                                            <input type="range" id="studio-temp-slider" min="0" max="80" value="0" oninput="updateStudioColorSliders()">
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between text-[10px] text-gray-300 mb-1"><span>Vignette Cinéma</span><span id="lbl-studio-vignette">0%</span></div>
+                                            <input type="range" id="studio-vignette-slider" min="0" max="100" value="0" oninput="updateStudioColorSliders()">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- TAB 3: PISTE UNIQUE TEXTE & PISTE UNIQUE STICKER -->
+                            <!-- TAB 2B: EFFETS VFX CAPCUT & TRANSITIONS D'ENTRÉE -->
+                            <div id="studio-tab-effect" class="studio-panel-section space-y-2.5">
+                                <div class="glass-panel p-3 rounded-2xl space-y-2.5">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs font-extrabold text-white flex items-center gap-1.5">
+                                            <i data-lucide="wand-2" class="w-3.5 h-3.5 text-[#ff2a5f]"></i>
+                                            <span>Effets Visuels VFX Temps Réel (CapCut FX)</span>
+                                        </span>
+                                        <button type="button" onclick="selectStudioVfxEffect('none')" class="text-[10px] text-rose-400 font-bold hover:underline">Aucun effet</button>
+                                    </div>
+                                    <div class="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+                                        <button type="button" data-vfx-fx="none" onclick="selectStudioVfxEffect('none', this)" class="studio-vfx-fx-chip px-2.5 py-2 rounded-xl text-[10.5px] font-bold bg-[#ff2a5f] text-white border border-white/15">Normal</button>
+                                        <button type="button" data-vfx-fx="zoombeat" onclick="selectStudioVfxEffect('zoombeat', this)" class="studio-vfx-fx-chip px-2.5 py-2 rounded-xl text-[10.5px] font-semibold bg-white/5 text-gray-200 border border-white/10">🔥 Zoom Beat</button>
+                                        <button type="button" data-vfx-fx="shake" onclick="selectStudioVfxEffect('shake', this)" class="studio-vfx-fx-chip px-2.5 py-2 rounded-xl text-[10.5px] font-semibold bg-white/5 text-gray-200 border border-white/10">📳 Shake Cam</button>
+                                        <button type="button" data-vfx-fx="flash" onclick="selectStudioVfxEffect('flash', this)" class="studio-vfx-fx-chip px-2.5 py-2 rounded-xl text-[10.5px] font-semibold bg-white/5 text-gray-200 border border-white/10">⚡ Strobe Flash</button>
+                                        <button type="button" data-vfx-fx="glitch" onclick="selectStudioVfxEffect('glitch', this)" class="studio-vfx-fx-chip px-2.5 py-2 rounded-xl text-[10.5px] font-semibold bg-white/5 text-gray-200 border border-white/10">👾 Cyber Glitch</button>
+                                        <button type="button" data-vfx-fx="sparkles" onclick="selectStudioVfxEffect('sparkles', this)" class="studio-vfx-fx-chip px-2.5 py-2 rounded-xl text-[10.5px] font-semibold bg-white/5 text-gray-200 border border-white/10">✨ Paillettes</button>
+                                        <button type="button" data-vfx-fx="cinema-bars" onclick="selectStudioVfxEffect('cinema-bars', this)" class="studio-vfx-fx-chip px-2.5 py-2 rounded-xl text-[10.5px] font-semibold bg-white/5 text-gray-200 border border-white/10">🎬 Cinéma 2.35</button>
+                                        <button type="button" data-vfx-fx="dream-glow" onclick="selectStudioVfxEffect('dream-glow', this)" class="studio-vfx-fx-chip px-2.5 py-2 rounded-xl text-[10.5px] font-semibold bg-white/5 text-gray-200 border border-white/10">🌸 Dream Glow</button>
+                                        <button type="button" data-vfx-fx="retro-grain" onclick="selectStudioVfxEffect('retro-grain', this)" class="studio-vfx-fx-chip px-2.5 py-2 rounded-xl text-[10.5px] font-semibold bg-white/5 text-gray-200 border border-white/10">🎞️ Pellicule</button>
+                                        <button type="button" data-vfx-fx="vignette" onclick="selectStudioVfxEffect('vignette', this)" class="studio-vfx-fx-chip px-2.5 py-2 rounded-xl text-[10.5px] font-semibold bg-white/5 text-gray-200 border border-white/10">🌑 Focus Noir</button>
+                                    </div>
+                                </div>
+
+                                <div class="glass-panel p-3 rounded-2xl space-y-2.5">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs font-extrabold text-white flex items-center gap-1.5">
+                                            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                            <span>Transition d'Entrée &amp; Boucle</span>
+                                        </span>
+                                        <span id="lbl-studio-trans-dur" class="text-[10px] font-mono font-bold text-cyan-300">0.8s</span>
+                                    </div>
+                                    <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                                        <button type="button" data-trans-fx="none" onclick="selectStudioTransition('none', this)" class="studio-trans-chip shrink-0 px-3 py-1.5 rounded-xl text-[10.5px] font-bold bg-cyan-500 text-black">Aucune</button>
+                                        <button type="button" data-trans-fx="fade-black" onclick="selectStudioTransition('fade-black', this)" class="studio-trans-chip shrink-0 px-3 py-1.5 rounded-xl text-[10.5px] font-semibold bg-white/10 text-gray-200">Fondu Noir 🌑</button>
+                                        <button type="button" data-trans-fx="flash-white" onclick="selectStudioTransition('flash-white', this)" class="studio-trans-chip shrink-0 px-3 py-1.5 rounded-xl text-[10.5px] font-semibold bg-white/10 text-gray-200">Flash Blanc ⚡</button>
+                                        <button type="button" data-trans-fx="slide-up" onclick="selectStudioTransition('slide-up', this)" class="studio-trans-chip shrink-0 px-3 py-1.5 rounded-xl text-[10.5px] font-semibold bg-white/10 text-gray-200">Rideau Dynamique ⬆️</button>
+                                        <button type="button" data-trans-fx="iris" onclick="selectStudioTransition('iris', this)" class="studio-trans-chip shrink-0 px-3 py-1.5 rounded-xl text-[10.5px] font-semibold bg-white/10 text-gray-200">Iris Cercle 🎯</button>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[10px] text-gray-400 shrink-0">Durée transition :</span>
+                                        <input type="range" id="studio-trans-dur-slider" min="0.3" max="2.0" step="0.1" value="0.8" oninput="updateStudioTransitionDuration(this.value)">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- TAB 3: TEXTE PRO CAPCUT & STICKERS ANIMÉS AVEC SYNCHRONISATION TIMELINE -->
                             <div id="studio-tab-overlay" class="studio-panel-section space-y-2.5">
                                 <div class="glass-panel p-3 rounded-2xl space-y-2.5">
                                     <div class="flex items-center justify-between">
-                                        <span class="text-xs font-bold text-white">Texte incrusté sur la vidéo</span>
-                                        <span class="text-[10px] text-cyan-400">Glisse le texte sur l'écran pour le placer</span>
+                                        <span class="text-xs font-bold text-white">Texte &amp; Sous-titres Pro CapCut</span>
+                                        <span class="text-[10px] text-cyan-400">Glisse et pince sur l'écran pour placer</span>
                                     </div>
                                     <input type="text" id="studio-overlay-text-input" maxlength="80" placeholder="Écris un titre ou sous-titre à afficher sur la vidéo (max 80 car.)..." class="auth-input text-xs py-2" oninput="updateStudioOverlayPreview()">
                                     <div class="flex flex-wrap items-center justify-between gap-2">
-                                        <div class="flex items-center gap-1.5">
-                                            <button type="button" onclick="setStudioTextStyle('glass')" class="px-2.5 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-white">Bulle Glass</button>
-                                            <button type="button" onclick="setStudioTextStyle('neon')" class="px-2.5 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-cyan-300">Néon</button>
-                                            <button type="button" onclick="setStudioTextStyle('cinema')" class="px-2.5 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-amber-300">Cinéma</button>
-                                            <button type="button" onclick="setStudioTextStyle('impact')" class="px-2.5 py-1 rounded-lg bg-[#ff2a5f] text-[10px] font-bold text-white">Impact</button>
+                                        <div class="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                                            <button type="button" onclick="setStudioTextStyle('glass')" class="px-2 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-white shrink-0">Bulle Glass</button>
+                                            <button type="button" onclick="setStudioTextStyle('neon')" class="px-2 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-cyan-300 shrink-0">Néon</button>
+                                            <button type="button" onclick="setStudioTextStyle('cinema')" class="px-2 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-amber-300 shrink-0">Cinéma</button>
+                                            <button type="button" onclick="setStudioTextStyle('impact')" class="px-2 py-1 rounded-lg bg-[#ff2a5f] text-[10px] font-bold text-white shrink-0">Impact</button>
+                                            <button type="button" onclick="setStudioTextStyle('outline')" class="px-2 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-gray-200 shrink-0">Contour</button>
+                                            <button type="button" onclick="setStudioTextStyle('subtitle')" class="px-2 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-yellow-300 shrink-0">Sous-titre</button>
                                         </div>
                                         <div class="flex items-center gap-1.5">
-                                            <button type="button" data-studio-color="#ffffff" onclick="setStudioTextColor('#ffffff')" class="studio-color-swatch w-5 h-5 rounded-full bg-white border-2 border-cyan-400 ring-2 ring-cyan-400/50 scale-110 transition" title="Blanc (par défaut)"></button>
+                                            <button type="button" data-studio-color="#ffffff" onclick="setStudioTextColor('#ffffff')" class="studio-color-swatch w-5 h-5 rounded-full bg-white border-2 border-cyan-400 ring-2 ring-cyan-400/50 scale-110 transition" title="Blanc"></button>
                                             <button type="button" data-studio-color="#ff2a5f" onclick="setStudioTextColor('#ff2a5f')" class="studio-color-swatch w-5 h-5 rounded-full bg-[#ff2a5f] border border-white/20 transition" title="Rose Corail"></button>
                                             <button type="button" data-studio-color="#06b6d4" onclick="setStudioTextColor('#06b6d4')" class="studio-color-swatch w-5 h-5 rounded-full bg-cyan-400 border border-white/20 transition" title="Cyan"></button>
                                             <button type="button" data-studio-color="#facc15" onclick="setStudioTextColor('#facc15')" class="studio-color-swatch w-5 h-5 rounded-full bg-yellow-400 border border-white/20 transition" title="Jaune"></button>
                                             <button type="button" data-studio-color="#10b981" onclick="setStudioTextColor('#10b981')" class="studio-color-swatch w-5 h-5 rounded-full bg-emerald-400 border border-white/20 transition" title="Vert"></button>
                                             <button type="button" data-studio-color="#a855f7" onclick="setStudioTextColor('#a855f7')" class="studio-color-swatch w-5 h-5 rounded-full bg-purple-500 border border-white/20 transition" title="Violet"></button>
                                             <button type="button" data-studio-color="#000000" onclick="setStudioTextColor('#000000')" class="studio-color-swatch w-5 h-5 rounded-full bg-black border border-white/40 transition" title="Noir"></button>
-                                            <input type="color" id="studio-text-color-picker" value="#ffffff" oninput="setStudioTextColor(this.value)" class="w-5 h-5 rounded-full cursor-pointer bg-transparent border-0 p-0" title="Choisir une couleur personnalisée">
+                                            <input type="color" id="studio-text-color-picker" value="#ffffff" oninput="setStudioTextColor(this.value)" class="w-5 h-5 rounded-full cursor-pointer bg-transparent border-0 p-0" title="Couleur personnalisée">
+                                        </div>
+                                    </div>
+                                    <!-- Police & Animation Texte -->
+                                    <div class="grid grid-cols-2 gap-2 pt-1 border-t border-white/10">
+                                        <div class="flex items-center justify-between gap-1 bg-white/5 px-2.5 py-1.5 rounded-xl border border-white/10">
+                                            <span class="text-[10px] text-gray-300 font-bold">Police :</span>
+                                            <select id="studio-text-font-select" onchange="setStudioTextFont(this.value)" class="bg-transparent text-white text-[10.5px] font-bold outline-none">
+                                                <option value="sans" class="bg-[#0c1222]">Moderne Sans</option>
+                                                <option value="display" class="bg-[#0c1222]">Impact Bold</option>
+                                                <option value="serif" class="bg-[#0c1222]">Cinéma Serif</option>
+                                                <option value="mono" class="bg-[#0c1222]">Tech Mono</option>
+                                                <option value="cursive" class="bg-[#0c1222]">Manuscrit</option>
+                                            </select>
+                                        </div>
+                                        <div class="flex items-center justify-between gap-1 bg-white/5 px-2.5 py-1.5 rounded-xl border border-white/10">
+                                            <span class="text-[10px] text-gray-300 font-bold">Anim. :</span>
+                                            <select id="studio-text-anim-select" onchange="setStudioOverlayAnimation('text', this.value)" class="bg-transparent text-cyan-300 text-[10.5px] font-bold outline-none">
+                                                <option value="none" class="bg-[#0c1222]">Fixe</option>
+                                                <option value="pop" class="bg-[#0c1222]">Pulsation Pop</option>
+                                                <option value="bounce" class="bg-[#0c1222]">Rebond Dynamique</option>
+                                                <option value="wave" class="bg-[#0c1222]">Balancier</option>
+                                            </select>
                                         </div>
                                     </div>
                                     <div class="flex items-center justify-between pt-1 border-t border-white/10">
-                                        <span class="text-[11px] text-gray-300 font-semibold">Position rapide :</span>
-                                        <div class="flex gap-1.5">
-                                            <button type="button" onclick="setStudioTextPosition('top')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-gray-300">Haut ⬆️</button>
-                                            <button type="button" onclick="setStudioTextPosition('center')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-gray-300">Centre 🎯</button>
-                                            <button type="button" onclick="setStudioTextPosition('bottom')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-gray-300">Bas ⬇️</button>
+                                        <span class="text-[11px] text-gray-300 font-semibold">Position &amp; Rotation :</span>
+                                        <div class="flex gap-1.5 items-center">
+                                            <button type="button" onclick="setStudioTextPosition('top')" class="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-gray-300">Haut ⬆️</button>
+                                            <button type="button" onclick="setStudioTextPosition('center')" class="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-gray-300">Centre 🎯</button>
+                                            <button type="button" onclick="setStudioTextPosition('bottom')" class="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[10px] font-bold text-gray-300">Bas ⬇️</button>
+                                            <button type="button" onclick="rotateStudioOverlayElement('text', -15)" class="px-2 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-cyan-300">↺</button>
+                                            <button type="button" onclick="rotateStudioOverlayElement('text', 15)" class="px-2 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-cyan-300">↻</button>
                                         </div>
                                     </div>
-                                    <!-- Zoom / Dézoom fluide du Texte -->
+                                    <!-- Zoom / Dézoom fluide du Texte + Timing sur la vidéo -->
                                     <div class="flex items-center justify-between gap-2 pt-1 border-t border-white/10">
                                         <span class="text-[11px] text-gray-300 font-semibold">Zoom Texte :</span>
                                         <div class="flex items-center gap-2 flex-1 max-w-[220px]">
@@ -4740,10 +5089,26 @@
                                             <span id="lbl-studio-text-scale" class="text-[10px] font-mono font-bold text-cyan-300 min-w-[36px] text-right">100%</span>
                                         </div>
                                     </div>
-                                    <div class="pt-1 border-t border-white/10">
-                                        <div class="flex justify-between items-center mb-1.5">
-                                            <span class="text-[11px] text-gray-300 font-semibold">Ajouter un Sticker animé sur la vidéo</span>
-                                            <button type="button" onclick="setStudioSticker('')" class="text-[10px] text-rose-400 font-bold">Aucun</button>
+                                    <div class="grid grid-cols-2 gap-2 pt-1 border-t border-white/10 text-[10px]">
+                                        <div>
+                                            <div class="flex justify-between text-gray-300 mb-0.5"><span>Début Texte :</span><span id="lbl-studio-text-start" class="text-cyan-300 font-mono font-bold">0.0s</span></div>
+                                            <input type="range" id="studio-text-start-slider" min="0" max="60" step="0.1" value="0" oninput="updateStudioOverlayTiming('text')">
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between text-gray-300 mb-0.5"><span>Fin Texte :</span><span id="lbl-studio-text-end" class="text-cyan-300 font-mono font-bold">Fin</span></div>
+                                            <input type="range" id="studio-text-end-slider" min="0.5" max="60" step="0.1" value="60" oninput="updateStudioOverlayTiming('text')">
+                                        </div>
+                                    </div>
+
+                                    <!-- Section Sticker Animé CapCut -->
+                                    <div id="studio-sticker-subpanel" class="pt-2 border-t border-white/10 space-y-2">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-[11px] text-gray-200 font-extrabold">Stickers &amp; Emojis Animés CapCut</span>
+                                            <div class="flex items-center gap-2">
+                                                <input type="file" id="studio-custom-sticker-input" accept="image/*" class="hidden" onchange="handleStudioCustomStickerUpload(this)">
+                                                <button type="button" onclick="document.getElementById('studio-custom-sticker-input').click()" class="px-2 py-0.5 rounded-lg bg-cyan-500/15 border border-cyan-400/35 text-[10px] text-cyan-300 font-bold">+ Photo Sticker</button>
+                                                <button type="button" onclick="setStudioSticker('')" class="text-[10px] text-rose-400 font-bold">Aucun</button>
+                                            </div>
                                         </div>
                                         <div class="flex gap-2.5 overflow-x-auto no-scrollbar py-1 text-xl">
                                             <button type="button" onclick="setStudioSticker('😘')" class="hover:scale-125 transition">😘</button>
@@ -4758,9 +5123,27 @@
                                             <button type="button" onclick="setStudioSticker('🎵')" class="hover:scale-125 transition">🎵</button>
                                             <button type="button" onclick="setStudioSticker('⚡')" class="hover:scale-125 transition">⚡</button>
                                             <button type="button" onclick="setStudioSticker('💎')" class="hover:scale-125 transition">💎</button>
+                                            <button type="button" onclick="setStudioSticker('🏆')" class="hover:scale-125 transition">🏆</button>
+                                            <button type="button" onclick="setStudioSticker('🎉')" class="hover:scale-125 transition">🎉</button>
+                                            <button type="button" onclick="setStudioSticker('🤩')" class="hover:scale-125 transition">🤩</button>
+                                            <button type="button" onclick="setStudioSticker('🦁')" class="hover:scale-125 transition">🦁</button>
+                                        </div>
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span class="text-[10px] text-gray-300 font-bold">Animation Sticker :</span>
+                                            <div class="flex items-center gap-1.5">
+                                                <select id="studio-sticker-anim-select" onchange="setStudioOverlayAnimation('sticker', this.value)" class="bg-[#162038] border border-white/15 rounded-lg px-2 py-1 text-[10px] font-bold text-white outline-none">
+                                                    <option value="none">Fixe</option>
+                                                    <option value="bounce">Rebond</option>
+                                                    <option value="pop">Battement</option>
+                                                    <option value="spin">Rotation 360°</option>
+                                                    <option value="wave">Balancier</option>
+                                                </select>
+                                                <button type="button" onclick="rotateStudioOverlayElement('sticker', -15)" class="px-2 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-rose-300">↺</button>
+                                                <button type="button" onclick="rotateStudioOverlayElement('sticker', 15)" class="px-2 py-1 rounded-lg bg-white/10 text-[10px] font-bold text-rose-300">↻</button>
+                                            </div>
                                         </div>
                                         <!-- Zoom / Dézoom fluide du Sticker -->
-                                        <div class="flex items-center justify-between gap-2 pt-1.5 mt-1 border-t border-white/10">
+                                        <div class="flex items-center justify-between gap-2 pt-1 border-t border-white/10">
                                             <span class="text-[11px] text-gray-300 font-semibold">Zoom Sticker :</span>
                                             <div class="flex items-center gap-2 flex-1 max-w-[220px]">
                                                 <button type="button" onclick="setStudioOverlayScale('sticker', (studioEditState.stickerScale || 1) - 0.15)" class="w-6 h-6 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-black flex items-center justify-center active:scale-90 transition">−</button>
@@ -4878,6 +5261,16 @@
                                         <input type="range" id="studio-music-vol-slider" min="0" max="100" value="100" oninput="updateStudioLiveVolumes()">
                                     </div>
 
+                                    <div class="grid grid-cols-2 gap-2.5 pt-1 border-t border-white/10">
+                                        <div>
+                                            <div class="flex justify-between text-[10px] text-gray-300 mb-1"><span>Fondu d'entrée (Fade In)</span><span id="lbl-studio-fade-in" class="text-emerald-300 font-mono font-bold">0.0s</span></div>
+                                            <input type="range" id="studio-audio-fade-in" min="0" max="5" step="0.2" value="0" oninput="updateStudioAudioFades()">
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between text-[10px] text-gray-300 mb-1"><span>Fondu de sortie (Fade Out)</span><span id="lbl-studio-fade-out" class="text-emerald-300 font-mono font-bold">0.0s</span></div>
+                                            <input type="range" id="studio-audio-fade-out" min="0" max="5" step="0.2" value="0" oninput="updateStudioAudioFades()">
+                                        </div>
+                                    </div>
                                     <div class="flex items-center justify-between pt-1 border-t border-white/10">
                                         <div>
                                             <span class="text-xs font-bold text-white block">Conserver le son original de la vidéo</span>
@@ -5047,7 +5440,16 @@
                         <span id="rshield-account-strike-pill" class="shrink-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Pour Toi : Éligible ✓</span>
                     </div>
                     <div id="upload-status" class="text-xs text-center text-cyan-400 h-4 mt-1.5 font-medium"></div>
-                    <button type="button" onclick="uploadVideo()" id="btn-publish" class="w-full bg-gradient-to-r from-[#ff2a5f] via-rose-600 to-purple-600 hover:opacity-95 text-white font-extrabold py-3.5 rounded-2xl mt-1.5 flex justify-center items-center gap-2 shadow-lg shadow-rose-600/30 active:scale-95 transition" data-i18n="publish_btn">Publier</button>
+                    <div class="grid grid-cols-5 gap-2 mt-1.5">
+                        <button type="button" onclick="saveStudioDraft()" id="btn-save-draft-bottom" class="col-span-2 bg-white/10 hover:bg-white/15 border border-amber-400/40 text-amber-300 font-extrabold py-3.5 rounded-2xl flex justify-center items-center gap-1.5 active:scale-95 transition text-xs">
+                            <i data-lucide="folder-kanban" class="w-4 h-4"></i>
+                            <span>Brouillons</span>
+                        </button>
+                        <button type="button" onclick="uploadVideo()" id="btn-publish" class="col-span-3 bg-gradient-to-r from-[#ff2a5f] via-rose-600 to-purple-600 hover:opacity-95 text-white font-extrabold py-3.5 rounded-2xl flex justify-center items-center gap-2 shadow-lg shadow-rose-600/30 active:scale-95 transition text-xs sm:text-sm" data-i18n="publish_btn">
+                            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                            <span>Publier maintenant</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -5200,10 +5602,10 @@
             <input type="file" id="comment-sticker-file-input" accept="image/*" class="hidden" onchange="handleCommentStickerFileSelected(this)">
             <input type="file" id="comment-video-sticker-file-input" accept="video/*" class="hidden" onchange="handleCommentVideoStickerSelected(this)">
 
-            <!-- Message affiché en Mode Invité : consultation seule sans interaction -->
-            <div id="comments-guest-readonly-bar" class="hidden p-3 border-t border-white/10 bg-[#0c1222] items-center justify-between gap-2">
-                <span class="text-xs text-gray-300">Mode invité : connectez-vous pour commenter ou interagir.</span>
-                <button type="button" onclick="goToAuth()" class="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white text-xs font-bold shrink-0 shadow-md active:scale-95 transition">Se connecter</button>
+            <!-- Message affiché en Mode Invité : déclencheur direct du sélecteur Google en 1 clic -->
+            <div id="comments-guest-readonly-bar" onclick="openGoogleAccountChooserModal()" class="hidden p-3 border-t border-white/10 bg-[#0c1222] items-center justify-between gap-2 cursor-pointer">
+                <span class="text-xs text-gray-300">Mode invité : connectez-vous en 1 clic pour aimer ou commenter.</span>
+                <button type="button" onclick="event.stopPropagation(); openGoogleAccountChooserModal()" class="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white text-xs font-bold shrink-0 shadow-md active:scale-95 transition">Se connecter</button>
             </div>
 
             <div id="comment-input-area" class="p-3 border-t border-white/10 flex items-center gap-1.5 bg-[#0c1222]">
@@ -6596,7 +6998,8 @@
             rvMasterAudio.webkitPreservesPitch = true;
             // Apply edited volume: if card has an attached app song, rvMasterAudio plays the attached song at musicGain
             rvMasterAudio.volume = hasAttachedSound ? Math.max(0.05, musicGain) : Math.max(0.05, origGain);
-            rvMasterAudio.playbackRate = currentPlaybackRate;
+            const effCardRate = getEffectiveCardPlaybackRate(cardEl);
+            rvMasterAudio.playbackRate = hasAttachedSound ? (currentPlaybackRate || 1.0) : effCardRate;
 
             if (rvMasterAudio.getAttribute("data-bound-key") !== trackKey || !rvMasterAudio.getAttribute("src")) {
                 if (!rvMasterAudio.paused) rvMasterAudio.pause();
@@ -6626,7 +7029,7 @@
                     const origUrls = extractPlayableAudioUrlsFromMediaUrl(rawOriginalUrl, trimStart, trimEnd);
                     const origSrc = origUrls.networkPrimary || rawOriginalUrl;
                     rvBgMusicAudio.volume = origGain;
-                    rvBgMusicAudio.playbackRate = currentPlaybackRate;
+                    rvBgMusicAudio.playbackRate = getEffectiveCardPlaybackRate(cardEl);
                     rvBgMusicAudio.loop = false;
                     if (rvBgMusicAudio.getAttribute("data-bound-key") !== trackKey || !rvBgMusicAudio.getAttribute("src")) {
                         if (!rvBgMusicAudio.paused) rvBgMusicAudio.pause();
@@ -6679,6 +7082,103 @@
             }
         }
 
+        function getEffectiveCardPlaybackRate(cardEl) {
+            const studioSpd = cardEl ? (parseFloat(cardEl.getAttribute('data-studio-speed') || '1') || 1.0) : 1.0;
+            return Math.max(0.25, Math.min(4.0, studioSpd * (currentPlaybackRate || 1.0)));
+        }
+
+        function buildPublishedStudioOverlaysHTML(data) {
+            const sc = data?.studioConfig || {};
+            let html = '';
+
+            // 1. Live VFX Effect Layer
+            if (sc.vfxEffect && sc.vfxEffect !== 'none') {
+                html += `<div class="rv-published-vfx-layer absolute inset-0 pointer-events-none z-16 rv-vfx-layer-${escapeHtml(sc.vfxEffect)}"></div>`;
+            }
+
+            // 2. Vignette Layer
+            const vig = Number(sc.vignette) || 0;
+            if (vig > 0) {
+                html += `<div class="rv-published-vignette-layer absolute inset-0 pointer-events-none z-16" style="background:radial-gradient(circle, transparent ${Math.max(25, 70 - vig * 0.4)}%, rgba(0,0,0,${Math.min(0.95, vig / 100).toFixed(2)}) 100%);"></div>`;
+            }
+
+            // 3. Entry Transition Layer
+            if (sc.transitionStyle && sc.transitionStyle !== 'none') {
+                const tDur = Number(sc.transitionDuration) || 0.8;
+                html += `<div class="rv-published-transition-layer absolute inset-0 pointer-events-none z-20 rv-transition-active-${escapeHtml(sc.transitionStyle)}" style="--rv-trans-dur:${tDur}s;"></div>`;
+            }
+
+            // 4. Text Overlay (with Font, Style, Color, Scale, Rotation, Animation & Timeline Start/End)
+            if (sc.overlayText) {
+                const tx = Number.isFinite(Number(sc.overlayX)) ? Number(sc.overlayX) : 50;
+                const ty = Number.isFinite(Number(sc.overlayY)) ? Number(sc.overlayY) : (sc.overlayPos === 'top' ? 16 : (sc.overlayPos === 'bottom' ? 76 : 50));
+                const ts = Number.isFinite(Number(sc.overlayScale)) ? Number(sc.overlayScale) : 1;
+                const trot = Number(sc.overlayRotation) || 0;
+                const fontCls = 'rv-font-' + escapeHtml(sc.overlayFont || 'sans');
+                const animCls = (sc.overlayAnim && sc.overlayAnim !== 'none') ? ('rv-ov-anim-' + escapeHtml(sc.overlayAnim)) : '';
+                const tStart = Number(sc.overlayStartTime) || 0;
+                const tEnd = Number(sc.overlayEndTime) || 60;
+                html += `<div class="rv-video-text-overlay absolute z-20 pointer-events-none text-center max-w-[85%] px-3.5 py-1.5 studio-text-banner-${escapeHtml(sc.overlayStyle || 'glass')} ${fontCls} ${animCls} text-sm" data-start-time="${tStart}" data-end-time="${tEnd}" style="--rv-overlay-text-color:${escapeHtml(sc.overlayColor || '#ffffff')};color:${escapeHtml(sc.overlayColor || '#ffffff')} !important;--rv-ov-scale:${ts};--rv-ov-rot:${trot}deg;left:${tx}%;top:${ty}%;transform:translate3d(-50%,-50%,0) scale(${ts}) rotate(${trot}deg);transform-origin:center center;">${escapeHtml(sc.overlayText)}</div>`;
+            }
+
+            // 5. Sticker Overlay (Emoji or Custom Photo Sticker, with Scale, Rotation, Animation & Timeline Start/End)
+            if (sc.overlaySticker || sc.customStickerUrl) {
+                const sx = Number.isFinite(Number(sc.stickerX)) ? Number(sc.stickerX) : 22;
+                const sy = Number.isFinite(Number(sc.stickerY)) ? Number(sc.stickerY) : 72;
+                const ss = Number.isFinite(Number(sc.stickerScale)) ? Number(sc.stickerScale) : 1;
+                const srot = Number(sc.stickerRotation) || 0;
+                const sAnimCls = (sc.stickerAnim && sc.stickerAnim !== 'none') ? ('rv-ov-anim-' + escapeHtml(sc.stickerAnim)) : '';
+                const sStart = Number(sc.stickerStartTime) || 0;
+                const sEnd = Number(sc.stickerEndTime) || 60;
+                const stickerInner = sc.customStickerUrl
+                    ? `<img src="${escapeHtml(sc.customStickerUrl)}" class="w-16 h-16 object-contain rounded-xl drop-shadow-xl">`
+                    : escapeHtml(sc.overlaySticker);
+                html += `<div class="rv-video-sticker-overlay absolute z-20 pointer-events-none text-4xl drop-shadow-xl ${sAnimCls}" data-start-time="${sStart}" data-end-time="${sEnd}" style="--rv-ov-scale:${ss};--rv-ov-rot:${srot}deg;left:${sx}%;top:${sy}%;transform:translate3d(-50%,-50%,0) scale(${ss}) rotate(${srot}deg);transform-origin:center center;">${stickerInner}</div>`;
+            }
+
+            return html;
+        }
+
+        function syncPublishedCardTimedOverlaysAndFades(v, cardEl) {
+            if (!v || !cardEl) return;
+            const cur = v.currentTime || 0;
+            const { trimStart, trimEnd } = getCardTrimBounds(cardEl);
+            const txtOv = cardEl.querySelector('.rv-video-text-overlay');
+            if (txtOv) {
+                const sT = parseFloat(txtOv.getAttribute('data-start-time') || '0') || 0;
+                const eT = parseFloat(txtOv.getAttribute('data-end-time') || '60') || 60;
+                if (sT > 0.05 || eT < 59.5) {
+                    const visible = (cur >= sT - 0.05) && (cur <= eT + 0.15);
+                    txtOv.style.opacity = visible ? '1' : '0';
+                }
+            }
+            const stkOv = cardEl.querySelector('.rv-video-sticker-overlay');
+            if (stkOv) {
+                const sT = parseFloat(stkOv.getAttribute('data-start-time') || '0') || 0;
+                const eT = parseFloat(stkOv.getAttribute('data-end-time') || '60') || 60;
+                if (sT > 0.05 || eT < 59.5) {
+                    const visible = (cur >= sT - 0.05) && (cur <= eT + 0.15);
+                    stkOv.style.opacity = visible ? '1' : '0';
+                }
+            }
+            const fIn = parseFloat(cardEl.getAttribute('data-audio-fade-in') || '0') || 0;
+            const fOut = parseFloat(cardEl.getAttribute('data-audio-fade-out') || '0') || 0;
+            if ((fIn > 0.05 || fOut > 0.05) && v === activePlayingVideo && !isGlobalMuted && rvMasterAudio && !rvMasterAudio.paused) {
+                const vIsServerTrimmed = isVideoElementServerTrimmed(v, cardEl);
+                const relPos = vIsServerTrimmed ? cur : Math.max(0, cur - trimStart);
+                const totalDur = Math.max(1, (trimEnd > trimStart ? (trimEnd - trimStart) : (v.duration || 30)));
+                let mult = 1.0;
+                if (fIn > 0.05 && relPos < fIn) mult = Math.max(0.05, relPos / fIn);
+                if (fOut > 0.05 && (totalDur - relPos) < fOut) mult = Math.min(mult, Math.max(0.05, (totalDur - relPos) / fOut));
+                const { hasAttachedSound, musicGain, origGain } = getCardVolumeConfig(cardEl);
+                const baseVol = hasAttachedSound ? Math.max(0.05, musicGain) : Math.max(0.05, origGain);
+                rvMasterAudio.volume = Math.max(0.02, Math.min(1, baseVol * mult));
+                if (rvBgMusicAudio && rvBgMusicAudio.dataset.activeDual === "true" && !rvBgMusicAudio.paused) {
+                    rvBgMusicAudio.volume = Math.max(0.02, Math.min(1, origGain * mult));
+                }
+            }
+        }
+
         function configureHardwareVideoElement(v, cardEl) {
             if (!v) return;
             v.playsInline = true;
@@ -6688,8 +7188,9 @@
             v.defaultMuted = true;
             v.setAttribute("muted", "");
             v.loop = false;
-            if (v.playbackRate !== currentPlaybackRate) {
-                v.playbackRate = currentPlaybackRate;
+            const effectiveRate = getEffectiveCardPlaybackRate(cardEl || v.closest('.video-card'));
+            if (v.playbackRate !== effectiveRate) {
+                v.playbackRate = effectiveRate;
             }
 
             if (v.dataset.hwBound === "true") return;
@@ -6745,7 +7246,8 @@
             v.addEventListener("playing", () => {
                 if (isOutsideFeedAudioBlocked() && !v.closest('#upload-modal') && !v.closest('#story-creator-modal') && !v.closest('#story-viewer-modal')) { v.muted = true; try { v.pause(); } catch(e){} stopMasterAudio(); return; }
                 v.muted = true;
-                if (v.playbackRate !== currentPlaybackRate) v.playbackRate = currentPlaybackRate;
+                const effCardRate = getEffectiveCardPlaybackRate(cardEl || v.closest('.video-card'));
+                if (v.playbackRate !== effCardRate) v.playbackRate = effCardRate;
                 if (v === activePlayingVideo && v.dataset.launchComplete === "true" && !isGlobalMuted && rvMasterAudio && rvMasterAudio.dataset.noAudioTrack !== "true") {
                     if (rvMasterAudio.paused) {
                         rvMasterAudio.dataset.pausedForNetBuffer = "false";
@@ -6793,7 +7295,7 @@
             if (rvMasterAudio && !rvMasterAudio.paused) rvMasterAudio.pause();
             v.muted = true;
             v.loop = false;
-            v.playbackRate = currentPlaybackRate;
+            v.playbackRate = getEffectiveCardPlaybackRate(cardEl);
             const targetVStart = getEffectiveVideoStartTime(v, cardEl);
             try { v.currentTime = targetVStart; } catch (e) {}
             if (rvMasterAudio) {
@@ -7061,7 +7563,6 @@
 
         window.useVideoSoundDirectly = async (docId, e) => {
             if (e) e.stopPropagation();
-            if (!checkAuth()) return;
             let vData = profileVideosData[docId] || null;
             if (!vData) {
                 try {
@@ -7214,7 +7715,6 @@
             if (fullOverlay && !fullOverlay.classList.contains('hidden')) {
                 closeFullVideo();
             }
-            if (!checkAuth()) return;
             selectedSoundForUpload = soundCopy;
             studioEditState.audioTrimStart = 0;
             studioEditState.audioTrimEnd = 0;
@@ -7446,6 +7946,10 @@
             if (pvCheck) pvCheck.checked = isProfileViewsEnabledForCurrentUser();
             const osCheck = document.getElementById('setting-online-status-enabled');
             if (osCheck) osCheck.checked = isOnlineStatusEnabledForCurrentUser();
+            const repPrivSel = document.getElementById('setting-reposts-privacy');
+            if (repPrivSel) repPrivSel.value = getProfileSectionPrivacyForUser(currentUserData, 'reposts');
+            const likPrivSel = document.getElementById('setting-liked-privacy');
+            if (likPrivSel) likPrivSel.value = getProfileSectionPrivacyForUser(currentUserData, 'liked');
             const currentLang = window.getCurrentLangCode ? window.getCurrentLangCode() : safeGetStorage('rv_lang', 'fr');
             const setSel = document.getElementById('settings-lang-select');
             if (setSel) setSel.value = currentLang;
@@ -12146,8 +12650,46 @@
             }
             syncTalentPreRegistrationUI();
             closeModal('talent-event-rules-modal');
+            if (!auth.currentUser) {
+                openGoogleAccountChooserModal();
+                return;
+            }
             showToast("Pré-inscription à #RVideosTalent2026 validée avec succès ! Rendez-vous le 1er décembre 2026 🏆🎉", "success");
         };
+
+        function createGuestFeedContestCardElement() {
+            const slide = document.createElement('div');
+            slide.id = 'guest-feed-contest-card';
+            slide.className = 'w-full h-full relative snap-start bg-gradient-to-br from-[#0d0826] via-[#2a0b3f] to-[#4a0b2d] overflow-hidden flex items-center justify-center p-5 select-none';
+            slide.innerHTML = `
+                <div class="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-amber-400/20 blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-[#ff2a5f]/25 blur-3xl pointer-events-none"></div>
+                <div onclick="openTalentEventRulesModal()" class="relative z-10 w-full max-w-md rounded-3xl p-6 bg-black/45 backdrop-blur-xl border-2 border-amber-400/45 shadow-2xl flex flex-col items-center text-center space-y-4 cursor-pointer transition-transform active:scale-[0.99]">
+                    <div class="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white shadow-lg">
+                        <i data-lucide="trophy" class="w-3.5 h-3.5"></i>
+                        <span>Événement Officiel #RVideosTalent2026</span>
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-[#ff2a5f] p-0.5 shadow-xl shadow-rose-500/30">
+                        <div class="w-full h-full rounded-[14px] bg-[#160d2e] flex items-center justify-center text-3xl">🏆</div>
+                    </div>
+                    <div class="space-y-1.5">
+                        <h3 class="text-xl sm:text-2xl font-black font-display text-white tracking-tight leading-tight">Grand Concours Créateurs</h3>
+                        <p class="text-xs sm:text-sm text-amber-200 font-bold">100 000 FCFA à gagner • Paiement direct Orange Money &amp; Mobile Money</p>
+                    </div>
+                    <div class="w-full grid grid-cols-2 gap-2 text-left text-[11px] text-gray-200 pt-1">
+                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10 font-bold">🎬 Vidéo originale ≤ 60s</div>
+                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10 font-bold">🎂 18 à 30 ans</div>
+                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10 font-bold">❤️ 500 – 1 000+ Likes</div>
+                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10 font-bold text-amber-300">📅 1er – 31 Déc. 2026</div>
+                    </div>
+                    <button type="button" onclick="event.stopPropagation(); openTalentEventRulesModal()" class="w-full py-4 px-4 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-[#ff2a5f] text-white font-black text-xs sm:text-sm leading-snug shadow-xl shadow-rose-600/35 active:scale-95 transition flex items-center justify-center text-center">
+                        <span>🏆 Concours 100 000 FCFA : Crée ton compte en 1 clic pour valider ta participation</span>
+                    </button>
+                    <span class="text-[11px] text-gray-300 font-medium">Appuie pour consulter le règlement officiel (#talent-event-rules-modal) • Glisse pour continuer</span>
+                </div>
+            `;
+            return slide;
+        }
         setTimeout(syncTalentPreRegistrationUI, 200);
 
         document.getElementById('btn-register').addEventListener('click', async () => {
@@ -12362,6 +12904,15 @@
                 if (window.closePhoneAuthModal) window.closePhoneAuthModal();
                 if (window.closeAppleAuthModal) window.closeAppleAuthModal();
                 closeModal('login-prompt-modal');
+                document.getElementById('guest-feed-contest-card')?.remove();
+                if (document.getElementById('comments-sheet')?.classList.contains('open') && currentVideoIdForComments) {
+                    const gBar = document.getElementById('comments-guest-readonly-bar');
+                    const iArea = document.getElementById('comment-input-area');
+                    const qBar = document.getElementById('comment-quick-tools-bar');
+                    if (gBar) { gBar.classList.add('hidden'); gBar.classList.remove('flex'); }
+                    if (iArea) { iArea.classList.remove('hidden'); iArea.classList.add('flex'); }
+                    if (qBar) { qBar.classList.remove('hidden'); qBar.classList.add('flex'); }
+                }
                 document.getElementById('auth-screen').classList.remove('active'); 
                 document.getElementById('bottom-nav').classList.remove('hidden'); 
                 document.getElementById('bottom-nav').classList.add('flex');
@@ -12375,11 +12926,22 @@
                 subscribeToUnreadCount();
                 updateDiscoverEventNavReminder();
                 
+                const isStudioModalOpen = document.getElementById('upload-modal')?.classList.contains('open');
+                if (isStudioModalOpen) {
+                    refreshStudioRShieldBarUI();
+                    if (window.pendingStudioActionAfterAuth === 'draft') {
+                        window.pendingStudioActionAfterAuth = null;
+                        setTimeout(() => window.saveStudioDraft(), 250);
+                    } else if (window.pendingStudioActionAfterAuth === 'publish') {
+                        window.pendingStudioActionAfterAuth = null;
+                        showToast("Connexion réussie ! Vous pouvez maintenant publier votre vidéo 🎬", "success");
+                    }
+                }
                 const currentActive = document.querySelector('.screen.active');
-                if (!hasUserVerifiedBirthDate(effectiveUid, cleanUserEmail)) {
+                if (!isStudioModalOpen && !hasUserVerifiedBirthDate(effectiveUid, cleanUserEmail)) {
                     // Première connexion : demander obligatoirement la date de naissance (12 ans requis)
                     openFirstTimeBirthDateModal();
-                } else if (effectiveUid && safeGetStorage(`rv_first_time_photo_pending_${effectiveUid}`, '') === 'true') {
+                } else if (!isStudioModalOpen && effectiveUid && safeGetStorage(`rv_first_time_photo_pending_${effectiveUid}`, '') === 'true') {
                     openFirstTimeProfilePhotoStep();
                 } else if (!currentActive || currentActive.id === 'auth-screen' || currentActive.id === 'splash-screen') { 
                     window.navigateTo('feed'); 
@@ -12482,21 +13044,67 @@
             updateDiscoverEventNavReminder(screen);
         }
 
+        function getProfileSectionPrivacyForUser(userData, sectionKey) {
+            const uid = userData?.uid || auth.currentUser?.uid || 'guest';
+            const storageKey = sectionKey === 'reposts' ? `rv_privacy_reposts_${uid}` : `rv_privacy_liked_${uid}`;
+            if (auth.currentUser && uid === auth.currentUser.uid) {
+                const localVal = safeGetStorage(storageKey, '');
+                if (localVal === 'public' || localVal === 'followers' || localVal === 'private') return localVal;
+            }
+            const fieldName = sectionKey === 'reposts' ? 'repostedVideosPrivacy' : 'likedVideosPrivacy';
+            if (userData && (userData[fieldName] === 'public' || userData[fieldName] === 'followers' || userData[fieldName] === 'private')) {
+                return userData[fieldName];
+            }
+            return 'public';
+        }
+
+        function canViewerAccessProfileSection(targetUserData, sectionKey, isMe) {
+            if (isMe) return { allowed: true, mode: getProfileSectionPrivacyForUser(targetUserData, sectionKey) };
+            const mode = getProfileSectionPrivacyForUser(targetUserData, sectionKey);
+            if (mode === 'public') return { allowed: true, mode };
+            if (mode === 'private') return { allowed: false, mode };
+            if (mode === 'followers') {
+                const myUid = auth.currentUser?.uid || '';
+                const isFollower = !!(myUid && Array.isArray(targetUserData?.followers) && targetUserData.followers.includes(myUid));
+                return { allowed: isFollower, mode };
+            }
+            return { allowed: true, mode: 'public' };
+        }
+
+        window.updateProfileSectionPrivacy = async (sectionKey, modeVal) => {
+            if (!checkAuth()) return;
+            const validMode = (modeVal === 'private' || modeVal === 'followers') ? modeVal : 'public';
+            const uid = auth.currentUser.uid;
+            const storageKey = sectionKey === 'reposts' ? `rv_privacy_reposts_${uid}` : `rv_privacy_liked_${uid}`;
+            const fieldName = sectionKey === 'reposts' ? 'repostedVideosPrivacy' : 'likedVideosPrivacy';
+            safeSetStorage(storageKey, validMode);
+            if (currentUserData) currentUserData[fieldName] = validMode;
+            if (currentProfileViewedData && currentProfileViewedData.uid === uid) {
+                currentProfileViewedData[fieldName] = validMode;
+            }
+            try {
+                await updateDoc(doc(db, "users", uid), { [fieldName]: validMode });
+            } catch (e) {}
+            const labelMap = { public: 'Tout le monde 🌍', followers: 'Abonnés uniquement 👥', private: 'Moi seul (Privé) 🔒' };
+            const secName = sectionKey === 'reposts' ? 'Vidéos republiées' : 'Vidéos aimées';
+            showToast(`${secName} : visibilité réglée sur « ${labelMap[validMode]} »`, "success");
+            if (document.getElementById('profile-screen')?.classList.contains('active') && currentProfileUid === uid) {
+                renderProfile(currentUserData, true, { keepVisible: true });
+            }
+        };
+
         window.switchProfileTab = (tab) => {
             currentProfileTab = tab;
-            const tabVideos = document.getElementById('tab-profile-videos');
-            const tabFavs = document.getElementById('tab-profile-favs');
-            if (tab === 'videos') {
-                tabVideos.classList.add('border-[#ff2a5f]', 'text-white');
-                tabVideos.classList.remove('text-gray-500', 'border-transparent');
-                tabFavs.classList.remove('border-[#ff2a5f]', 'text-white');
-                tabFavs.classList.add('text-gray-500', 'border-transparent');
-            } else {
-                tabFavs.classList.add('border-[#ff2a5f]', 'text-white');
-                tabFavs.classList.remove('text-gray-500', 'border-transparent');
-                tabVideos.classList.remove('border-[#ff2a5f]', 'text-white');
-                tabVideos.classList.add('text-gray-500', 'border-transparent');
-            }
+            const allTabs = ['videos', 'drafts', 'reposts', 'liked', 'favs'];
+            allTabs.forEach(tKey => {
+                const el = document.getElementById('tab-profile-' + tKey);
+                if (!el) return;
+                const isActive = (tKey === tab);
+                el.classList.toggle('border-[#ff2a5f]', isActive);
+                el.classList.toggle('text-white', isActive);
+                el.classList.toggle('border-transparent', !isActive);
+                el.classList.toggle('text-gray-500', !isActive);
+            });
             if (currentProfileUid && currentProfileViewedData && currentProfileViewedData.uid === currentProfileUid) {
                 renderProfile(currentProfileViewedData, !!(auth.currentUser && currentProfileUid === auth.currentUser.uid), { keepVisible: true });
             } else if (currentProfileUid) {
@@ -12966,16 +13574,21 @@
                     div.setAttribute('data-orig-vol', String(data.studioConfig?.originalVolume ?? 100));
                     div.setAttribute('data-music-vol', String(data.studioConfig?.musicVolume ?? 100));
                     div.setAttribute('data-keep-orig-audio', String(data.studioConfig?.keepOriginalAudio !== false));
+                    div.setAttribute('data-studio-speed', String(data.studioConfig?.speed || 1.0));
+                    div.setAttribute('data-audio-fade-in', String(data.studioConfig?.audioFadeIn || 0));
+                    div.setAttribute('data-audio-fade-out', String(data.studioConfig?.audioFadeOut || 0));
                     const hasAttachedCommunitySound = !!(resolvedCardSoundUrl && String(resolvedCardSoundUrl).trim().length > 0);
                     div.setAttribute('data-muted-video', (!hasAttachedCommunitySound && (data.studioConfig?.keepOriginalAudio === false || data.muted === true || data.hasAudio === false)) ? 'true' : 'false');
                     if (Array.isArray(data.studioConfig?.deletedRanges) && data.studioConfig.deletedRanges.length > 0) {
                         div.setAttribute('data-deleted-ranges', JSON.stringify(data.studioConfig.deletedRanges));
                     }
+                    const cardCanvasBgCls = `rv-canvas-bg-${escapeHtml(data.studioConfig?.canvasBg || 'black')}`;
+                    const cardVfxMotionCls = data.studioConfig?.vfxEffect === 'shake' ? 'rv-video-vfx-shake' : (data.studioConfig?.vfxEffect === 'zoombeat' ? 'rv-video-vfx-zoombeat' : '');
+                    div.classList.add(cardCanvasBgCls);
                     
                     div.innerHTML = `
-                        <video class="w-full h-full ${fitClass} ${ data.studioConfig?.filterPreset || vfxClass } pointer-events-none bg-black" style="${ data.studioConfig?.customFilterCss ? 'filter:' + escapeHtml(data.studioConfig.customFilterCss) + ';' : '' }${ data.studioConfig?.transformCss ? 'transform:' + escapeHtml(data.studioConfig.transformCss) + ';' : '' }" muted playsinline webkit-playsinline preload="none"></video>
-                        ${ data.studioConfig?.overlayText ? `<div class="rv-video-text-overlay absolute z-20 pointer-events-none text-center max-w-[85%] px-3.5 py-1.5 studio-text-banner-${ escapeHtml(data.studioConfig.overlayStyle || 'glass') } text-sm" style="--rv-overlay-text-color:${ escapeHtml(data.studioConfig.overlayColor || '#ffffff') };color:${ escapeHtml(data.studioConfig.overlayColor || '#ffffff') } !important;left:${ Number.isFinite(Number(data.studioConfig.overlayX)) ? Number(data.studioConfig.overlayX) : 50 }%;top:${ Number.isFinite(Number(data.studioConfig.overlayY)) ? Number(data.studioConfig.overlayY) : (data.studioConfig.overlayPos === 'top' ? 16 : (data.studioConfig.overlayPos === 'bottom' ? 76 : 50)) }%;transform:translate3d(-50%,-50%,0) scale(${ Number.isFinite(Number(data.studioConfig.overlayScale)) ? Number(data.studioConfig.overlayScale) : 1 });transform-origin:center center;">${ escapeHtml(data.studioConfig.overlayText) }</div>` : '' }
-                        ${ data.studioConfig?.overlaySticker ? `<div class="absolute z-20 pointer-events-none text-4xl drop-shadow-xl" style="left:${ Number.isFinite(Number(data.studioConfig.stickerX)) ? Number(data.studioConfig.stickerX) : 78 }%;top:${ Number.isFinite(Number(data.studioConfig.stickerY)) ? Number(data.studioConfig.stickerY) : 22 }%;transform:translate3d(-50%,-50%,0) scale(${ Number.isFinite(Number(data.studioConfig.stickerScale)) ? Number(data.studioConfig.stickerScale) : 1 });transform-origin:center center;">${ escapeHtml(data.studioConfig.overlaySticker) }</div>` : '' }
+                        <video class="w-full h-full ${fitClass} ${ data.studioConfig?.filterPreset || vfxClass } ${cardVfxMotionCls} ${cardCanvasBgCls} pointer-events-none bg-black" style="${ data.studioConfig?.customFilterCss ? 'filter:' + escapeHtml(data.studioConfig.customFilterCss) + ';' : '' }${ data.studioConfig?.transformCss ? 'transform:' + escapeHtml(data.studioConfig.transformCss) + ';' : '' }" muted playsinline webkit-playsinline preload="none"></video>
+                        ${ buildPublishedStudioOverlaysHTML(data) }
                         <div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 opacity-0 z-20">
                             <div class="bg-black/45 rounded-full p-4 backdrop-blur-md border border-white/15 shadow-2xl">
                                 <svg class="w-10 h-10 text-white fill-white ml-0.5" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
@@ -13130,6 +13743,7 @@
                                 }
                             }
                         }
+                        syncPublishedCardTimedOverlaysAndFades(v, div);
                         // Detect seamless native hardware loop wrap-around when v.loop === true
                         if (v.lastTimeUpdatePos !== undefined && cur < v.lastTimeUpdatePos - 0.5) {
                             triggerBump();
@@ -13170,6 +13784,14 @@
                     });
                     
                     if(videoObserver) videoObserver.observe(div);
+                    if (isGuestMode && !container.querySelector('#guest-feed-contest-card')) {
+                        const renderedVideoCardsCount = container.querySelectorAll('.video-card').length;
+                        if (renderedVideoCardsCount === 2) {
+                            const contestSlide = createGuestFeedContestCardElement();
+                            container.appendChild(contestSlide);
+                            if (videoObserver) videoObserver.observe(contestSlide);
+                        }
+                    }
                 });
                 
                 isFetchingMore = false; 
@@ -13224,27 +13846,123 @@
             contrast: 100,
             saturation: 100,
             hue: 0,
+            temperature: 0,
+            vignette: 0,
             rotation: 0,
             mirrored: false,
+            zoomScale: 1.0,
+            canvasBg: 'black',
             speed: 1.0,
+            vfxEffect: 'none',
+            transitionStyle: 'none',
+            transitionDuration: 0.8,
             overlayText: '',
             overlayStyle: 'glass',
+            overlayFont: 'sans',
             overlayColor: '#ffffff',
+            overlayAnim: 'none',
             overlayPos: 'center',
             overlayX: 50,
             overlayY: 50,
             overlayScale: 1.0,
+            overlayRotation: 0,
+            overlayStartTime: 0,
+            overlayEndTime: 60,
             overlaySticker: '',
+            customStickerUrl: '',
+            stickerAnim: 'none',
             stickerX: 22,
             stickerY: 72,
             stickerScale: 1.0,
+            stickerRotation: 0,
+            stickerStartTime: 0,
+            stickerEndTime: 60,
             activeOverlayTarget: 'text',
             originalVolume: 100,
             musicVolume: 100,
+            audioFadeIn: 0,
+            audioFadeOut: 0,
             audioTrimStart: 0,
             audioTrimEnd: 0,
             audioStartOffset: 0,
             audioDuration: 30
+        };
+
+        let studioUndoStack = [];
+        let studioRedoStack = [];
+        window.currentEditingDraftId = null;
+        window.pendingStudioActionAfterAuth = null;
+
+        function pushStudioHistorySnapshot() {
+            try {
+                const snap = JSON.stringify({
+                    edit: { ...studioEditState },
+                    trim: {
+                        start: studioTrimState.start,
+                        end: studioTrimState.end,
+                        splitPoints: [...(studioTrimState.splitPoints || [])],
+                        deletedRanges: [...(studioTrimState.deletedRanges || [])]
+                    }
+                });
+                if (studioUndoStack.length === 0 || studioUndoStack[studioUndoStack.length - 1] !== snap) {
+                    studioUndoStack.push(snap);
+                    if (studioUndoStack.length > 30) studioUndoStack.shift();
+                    studioRedoStack = [];
+                }
+            } catch (e) {}
+        }
+
+        function applyStudioSnapshotObject(parsed) {
+            if (!parsed) return;
+            if (parsed.edit) {
+                Object.assign(studioEditState, parsed.edit);
+            }
+            if (parsed.trim) {
+                studioTrimState.start = Number(parsed.trim.start) || 0;
+                studioTrimState.end = Number(parsed.trim.end) || studioTrimState.duration || 30;
+                studioTrimState.splitPoints = Array.isArray(parsed.trim.splitPoints) ? [...parsed.trim.splitPoints] : [];
+                studioTrimState.deletedRanges = Array.isArray(parsed.trim.deletedRanges) ? [...parsed.trim.deletedRanges] : [];
+            }
+            const txtInp = document.getElementById('studio-overlay-text-input');
+            if (txtInp) txtInp.value = studioEditState.overlayText || '';
+            applyStudioVisualTransformAndFilter();
+            window.updateStudioOverlayPreview();
+            window.setStudioSticker(studioEditState.overlaySticker || '', true);
+            renderModernTrimmerUI();
+            window.syncTimelinePillsUI();
+        }
+
+        window.undoStudioEdit = () => {
+            if (studioUndoStack.length <= 1) {
+                showToast("Aucune action précédente à annuler", "info");
+                return;
+            }
+            const current = studioUndoStack.pop();
+            studioRedoStack.push(current);
+            const prev = JSON.parse(studioUndoStack[studioUndoStack.length - 1]);
+            applyStudioSnapshotObject(prev);
+            showToast("Action annulée ↶", "info");
+        };
+
+        window.redoStudioEdit = () => {
+            if (studioRedoStack.length === 0) {
+                showToast("Aucune action à rétablir", "info");
+                return;
+            }
+            const nextStr = studioRedoStack.pop();
+            studioUndoStack.push(nextStr);
+            applyStudioSnapshotObject(JSON.parse(nextStr));
+            showToast("Action rétablie ↷", "info");
+        };
+
+        window.stepStudioPlayheadFrame = (deltaSec) => {
+            const v = document.getElementById('video-preview');
+            if (!v || !v.duration) return;
+            if (!v.paused) v.pause();
+            const nextT = Math.max(studioTrimState.start || 0, Math.min(studioTrimState.end || v.duration, (v.currentTime || 0) + deltaSec));
+            try { v.currentTime = nextT; } catch (e) {}
+            studioTrimState.playhead = nextT;
+            renderModernTrimmerUI();
         };
 
         let studioCapturedPhotoDataUrl = null;
@@ -14315,19 +15033,58 @@
             showToast(`Cadence vidéo : ${rate}x`, "info");
         };
 
+        const ALL_STUDIO_FILTER_PRESET_CLASSES = [
+            'vfx-none', 'vfx-vivid', 'vfx-cinema', 'vfx-tealorange', 'vfx-goldluxe',
+            'vfx-cyber', 'vfx-tokyonight', 'vfx-sun237', 'vfx-pastel', 'vfx-vhs', 'vfx-arctic', 'vfx-bw'
+        ];
+
+        const STUDIO_PRESET_BASE_FILTERS = {
+            'vfx-none': '',
+            'vfx-vivid': 'saturate(1.45) contrast(1.12)',
+            'vfx-cinema': 'contrast(1.2) sepia(0.22) saturate(1.15) brightness(0.95)',
+            'vfx-tealorange': 'contrast(1.22) saturate(1.38) sepia(0.18) hue-rotate(-12deg)',
+            'vfx-goldluxe': 'sepia(0.42) saturate(1.55) brightness(1.05) contrast(1.15)',
+            'vfx-cyber': 'hue-rotate(25deg) saturate(1.5) contrast(1.1)',
+            'vfx-tokyonight': 'contrast(1.25) saturate(1.45) hue-rotate(205deg) brightness(0.94)',
+            'vfx-sun237': 'sepia(0.35) saturate(1.65) contrast(1.12) brightness(1.06)',
+            'vfx-pastel': 'brightness(1.08) saturate(0.88) contrast(0.95)',
+            'vfx-vhs': 'contrast(1.28) saturate(0.82) hue-rotate(-14deg) brightness(0.96)',
+            'vfx-arctic': 'hue-rotate(165deg) saturate(1.25) contrast(1.08)',
+            'vfx-bw': 'grayscale(1) contrast(1.25)'
+        };
+
         function getComputedStudioFilterString() {
-            const b = studioEditState.brightness;
-            const c = studioEditState.contrast;
-            const s = studioEditState.saturation;
-            const h = studioEditState.hue;
-            if (b === 100 && c === 100 && s === 100 && h === 0) return '';
-            return `brightness(${b}%) contrast(${c}%) saturate(${s}%) hue-rotate(${h}deg)`;
+            const b = Number(studioEditState.brightness ?? 100);
+            const c = Number(studioEditState.contrast ?? 100);
+            const s = Number(studioEditState.saturation ?? 100);
+            const h = Number(studioEditState.hue ?? 0);
+            const temp = Number(studioEditState.temperature ?? 0);
+            const presetBase = STUDIO_PRESET_BASE_FILTERS[studioEditState.filterPreset || 'vfx-none'] || '';
+            const customParts = [];
+            if (b !== 100 || c !== 100 || s !== 100 || h !== 0) {
+                customParts.push(`brightness(${b}%) contrast(${c}%) saturate(${s}%) hue-rotate(${h}deg)`);
+            }
+            if (temp > 0) {
+                customParts.push(`sepia(${Math.min(0.65, temp / 100).toFixed(2)})`);
+            }
+            if (presetBase && customParts.length > 0) {
+                return `${presetBase} ${customParts.join(' ')}`.trim();
+            }
+            if (customParts.length > 0) {
+                return customParts.join(' ');
+            }
+            return presetBase;
         }
 
         function getComputedStudioTransformString() {
             const parts = [];
             if (studioEditState.rotation) parts.push(`rotate(${studioEditState.rotation}deg)`);
-            if (studioEditState.mirrored) parts.push(`scaleX(-1)`);
+            const z = Number(studioEditState.zoomScale) || 1.0;
+            const sx = (studioEditState.mirrored ? -1 : 1) * z;
+            const sy = z;
+            if (sx !== 1 || sy !== 1) {
+                parts.push(`scale(${sx.toFixed(2)}, ${sy.toFixed(2)})`);
+            }
             return parts.join(' ');
         }
 
@@ -14337,17 +15094,115 @@
                 document.getElementById('studio-camera-live-video'),
                 document.getElementById('studio-photo-preview')
             ];
-            const allPresetClasses = ['vfx-none', 'vfx-vivid', 'vfx-cinema', 'vfx-cyber', 'vfx-sun237', 'vfx-vhs', 'vfx-arctic', 'vfx-bw'];
             const filterCss = getComputedStudioFilterString();
             const transformCss = getComputedStudioTransformString();
+            const fx = studioEditState.vfxEffect || 'none';
 
             targets.forEach(el => {
                 if (!el) return;
-                allPresetClasses.forEach(cls => el.classList.remove(cls));
+                ALL_STUDIO_FILTER_PRESET_CLASSES.forEach(cls => el.classList.remove(cls));
+                el.classList.remove('rv-video-vfx-shake', 'rv-video-vfx-zoombeat');
                 el.classList.add(studioEditState.filterPreset || 'vfx-none');
+                if (fx === 'shake') el.classList.add('rv-video-vfx-shake');
+                if (fx === 'zoombeat') el.classList.add('rv-video-vfx-zoombeat');
                 el.style.filter = filterCss;
                 el.style.transform = transformCss;
             });
+
+            // Live VFX Overlay inside #upload-preview-area
+            const vfxLayer = document.getElementById('studio-live-vfx-layer');
+            if (vfxLayer) {
+                vfxLayer.className = `absolute inset-0 pointer-events-none z-16 rv-vfx-layer-${fx}`;
+            }
+
+            // Live Vignette Overlay
+            const vigLayer = document.getElementById('studio-live-vignette-layer');
+            const vigPct = Number(studioEditState.vignette) || 0;
+            if (vigLayer) {
+                if (vigPct > 0) {
+                    vigLayer.classList.remove('hidden');
+                    vigLayer.style.background = `radial-gradient(circle, transparent ${Math.max(25, 70 - vigPct * 0.4)}%, rgba(0,0,0,${Math.min(0.95, vigPct / 100).toFixed(2)}) 100%)`;
+                } else {
+                    vigLayer.classList.add('hidden');
+                }
+            }
+
+            // Canvas Background
+            const previewArea = document.getElementById('upload-preview-area');
+            const vEl = document.getElementById('video-preview');
+            const bgClasses = ['rv-canvas-bg-black', 'rv-canvas-bg-crimson', 'rv-canvas-bg-neon', 'rv-canvas-bg-cyber', 'rv-canvas-bg-gold'];
+            const chosenBg = `rv-canvas-bg-${studioEditState.canvasBg || 'black'}`;
+            [previewArea, vEl].forEach(node => {
+                if (!node) return;
+                bgClasses.forEach(c => node.classList.remove(c));
+                node.classList.add(chosenBg);
+            });
+        }
+
+        window.setStudioVideoZoomCrop = (valPct) => {
+            const z = Math.max(1.0, Math.min(2.4, (Number(valPct) || 100) / 100));
+            studioEditState.zoomScale = z;
+            const sl = document.getElementById('studio-zoom-crop-slider');
+            if (sl) sl.value = String(Math.round(z * 100));
+            const lbl = document.getElementById('lbl-studio-zoom-crop');
+            if (lbl) lbl.innerText = Math.round(z * 100) + '%';
+            applyStudioVisualTransformAndFilter();
+            pushStudioHistorySnapshot();
+        };
+
+        window.setStudioCanvasBg = (bgKey) => {
+            studioEditState.canvasBg = bgKey || 'black';
+            applyStudioVisualTransformAndFilter();
+            pushStudioHistorySnapshot();
+            showToast(`Fond de toile « ${bgKey.toUpperCase()} » appliqué 🖼️`, "info");
+        };
+
+        window.selectStudioVfxEffect = (fxKey, btnEl = null) => {
+            studioEditState.vfxEffect = fxKey || 'none';
+            document.querySelectorAll('.studio-vfx-fx-chip').forEach(b => {
+                const isMatch = b.getAttribute('data-vfx-fx') === studioEditState.vfxEffect;
+                b.className = isMatch
+                    ? "studio-vfx-fx-chip px-2.5 py-2 rounded-xl text-[10.5px] font-bold bg-[#ff2a5f] text-white border border-white/20 shadow"
+                    : "studio-vfx-fx-chip px-2.5 py-2 rounded-xl text-[10.5px] font-semibold bg-white/5 text-gray-200 border border-white/10";
+            });
+            applyStudioVisualTransformAndFilter();
+            pushStudioHistorySnapshot();
+            if (typeof window.syncTimelinePillsUI === 'function') window.syncTimelinePillsUI();
+        };
+
+        window.selectStudioTransition = (transKey, btnEl = null) => {
+            studioEditState.transitionStyle = transKey || 'none';
+            document.querySelectorAll('.studio-trans-chip').forEach(b => {
+                const isMatch = b.getAttribute('data-trans-fx') === studioEditState.transitionStyle;
+                b.className = isMatch
+                    ? "studio-trans-chip shrink-0 px-3 py-1.5 rounded-xl text-[10.5px] font-bold bg-cyan-500 text-black"
+                    : "studio-trans-chip shrink-0 px-3 py-1.5 rounded-xl text-[10.5px] font-semibold bg-white/10 text-gray-200";
+            });
+            triggerStudioPreviewTransition();
+            pushStudioHistorySnapshot();
+        };
+
+        window.updateStudioTransitionDuration = (val) => {
+            const dur = Math.max(0.3, Math.min(2.0, parseFloat(val) || 0.8));
+            studioEditState.transitionDuration = dur;
+            const lbl = document.getElementById('lbl-studio-trans-dur');
+            if (lbl) lbl.innerText = dur.toFixed(1) + 's';
+            triggerStudioPreviewTransition();
+        };
+
+        function triggerStudioPreviewTransition() {
+            const layer = document.getElementById('studio-live-transition-layer');
+            if (!layer) return;
+            const tr = studioEditState.transitionStyle || 'none';
+            layer.className = 'absolute inset-0 pointer-events-none z-20 hidden';
+            if (tr === 'none') return;
+            const dur = Number(studioEditState.transitionDuration) || 0.8;
+            layer.style.setProperty('--rv-trans-dur', `${dur}s`);
+            void layer.offsetWidth;
+            layer.className = `absolute inset-0 pointer-events-none z-20 rv-transition-active-${tr}`;
+            setTimeout(() => {
+                layer.className = 'absolute inset-0 pointer-events-none z-20 hidden';
+            }, dur * 1000 + 80);
         }
 
         window.selectStudioFilterPreset = (presetCls, btnEl) => {
@@ -14366,13 +15221,18 @@
             studioEditState.contrast = parseInt(document.getElementById('studio-contrast-slider')?.value || '100', 10);
             studioEditState.saturation = parseInt(document.getElementById('studio-sat-slider')?.value || '100', 10);
             studioEditState.hue = parseInt(document.getElementById('studio-hue-slider')?.value || '0', 10);
+            studioEditState.temperature = parseInt(document.getElementById('studio-temp-slider')?.value || '0', 10);
+            studioEditState.vignette = parseInt(document.getElementById('studio-vignette-slider')?.value || '0', 10);
 
             const lb = document.getElementById('lbl-studio-bright'); if (lb) lb.innerText = studioEditState.brightness + '%';
             const lc = document.getElementById('lbl-studio-contrast'); if (lc) lc.innerText = studioEditState.contrast + '%';
             const ls = document.getElementById('lbl-studio-sat'); if (ls) ls.innerText = studioEditState.saturation + '%';
             const lh = document.getElementById('lbl-studio-hue'); if (lh) lh.innerText = studioEditState.hue + '°';
+            const lt = document.getElementById('lbl-studio-temp'); if (lt) lt.innerText = studioEditState.temperature + '%';
+            const lv = document.getElementById('lbl-studio-vignette'); if (lv) lv.innerText = studioEditState.vignette + '%';
 
             applyStudioVisualTransformAndFilter();
+            pushStudioHistorySnapshot();
         };
 
         window.resetStudioColorGrading = () => {
@@ -14381,14 +15241,26 @@
             studioEditState.contrast = 100;
             studioEditState.saturation = 100;
             studioEditState.hue = 0;
+            studioEditState.temperature = 0;
+            studioEditState.vignette = 0;
+            studioEditState.vfxEffect = 'none';
+            studioEditState.transitionStyle = 'none';
+            studioEditState.zoomScale = 1.0;
+            studioEditState.canvasBg = 'black';
             const b = document.getElementById('studio-bright-slider'); if (b) b.value = 100;
             const c = document.getElementById('studio-contrast-slider'); if (c) c.value = 100;
             const s = document.getElementById('studio-sat-slider'); if (s) s.value = 100;
             const h = document.getElementById('studio-hue-slider'); if (h) h.value = 0;
+            const t = document.getElementById('studio-temp-slider'); if (t) t.value = 0;
+            const v = document.getElementById('studio-vignette-slider'); if (v) v.value = 0;
+            const z = document.getElementById('studio-zoom-crop-slider'); if (z) z.value = 100;
+            const zl = document.getElementById('lbl-studio-zoom-crop'); if (zl) zl.innerText = '100%';
             window.updateStudioColorSliders();
             const firstChip = document.querySelector('.studio-filter-chip');
             window.selectStudioFilterPreset('vfx-none', firstChip);
-            showToast("Filtres et couleurs réinitialisés", "info");
+            window.selectStudioVfxEffect('none');
+            window.selectStudioTransition('none');
+            showToast("Filtres, effets et étalonnage réinitialisés", "info");
         };
 
         let studioFloatingZoomHideTimer = null;
@@ -14399,22 +15271,28 @@
                 const tx = Number.isFinite(Number(studioEditState.overlayX)) ? Number(studioEditState.overlayX) : 50;
                 const ty = Number.isFinite(Number(studioEditState.overlayY)) ? Number(studioEditState.overlayY) : 50;
                 const ts = Math.max(0.35, Math.min(3.5, Number(studioEditState.overlayScale) || 1.0));
+                const trot = Number(studioEditState.overlayRotation) || 0;
                 banner.style.left = tx + '%';
                 banner.style.top = ty + '%';
                 banner.style.right = 'auto';
                 banner.style.bottom = 'auto';
-                banner.style.transform = `translate3d(-50%, -50%, 0) scale(${ts})`;
+                banner.style.setProperty('--rv-ov-scale', String(ts));
+                banner.style.setProperty('--rv-ov-rot', `${trot}deg`);
+                banner.style.transform = `translate3d(-50%, -50%, 0) scale(${ts}) rotate(${trot}deg)`;
             }
             const st = document.getElementById('studio-live-sticker-overlay');
             if (st) {
                 const sx = Number.isFinite(Number(studioEditState.stickerX)) ? Number(studioEditState.stickerX) : 22;
                 const sy = Number.isFinite(Number(studioEditState.stickerY)) ? Number(studioEditState.stickerY) : 72;
                 const ss = Math.max(0.35, Math.min(3.5, Number(studioEditState.stickerScale) || 1.0));
+                const srot = Number(studioEditState.stickerRotation) || 0;
                 st.style.left = sx + '%';
                 st.style.top = sy + '%';
                 st.style.right = 'auto';
                 st.style.bottom = 'auto';
-                st.style.transform = `translate3d(-50%, -50%, 0) scale(${ss})`;
+                st.style.setProperty('--rv-ov-scale', String(ss));
+                st.style.setProperty('--rv-ov-rot', `${srot}deg`);
+                st.style.transform = `translate3d(-50%, -50%, 0) scale(${ss}) rotate(${srot}deg)`;
             }
             const tSlider = document.getElementById('studio-text-scale-slider');
             const tLbl = document.getElementById('lbl-studio-text-scale');
@@ -14496,10 +15374,90 @@
                 return;
             }
             banner.innerText = txt;
-            banner.classList.remove('hidden', 'studio-text-banner-glass', 'studio-text-banner-neon', 'studio-text-banner-cinema', 'studio-text-banner-impact');
+            banner.classList.remove(
+                'hidden',
+                'studio-text-banner-glass', 'studio-text-banner-neon', 'studio-text-banner-cinema',
+                'studio-text-banner-impact', 'studio-text-banner-outline', 'studio-text-banner-subtitle',
+                'rv-font-sans', 'rv-font-display', 'rv-font-serif', 'rv-font-mono', 'rv-font-cursive',
+                'rv-ov-anim-pop', 'rv-ov-anim-bounce', 'rv-ov-anim-spin', 'rv-ov-anim-wave'
+            );
             banner.classList.add('studio-text-banner-' + (studioEditState.overlayStyle || 'glass'));
+            banner.classList.add('rv-font-' + (studioEditState.overlayFont || 'sans'));
+            if (studioEditState.overlayAnim && studioEditState.overlayAnim !== 'none') {
+                banner.classList.add('rv-ov-anim-' + studioEditState.overlayAnim);
+            }
             applyStudioOverlayTransformStyles();
             if (typeof window.syncTimelinePillsUI === 'function') window.syncTimelinePillsUI();
+        };
+
+        window.setStudioTextFont = (fontKey) => {
+            studioEditState.overlayFont = fontKey || 'sans';
+            window.updateStudioOverlayPreview();
+            pushStudioHistorySnapshot();
+        };
+
+        window.setStudioOverlayAnimation = (target, animKey) => {
+            if (target === 'sticker') {
+                studioEditState.stickerAnim = animKey || 'none';
+                const st = document.getElementById('studio-live-sticker-overlay');
+                if (st) {
+                    st.classList.remove('rv-ov-anim-pop', 'rv-ov-anim-bounce', 'rv-ov-anim-spin', 'rv-ov-anim-wave');
+                    if (studioEditState.stickerAnim !== 'none') {
+                        st.classList.add('rv-ov-anim-' + studioEditState.stickerAnim);
+                    }
+                }
+            } else {
+                studioEditState.overlayAnim = animKey || 'none';
+                window.updateStudioOverlayPreview();
+            }
+            pushStudioHistorySnapshot();
+        };
+
+        window.rotateStudioOverlayElement = (target, deltaDeg) => {
+            if (target === 'sticker') {
+                studioEditState.stickerRotation = ((Number(studioEditState.stickerRotation) || 0) + deltaDeg) % 360;
+            } else {
+                studioEditState.overlayRotation = ((Number(studioEditState.overlayRotation) || 0) + deltaDeg) % 360;
+            }
+            applyStudioOverlayTransformStyles();
+            pushStudioHistorySnapshot();
+        };
+
+        window.updateStudioOverlayTiming = (target) => {
+            const sInp = document.getElementById('studio-text-start-slider');
+            const eInp = document.getElementById('studio-text-end-slider');
+            const maxD = Math.max(1, Number(studioTrimState.duration) || 30);
+            let sVal = Math.max(0, parseFloat(sInp?.value || '0') || 0);
+            let eVal = Math.max(sVal + 0.5, parseFloat(eInp?.value || String(maxD)) || maxD);
+            studioEditState.overlayStartTime = Number(sVal.toFixed(1));
+            studioEditState.overlayEndTime = Number(eVal.toFixed(1));
+            const ls = document.getElementById('lbl-studio-text-start');
+            const le = document.getElementById('lbl-studio-text-end');
+            if (ls) ls.innerText = studioEditState.overlayStartTime.toFixed(1) + 's';
+            if (le) le.innerText = studioEditState.overlayEndTime >= maxD - 0.2 ? 'Fin' : (studioEditState.overlayEndTime.toFixed(1) + 's');
+            if (typeof window.syncTimelinePillsUI === 'function') window.syncTimelinePillsUI();
+        };
+
+        window.handleStudioCustomStickerUpload = (inp) => {
+            if (!inp || !inp.files || !inp.files[0]) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                studioEditState.customStickerUrl = ev.target.result;
+                window.setStudioSticker('🖼️', true);
+                showToast("Sticker photo personnalisé importé sur la vidéo ! ✨", "success");
+            };
+            reader.readAsDataURL(inp.files[0]);
+        };
+
+        window.updateStudioAudioFades = () => {
+            const fIn = parseFloat(document.getElementById('studio-audio-fade-in')?.value || '0') || 0;
+            const fOut = parseFloat(document.getElementById('studio-audio-fade-out')?.value || '0') || 0;
+            studioEditState.audioFadeIn = Number(fIn.toFixed(1));
+            studioEditState.audioFadeOut = Number(fOut.toFixed(1));
+            const lIn = document.getElementById('lbl-studio-fade-in');
+            const lOut = document.getElementById('lbl-studio-fade-out');
+            if (lIn) lIn.innerText = studioEditState.audioFadeIn.toFixed(1) + 's';
+            if (lOut) lOut.innerText = studioEditState.audioFadeOut.toFixed(1) + 's';
         };
 
         window.setStudioTextStyle = (style) => {
@@ -14537,16 +15495,26 @@
             showStudioFloatingZoomHud('text');
         };
 
-        window.setStudioSticker = (emoji) => {
+        window.setStudioSticker = (emoji, keepCustomUrl = false) => {
             studioEditState.overlaySticker = emoji;
+            if (!emoji || (emoji !== '🖼️' && !keepCustomUrl)) {
+                studioEditState.customStickerUrl = '';
+            }
             const st = document.getElementById('studio-live-sticker-overlay');
             if (!st) return;
-            if (!emoji) {
+            if (!emoji && !studioEditState.customStickerUrl) {
                 st.classList.add('hidden');
-                st.innerText = '';
+                st.innerHTML = '';
             } else {
-                st.innerText = emoji;
-                st.classList.remove('hidden');
+                if (studioEditState.customStickerUrl) {
+                    st.innerHTML = `<img src="${escapeHtml(studioEditState.customStickerUrl)}" class="w-16 h-16 object-contain rounded-xl drop-shadow-xl pointer-events-none">`;
+                } else {
+                    st.innerText = emoji;
+                }
+                st.classList.remove('hidden', 'rv-ov-anim-pop', 'rv-ov-anim-bounce', 'rv-ov-anim-spin', 'rv-ov-anim-wave');
+                if (studioEditState.stickerAnim && studioEditState.stickerAnim !== 'none') {
+                    st.classList.add('rv-ov-anim-' + studioEditState.stickerAnim);
+                }
                 studioEditState.activeOverlayTarget = 'sticker';
                 applyStudioOverlayTransformStyles();
                 showStudioFloatingZoomHud('sticker');
@@ -15105,22 +16073,311 @@
             showToast(`Hashtag ${tag} ajouté`, "info");
         };
 
-        window.saveStudioDraft = () => {
-            const draft = {
+        // ============================================================================
+        // PERSISTENT USER DRAFTS ENGINE (INDEXEDDB + LOCALSTORAGE + PROFILE DISPLAY)
+        // ============================================================================
+        const STUDIO_DRAFTS_IDB_NAME = 'rv_studio_drafts_idb_v1';
+        const STUDIO_DRAFTS_IDB_STORE = 'draft_files';
+
+        function openStudioDraftsIDB() {
+            return new Promise((resolve) => {
+                if (!window.indexedDB) { resolve(null); return; }
+                try {
+                    const req = indexedDB.open(STUDIO_DRAFTS_IDB_NAME, 1);
+                    req.onupgradeneeded = (e) => {
+                        const dbIdb = e.target.result;
+                        if (!dbIdb.objectStoreNames.contains(STUDIO_DRAFTS_IDB_STORE)) {
+                            dbIdb.createObjectStore(STUDIO_DRAFTS_IDB_STORE, { keyPath: 'id' });
+                        }
+                    };
+                    req.onsuccess = (e) => resolve(e.target.result);
+                    req.onerror = () => resolve(null);
+                } catch (e) { resolve(null); }
+            });
+        }
+
+        async function saveDraftMediaBlobToIDB(draftId, mediaFile, customAudioFile = null) {
+            const dbIdb = await openStudioDraftsIDB();
+            if (!dbIdb || !draftId) return;
+            return new Promise((resolve) => {
+                try {
+                    const tx = dbIdb.transaction(STUDIO_DRAFTS_IDB_STORE, 'readwrite');
+                    tx.objectStore(STUDIO_DRAFTS_IDB_STORE).put({
+                        id: draftId,
+                        mediaFile: mediaFile || null,
+                        customAudioFile: customAudioFile || null,
+                        ts: Date.now()
+                    });
+                    tx.oncomplete = () => resolve(true);
+                    tx.onerror = () => resolve(false);
+                } catch (e) { resolve(false); }
+            });
+        }
+
+        async function loadDraftMediaBlobFromIDB(draftId) {
+            const dbIdb = await openStudioDraftsIDB();
+            if (!dbIdb || !draftId) return null;
+            return new Promise((resolve) => {
+                try {
+                    const tx = dbIdb.transaction(STUDIO_DRAFTS_IDB_STORE, 'readonly');
+                    const req = tx.objectStore(STUDIO_DRAFTS_IDB_STORE).get(draftId);
+                    req.onsuccess = () => resolve(req.result || null);
+                    req.onerror = () => resolve(null);
+                } catch (e) { resolve(null); }
+            });
+        }
+
+        async function deleteDraftMediaBlobFromIDB(draftId) {
+            const dbIdb = await openStudioDraftsIDB();
+            if (!dbIdb || !draftId) return;
+            return new Promise((resolve) => {
+                try {
+                    const tx = dbIdb.transaction(STUDIO_DRAFTS_IDB_STORE, 'readwrite');
+                    tx.objectStore(STUDIO_DRAFTS_IDB_STORE).delete(draftId);
+                    tx.oncomplete = () => resolve(true);
+                    tx.onerror = () => resolve(false);
+                } catch (e) { resolve(false); }
+            });
+        }
+
+        function getUserStudioDraftsList(uid = null) {
+            const targetUid = uid || auth.currentUser?.uid || '';
+            if (!targetUid) return [];
+            try {
+                const raw = safeGetStorage(`rv_user_drafts_v1_${targetUid}`, '[]');
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveUserStudioDraftsList(uid, list) {
+            if (!uid) return;
+            try {
+                safeSetStorage(`rv_user_drafts_v1_${uid}`, JSON.stringify(Array.isArray(list) ? list : []));
+            } catch (e) {}
+            updateProfileDraftsBadgeUI(uid);
+        }
+
+        function updateProfileDraftsBadgeUI(uid = null) {
+            const targetUid = uid || currentProfileUid || auth.currentUser?.uid || '';
+            const isMyProfile = !!(auth.currentUser && targetUid === auth.currentUser.uid);
+            const tabDrafts = document.getElementById('tab-profile-drafts');
+            const badge = document.getElementById('profile-drafts-count-badge');
+            const drafts = isMyProfile ? getUserStudioDraftsList(auth.currentUser.uid) : [];
+            if (tabDrafts) {
+                tabDrafts.classList.toggle('hidden', !isMyProfile);
+                tabDrafts.classList.toggle('flex', isMyProfile);
+            }
+            if (badge) {
+                badge.innerText = String(drafts.length);
+                badge.classList.toggle('hidden', drafts.length === 0);
+                badge.classList.toggle('inline-flex', drafts.length > 0);
+            }
+        }
+
+        function captureCurrentStudioThumbnailDataUrl() {
+            try {
+                const v = document.getElementById('video-preview');
+                const img = document.getElementById('studio-photo-preview');
+                const canvas = document.createElement('canvas');
+                canvas.width = 270;
+                canvas.height = 360;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#0c1222';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                const filterStr = getComputedStudioFilterString();
+                if (filterStr) ctx.filter = filterStr;
+                if (v && !v.classList.contains('hidden') && v.readyState >= 2) {
+                    ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+                } else if (img && !img.classList.contains('hidden') && img.complete) {
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                } else if (studioCapturedPhotoDataUrl) {
+                    return studioCapturedPhotoDataUrl;
+                }
+                ctx.filter = 'none';
+                if (studioEditState.overlayText) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+                    ctx.fillRect(16, canvas.height / 2 - 20, canvas.width - 32, 36);
+                    ctx.fillStyle = studioEditState.overlayColor || '#ffffff';
+                    ctx.font = 'bold 14px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(studioEditState.overlayText.slice(0, 28), canvas.width / 2, canvas.height / 2 + 4);
+                }
+                if (studioEditState.overlaySticker) {
+                    ctx.font = '32px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(studioEditState.overlaySticker, canvas.width * 0.25, canvas.height * 0.72);
+                }
+                return canvas.toDataURL('image/jpeg', 0.78);
+            } catch (e) {
+                return '';
+            }
+        }
+
+        window.saveStudioDraft = async () => {
+            if (!auth.currentUser) {
+                window.pendingStudioActionAfterAuth = 'draft';
+                showToast("Connectez-vous d'abord pour sauvegarder votre brouillon sur votre profil ! 🔐", "info");
+                openGoogleAccountChooserModal();
+                return;
+            }
+            const f = studioSelectedFile || document.getElementById('video-file-input')?.files[0] || document.getElementById('native-camera-file-input')?.files[0] || studioRecordedFile;
+            const uid = auth.currentUser.uid;
+            const draftId = window.currentEditingDraftId || ('draft_' + Date.now());
+            const thumbDataUrl = captureCurrentStudioThumbnailDataUrl();
+            const netDur = computeNetTrimmedDuration();
+
+            const draftEntry = {
+                id: draftId,
+                uid: uid,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+                fileName: f ? f.name : 'Montage R-Studio',
+                hasMediaFile: !!f,
+                netDuration: Number(netDur.toFixed(1)),
+                thumbDataUrl: thumbDataUrl,
                 desc: document.getElementById('video-desc')?.value || '',
-                soundTitle: document.getElementById('video-sound-title')?.value || '',
+                soundTitle: document.getElementById('video-sound-title')?.value || (selectedSoundForUpload?.soundTitle || ''),
+                selectedSound: selectedSoundForUpload ? {
+                    soundTitle: selectedSoundForUpload.soundTitle || '',
+                    soundAuthor: selectedSoundForUpload.soundAuthor || '',
+                    audioUrl: selectedSoundForUpload.audioUrl || '',
+                    rawVideoUrl: selectedSoundForUpload.rawVideoUrl || '',
+                    sourceVideoId: selectedSoundForUpload.sourceVideoId || null
+                } : null,
                 location: document.getElementById('video-location')?.value || '',
                 tags: document.getElementById('video-tags')?.value || '',
+                visibility: document.getElementById('video-visibility')?.value || 'public',
                 aspectMode: document.getElementById('video-aspect-mode')?.value || 'contain',
-                overlayText: studioEditState.overlayText || '',
-                overlaySticker: studioEditState.overlaySticker || ''
+                allowComments: document.getElementById('opt-comments')?.checked !== false,
+                allowDownloads: document.getElementById('opt-downloads')?.checked !== false,
+                allowDuet: document.getElementById('opt-duet')?.checked !== false,
+                trimState: {
+                    duration: studioTrimState.duration || 30,
+                    start: studioTrimState.start || 0,
+                    end: studioTrimState.end || 30,
+                    splitPoints: [...(studioTrimState.splitPoints || [])],
+                    deletedRanges: [...(studioTrimState.deletedRanges || [])]
+                },
+                studioConfig: {
+                    ...studioEditState,
+                    customFilterCss: getComputedStudioFilterString(),
+                    transformCss: getComputedStudioTransformString()
+                }
             };
-            safeSetStorage('rv_studio_draft', JSON.stringify(draft));
-            showToast("Brouillon sauvegardé dans R-Studio ! 💾", "success");
+
+            if (f) {
+                await saveDraftMediaBlobToIDB(draftId, f, selectedSoundForUpload?.customFile || null);
+            }
+
+            const existingList = getUserStudioDraftsList(uid).filter(d => d && d.id !== draftId);
+            existingList.unshift(draftEntry);
+            saveUserStudioDraftsList(uid, existingList.slice(0, 25));
+            safeSetStorage('rv_studio_draft', JSON.stringify(draftEntry));
+            window.currentEditingDraftId = draftId;
+
+            showToast("Brouillon sauvegardé sur votre profil ! 📁✨", "success");
+            if (document.getElementById('profile-screen')?.classList.contains('active') && currentProfileUid === uid) {
+                renderProfile(currentUserData, true, { keepVisible: true });
+            }
+        };
+
+        window.openStudioDraftFromProfile = async (draftId) => {
+            if (!auth.currentUser) {
+                openGoogleAccountChooserModal();
+                return;
+            }
+            const uid = auth.currentUser.uid;
+            const drafts = getUserStudioDraftsList(uid);
+            const draft = drafts.find(d => d && d.id === draftId);
+            if (!draft) {
+                showToast("Brouillon introuvable", "error");
+                return;
+            }
+            window.currentEditingDraftId = draft.id;
+            window.openUploadModal(true);
+
+            if (draft.desc !== undefined && document.getElementById('video-desc')) document.getElementById('video-desc').value = draft.desc;
+            if (draft.location !== undefined && document.getElementById('video-location')) document.getElementById('video-location').value = draft.location;
+            if (draft.tags !== undefined && document.getElementById('video-tags')) document.getElementById('video-tags').value = draft.tags;
+            if (draft.visibility && document.getElementById('video-visibility')) document.getElementById('video-visibility').value = draft.visibility;
+            if (draft.aspectMode && document.getElementById('video-aspect-mode')) {
+                document.getElementById('video-aspect-mode').value = draft.aspectMode;
+                window.updateUploadPreviewFit(draft.aspectMode);
+            }
+            if (draft.soundTitle && document.getElementById('video-sound-title')) {
+                document.getElementById('video-sound-title').value = draft.soundTitle;
+            }
+
+            if (draft.studioConfig) {
+                Object.assign(studioEditState, draft.studioConfig);
+            }
+            if (draft.selectedSound) {
+                selectedSoundForUpload = { ...draft.selectedSound };
+            }
+
+            const idbRecord = await loadDraftMediaBlobFromIDB(draft.id);
+            if (idbRecord && idbRecord.mediaFile) {
+                if (idbRecord.customAudioFile && selectedSoundForUpload) {
+                    selectedSoundForUpload.customFile = idbRecord.customAudioFile;
+                }
+                loadFileIntoStudioEditor(idbRecord.mediaFile);
+                setTimeout(() => {
+                    if (draft.trimState) {
+                        studioTrimState.duration = draft.trimState.duration || studioTrimState.duration || 30;
+                        studioTrimState.start = Number(draft.trimState.start) || 0;
+                        studioTrimState.end = Number(draft.trimState.end) || studioTrimState.duration;
+                        studioTrimState.splitPoints = Array.isArray(draft.trimState.splitPoints) ? [...draft.trimState.splitPoints] : [];
+                        studioTrimState.deletedRanges = Array.isArray(draft.trimState.deletedRanges) ? [...draft.trimState.deletedRanges] : [];
+                        renderModernTrimmerUI();
+                    }
+                }, 380);
+            } else if (draft.thumbDataUrl) {
+                const photoPrev = document.getElementById('studio-photo-preview');
+                const emptyPrompt = document.getElementById('studio-empty-prompt');
+                if (photoPrev) {
+                    photoPrev.src = draft.thumbDataUrl;
+                    photoPrev.classList.remove('hidden');
+                }
+                if (emptyPrompt) emptyPrompt.classList.add('hidden');
+            }
+
+            const txtInp = document.getElementById('studio-overlay-text-input');
+            if (txtInp) txtInp.value = studioEditState.overlayText || '';
+            const bSlider = document.getElementById('studio-bright-slider'); if (bSlider) bSlider.value = studioEditState.brightness ?? 100;
+            const cSlider = document.getElementById('studio-contrast-slider'); if (cSlider) cSlider.value = studioEditState.contrast ?? 100;
+            const sSlider = document.getElementById('studio-sat-slider'); if (sSlider) sSlider.value = studioEditState.saturation ?? 100;
+            const hSlider = document.getElementById('studio-hue-slider'); if (hSlider) hSlider.value = studioEditState.hue ?? 0;
+            const tSlider = document.getElementById('studio-temp-slider'); if (tSlider) tSlider.value = studioEditState.temperature ?? 0;
+            const vigSlider = document.getElementById('studio-vignette-slider'); if (vigSlider) vigSlider.value = studioEditState.vignette ?? 0;
+            const zSlider = document.getElementById('studio-zoom-crop-slider'); if (zSlider) zSlider.value = Math.round((studioEditState.zoomScale || 1) * 100);
+            const spdSel = document.getElementById('studio-speed-select'); if (spdSel) spdSel.value = String(studioEditState.speed || 1);
+
+            applyStudioVisualTransformAndFilter();
+            window.updateStudioOverlayPreview();
+            window.setStudioSticker(studioEditState.overlaySticker || '', true);
+            if (selectedSoundForUpload) bindSelectedSoundToStudioAudioEngine(false);
+            window.updateStudioLiveVolumes();
+            window.syncTimelinePillsUI();
+            showToast("Brouillon chargé dans R-Studio Pro ! Vous pouvez continuer votre montage ou publier 🎬", "success");
+        };
+
+        window.deleteStudioDraftFromProfile = async (draftId, ev = null) => {
+            if (ev) ev.stopPropagation();
+            if (!auth.currentUser) return;
+            const uid = auth.currentUser.uid;
+            const updated = getUserStudioDraftsList(uid).filter(d => d && d.id !== draftId);
+            saveUserStudioDraftsList(uid, updated);
+            await deleteDraftMediaBlobFromIDB(draftId);
+            showToast("Brouillon supprimé 🗑️", "info");
+            if (document.getElementById('profile-screen')?.classList.contains('active')) {
+                renderProfile(currentUserData, true, { keepVisible: true });
+            }
         };
 
         window.openUploadWithTag = (tag) => {
-            if (!checkAuth()) return;
             window.openUploadModal();
             const descInput = document.getElementById('video-desc');
             if (descInput) descInput.value = tag + " ";
@@ -15137,14 +16394,23 @@
         let studioHdModeActive = true;
         let studioCaptureSubMode = 'video';
 
-        window.openStudioDrawerTab = (tabId) => {
+        window.openStudioDrawerTab = (tabId, focusSub = null) => {
             const drawer = document.getElementById('studio-editor-drawer');
             if (drawer) {
                 drawer.classList.remove('drawer-closed');
                 drawer.classList.add('drawer-open');
             }
-            const pill = document.getElementById('dock-pill-' + tabId);
+            const pill = document.getElementById('dock-pill-' + (focusSub === 'sticker' ? 'sticker' : tabId));
             window.switchStudioEditTab(tabId, pill);
+            if (focusSub === 'sticker') {
+                setTimeout(() => {
+                    document.getElementById('studio-sticker-subpanel')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 90);
+            } else if (focusSub === 'text') {
+                setTimeout(() => {
+                    document.getElementById('studio-overlay-text-input')?.focus();
+                }, 90);
+            }
             if (window.lucide) lucide.createIcons();
         };
 
@@ -15302,8 +16568,8 @@
             }
         }
 
-        window.openUploadModal = () => {
-            if(!checkAuth()) return;
+        window.openUploadModal = (preserveDraftLoad = false) => {
+            if (!preserveDraftLoad) window.currentEditingDraftId = null;
             document.getElementById('upload-modal').classList.add('open');
             pauseAllOutsideUploadMedia();
             stopStudioCameraStream();
@@ -15858,6 +17124,30 @@
                         const pct = Math.max(0, Math.min(100, (studioTrimState.playhead / studioTrimState.duration) * 100));
                         phLine.style.left = `${pct}%`;
                     }
+                    // Live preview of Text timing window & Audio Fade-In / Fade-Out inside R-Studio
+                    const bannerEl = document.getElementById('studio-live-text-overlay');
+                    if (bannerEl && studioEditState.overlayText) {
+                        const tStart = Number(studioEditState.overlayStartTime) || 0;
+                        const tEnd = Number(studioEditState.overlayEndTime) || 60;
+                        const inWindow = (cur >= tStart - 0.05) && (cur <= tEnd + 0.15);
+                        bannerEl.style.opacity = inWindow ? '1' : '0';
+                    }
+                    const fIn = Number(studioEditState.audioFadeIn) || 0;
+                    const fOut = Number(studioEditState.audioFadeOut) || 0;
+                    if (fIn > 0.05 || fOut > 0.05) {
+                        const relPos = Math.max(0, cur - (studioTrimState.start || 0));
+                        const clipLen = Math.max(1, (studioTrimState.end || v.duration || 30) - (studioTrimState.start || 0));
+                        let fadeMult = 1.0;
+                        if (fIn > 0.05 && relPos < fIn) fadeMult = Math.max(0.05, relPos / fIn);
+                        if (fOut > 0.05 && (clipLen - relPos) < fOut) fadeMult = Math.min(fadeMult, Math.max(0.05, (clipLen - relPos) / fOut));
+                        const keepCheckbox = document.getElementById('studio-keep-original-audio');
+                        const effOrig = (keepCheckbox && !keepCheckbox.checked) ? 0 : ((studioEditState.originalVolume ?? 100) / 100);
+                        v.volume = Math.max(0, Math.min(1, effOrig * fadeMult));
+                        if (studioMusicPreviewAudio && !studioMusicPreviewAudio.paused) {
+                            studioMusicPreviewAudio.volume = Math.max(0, Math.min(1, ((studioEditState.musicVolume ?? 100) / 100) * fadeMult));
+                        }
+                    }
+
                     const tcEl = document.getElementById('studio-current-timecode');
                     if (tcEl) {
                         const curS = Math.max(0, v.currentTime || 0);
@@ -16015,6 +17305,12 @@
             v.play().catch(()=>{});
         };
         window.uploadVideo = async () => {
+            if (!auth.currentUser) {
+                window.pendingStudioActionAfterAuth = 'publish';
+                showToast("Connectez-vous d'abord pour publier votre vidéo éditée ! 🔐", "info");
+                openGoogleAccountChooserModal();
+                return;
+            }
             const f = studioSelectedFile || document.getElementById('video-file-input').files[0] || document.getElementById('native-camera-file-input')?.files[0] || studioRecordedFile;
             if(!f) { showToast("Veuillez sélectionner ou filmer une vidéo avant de publier.", "error"); return; }
             const btn = document.getElementById('btn-publish'); const originalText = btn.innerText; btn.innerHTML = `<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"></div>`; btn.disabled = true;
@@ -16083,21 +17379,46 @@
                 filterPreset: studioEditState.filterPreset || 'vfx-none',
                 customFilterCss: getComputedStudioFilterString(),
                 transformCss: getComputedStudioTransformString(),
-                speed: studioEditState.speed || 1.0,
+                brightness: Number(studioEditState.brightness ?? 100),
+                contrast: Number(studioEditState.contrast ?? 100),
+                saturation: Number(studioEditState.saturation ?? 100),
+                hue: Number(studioEditState.hue ?? 0),
+                temperature: Number(studioEditState.temperature ?? 0),
+                vignette: Number(studioEditState.vignette ?? 0),
+                rotation: Number(studioEditState.rotation ?? 0),
+                mirrored: !!studioEditState.mirrored,
+                zoomScale: Number(studioEditState.zoomScale ?? 1.0),
+                canvasBg: studioEditState.canvasBg || 'black',
+                speed: Number(studioEditState.speed) || 1.0,
+                vfxEffect: studioEditState.vfxEffect || 'none',
+                transitionStyle: studioEditState.transitionStyle || 'none',
+                transitionDuration: Number(studioEditState.transitionDuration) || 0.8,
                 overlayText: studioEditState.overlayText || '',
                 overlayStyle: studioEditState.overlayStyle || 'glass',
+                overlayFont: studioEditState.overlayFont || 'sans',
                 overlayColor: studioEditState.overlayColor || '#ffffff',
+                overlayAnim: studioEditState.overlayAnim || 'none',
                 overlayPos: studioEditState.overlayPos || 'center',
                 overlayX: Number.isFinite(Number(studioEditState.overlayX)) ? Number(studioEditState.overlayX) : 50,
                 overlayY: Number.isFinite(Number(studioEditState.overlayY)) ? Number(studioEditState.overlayY) : 50,
                 overlayScale: Number.isFinite(Number(studioEditState.overlayScale)) ? Number(studioEditState.overlayScale) : 1.0,
+                overlayRotation: Number(studioEditState.overlayRotation) || 0,
+                overlayStartTime: Number(studioEditState.overlayStartTime) || 0,
+                overlayEndTime: Number(studioEditState.overlayEndTime) || 60,
                 overlaySticker: studioEditState.overlaySticker || '',
+                customStickerUrl: studioEditState.customStickerUrl || '',
+                stickerAnim: studioEditState.stickerAnim || 'none',
                 stickerX: Number.isFinite(Number(studioEditState.stickerX)) ? Number(studioEditState.stickerX) : 22,
                 stickerY: Number.isFinite(Number(studioEditState.stickerY)) ? Number(studioEditState.stickerY) : 72,
                 stickerScale: Number.isFinite(Number(studioEditState.stickerScale)) ? Number(studioEditState.stickerScale) : 1.0,
+                stickerRotation: Number(studioEditState.stickerRotation) || 0,
+                stickerStartTime: Number(studioEditState.stickerStartTime) || 0,
+                stickerEndTime: Number(studioEditState.stickerEndTime) || 60,
                 keepOriginalAudio: keepOrigChecked || (!baseUploadSoundUrl && !(selectedSoundForUpload && selectedSoundForUpload.customFile)),
                 originalVolume: origVolNum,
                 musicVolume: musicVolNum,
+                audioFadeIn: Number(studioEditState.audioFadeIn) || 0,
+                audioFadeOut: Number(studioEditState.audioFadeOut) || 0,
                 audioTrimStart: audioTrimStart,
                 audioTrimEnd: audioTrimEnd,
                 audioStartOffset: audioStartOffset,
@@ -16211,10 +17532,17 @@
                 document.getElementById('video-location').value = "";
                 document.getElementById('video-tags').value = "";
                 document.getElementById('upload-status').innerText = "";
+                if (window.currentEditingDraftId && auth.currentUser) {
+                    const remDrafts = getUserStudioDraftsList(auth.currentUser.uid).filter(d => d && d.id !== window.currentEditingDraftId);
+                    saveUserStudioDraftsList(auth.currentUser.uid, remDrafts);
+                    await deleteDraftMediaBlobFromIDB(window.currentEditingDraftId);
+                    window.currentEditingDraftId = null;
+                }
                 safeSetStorage('rv_studio_draft', '');
                 window.closeStudioModal();
-                showToast("Vidéo publiée avec succès ! 🎉", "success");
+                showToast("Vidéo publiée avec succès avec tout votre montage R-Studio ! 🎉", "success");
                 navigateTo('feed');
+                loadFeed();
             } catch(e) { showToast(e.message, "error"); } finally { btn.disabled=false; btn.innerHTML=originalText; }
         };
 
@@ -16308,6 +17636,16 @@
             videoObserver = new IntersectionObserver((entries) => { 
                 entries.forEach((entry) => { 
                     const card = entry.target;
+                    if (card && card.id === 'guest-feed-contest-card') {
+                        if (entry.isIntersecting) {
+                            stopMasterAudio();
+                            document.querySelectorAll('#feed-container .video-card video').forEach(vid => {
+                                vid.muted = true;
+                                if (!vid.paused) vid.pause();
+                            });
+                        }
+                        return;
+                    }
                     const v = card.querySelector('video'); 
                     if (!v) return;
                     const sourceUrl = card.getAttribute('data-src');
@@ -16340,7 +17678,8 @@
                         checkAndTriggerLastVideoPourToiAlert(card);
                         playVideoSynchronized(v, card, true);
 
-                        const nextCard = card.nextElementSibling;
+                        const rawNext = card.nextElementSibling;
+                        const nextCard = (rawNext && rawNext.id === 'guest-feed-contest-card') ? rawNext.nextElementSibling : rawNext;
                         const nextUrl = (appSettings.preloadNext && nextCard) ? nextCard.getAttribute('data-src') : null;
                         scheduleDeferredVideoCache(sourceUrl, v, nextUrl);
 
@@ -16364,12 +17703,16 @@
                     } 
                 }); 
             }, options); 
-            document.querySelectorAll('.video-card').forEach(c => videoObserver.observe(c)); 
+            document.querySelectorAll('.video-card, #guest-feed-contest-card').forEach(c => videoObserver.observe(c)); 
         }
 
         // --- TOGGLE LIKE (IMMEDIATE VISUAL INCREMENT/DECREMENT IN FRONT OF USER) ---
         window.toggleLike = async (docId, el, authorId) => { 
-            if (!checkAuth() || !docId) return; 
+            if (!auth.currentUser) {
+                openGoogleAccountChooserModal();
+                return;
+            }
+            if (!docId) return; 
             const uid = auth.currentUser.uid;
             const countSpan = el.querySelector('.like-count');
             const vData = profileVideosData[docId] || {};
@@ -16658,7 +18001,11 @@
 
         window.voteOnCommentPoll = async (vidId, commentId, optionIndex, ev) => {
             if (ev) ev.stopPropagation();
-            if (!checkAuth() || !vidId || !commentId) return;
+            if (!auth.currentUser) {
+                openGoogleAccountChooserModal();
+                return;
+            }
+            if (!vidId || !commentId) return;
             const myUid = auth.currentUser.uid;
             try {
                 const cRef = doc(db, `videos/${vidId}/comments`, commentId);
@@ -16772,7 +18119,10 @@
         };
 
         window.triggerCommentGallerySticker = () => {
-            if (!checkAuth()) return;
+            if (!auth.currentUser) {
+                openGoogleAccountChooserModal();
+                return;
+            }
             const inp = document.getElementById('comment-sticker-file-input');
             if (inp) {
                 inp.value = "";
@@ -16781,7 +18131,10 @@
         };
 
         window.triggerCommentVideoSticker = () => {
-            if (!checkAuth()) return;
+            if (!auth.currentUser) {
+                openGoogleAccountChooserModal();
+                return;
+            }
             const inp = document.getElementById('comment-video-sticker-file-input');
             if (inp) {
                 inp.value = "";
@@ -17092,7 +18445,10 @@
         };
         
         window.replyToUser = (username, parentCommentId = null, targetUid = null, replyToCommentId = null) => {
-            if (!checkAuth()) return;
+            if (!auth.currentUser) {
+                openGoogleAccountChooserModal();
+                return;
+            }
             replyingToCommentState = {
                 username: username || '',
                 parentCommentId: parentCommentId || null,
@@ -17114,7 +18470,10 @@
         };
 
         window.appendCommentEmoji = (emoji) => {
-            if (!checkAuth()) return;
+            if (!auth.currentUser) {
+                openGoogleAccountChooserModal();
+                return;
+            }
             const inp = document.getElementById('comment-input');
             if (!inp) return;
             inp.value += emoji;
@@ -17510,7 +18869,11 @@
             }); 
         };
         window.toggleCommentLike = async (vidId, cId, aId, btnEl = null) => {
-            if (!checkAuth() || !vidId || !cId) return;
+            if (!auth.currentUser) {
+                openGoogleAccountChooserModal();
+                return;
+            }
+            if (!vidId || !cId) return;
             const uid = auth.currentUser.uid;
             const targetBtn = btnEl || document.querySelector(`.comment-like-btn[data-cid="${cId}"]`);
             const countSpan = targetBtn ? targetBtn.querySelector('.comment-like-count, span') : null;
@@ -17561,7 +18924,11 @@
         };
         
         window.sendComment = async () => { 
-            if (!checkAuth() || !currentVideoIdForComments) return;
+            if (!auth.currentUser) {
+                openGoogleAccountChooserModal();
+                return;
+            }
+            if (!currentVideoIdForComments) return;
             const inp = document.getElementById('comment-input'); 
             const txt = inp ? inp.value.trim() : ""; 
             const hasSticker = !!pendingCommentStickerDataUrl;
@@ -18299,10 +19666,9 @@
             const canManage = !!(auth.currentUser && (data.userId === auth.currentUser.uid || (currentUserData && currentUserData.email === VIP_EMAIL)));
 
             const html = `
-            <div class="video-card w-full h-full relative bg-black flex items-center justify-center" data-id="${id}" data-src="${rawUrl}" data-raw-url="${escapeHtml(data.url || '')}" data-trim-start="${data.trimStart || 0}" data-trim-end="${data.trimEnd || 0}" data-audio-trim-start="${data.studioConfig?.audioTrimStart || 0}" data-audio-trim-end="${data.studioConfig?.audioTrimEnd || 0}" data-audio-offset="${data.studioConfig?.audioStartOffset || 0}" data-deleted-ranges="${escapeHtml(JSON.stringify(data.studioConfig?.deletedRanges || []))}" data-sound-url="${escapeHtml(data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url) || '')}" data-orig-vol="${escapeHtml(String(data.studioConfig?.originalVolume ?? 100))}" data-music-vol="${escapeHtml(String(data.studioConfig?.musicVolume ?? 100))}" data-keep-orig-audio="${escapeHtml(String(data.studioConfig?.keepOriginalAudio !== false))}" data-muted-video="${(!((data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url)) && String(data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url)).trim()) && (data.studioConfig?.keepOriginalAudio === false || data.muted === true || data.hasAudio === false)) ? 'true' : 'false'}" data-in-view="true">
-                <video id="fullscreen-active-video" class="w-full h-full ${fitClass} ${ data.studioConfig?.filterPreset || '' }" style="${ data.studioConfig?.customFilterCss ? 'filter:' + escapeHtml(data.studioConfig.customFilterCss) + ';' : '' }${ data.studioConfig?.transformCss ? 'transform:' + escapeHtml(data.studioConfig.transformCss) + ';' : '' }" muted playsinline webkit-playsinline preload="auto" src="${cachedUrl}"></video>
-                ${ data.studioConfig?.overlayText ? `<div class="rv-video-text-overlay absolute z-20 pointer-events-none text-center max-w-[85%] px-3.5 py-1.5 studio-text-banner-${ escapeHtml(data.studioConfig.overlayStyle || 'glass') } text-sm" style="--rv-overlay-text-color:${ escapeHtml(data.studioConfig.overlayColor || '#ffffff') };color:${ escapeHtml(data.studioConfig.overlayColor || '#ffffff') } !important;left:${ Number.isFinite(Number(data.studioConfig.overlayX)) ? Number(data.studioConfig.overlayX) : 50 }%;top:${ Number.isFinite(Number(data.studioConfig.overlayY)) ? Number(data.studioConfig.overlayY) : (data.studioConfig.overlayPos === 'top' ? 16 : (data.studioConfig.overlayPos === 'bottom' ? 76 : 50)) }%;transform:translate3d(-50%,-50%,0) scale(${ Number.isFinite(Number(data.studioConfig.overlayScale)) ? Number(data.studioConfig.overlayScale) : 1 });transform-origin:center center;">${ escapeHtml(data.studioConfig.overlayText) }</div>` : '' }
-                ${ data.studioConfig?.overlaySticker ? `<div class="absolute z-20 pointer-events-none text-4xl drop-shadow-xl" style="left:${ Number.isFinite(Number(data.studioConfig.stickerX)) ? Number(data.studioConfig.stickerX) : 78 }%;top:${ Number.isFinite(Number(data.studioConfig.stickerY)) ? Number(data.studioConfig.stickerY) : 22 }%;transform:translate3d(-50%,-50%,0) scale(${ Number.isFinite(Number(data.studioConfig.stickerScale)) ? Number(data.studioConfig.stickerScale) : 1 });transform-origin:center center;">${ escapeHtml(data.studioConfig.overlaySticker) }</div>` : '' }
+            <div class="video-card w-full h-full relative bg-black rv-canvas-bg-${escapeHtml(data.studioConfig?.canvasBg || 'black')} flex items-center justify-center" data-id="${id}" data-src="${rawUrl}" data-raw-url="${escapeHtml(data.url || '')}" data-trim-start="${data.trimStart || 0}" data-trim-end="${data.trimEnd || 0}" data-audio-trim-start="${data.studioConfig?.audioTrimStart || 0}" data-audio-trim-end="${data.studioConfig?.audioTrimEnd || 0}" data-audio-offset="${data.studioConfig?.audioStartOffset || 0}" data-studio-speed="${data.studioConfig?.speed || 1.0}" data-audio-fade-in="${data.studioConfig?.audioFadeIn || 0}" data-audio-fade-out="${data.studioConfig?.audioFadeOut || 0}" data-deleted-ranges="${escapeHtml(JSON.stringify(data.studioConfig?.deletedRanges || []))}" data-sound-url="${escapeHtml(data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url) || '')}" data-orig-vol="${escapeHtml(String(data.studioConfig?.originalVolume ?? 100))}" data-music-vol="${escapeHtml(String(data.studioConfig?.musicVolume ?? 100))}" data-keep-orig-audio="${escapeHtml(String(data.studioConfig?.keepOriginalAudio !== false))}" data-muted-video="${(!((data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url)) && String(data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url)).trim()) && (data.studioConfig?.keepOriginalAudio === false || data.muted === true || data.hasAudio === false)) ? 'true' : 'false'}" data-in-view="true">
+                <video id="fullscreen-active-video" class="w-full h-full ${fitClass} ${ data.studioConfig?.filterPreset || '' } ${data.studioConfig?.vfxEffect === 'shake' ? 'rv-video-vfx-shake' : (data.studioConfig?.vfxEffect === 'zoombeat' ? 'rv-video-vfx-zoombeat' : '')} rv-canvas-bg-${escapeHtml(data.studioConfig?.canvasBg || 'black')}" style="${ data.studioConfig?.customFilterCss ? 'filter:' + escapeHtml(data.studioConfig.customFilterCss) + ';' : '' }${ data.studioConfig?.transformCss ? 'transform:' + escapeHtml(data.studioConfig.transformCss) + ';' : '' }" muted playsinline webkit-playsinline preload="auto" src="${cachedUrl}"></video>
+                ${ buildPublishedStudioOverlaysHTML(data) }
                 ${canManage ? `
                 <div class="absolute top-4 right-4 z-30 flex items-center gap-2 pointer-events-auto">
                     <button onclick="event.stopPropagation(); togglePinVideo('${id}', ${!!data.isPinned})" class="glass-pill px-3 h-10 rounded-full flex items-center gap-1.5 text-xs font-bold ${data.isPinned ? 'text-amber-300 border-amber-400/40' : 'text-white'} shadow-lg active:scale-95 transition" title="Épingler">
@@ -18391,6 +19757,7 @@
                         restartOrAdvanceVideo(fullVid, fullCard);
                         return;
                     }
+                    syncPublishedCardTimedOverlaysAndFades(fullVid, fullCard);
                     if (fullDeletedRanges.length > 0) {
                         const rangeOffset = vIsServerTrimmed ? cTrimStart : 0;
                         for (let rIdx = 0; rIdx < fullDeletedRanges.length; rIdx++) {
@@ -20642,7 +22009,9 @@
                 }
                 let shouldShow = false;
                 if (currentProfileTab === 'videos') { if (v.userId === data.uid) shouldShow = true; }
-                else if (currentProfileTab === 'favs') { if (v.favorites && v.favorites.includes(data.uid)) shouldShow = true; }
+                else if (currentProfileTab === 'reposts') { if (Array.isArray(v.repostedBy) && v.repostedBy.includes(data.uid)) shouldShow = true; }
+                else if (currentProfileTab === 'liked') { if (Array.isArray(v.likedBy) && v.likedBy.includes(data.uid)) shouldShow = true; }
+                else if (currentProfileTab === 'favs') { if (Array.isArray(v.favorites) && v.favorites.includes(data.uid)) shouldShow = true; }
                 if (shouldShow) {
                     profileVideosData[d.id] = v;
                     items.push({ id: d.id, data: v });
@@ -20671,23 +22040,128 @@
                 currentProfileViewedData.__autoFollowerUids = [];
                 currentProfileViewedData.__totalFollowersDisplayed = totalFollowersDisplayed;
             }
-            items.sort((a, b) => (b.data.isPinned ? 1 : 0) - (a.data.isPinned ? 1 : 0));
+
+            // Update Drafts tab visibility & Lock icons on Reposts / Liked tabs
+            updateProfileDraftsBadgeUI(data.uid);
+            const repAccess = canViewerAccessProfileSection(data, 'reposts', isMe);
+            const likAccess = canViewerAccessProfileSection(data, 'liked', isMe);
+            const repLockIcon = document.getElementById('tab-reposts-lock-icon');
+            const likLockIcon = document.getElementById('tab-liked-lock-icon');
+            if (repLockIcon) repLockIcon.classList.toggle('hidden', repAccess.mode === 'public');
+            if (likLockIcon) likLockIcon.classList.toggle('hidden', likAccess.mode === 'public');
+
+            const privBanner = document.getElementById('profile-tab-privacy-banner');
+            if (privBanner) {
+                if (isMe && (currentProfileTab === 'reposts' || currentProfileTab === 'liked')) {
+                    const activeMode = currentProfileTab === 'reposts' ? repAccess.mode : likAccess.mode;
+                    const modeLbl = activeMode === 'private' ? '🔒 Privé (Moi seul)' : (activeMode === 'followers' ? '👥 Abonnés uniquement' : '🌍 Public (Tout le monde)');
+                    privBanner.classList.remove('hidden');
+                    privBanner.classList.add('flex');
+                    privBanner.innerHTML = `
+                        <span class="truncate">Visibilité de cet onglet : <strong class="text-white">${modeLbl}</strong></span>
+                        <button type="button" onclick="openSettingsModal()" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-cyan-300 font-bold text-[10px] shrink-0">Régler dans Paramètres</button>
+                    `;
+                } else {
+                    privBanner.classList.add('hidden');
+                    privBanner.classList.remove('flex');
+                }
+            }
+
+            // Check privacy restriction when viewing another user's 'reposts' or 'liked' tab
+            if (!isMe && ((currentProfileTab === 'reposts' && !repAccess.allowed) || (currentProfileTab === 'liked' && !likAccess.allowed))) {
+                const secLabel = currentProfileTab === 'reposts' ? 'vidéos republiées' : 'vidéos aimées';
+                const reasonText = (currentProfileTab === 'reposts' ? repAccess.mode : likAccess.mode) === 'followers'
+                    ? `Seuls les abonnés de @${escapeHtml(data.username || 'utilisateur')} peuvent voir ses ${secLabel}.`
+                    : `Cet utilisateur a rendu ses ${secLabel} privées.`;
+                grid.innerHTML = `
+                    <div class="col-span-3 sm:col-span-4 md:col-span-5 text-center py-12 px-4 space-y-2">
+                        <div class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-amber-400">
+                            <i data-lucide="lock" class="w-5 h-5"></i>
+                        </div>
+                        <div class="text-xs font-extrabold text-white">Contenu privé 🔒</div>
+                        <p class="text-[11px] text-gray-400 max-w-xs mx-auto">${reasonText}</p>
+                    </div>`;
+                setProfileScreenLoading(false);
+                lucide.createIcons();
+                return;
+            }
 
             const frag = document.createDocumentFragment();
+            const myDrafts = isMe ? getUserStudioDraftsList(data.uid) : [];
+
+            // Render user's saved drafts in 'drafts' tab AND at the top of 'videos' tab on own profile!
+            if (isMe && (currentProfileTab === 'drafts' || currentProfileTab === 'videos') && myDrafts.length > 0) {
+                myDrafts.forEach(draft => {
+                    const div = document.createElement('div');
+                    div.className = "bg-[#0c1222] aspect-[3/4] relative rounded-xl overflow-hidden border-2 border-amber-400/50 group cursor-pointer shadow-lg";
+                    div.onclick = () => openStudioDraftFromProfile(draft.id);
+                    const dDate = formatDateStamp(new Date(draft.updatedAt || draft.createdAt || Date.now()));
+                    const thumbHtml = draft.thumbDataUrl
+                        ? `<img src="${escapeHtml(draft.thumbDataUrl)}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">`
+                        : `<div class="w-full h-full bg-gradient-to-br from-[#1e1035] via-[#0f172a] to-[#3b0a28] flex flex-col items-center justify-center p-3 text-center"><i data-lucide="film" class="w-8 h-8 text-amber-400 mb-1"></i><span class="text-[10px] font-bold text-gray-200 line-clamp-2">${escapeHtml(draft.desc || draft.fileName || 'Brouillon R-Studio')}</span></div>`;
+                    div.innerHTML = `
+                        ${thumbHtml}
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/40"></div>
+                        <div class="absolute top-1.5 left-1.5 bg-amber-400 text-black text-[8.5px] font-black px-1.5 py-0.5 rounded-md flex items-center gap-1 z-10 shadow">
+                            <i data-lucide="folder-kanban" class="w-2.5 h-2.5"></i>
+                            <span>BROUILLON</span>
+                        </div>
+                        <button type="button" onclick="deleteStudioDraftFromProfile('${escapeHtml(draft.id)}', event)" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/70 hover:bg-rose-600 text-rose-300 hover:text-white flex items-center justify-center z-10 transition" title="Supprimer ce brouillon">
+                            <i data-lucide="trash-2" class="w-3 h-3"></i>
+                        </button>
+                        <div class="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col gap-0.5 z-10">
+                            <span class="text-[9.5px] font-extrabold text-amber-200 truncate">${escapeHtml(draft.desc || 'Cliquer pour reprendre ou publier')}</span>
+                            <div class="flex items-center justify-between text-[8px] font-bold text-gray-300">
+                                <span>⏱️ ${Number(draft.netDuration || 0).toFixed(1)}s</span>
+                                <span>${dDate}</span>
+                            </div>
+                        </div>`;
+                    frag.appendChild(div);
+                });
+            }
+
+            if (currentProfileTab === 'drafts') {
+                grid.appendChild(frag);
+                if (myDrafts.length === 0) {
+                    grid.innerHTML = "<div class='col-span-3 sm:col-span-4 md:col-span-5 text-center text-gray-500 text-xs py-10'>Aucun brouillon sauvegardé pour le moment.</div>";
+                }
+                setProfileScreenLoading(false);
+                lucide.createIcons();
+                return;
+            }
+
+            items.sort((a, b) => (b.data.isPinned ? 1 : 0) - (a.data.isPinned ? 1 : 0));
+
             items.forEach(({ id, data: v }) => {
                 const dateStr = formatDateStamp(v.createdAt);
-                const pinnedBadge = v.isPinned ? `<div class="absolute top-1.5 left-1.5 bg-amber-500 text-black text-[8px] font-extrabold px-1.5 py-0.5 rounded flex items-center gap-0.5 z-10">📌 Épinglé</div>` : '';
+                let topBadge = '';
+                if (currentProfileTab === 'videos' && v.isPinned) {
+                    topBadge = `<div class="absolute top-1.5 left-1.5 bg-amber-500 text-black text-[8px] font-extrabold px-1.5 py-0.5 rounded flex items-center gap-0.5 z-10">📌 Épinglé</div>`;
+                } else if (currentProfileTab === 'reposts') {
+                    topBadge = `<div class="absolute top-1.5 left-1.5 bg-emerald-500/90 text-black text-[8px] font-extrabold px-1.5 py-0.5 rounded flex items-center gap-0.5 z-10">🔁 Republié</div>`;
+                } else if (currentProfileTab === 'liked') {
+                    topBadge = `<div class="absolute top-1.5 left-1.5 bg-[#ff2a5f]/90 text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded flex items-center gap-0.5 z-10">❤️ Aimé</div>`;
+                }
                 const div = document.createElement('div');
                 div.className = "bg-[#0c1222] aspect-[3/4] relative rounded-xl overflow-hidden border border-white/10 group cursor-pointer";
                 div.onclick = () => openFullVideo(id);
                 const profThumbUrl = getVideoThumbnail(v.url, (v.thumbnailOffset !== undefined && Number(v.thumbnailOffset) >= (Number(v.trimStart) || 0)) ? v.thumbnailOffset : (v.trimStart || 0), v.coverUrl || "");
                 const profFallbackThumb = getVideoFallbackThumbnail(v.url);
-                div.innerHTML = `${pinnedBadge}<img src="${escapeHtml(profThumbUrl)}" data-fb="${escapeHtml(profFallbackThumb)}" onerror="if(this.dataset.fb && this.src!==this.dataset.fb){this.src=this.dataset.fb;}" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition duration-300"><div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div><div class="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between text-[9px] font-bold text-white drop-shadow-md"><span class="flex items-center gap-0.5"><i data-lucide="play" class="w-2.5 h-2.5 fill-white"></i> ${formatCount(getRealVideoViewsCount(v))}</span><span class="text-gray-300 text-[8px]">${dateStr}</span></div>`;
+                const thumbFilterStyle = v.studioConfig?.customFilterCss ? `filter:${escapeHtml(v.studioConfig.customFilterCss)};` : '';
+                div.innerHTML = `${topBadge}<img src="${escapeHtml(profThumbUrl)}" data-fb="${escapeHtml(profFallbackThumb)}" onerror="if(this.dataset.fb && this.src!==this.dataset.fb){this.src=this.dataset.fb;}" loading="lazy" decoding="async" style="${thumbFilterStyle}" class="w-full h-full object-cover ${v.studioConfig?.filterPreset || ''} group-hover:scale-105 transition duration-300"><div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div><div class="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between text-[9px] font-bold text-white drop-shadow-md"><span class="flex items-center gap-0.5"><i data-lucide="play" class="w-2.5 h-2.5 fill-white"></i> ${formatCount(getRealVideoViewsCount(v))}</span><span class="text-gray-300 text-[8px]">${dateStr}</span></div>`;
                 frag.appendChild(div);
             });
             grid.appendChild(frag);
 
-            if(items.length === 0) grid.innerHTML = "<div class='col-span-3 sm:col-span-4 md:col-span-5 text-center text-gray-500 text-xs py-10'>Aucune vidéo dans cet onglet.</div>";
+            if(items.length === 0 && !(isMe && currentProfileTab === 'videos' && myDrafts.length > 0)) {
+                const emptyMsgMap = {
+                    videos: "Aucune vidéo publiée pour le moment.",
+                    reposts: "Aucune vidéo republiée dans cet onglet.",
+                    liked: "Aucune vidéo aimée dans cet onglet.",
+                    favs: "Aucune vidéo en favoris dans cet onglet."
+                };
+                grid.innerHTML = `<div class='col-span-3 sm:col-span-4 md:col-span-5 text-center text-gray-500 text-xs py-10'>${emptyMsgMap[currentProfileTab] || "Aucune vidéo dans cet onglet."}</div>`;
+            }
             setProfileScreenLoading(false);
             lucide.createIcons(); 
         }
@@ -21672,13 +23146,19 @@
         function initAppLanguageAndStartupState() {
             if (window.__rvStartupLangInitialized) return;
             window.__rvStartupLangInitialized = true;
-            const hasChosenLang = safeGetStorage('rv_lang_chosen_v1', '') === 'true';
             let savedLang = safeGetStorage('rv_lang', '');
             if (!savedLang) {
-                const browserLang = (navigator.language || 'fr').slice(0, 2).toLowerCase();
+                const rawSysLang = (navigator.languages && navigator.languages[0]) || navigator.language || 'fr';
+                const browserLang = String(rawSysLang).slice(0, 2).toLowerCase();
                 const supported = ['fr', 'en', 'es', 'pt', 'de', 'tr', 'id', 'vi', 'hi', 'zh', 'ja', 'ko'];
                 savedLang = supported.includes(browserLang) ? browserLang : 'fr';
                 safeSetStorage('rv_lang', savedLang);
+            }
+            safeSetStorage('rv_lang_chosen_v1', 'true');
+            const firstLangModal = document.getElementById('first-time-lang-modal');
+            if (firstLangModal) {
+                firstLangModal.classList.add('hidden');
+                firstLangModal.classList.remove('flex');
             }
             const sel = document.getElementById('lang-selector');
             if (sel) sel.value = savedLang;
@@ -21686,11 +23166,6 @@
             if (setSel) setSel.value = savedLang;
             window.changeLanguage(savedLang, false);
             updateFeedFitHeaderLabel();
-            if (!hasChosenLang) {
-                setTimeout(() => {
-                    window.openFirstTimeLanguageModal();
-                }, 350);
-            }
             if(!navigator.onLine) {
                 document.getElementById('splash-screen').classList.remove('active');
                 document.getElementById('offline-screen').classList.add('active');
