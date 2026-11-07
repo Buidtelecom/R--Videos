@@ -1843,8 +1843,14 @@
             color: #0f172a !important;
         }
 
-        body.light-theme #profile-screen > div:first-child {
+        body.light-theme #profile-screen > div:first-child,
+        body.light-theme #profile-main-content > div:first-child {
             background: linear-gradient(to bottom, rgba(255, 42, 95, 0.12), #f1f5f9, #f8fafc) !important;
+        }
+        body.light-theme #profile-loading-overlay,
+        body.light-theme #profile-main-content {
+            background: #f8fafc !important;
+            color: #0f172a !important;
         }
         #rv-talent-event-poster,
         body.light-theme #discover-screen #trending-container > div#rv-talent-event-poster {
@@ -20452,6 +20458,74 @@
             });
         }
 
+        function ensureUniquePhotosForAutonomousAccounts(list, seedContext = '') {
+            if (!Array.isArray(list) || list.length === 0) return [];
+            const sorted = sortRealAccountsBeforeVirtual(list);
+            const usedPhotos = new Set();
+            const usedUsernames = new Set();
+            const usedUids = new Set();
+            if (currentProfileViewedData) {
+                if (currentProfileViewedData.uid) usedUids.add(String(currentProfileViewedData.uid));
+                if (currentProfileViewedData.photoURL) usedPhotos.add(String(currentProfileViewedData.photoURL).trim());
+                if (currentProfileViewedData.username) usedUsernames.add(String(currentProfileViewedData.username).trim().toLowerCase());
+            }
+            const seedBase = rvHashStr(String(seedContext || currentProfileViewedData?.uid || 'social_modal'));
+            const maxPool = getSuccessiveCreatedCmAccountsCount();
+            const result = [];
+
+            for (let i = 0; i < sorted.length; i++) {
+                const item = sorted[i];
+                if (!item || !item.uid) continue;
+
+                if (!isAutonomousCmAccount(item)) {
+                    if (!usedUids.has(item.uid)) {
+                        usedUids.add(item.uid);
+                        if (item.photoURL) usedPhotos.add(String(item.photoURL).trim());
+                        if (item.username) usedUsernames.add(String(item.username).trim().toLowerCase());
+                        result.push(item);
+                    }
+                    continue;
+                }
+
+                let cand = item;
+                let candPhoto = String(cand.photoURL || '').trim();
+                let candUser = String(cand.username || '').trim().toLowerCase();
+
+                if (!candPhoto || usedPhotos.has(candPhoto) || usedUsernames.has(candUser) || usedUids.has(cand.uid)) {
+                    let foundReplacement = null;
+                    for (let step = 0; step < 320; step++) {
+                        const idx1 = ((seedBase + i * 37 + step) % maxPool) + 1;
+                        const alt = getAutonomousCameroonianAccountByIndex(idx1);
+                        if (!alt) continue;
+                        const altPhoto = String(alt.photoURL || '').trim();
+                        const altUser = String(alt.username || '').trim().toLowerCase();
+                        if (altPhoto && !usedPhotos.has(altPhoto) && !usedUsernames.has(altUser) && !usedUids.has(alt.uid)) {
+                            foundReplacement = {
+                                ...cand,
+                                uid: alt.uid,
+                                username: alt.username,
+                                photoURL: alt.photoURL,
+                                bio: alt.bio || cand.bio || '',
+                                isVerified: false,
+                                isAutonomousProfile: true
+                            };
+                            break;
+                        }
+                    }
+                    if (!foundReplacement) continue;
+                    cand = foundReplacement;
+                    candPhoto = String(cand.photoURL || '').trim();
+                    candUser = String(cand.username || '').trim().toLowerCase();
+                }
+
+                usedUids.add(cand.uid);
+                if (candPhoto) usedPhotos.add(candPhoto);
+                if (candUser) usedUsernames.add(candUser);
+                result.push(cand);
+            }
+            return result;
+        }
+
         function getDeduplicatedRecentViewers(userData) {
             const seen = new Set();
             const realUnique = [];
@@ -20495,7 +20569,7 @@
                     }
                 }
             }
-            return sortRealAccountsBeforeVirtual(unique);
+            return ensureUniquePhotosForAutonomousAccounts(unique, `viewers_${userData?.uid || ''}`);
         }
 
         window.openProfileSocialModal = (tab = 'likes') => {
@@ -20594,7 +20668,7 @@
                 } catch (e) {}
                 return null;
             }));
-            return sortRealAccountsBeforeVirtual(results.filter(Boolean)).slice(0, PROFILE_RECENT_LIMIT);
+            return ensureUniquePhotosForAutonomousAccounts(results.filter(Boolean), `fetch_${currentProfileViewedData?.uid || ''}`).slice(0, PROFILE_RECENT_LIMIT);
         }
 
         function buildSocialUserRowHTML(person, subLabel = '') {
@@ -20727,7 +20801,8 @@
                         listEl.innerHTML = "<div class='text-center text-xs text-gray-500 py-10'>Aucun abonné pour le moment.</div>";
                         return;
                     }
-                    listEl.innerHTML = sortRealAccountsBeforeVirtual(users).map(u => buildSocialUserRowHTML(u, "Abonné à ce profil")).join('');
+                    const uniqueFollowers = ensureUniquePhotosForAutonomousAccounts(users, `followers_${currentProfileViewedData?.uid || ''}`);
+                    listEl.innerHTML = uniqueFollowers.map(u => buildSocialUserRowHTML(u, "Abonné à ce profil")).join('');
                 } else if (tab === 'following') {
                     const followingUids = Array.isArray(currentProfileViewedData.following)
                         ? currentProfileViewedData.following.filter(id => !isVirtualBotIdOrUser(id))
@@ -20737,7 +20812,8 @@
                         listEl.innerHTML = "<div class='text-center text-xs text-gray-500 py-10'>Aucun abonnement pour le moment.</div>";
                         return;
                     }
-                    listEl.innerHTML = sortRealAccountsBeforeVirtual(users).map(u => buildSocialUserRowHTML(u, "Suivi par ce profil")).join('');
+                    const uniqueFollowing = ensureUniquePhotosForAutonomousAccounts(users, `following_${currentProfileViewedData?.uid || ''}`);
+                    listEl.innerHTML = uniqueFollowing.map(u => buildSocialUserRowHTML(u, "Suivi par ce profil")).join('');
                 } else if (tab === 'likes') {
                     // Toujours collecter les comptes réels en premier, puis compléter avec les comptes virtuels
                     const realLikersMap = new Map();
@@ -20808,7 +20884,7 @@
                         } catch (e) {}
                         return item.username ? item : null;
                     }));
-                    sortRealAccountsBeforeVirtual(hydrated.filter(Boolean)).slice(0, PROFILE_RECENT_LIMIT).forEach(u => finalLikers.push(u));
+                    ensureUniquePhotosForAutonomousAccounts(hydrated.filter(Boolean), `likes_${currentProfileViewedData?.uid || ''}`).slice(0, PROFILE_RECENT_LIMIT).forEach(u => finalLikers.push(u));
 
                     if (finalLikers.length === 0) {
                         listEl.innerHTML = "<div class='text-center text-xs text-gray-500 py-10'>Aucune mention J'aime reçue récemment.</div>";
@@ -20861,7 +20937,7 @@
                         } catch (e) {}
                         return vItem;
                     }));
-                    const validViewers = sortRealAccountsBeforeVirtual(hydratedViewers.filter(Boolean)).slice(0, PROFILE_RECENT_LIMIT);
+                    const validViewers = ensureUniquePhotosForAutonomousAccounts(hydratedViewers.filter(Boolean), `views_${currentProfileViewedData?.uid || ''}`).slice(0, PROFILE_RECENT_LIMIT);
                     listEl.innerHTML = validViewers.map(u => {
                         const whenStr = u.ts ? `A consulté le profil • ${formatDateStamp(new Date(u.ts))}` : "A consulté le profil récemment";
                         return buildSocialUserRowHTML(u, whenStr);
