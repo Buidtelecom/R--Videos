@@ -10195,16 +10195,59 @@
             }
         }
 
-        function getCleanShareableVideoUrl(url, vData = null, username = '') {
-            const safeName = (username || (vData && vData.username) || 'createur').replace(/^@+/, '');
-            const watermarked = getWatermarkedUrl(url || '', safeName, vData);
+        const RV_APP_DEEP_LINK_BASE = "https://rvideosapp.vercel.app";
+
+        function registerFirebaseDeepLink(dlDocId, payload = {}) {
+            if (!dlDocId || !db) return;
             try {
-                const parsed = new URL(watermarked, window.location.href);
-                if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-                    return parsed.href;
-                }
+                setDoc(doc(db, "deep_links", String(dlDocId)), {
+                    ...payload,
+                    baseDomain: RV_APP_DEEP_LINK_BASE,
+                    updatedAt: serverTimestamp()
+                }, { merge: true }).catch(() => {});
             } catch (e) {}
-            return window.location.href;
+        }
+
+        function buildFirebaseVideoDeepLink(videoId, username = '', rawUrl = '') {
+            const safeName = String(username || 'createur').replace(/^@+/, '').trim();
+            if (videoId) {
+                const deepLinkUrl = `${RV_APP_DEEP_LINK_BASE}/?video=${encodeURIComponent(videoId)}${safeName ? `&u=${encodeURIComponent(safeName)}` : ''}`;
+                registerFirebaseDeepLink(`video_${videoId}`, {
+                    type: "video",
+                    targetId: String(videoId),
+                    videoId: String(videoId),
+                    username: safeName,
+                    url: deepLinkUrl,
+                    rawVideoUrl: String(rawUrl || '')
+                });
+                return deepLinkUrl;
+            }
+            return RV_APP_DEEP_LINK_BASE;
+        }
+
+        function buildFirebaseProfileDeepLink(uid, username = '') {
+            const safeName = String(username || 'utilisateur').replace(/^@+/, '').trim();
+            if (uid) {
+                const deepLinkUrl = `${RV_APP_DEEP_LINK_BASE}/?user=${encodeURIComponent(uid)}${safeName ? `&u=${encodeURIComponent(safeName)}` : ''}`;
+                registerFirebaseDeepLink(`user_${uid}`, {
+                    type: "profile",
+                    targetId: String(uid),
+                    userId: String(uid),
+                    username: safeName,
+                    url: deepLinkUrl
+                });
+                return deepLinkUrl;
+            }
+            return safeName ? `${RV_APP_DEEP_LINK_BASE}/?u=${encodeURIComponent(safeName)}` : RV_APP_DEEP_LINK_BASE;
+        }
+
+        function getCleanShareableVideoUrl(url, vData = null, username = '', videoId = '') {
+            const safeName = (username || (vData && vData.username) || 'createur').replace(/^@+/, '');
+            const resolvedVideoId = videoId || (vData && vData.id) || '';
+            if (resolvedVideoId) {
+                return buildFirebaseVideoDeepLink(resolvedVideoId, safeName, url);
+            }
+            return RV_APP_DEEP_LINK_BASE;
         }
 
         window.closeNativePhoneShareSheet = () => {
@@ -10375,7 +10418,7 @@
         window.shareVideo = (url, videoId, username) => {
             const vData = (videoId && profileVideosData && profileVideosData[videoId]) ? profileVideosData[videoId] : null;
             const safeName = (username || (vData && vData.username) || 'createur').replace(/^@+/, '');
-            const cleanVideoUrl = getCleanShareableVideoUrl(url, vData, safeName);
+            const cleanVideoUrl = getCleanShareableVideoUrl(url, vData, safeName, videoId);
             const shareTitle = `Vidéo de @${safeName} sur R-Videos`;
             const shareText = `Regarde cette vidéo de @${safeName} sur R-Videos !`;
             const fullShareText = `${shareText}\n${cleanVideoUrl}`;
@@ -10411,11 +10454,13 @@
 
         window.shareMyProfile = () => {
             if (!currentUserData) return;
+            const myUid = (auth.currentUser && auth.currentUser.uid) || currentUserData.uid || '';
+            const profileUrl = buildFirebaseProfileDeepLink(myUid, currentUserData.username);
             const shareText = `Rejoins @${currentUserData.username} sur R-Videos !`;
             if (navigator.share) {
-                navigator.share({ title: 'R-Videos', text: shareText, url: window.location.href }).catch(() => {});
+                navigator.share({ title: 'R-Videos', text: shareText, url: profileUrl }).catch(() => {});
             } else {
-                copyTextSafe(shareText + " " + window.location.href);
+                copyTextSafe(shareText + " " + profileUrl);
             }
         };
 
@@ -13025,7 +13070,95 @@
                 
                 loadFeed();
             }
+            handleIncomingFirebaseDeepLink();
         });
+
+        let hasHandledInitialDeepLink = false;
+        async function handleIncomingFirebaseDeepLink(forceCheck = false) {
+            if (hasHandledInitialDeepLink && !forceCheck) return;
+            try {
+                const searchParams = new URLSearchParams(window.location.search || "");
+                const rawHash = (window.location.hash || "").replace(/^#\/?/, "");
+                const hashParams = new URLSearchParams(rawHash.includes("=") ? rawHash : "");
+
+                let dlId = searchParams.get("dl") || searchParams.get("link") || hashParams.get("dl") || "";
+                let videoId = searchParams.get("video") || searchParams.get("v") || searchParams.get("videoId") || hashParams.get("video") || hashParams.get("v") || "";
+                let userId = searchParams.get("user") || searchParams.get("profile") || searchParams.get("uid") || hashParams.get("user") || hashParams.get("profile") || "";
+                let username = searchParams.get("u") || hashParams.get("u") || "";
+                let storyUid = searchParams.get("story") || hashParams.get("story") || "";
+
+                if (!videoId && rawHash.startsWith("video/")) videoId = decodeURIComponent(rawHash.slice(6));
+                if (!userId && rawHash.startsWith("user/")) userId = decodeURIComponent(rawHash.slice(5));
+                if (!storyUid && rawHash.startsWith("story/")) storyUid = decodeURIComponent(rawHash.slice(6));
+
+                if (!dlId && !videoId && !userId && !username && !storyUid) return;
+                hasHandledInitialDeepLink = true;
+
+                if (dlId) {
+                    try {
+                        const dlSnap = await getDoc(doc(db, "deep_links", String(dlId)));
+                        if (dlSnap.exists()) {
+                            const dlData = dlSnap.data() || {};
+                            setDoc(doc(db, "deep_links", String(dlId)), { clicks: increment(1), lastOpenedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+                            if (dlData.type === "video" && (dlData.videoId || dlData.targetId)) videoId = dlData.videoId || dlData.targetId;
+                            else if (dlData.type === "profile" && (dlData.userId || dlData.targetId)) userId = dlData.userId || dlData.targetId;
+                            else if (dlData.type === "story" && dlData.targetId) storyUid = dlData.targetId;
+                        }
+                    } catch (e) {}
+                }
+
+                if (videoId) {
+                    setDoc(doc(db, "deep_links", `video_${videoId}`), {
+                        type: "video",
+                        targetId: String(videoId),
+                        videoId: String(videoId),
+                        clicks: increment(1),
+                        lastOpenedAt: serverTimestamp()
+                    }, { merge: true }).catch(() => {});
+                    await window.openFullVideo(String(videoId));
+                } else if (storyUid) {
+                    setDoc(doc(db, "deep_links", `story_${storyUid}`), {
+                        type: "story",
+                        targetId: String(storyUid),
+                        clicks: increment(1),
+                        lastOpenedAt: serverTimestamp()
+                    }, { merge: true }).catch(() => {});
+                    try {
+                        const uSnap = await getDoc(doc(db, "users", String(storyUid)));
+                        if (uSnap.exists() && typeof ingestUserStoriesFromDoc === "function") {
+                            ingestUserStoriesFromDoc(String(storyUid), uSnap.data());
+                        }
+                    } catch (e) {}
+                    window.openStoryViewer(String(storyUid), 0);
+                } else if (userId || username) {
+                    let resolvedUid = userId;
+                    if (!resolvedUid && username) {
+                        const cleanU = String(username).replace(/^@+/, "").trim();
+                        if (cleanU) {
+                            const uQuery = await getDocs(query(collection(db, "users"), where("username", "==", cleanU), limit(1)));
+                            if (!uQuery.empty) resolvedUid = uQuery.docs[0].id;
+                        }
+                    }
+                    if (resolvedUid) {
+                        setDoc(doc(db, "deep_links", `user_${resolvedUid}`), {
+                            type: "profile",
+                            targetId: String(resolvedUid),
+                            userId: String(resolvedUid),
+                            clicks: increment(1),
+                            lastOpenedAt: serverTimestamp()
+                        }, { merge: true }).catch(() => {});
+                        await window.viewUserProfile(String(resolvedUid), { fromDeepLink: true });
+                    }
+                }
+
+                if (window.history && typeof window.history.replaceState === "function") {
+                    const cleanPath = window.location.pathname || "/";
+                    window.history.replaceState({}, document.title, cleanPath);
+                }
+            } catch (e) {}
+        }
+        window.addEventListener("hashchange", () => handleIncomingFirebaseDeepLink(true));
+        window.addEventListener("popstate", () => handleIncomingFirebaseDeepLink(true));
 
         window.navigateTo = (screen) => {
             if (screen === 'inbox' || screen === 'profile' || screen === 'discover') {
@@ -19682,7 +19815,17 @@
         };
         
         window.openFullVideo = async (id) => { 
-            const data = profileVideosData[id]; 
+            if (!id) return;
+            let data = profileVideosData[id]; 
+            if (!data) {
+                try {
+                    const vSnap = await getDoc(doc(db, "videos", String(id)));
+                    if (vSnap.exists()) {
+                        data = { id: vSnap.id, ...vSnap.data() };
+                        profileVideosData[id] = data;
+                    }
+                } catch (e) {}
+            }
             if (!data) return; 
             data.id = id;
             // Pause any background feed video first so audio never overlaps
@@ -21454,11 +21597,18 @@
                 setProfileScreenLoading(false);
             }
         };
-        window.viewUserProfile = async (uid) => {
-            if(!auth.currentUser) { checkAuth(); return; }
-            if(uid === auth.currentUser.uid) return openMyProfile();
+        window.viewUserProfile = async (uid, options = {}) => {
+            if(!auth.currentUser && !(options && options.fromDeepLink)) { checkAuth(); return; }
+            if(auth.currentUser && uid === auth.currentUser.uid) return openMyProfile();
             setProfileScreenLoading(true);
-            navigateTo('profile');
+            if (!auth.currentUser && options && options.fromDeepLink) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                stopMasterAudio(); document.querySelectorAll('video').forEach(v => v.pause());
+                document.getElementById('profile-screen')?.classList.add('active');
+                updateNavUI('profile');
+            } else {
+                navigateTo('profile');
+            }
             if (isVirtualBotIdOrUser(uid)) {
                 setProfileScreenLoading(false);
                 return;
@@ -22419,12 +22569,12 @@
             const adminContainer = document.getElementById('admin-actions');
             adminContainer.classList.add('hidden'); adminContainer.innerHTML = '';
             if(!isMe) { 
-                const btn = document.getElementById('btn-follow'); const isF = data.followers?.includes(auth.currentUser.uid); updateFollowButtonUI(btn, isF); 
-                const isBlocked = currentUserData.blockedUsers && currentUserData.blockedUsers.includes(data.uid);
+                const btn = document.getElementById('btn-follow'); const isF = !!(auth.currentUser && data.followers?.includes(auth.currentUser.uid)); updateFollowButtonUI(btn, isF); 
+                const isBlocked = !!(currentUserData && currentUserData.blockedUsers && currentUserData.blockedUsers.includes(data.uid));
                 const blockBtn = document.getElementById('btn-block');
                 if (isBlocked) { blockBtn.innerHTML = '<i data-lucide="shield" class="w-4 h-4"></i>'; blockBtn.classList.add('bg-rose-900', 'text-white'); blockBtn.classList.remove('text-rose-400'); } else { blockBtn.innerHTML = '<i data-lucide="shield-off" class="w-4 h-4"></i>'; blockBtn.classList.remove('bg-rose-900', 'text-white'); blockBtn.classList.add('text-rose-400'); }
                 
-                if (currentUserData.email === VIP_EMAIL && (data.email || '').toLowerCase().trim() !== VIP_EMAIL.toLowerCase()) {
+                if (currentUserData && currentUserData.email === VIP_EMAIL && (data.email || '').toLowerCase().trim() !== VIP_EMAIL.toLowerCase()) {
                     adminContainer.classList.remove('hidden');
                     adminContainer.innerHTML = `<button onclick="toggleBan('${data.uid}')" class="w-full bg-rose-950 hover:bg-rose-900 text-rose-200 font-bold py-2.5 rounded-xl mt-2 border border-rose-500/40 uppercase tracking-widest text-[11px]">⚠️ Bannir cet utilisateur</button>`;
                 }
