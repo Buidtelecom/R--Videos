@@ -3397,6 +3397,11 @@
 
         <!-- 4. PROFILE SCREEN (Tablet & Phone Responsive) -->
         <div id="profile-screen" class="screen bg-[#05070e] overflow-y-auto pb-24 no-scrollbar">
+            <div id="profile-loading-overlay" class="hidden flex-col items-center justify-center min-h-[82vh] px-6 text-center select-none">
+                <div class="w-11 h-11 rounded-full border-[3px] border-[#ff2a5f]/20 border-t-[#ff2a5f] animate-spin mb-3"></div>
+                <div class="text-xs font-bold text-gray-400 tracking-wide">Chargement du profil...</div>
+            </div>
+            <div id="profile-main-content">
             <div class="relative pt-6 pb-4 px-4 bg-gradient-to-b from-[#ff2a5f]/20 via-[#0c1222] to-[#05070e]">
                 <div class="max-w-4xl mx-auto w-full">
                     <div class="flex justify-between items-center mb-4">
@@ -3498,6 +3503,7 @@
                     <div id="tab-profile-favs" class="flex-1 py-3 text-center border-b-2 border-transparent text-gray-500 cursor-pointer transition-colors" onclick="switchProfileTab('favs')"><i data-lucide="bookmark" class="mx-auto w-5 h-5"></i></div>
                 </div>
                 <div id="profile-videos-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2"></div>
+            </div>
             </div>
         </div>
 
@@ -8297,6 +8303,89 @@
         const rvUsedLikeValues = new Set();
         const rvGraduatedQuotaByVideoId = new Map();
         const rvAllKnownVideosCatalog = new Map();
+        const rvVerifiedRealCommentsCountMap = new Map();
+        const rvVerifyingCommentsPromises = new Map();
+        const rvFrozenAutoCommentTargetByVideoId = new Map();
+
+        function resolveCanonicalVideoId(videoData, explicitId = '') {
+            if (explicitId && String(explicitId).trim()) return String(explicitId).trim();
+            if (videoData && typeof videoData === 'object') {
+                if (videoData.id && String(videoData.id).trim()) return String(videoData.id).trim();
+                if (typeof profileVideosData === 'object' && profileVideosData) {
+                    for (const [k, val] of Object.entries(profileVideosData)) {
+                        if (val === videoData || (videoData.url && val && val.url === videoData.url)) {
+                            videoData.id = k;
+                            return k;
+                        }
+                    }
+                }
+                return String(videoData.url || videoData.description || 'vid_default');
+            }
+            return 'vid_default';
+        }
+
+        function getVerifiedRealCommentsCount(vidId, videoData) {
+            const cId = resolveCanonicalVideoId(videoData, vidId);
+            if (cId && rvVerifiedRealCommentsCountMap.has(cId)) {
+                return Math.max(0, Number(rvVerifiedRealCommentsCountMap.get(cId) || 0));
+            }
+            return Math.max(0, Number(videoData?.commentCount || 0));
+        }
+
+        function syncVideoCommentCountElementsInDom(vidId, exactTotalCount) {
+            if (!vidId) return;
+            const safeTotal = Math.max(0, Number(exactTotalCount || 0));
+            document.querySelectorAll(`.video-card[data-id="${vidId}"] .comment-count`).forEach(countSpan => {
+                countSpan.setAttribute('data-raw-count', String(safeTotal));
+                countSpan.innerText = formatCount(safeTotal);
+            });
+        }
+
+        async function verifyAndSyncExactVideoCommentsCount(vidId) {
+            if (!vidId) return 0;
+            const cId = String(vidId).trim();
+            if (rvVerifiedRealCommentsCountMap.has(cId)) {
+                const vObj = (typeof profileVideosData === 'object' && profileVideosData && profileVideosData[cId]) ? profileVideosData[cId] : { id: cId };
+                if (vObj && typeof vObj === 'object') {
+                    vObj.id = cId;
+                    vObj.commentCount = rvVerifiedRealCommentsCountMap.get(cId);
+                }
+                const exactTotal = getEffectiveCommentsCount(vObj, cId);
+                syncVideoCommentCountElementsInDom(cId, exactTotal);
+                return rvVerifiedRealCommentsCountMap.get(cId);
+            }
+            if (rvVerifyingCommentsPromises.has(cId)) {
+                return rvVerifyingCommentsPromises.get(cId);
+            }
+            const p = (async () => {
+                try {
+                    const snap = await getDocs(collection(db, `videos/${cId}/comments`));
+                    let realCount = 0;
+                    snap.forEach(d => {
+                        const cData = d.data();
+                        if (!isVirtualBotIdOrUser(cData.userId, cData.email, cData.isBot) && !String(d.id || '').startsWith('cm_auto_c_')) {
+                            realCount++;
+                        }
+                    });
+                    rvVerifiedRealCommentsCountMap.set(cId, realCount);
+                    if (typeof profileVideosData === 'object' && profileVideosData && profileVideosData[cId]) {
+                        profileVideosData[cId].id = cId;
+                        profileVideosData[cId].commentCount = realCount;
+                    }
+                    const vObj = (typeof profileVideosData === 'object' && profileVideosData && profileVideosData[cId]) ? profileVideosData[cId] : { id: cId, commentCount: realCount };
+                    const exactTotal = getEffectiveCommentsCount(vObj, cId);
+                    syncVideoCommentCountElementsInDom(cId, exactTotal);
+                    return realCount;
+                } catch (e) {
+                    const fallback = Math.max(0, Number(profileVideosData?.[cId]?.commentCount || 0));
+                    return fallback;
+                } finally {
+                    rvVerifyingCommentsPromises.delete(cId);
+                }
+            })();
+            rvVerifyingCommentsPromises.set(cId, p);
+            return p;
+        }
 
         function rvHashStr(str) {
             const s = String(str || "rv_default");
@@ -8471,24 +8560,24 @@
             });
         }
 
-        function computeVideoAutonomousMetricsSnapshot(videoData) {
-            if (!videoData) return { baseLikes: 0, baseComments: 0, baseFavs: 0, baseShares: 0 };
-            const vidId = String(videoData.id || videoData.url || videoData.description || 'vid_default');
+        function computeVideoAutonomousMetricsSnapshot(videoData, explicitId = '') {
+            if (!videoData && !explicitId) return { baseLikes: 0, baseComments: 0, baseFavs: 0, baseShares: 0 };
+            const vidId = resolveCanonicalVideoId(videoData, explicitId);
             if (rvSessionFrozenMetrics.has(vidId)) {
                 return rvSessionFrozenMetrics.get(vidId);
             }
 
             const h = rvHashStr(vidId);
-            const realHumanLikes = Array.isArray(videoData.likedBy)
+            const realHumanLikes = Array.isArray(videoData?.likedBy)
                 ? new Set(videoData.likedBy.filter(u => !isVirtualBotIdOrUser(u) && !String(u).startsWith('cm_auto_'))).size
                 : 0;
-            const realHumanFavs = Array.isArray(videoData.favorites)
+            const realHumanFavs = Array.isArray(videoData?.favorites)
                 ? new Set(videoData.favorites.filter(u => !isVirtualBotIdOrUser(u) && !String(u).startsWith('cm_auto_'))).size
                 : 0;
-            const realHumanShares = Array.isArray(videoData.sharedBy)
+            const realHumanShares = Array.isArray(videoData?.sharedBy)
                 ? new Set(videoData.sharedBy.filter(u => !isVirtualBotIdOrUser(u) && !String(u).startsWith('cm_auto_'))).size
                 : 0;
-            const realComments = Math.max(0, Number(videoData.commentCount || 0));
+            const realComments = getVerifiedRealCommentsCount(vidId, videoData);
 
             const rewatches = Math.max(0, Number(videoData.rewatches || 0));
             const completions = Math.max(0, Number(videoData.completions || 0));
@@ -8571,6 +8660,11 @@
             if (baseLikes >= RV_CM_MIN_LIKES && baseComments < 3 && (RV_CM_MAX_TOTAL_COMMENTS - realComments) >= 3) {
                 baseComments = Math.min(RV_CM_MAX_VIRTUAL_COMMENTS, 3 + (h % 4));
             }
+            if (rvFrozenAutoCommentTargetByVideoId.has(vidId)) {
+                baseComments = rvFrozenAutoCommentTargetByVideoId.get(vidId);
+            } else {
+                rvFrozenAutoCommentTargetByVideoId.set(vidId, baseComments);
+            }
             const totalComments = Math.min(RV_CM_MAX_TOTAL_COMMENTS, realComments + baseComments);
 
             let targetFavs = 0;
@@ -8620,16 +8714,18 @@
             return Math.max(calculatedViews, Number(videoData.views || 0));
         }
 
-        function getEffectiveCommentsCount(videoData) {
-            if (!videoData) return 0;
-            const realComments = Math.max(0, Number(videoData.commentCount || 0));
-            const snap = computeVideoAutonomousMetricsSnapshot(videoData);
-            const likes = getRealLikesCount(videoData);
-            const rawTotal = Math.min(RV_CM_MAX_TOTAL_COMMENTS, realComments + snap.baseComments);
-            if (likes > 1 && rawTotal >= likes) {
-                return Math.max(realComments, likes - 1);
+        function getEffectiveCommentsCount(videoData, explicitId = '') {
+            if (!videoData && !explicitId) return 0;
+            const canonicalId = resolveCanonicalVideoId(videoData, explicitId);
+            const vObj = (videoData && typeof videoData === 'object')
+                ? videoData
+                : ((canonicalId && typeof profileVideosData === 'object' && profileVideosData[canonicalId]) ? profileVideosData[canonicalId] : { id: canonicalId });
+            if (vObj && typeof vObj === 'object' && !vObj.id && canonicalId && canonicalId !== 'vid_default') {
+                vObj.id = canonicalId;
             }
-            return rawTotal;
+            const realComments = getVerifiedRealCommentsCount(canonicalId, vObj);
+            const autoComments = canonicalId ? generateSmartAutonomousCommentsForVideo(canonicalId, vObj) : [];
+            return realComments + autoComments.length;
         }
 
         function getRealFavoritesCount(videoData) {
@@ -8678,12 +8774,25 @@
         ];
 
         function generateSmartAutonomousCommentsForVideo(vidId, vData) {
-            if (!vidId) return [];
-            const snap = computeVideoAutonomousMetricsSnapshot(vData || { id: vidId });
-            const visibleCount = Math.min(RV_CM_MAX_VIRTUAL_COMMENTS, Math.max(0, snap.baseComments || 0));
+            const canonicalId = resolveCanonicalVideoId(vData, vidId);
+            if (!canonicalId) return [];
+            const resolvedData = (vData && typeof vData === 'object')
+                ? (vData.id ? vData : { ...vData, id: canonicalId })
+                : ((typeof profileVideosData === 'object' && profileVideosData && profileVideosData[canonicalId])
+                    ? { ...profileVideosData[canonicalId], id: canonicalId }
+                    : { id: canonicalId });
+            const snap = computeVideoAutonomousMetricsSnapshot(resolvedData, canonicalId);
+            const realComments = getVerifiedRealCommentsCount(canonicalId, resolvedData);
+            const likes = getRealLikesCount(resolvedData);
+            let maxTotalAllowed = RV_CM_MAX_TOTAL_COMMENTS;
+            if (likes > 1) {
+                maxTotalAllowed = Math.min(RV_CM_MAX_TOTAL_COMMENTS, Math.max(realComments, likes - 1));
+            }
+            const maxVirtualAllowed = Math.max(0, Math.min(RV_CM_MAX_VIRTUAL_COMMENTS, maxTotalAllowed - realComments));
+            const visibleCount = Math.min(maxVirtualAllowed, Math.max(0, snap.baseComments || 0));
             if (visibleCount <= 0) return [];
 
-            const h = rvHashStr(vidId);
+            const h = rvHashStr(canonicalId);
             let deletedSet = new Set();
             try {
                 const rawDel = JSON.parse(safeGetStorage('rv_deleted_auto_comments_v1', '[]') || '[]');
@@ -8695,7 +8804,8 @@
                 likedMap = JSON.parse(safeGetStorage('rv_liked_auto_comments_v1', '{}') || '{}') || {};
             } catch (e) {}
 
-            const maxActiveAcc = getSuccessiveCreatedCmAccountsCount();
+            // Utiliser un pool déterministe fixe pour que la liste de commentaires autonomes d'une publication ne varie jamais d'un instant à l'autre
+            const maxActiveAcc = 1200;
             const nowMs = Date.now();
             const baseCreatedMs = vData?.createdAt?.toMillis
                 ? vData.createdAt.toMillis()
@@ -8707,7 +8817,7 @@
             const usedPhotoUrls = new Set();
             const usedUsernames = new Set();
             for (let i = 0; i < visibleCount; i++) {
-                const cId = `cm_auto_c_${vidId}_${i}`;
+                const cId = `cm_auto_c_${canonicalId}_${i}`;
                 if (deletedSet.has(cId)) continue;
 
                 let accIdx = ((h + i * 193) % maxActiveAcc) + 1;
@@ -12759,7 +12869,11 @@
                 tabVideos.classList.remove('border-[#ff2a5f]', 'text-white');
                 tabVideos.classList.add('text-gray-500', 'border-transparent');
             }
-            if (currentProfileUid) viewUserProfile(currentProfileUid);
+            if (currentProfileUid && currentProfileViewedData && currentProfileViewedData.uid === currentProfileUid) {
+                renderProfile(currentProfileViewedData, !!(auth.currentUser && currentProfileUid === auth.currentUser.uid), { keepVisible: true });
+            } else if (currentProfileUid) {
+                viewUserProfile(currentProfileUid);
+            }
         };
 
         window.switchFeed = (mode) => {
@@ -13031,9 +13145,9 @@
                 let videos = [];
                 snapshot.forEach(doc => {
                     if (renderedFeedVideoIds.has(doc.id)) return;
-                    const data = doc.data();
+                    const data = { id: doc.id, ...doc.data() };
                     profileVideosData[doc.id] = data;
-                    videos.push({ id: doc.id, ...data });
+                    videos.push(data);
                 });
                 
                 videos = videos.filter(data => {
@@ -13104,6 +13218,14 @@
                         }
                     }
                 }
+
+                await Promise.race([
+                    Promise.all(videos.map(async (v) => {
+                        const exactReal = await verifyAndSyncExactVideoCommentsCount(v.id);
+                        v.commentCount = exactReal;
+                    })),
+                    new Promise(r => setTimeout(r, 1500))
+                ]);
 
                 assignGraduatedPopularityQuotas(videos);
 
@@ -16744,7 +16866,9 @@
                 getDoc(doc(db, "videos", id)).then((vidSnap) => {
                     if (vidSnap.exists()) {
                         const vData = vidSnap.data();
-                        profileVideosData[id] = { ...(profileVideosData[id] || {}), ...vData };
+                        const prevVerified = rvVerifiedRealCommentsCountMap.has(id) ? rvVerifiedRealCommentsCountMap.get(id) : undefined;
+                        profileVideosData[id] = { ...(profileVideosData[id] || {}), ...vData, id };
+                        if (prevVerified !== undefined) profileVideosData[id].commentCount = prevVerified;
                         if (currentVideoIdForComments === id) {
                             currentVideoAuthorId = vData.userId;
                             updateCommentOwnerPollButtonVisibility();
@@ -16866,12 +16990,13 @@
             const activeVideoId = currentVideoIdForComments;
             window.closeCommentPollBuilder();
 
-            document.querySelectorAll(`.video-card[data-id="${activeVideoId}"] .comment-count`).forEach(countSpan => {
-                updateCountUI(countSpan, 1);
-            });
+            const nextPollRealCount = getVerifiedRealCommentsCount(activeVideoId, profileVideosData[activeVideoId]) + 1;
+            rvVerifiedRealCommentsCountMap.set(activeVideoId, nextPollRealCount);
             if (profileVideosData[activeVideoId]) {
-                profileVideosData[activeVideoId].commentCount = (Number(profileVideosData[activeVideoId].commentCount) || 0) + 1;
+                profileVideosData[activeVideoId].id = activeVideoId;
+                profileVideosData[activeVideoId].commentCount = nextPollRealCount;
             }
+            syncVideoCommentCountElementsInDom(activeVideoId, getEffectiveCommentsCount(profileVideosData[activeVideoId] || { id: activeVideoId }, activeVideoId));
 
             const pollObject = {
                 question: escapeHtml(questionText),
@@ -17393,15 +17518,24 @@
                 let allComments = [];
                 snap.forEach(d => {
                     const cData = d.data();
-                    if (!isVirtualBotIdOrUser(cData.userId, cData.email, cData.isBot)) {
+                    if (!isVirtualBotIdOrUser(cData.userId, cData.email, cData.isBot) && !String(d.id || '').startsWith('cm_auto_c_')) {
                         allComments.push({ id: d.id, ...cData });
                     }
                 });
-                const autoComments = generateSmartAutonomousCommentsForVideo(id, profileVideosData[id]);
+                const exactRealCommentsCount = allComments.length;
+                rvVerifiedRealCommentsCountMap.set(id, exactRealCommentsCount);
+                if (profileVideosData[id]) {
+                    profileVideosData[id].id = id;
+                    profileVideosData[id].commentCount = exactRealCommentsCount;
+                }
+                const autoComments = generateSmartAutonomousCommentsForVideo(id, profileVideosData[id] || { id, commentCount: exactRealCommentsCount });
                 const existingIds = new Set(allComments.map(c => c.id));
                 autoComments.forEach(ac => {
                     if (!existingIds.has(ac.id)) allComments.push(ac);
                 });
+                // Garantir que le nombre mentionné sur la publication est exactement égal au nombre de commentaires présents dans celle-ci
+                syncVideoCommentCountElementsInDom(id, allComments.length);
+
                 const videoOwnerForHydration = currentVideoAuthorId || profileVideosData[id]?.userId || '';
                 await hydrateUserProfilesMap([...allComments.map(c => c.userId), videoOwnerForHydration].filter(Boolean));
 
@@ -17416,9 +17550,15 @@
                     let resolvedParentId = c.parentCommentId || null;
                     // Walk up to root parent if parent itself was a reply
                     if (resolvedParentId && byId.has(resolvedParentId)) {
-                        const parentObj = byId.get(resolvedParentId);
-                        if (parentObj && parentObj.parentCommentId && byId.has(parentObj.parentCommentId)) {
-                            resolvedParentId = parentObj.parentCommentId;
+                        let walkGuard = 0;
+                        while (resolvedParentId && byId.has(resolvedParentId) && walkGuard < 15) {
+                            const parentObj = byId.get(resolvedParentId);
+                            if (parentObj && parentObj.parentCommentId && byId.has(parentObj.parentCommentId) && parentObj.parentCommentId !== resolvedParentId) {
+                                resolvedParentId = parentObj.parentCommentId;
+                                walkGuard++;
+                            } else {
+                                break;
+                            }
                         }
                     } else if (!resolvedParentId && c.text && c.text.startsWith('@')) {
                         // Legacy fallback: match @username to the most recent prior top-level comment by that user
@@ -17441,6 +17581,18 @@
                         topLevelComments.push(c);
                     }
                 });
+
+                // Garantir qu'aucune réponse n'est orpheline afin que 100% des éléments de allComments soient affichés
+                const topLevelIdSet = new Set(topLevelComments.map(tc => tc.id));
+                for (const [pId, repList] of Array.from(repliesByParentId.entries())) {
+                    if (!topLevelIdSet.has(pId)) {
+                        repList.forEach(orphanRep => {
+                            topLevelComments.push(orphanRep);
+                            topLevelIdSet.add(orphanRep.id);
+                        });
+                        repliesByParentId.delete(pId);
+                    }
+                }
 
                 const resolvedVideoOwnerUid = currentVideoAuthorId || profileVideosData[id]?.userId || '';
                 const vDataForOwner = profileVideosData[id] || {};
@@ -17704,6 +17856,7 @@
                     const btnInDom = document.querySelector(`.comment-like-btn[data-cid="${cId}"]`);
                     const rowEl = btnInDom ? (btnInDom.closest('.rounded-xl') || btnInDom.closest('.rounded-2xl')) : null;
                     if (rowEl) rowEl.remove();
+                    syncVideoCommentCountElementsInDom(vidId, getEffectiveCommentsCount(profileVideosData[vidId] || { id: vidId }, vidId));
                     return;
                 }
                 const cRef = doc(db, `videos/${vidId}/comments`, cId);
@@ -17714,12 +17867,13 @@
                     showToast("Accès refusé : vous ne pouvez supprimer que vos propres commentaires.", "error");
                     return;
                 }
-                document.querySelectorAll(`.video-card[data-id="${vidId}"] .comment-count`).forEach(countSpan => {
-                    updateCountUI(countSpan, -1);
-                });
+                const nextRealAfterDel = Math.max(0, getVerifiedRealCommentsCount(vidId, profileVideosData[vidId]) - 1);
+                rvVerifiedRealCommentsCountMap.set(vidId, nextRealAfterDel);
                 if (profileVideosData[vidId]) {
-                    profileVideosData[vidId].commentCount = Math.max(0, (Number(profileVideosData[vidId].commentCount) || 1) - 1);
+                    profileVideosData[vidId].id = vidId;
+                    profileVideosData[vidId].commentCount = nextRealAfterDel;
                 }
+                syncVideoCommentCountElementsInDom(vidId, getEffectiveCommentsCount(profileVideosData[vidId] || { id: vidId }, vidId));
                 const btnInDom = document.querySelector(`.comment-like-btn[data-cid="${cId}"]`);
                 const rowEl = btnInDom ? (btnInDom.closest('.rounded-xl') || btnInDom.closest('.rounded-2xl')) : null;
                 if (rowEl) {
@@ -17806,12 +17960,13 @@
             window.cancelCommentReply();
             window.clearPendingCommentSticker();
 
-            document.querySelectorAll(`.video-card[data-id="${activeVideoId}"] .comment-count`).forEach(countSpan => {
-                updateCountUI(countSpan, 1);
-            });
+            const nextSendRealCount = getVerifiedRealCommentsCount(activeVideoId, profileVideosData[activeVideoId]) + 1;
+            rvVerifiedRealCommentsCountMap.set(activeVideoId, nextSendRealCount);
             if (profileVideosData[activeVideoId]) {
-                profileVideosData[activeVideoId].commentCount = (Number(profileVideosData[activeVideoId].commentCount) || 0) + 1;
+                profileVideosData[activeVideoId].id = activeVideoId;
+                profileVideosData[activeVideoId].commentCount = nextSendRealCount;
             }
+            syncVideoCommentCountElementsInDom(activeVideoId, getEffectiveCommentsCount(profileVideosData[activeVideoId] || { id: activeVideoId }, activeVideoId));
 
             // Optimistic comment row so the user sees their comment appear immediately
             const listEl = document.getElementById('comments-list');
@@ -17886,7 +18041,10 @@
             await updateDoc(doc(db, "videos", activeVideoId), { commentCount: increment(1) }); 
             
             const vidSnap = await getDoc(doc(db, "videos", activeVideoId)); 
-            const vidDataObj = vidSnap.exists() ? vidSnap.data() : (profileVideosData[activeVideoId] || {});
+            const vidDataObj = vidSnap.exists() ? { id: activeVideoId, ...vidSnap.data() } : (profileVideosData[activeVideoId] || { id: activeVideoId });
+            if (rvVerifiedRealCommentsCountMap.has(activeVideoId)) {
+                vidDataObj.commentCount = rvVerifiedRealCommentsCountMap.get(activeVideoId);
+            }
             if (vidSnap.exists()) profileVideosData[activeVideoId] = vidDataObj;
             const videoOwnerId = vidDataObj ? vidDataObj.userId : null;
             const notifVideoUrl = vidDataObj?.url || "";
@@ -18164,12 +18322,13 @@
                     const addedRef = await addDoc(collection(db, `videos/${activeVidId}/comments`), commentPayload);
                     newReplyId = addedRef.id;
                     await updateDoc(doc(db, "videos", activeVidId), { commentCount: increment(1) }).catch(() => {});
+                    const nextReplyRealCount = getVerifiedRealCommentsCount(activeVidId, profileVideosData[activeVidId]) + 1;
+                    rvVerifiedRealCommentsCountMap.set(activeVidId, nextReplyRealCount);
                     if (profileVideosData[activeVidId]) {
-                        profileVideosData[activeVidId].commentCount = (Number(profileVideosData[activeVidId].commentCount) || 0) + 1;
+                        profileVideosData[activeVidId].id = activeVidId;
+                        profileVideosData[activeVidId].commentCount = nextReplyRealCount;
                     }
-                    document.querySelectorAll(`.video-card[data-id="${activeVidId}"] .comment-count`).forEach(countSpan => {
-                        updateCountUI(countSpan, 1);
-                    });
+                    syncVideoCommentCountElementsInDom(activeVidId, getEffectiveCommentsCount(profileVideosData[activeVidId] || { id: activeVidId }, activeVidId));
                 } catch (e) {}
             }
 
@@ -18486,10 +18645,14 @@
         window.openFullVideo = async (id) => { 
             const data = profileVideosData[id]; 
             if (!data) return; 
+            data.id = id;
             // Pause any background feed video first so audio never overlaps
             stopMasterAudio(); document.querySelectorAll('video').forEach(v => v.pause());
 
-            await hydrateUserProfilesMap([data.userId]);
+            await Promise.all([
+                hydrateUserProfilesMap([data.userId]),
+                Promise.race([verifyAndSyncExactVideoCommentsCount(id), new Promise(r => setTimeout(r, 1200))])
+            ]);
             const authorIdentity = getResolvedProfileIdentity(data.userId, data.username, data.isVerified, data.userPhotoURL, data.userEmail);
             data.username = authorIdentity.username;
             if (data.username) {
@@ -19821,34 +19984,41 @@
             }
         };
 
+        function setProfileScreenLoading(isLoading) {
+            const loader = document.getElementById('profile-loading-overlay');
+            const mainContent = document.getElementById('profile-main-content');
+            if (loader) {
+                loader.classList.toggle('hidden', !isLoading);
+                loader.classList.toggle('flex', !!isLoading);
+            }
+            if (mainContent) {
+                mainContent.classList.toggle('hidden', !!isLoading);
+            }
+        }
+
         window.openMyProfile = async () => { 
             if(!checkAuth()) return; 
+            setProfileScreenLoading(true);
             navigateTo('profile'); 
-            if (currentUserData) {
-                currentUserData.uid = currentUserData.uid || auth.currentUser.uid;
-                renderProfile(currentUserData, true); 
-            }
             try {
                 const freshSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
                 if (freshSnap.exists()) {
                     currentUserData = freshSnap.data();
                     currentUserData.uid = auth.currentUser.uid;
-                    if (currentProfileUid === auth.currentUser.uid) {
-                        renderProfile(currentUserData, true);
-                    }
                 }
             } catch (e) {}
+            if (currentUserData) {
+                currentUserData.uid = currentUserData.uid || auth.currentUser.uid;
+                await renderProfile(currentUserData, true); 
+            } else {
+                setProfileScreenLoading(false);
+            }
         };
         window.viewUserProfile = async (uid) => {
             if(!auth.currentUser) { checkAuth(); return; }
             if(uid === auth.currentUser.uid) return openMyProfile();
+            setProfileScreenLoading(true);
             navigateTo('profile');
-            const cached = userProfileCache.get(uid);
-            if (cached) {
-                document.getElementById('profile-header-name').innerText = cached.username || "Profil";
-                document.getElementById('profile-handle').innerText = "@" + String(cached.username || "utilisateur").replace(/^@+/, "");
-                document.getElementById('profile-avatar-container').innerHTML = getAvatarHTML(cached.photoURL, "w-full h-full");
-            }
             if (String(uid || '').startsWith('cm_auto_')) {
                 const autoAcct = getAutonomousCameroonianAccount(uid);
                 if (autoAcct) {
@@ -19866,7 +20036,8 @@
                         }
                         return list;
                     };
-                    renderProfile({
+                    await new Promise(r => setTimeout(r, 180));
+                    await renderProfile({
                         uid: autoAcct.uid,
                         username: autoAcct.username,
                         photoURL: autoAcct.photoURL,
@@ -19881,11 +20052,17 @@
                     return;
                 }
             }
-            const snap = await getDoc(doc(db, "users", uid));
-            if(snap.exists()) {
-                const targetData = { uid: uid, ...snap.data() };
-                renderProfile(targetData, false);
-                recordProfileVisitIfVisible(uid, targetData).catch(() => {});
+            try {
+                const snap = await getDoc(doc(db, "users", uid));
+                if(snap.exists()) {
+                    const targetData = { uid: uid, ...snap.data() };
+                    await renderProfile(targetData, false);
+                    recordProfileVisitIfVisible(uid, targetData).catch(() => {});
+                } else {
+                    setProfileScreenLoading(false);
+                }
+            } catch (e) {
+                setProfileScreenLoading(false);
             }
         };
 
@@ -20259,9 +20436,26 @@
             } catch (e) {}
         }
 
+        function isAutonomousCmAccount(uidOrObj) {
+            if (!uidOrObj) return false;
+            const u = typeof uidOrObj === 'string' ? uidOrObj : String(uidOrObj.uid || uidOrObj.id || '');
+            return u.startsWith('cm_auto_') || !!(typeof uidOrObj === 'object' && (uidOrObj.isAutonomousProfile || uidOrObj.isVirtualAuto));
+        }
+
+        function sortRealAccountsBeforeVirtual(list) {
+            if (!Array.isArray(list)) return [];
+            return [...list].sort((a, b) => {
+                const aVirt = isAutonomousCmAccount(a);
+                const bVirt = isAutonomousCmAccount(b);
+                if (aVirt !== bVirt) return aVirt ? 1 : -1;
+                return 0;
+            });
+        }
+
         function getDeduplicatedRecentViewers(userData) {
             const seen = new Set();
-            const unique = [];
+            const realUnique = [];
+            const virtUnique = [];
             if (userData && Array.isArray(userData.profileViewers)) {
                 const sorted = [...userData.profileViewers]
                     .filter(v => v && v.uid && !isVirtualBotIdOrUser(v.uid))
@@ -20269,11 +20463,13 @@
                 for (const item of sorted) {
                     if (!seen.has(item.uid)) {
                         seen.add(item.uid);
-                        unique.push(item);
+                        if (isAutonomousCmAccount(item)) virtUnique.push(item);
+                        else realUnique.push(item);
                     }
-                    if (unique.length >= PROFILE_RECENT_LIMIT) break;
+                    if (realUnique.length + virtUnique.length >= PROFILE_RECENT_LIMIT) break;
                 }
             }
+            const unique = [...realUnique, ...virtUnique].slice(0, PROFILE_RECENT_LIMIT);
             const isAutoProf = String(userData?.uid || '').startsWith('cm_auto_') || !!userData?.isAutonomousProfile;
             const userLikes = isAutoProf ? 0 : Number(userData?.likes || 0);
             const targetVisitorsCap = isAutoProf
@@ -20293,12 +20489,13 @@
                             uid: autoAcc.uid,
                             username: autoAcc.username,
                             photoURL: autoAcc.photoURL,
+                            isAutonomousProfile: true,
                             ts: nowMs - (k + 1) * 3600000 * 2
                         });
                     }
                 }
             }
-            return unique;
+            return sortRealAccountsBeforeVirtual(unique);
         }
 
         window.openProfileSocialModal = (tab = 'likes') => {
@@ -20353,17 +20550,20 @@
 
         async function fetchRecentUsersByUids(uidList) {
             if (!Array.isArray(uidList) || uidList.length === 0) return [];
-            const cleanReversed = [];
+            const realReversed = [];
+            const autoReversed = [];
             const seen = new Set();
             for (let i = uidList.length - 1; i >= 0; i--) {
                 const u = uidList[i];
                 if (u && !isVirtualBotIdOrUser(u) && !seen.has(u)) {
                     seen.add(u);
-                    cleanReversed.push(u);
+                    if (String(u).startsWith('cm_auto_')) autoReversed.push(u);
+                    else realReversed.push(u);
                 }
-                if (cleanReversed.length >= PROFILE_RECENT_LIMIT) break;
             }
-            const results = await Promise.all(cleanReversed.map(async (uId) => {
+            // Toujours placer les comptes réels en premier avant les comptes virtuels
+            const prioritizedUids = [...realReversed, ...autoReversed].slice(0, PROFILE_RECENT_LIMIT);
+            const results = await Promise.all(prioritizedUids.map(async (uId) => {
                 if (String(uId || '').startsWith('cm_auto_')) {
                     const autoAcc = getAutonomousCameroonianAccount(uId);
                     if (autoAcc) {
@@ -20372,7 +20572,8 @@
                             username: autoAcc.username,
                             photoURL: autoAcc.photoURL,
                             bio: autoAcc.bio,
-                            isVerified: false
+                            isVerified: false,
+                            isAutonomousProfile: true
                         };
                     }
                 }
@@ -20386,13 +20587,14 @@
                             username: d.username || "Utilisateur",
                             photoURL: d.photoURL || "",
                             bio: d.bio || "",
-                            isVerified: !!(d.isVerified || d.email === VIP_EMAIL)
+                            isVerified: !!(d.isVerified || d.email === VIP_EMAIL),
+                            isAutonomousProfile: false
                         };
                     }
                 } catch (e) {}
                 return null;
             }));
-            return results.filter(Boolean).slice(0, PROFILE_RECENT_LIMIT);
+            return sortRealAccountsBeforeVirtual(results.filter(Boolean)).slice(0, PROFILE_RECENT_LIMIT);
         }
 
         function buildSocialUserRowHTML(person, subLabel = '') {
@@ -20511,19 +20713,21 @@
 
             try {
                 if (tab === 'followers') {
-                    const realFollowersUids = Array.isArray(currentProfileViewedData.followers)
+                    const rawFollowers = Array.isArray(currentProfileViewedData.followers)
                         ? currentProfileViewedData.followers.filter(id => !isVirtualBotIdOrUser(id))
                         : [];
+                    const realFollowersUids = rawFollowers.filter(id => !String(id).startsWith('cm_auto_'));
+                    const inlineAutoFollowers = rawFollowers.filter(id => String(id).startsWith('cm_auto_'));
                     const autoFollowersUids = Array.isArray(currentProfileViewedData.__autoFollowerUids)
                         ? currentProfileViewedData.__autoFollowerUids
                         : [];
-                    const followersUids = [...autoFollowersUids, ...realFollowersUids];
+                    const followersUids = [...autoFollowersUids, ...inlineAutoFollowers, ...realFollowersUids];
                     const users = await fetchRecentUsersByUids(followersUids);
                     if (users.length === 0) {
                         listEl.innerHTML = "<div class='text-center text-xs text-gray-500 py-10'>Aucun abonné pour le moment.</div>";
                         return;
                     }
-                    listEl.innerHTML = users.map(u => buildSocialUserRowHTML(u, "Abonné à ce profil")).join('');
+                    listEl.innerHTML = sortRealAccountsBeforeVirtual(users).map(u => buildSocialUserRowHTML(u, "Abonné à ce profil")).join('');
                 } else if (tab === 'following') {
                     const followingUids = Array.isArray(currentProfileViewedData.following)
                         ? currentProfileViewedData.following.filter(id => !isVirtualBotIdOrUser(id))
@@ -20533,27 +20737,47 @@
                         listEl.innerHTML = "<div class='text-center text-xs text-gray-500 py-10'>Aucun abonnement pour le moment.</div>";
                         return;
                     }
-                    listEl.innerHTML = users.map(u => buildSocialUserRowHTML(u, "Suivi par ce profil")).join('');
+                    listEl.innerHTML = sortRealAccountsBeforeVirtual(users).map(u => buildSocialUserRowHTML(u, "Suivi par ce profil")).join('');
                 } else if (tab === 'likes') {
-                    // Combine recentLikesReceived + recentLikers from videos + unique likedBy UIDs (limited to 10 most recent)
-                    const combinedMap = new Map();
+                    // Toujours collecter les comptes réels en premier, puis compléter avec les comptes virtuels
+                    const realLikersMap = new Map();
+                    const virtualLikersMap = new Map();
                     if (Array.isArray(currentProfileViewedData.recentLikesReceived)) {
                         const sortedRec = [...currentProfileViewedData.recentLikesReceived].sort((a, b) => (b.ts || 0) - (a.ts || 0));
                         sortedRec.forEach(entry => {
-                            if (entry && entry.uid && !isVirtualBotIdOrUser(entry.uid) && !combinedMap.has(entry.uid)) {
-                                combinedMap.set(entry.uid, entry);
+                            if (entry && entry.uid && !isVirtualBotIdOrUser(entry.uid)) {
+                                if (isAutonomousCmAccount(entry)) {
+                                    if (!virtualLikersMap.has(entry.uid)) virtualLikersMap.set(entry.uid, entry);
+                                } else {
+                                    if (!realLikersMap.has(entry.uid)) realLikersMap.set(entry.uid, entry);
+                                }
                             }
                         });
                     }
+                    Object.values(profileVideosData || {}).forEach(v => {
+                        if (v && v.userId === currentProfileViewedData.uid && Array.isArray(v.likedBy)) {
+                            for (let i = v.likedBy.length - 1; i >= 0; i--) {
+                                const lUid = v.likedBy[i];
+                                if (lUid && !isVirtualBotIdOrUser(lUid) && !String(lUid).startsWith('cm_auto_') && !realLikersMap.has(lUid)) {
+                                    realLikersMap.set(lUid, { uid: lUid, needsFetch: true });
+                                }
+                            }
+                        }
+                    });
                     for (const uid of currentProfileVideoLikers) {
-                        if (combinedMap.size >= PROFILE_RECENT_LIMIT) break;
-                        if (uid && !isVirtualBotIdOrUser(uid) && !combinedMap.has(uid)) {
-                            combinedMap.set(uid, { uid, needsFetch: true });
+                        if (!uid || isVirtualBotIdOrUser(uid)) continue;
+                        if (String(uid).startsWith('cm_auto_')) {
+                            if (!virtualLikersMap.has(uid)) virtualLikersMap.set(uid, { uid, needsFetch: true });
+                        } else {
+                            if (!realLikersMap.has(uid)) realLikersMap.set(uid, { uid, needsFetch: true });
                         }
                     }
+                    const orderedEntries = [
+                        ...Array.from(realLikersMap.values()),
+                        ...Array.from(virtualLikersMap.values())
+                    ].slice(0, PROFILE_RECENT_LIMIT);
                     const finalLikers = [];
-                    const entries = Array.from(combinedMap.values()).slice(0, PROFILE_RECENT_LIMIT);
-                    const hydrated = await Promise.all(entries.map(async (item) => {
+                    const hydrated = await Promise.all(orderedEntries.map(async (item) => {
                         if (String(item.uid || '').startsWith('cm_auto_')) {
                             const autoAcc = getAutonomousCameroonianAccount(item.uid);
                             if (autoAcc) {
@@ -20562,6 +20786,7 @@
                                     username: autoAcc.username,
                                     photoURL: autoAcc.photoURL,
                                     isVerified: false,
+                                    isAutonomousProfile: true,
                                     ts: item.ts || null
                                 };
                             }
@@ -20576,13 +20801,14 @@
                                     username: d.username || item.username || "Utilisateur",
                                     photoURL: d.photoURL || item.photoURL || "",
                                     isVerified: !!(d.isVerified || d.email === VIP_EMAIL),
+                                    isAutonomousProfile: false,
                                     ts: item.ts || null
                                 };
                             }
                         } catch (e) {}
                         return item.username ? item : null;
                     }));
-                    hydrated.filter(Boolean).slice(0, PROFILE_RECENT_LIMIT).forEach(u => finalLikers.push(u));
+                    sortRealAccountsBeforeVirtual(hydrated.filter(Boolean)).slice(0, PROFILE_RECENT_LIMIT).forEach(u => finalLikers.push(u));
 
                     if (finalLikers.length === 0) {
                         listEl.innerHTML = "<div class='text-center text-xs text-gray-500 py-10'>Aucune mention J'aime reçue récemment.</div>";
@@ -20635,7 +20861,7 @@
                         } catch (e) {}
                         return vItem;
                     }));
-                    const validViewers = hydratedViewers.filter(Boolean).slice(0, PROFILE_RECENT_LIMIT);
+                    const validViewers = sortRealAccountsBeforeVirtual(hydratedViewers.filter(Boolean)).slice(0, PROFILE_RECENT_LIMIT);
                     listEl.innerHTML = validViewers.map(u => {
                         const whenStr = u.ts ? `A consulté le profil • ${formatDateStamp(new Date(u.ts))}` : "A consulté le profil récemment";
                         return buildSocialUserRowHTML(u, whenStr);
@@ -20648,8 +20874,11 @@
         }
 
         let rvProfileRenderSeq = 0;
-        async function renderProfile(data, isMe) { 
+        async function renderProfile(data, isMe, options = {}) { 
             const myRenderSeq = ++rvProfileRenderSeq;
+            if (!options || !options.keepVisible) {
+                setProfileScreenLoading(true);
+            }
             if (data && isMe && auth.currentUser && !data.uid) {
                 data.uid = auth.currentUser.uid;
             }
@@ -20749,13 +20978,15 @@
                 grid.innerHTML = "<div class='col-span-3 sm:col-span-4 md:col-span-5 text-center text-gray-500 text-xs py-8'>Chargement...</div>";
             }
             let likes = 0;
-            const snap = await getDocs(query(collection(db, "videos"), orderBy("createdAt", "desc")));
+            const allProfileSnapVideos = [];
+            try {
+                const snap = await getDocs(query(collection(db, "videos"), orderBy("createdAt", "desc")));
+                snap.forEach(d => { allProfileSnapVideos.push({ id: d.id, ...d.data() }); });
+            } catch (e) {}
             if (myRenderSeq !== rvProfileRenderSeq) return;
             grid.innerHTML = "";
             let items = [];
             const likerUidSet = new Set();
-            const allProfileSnapVideos = [];
-            snap.forEach(d => { allProfileSnapVideos.push({ id: d.id, ...d.data() }); });
             assignGraduatedPopularityQuotas(allProfileSnapVideos);
             allProfileSnapVideos.forEach(v => { 
                 const d = { id: v.id };
@@ -20764,7 +20995,9 @@
                     if (Array.isArray(v.likedBy)) {
                         for (let i = v.likedBy.length - 1; i >= 0; i--) {
                             const lUid = v.likedBy[i];
-                            if (lUid && !isVirtualBotIdOrUser(lUid)) likerUidSet.add(lUid);
+                            if (lUid && !isVirtualBotIdOrUser(lUid) && !String(lUid).startsWith('cm_auto_')) {
+                                likerUidSet.add(lUid);
+                            }
                         }
                     }
                 }
@@ -20844,6 +21077,7 @@
             grid.appendChild(frag);
 
             if(items.length === 0) grid.innerHTML = "<div class='col-span-3 sm:col-span-4 md:col-span-5 text-center text-gray-500 text-xs py-10'>Aucune vidéo dans cet onglet.</div>";
+            setProfileScreenLoading(false);
             lucide.createIcons(); 
         }
 
