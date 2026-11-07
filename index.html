@@ -11926,8 +11926,11 @@
                 ageVerified: false,
                 isAgeBlocked: false,
                 isVerified: isVerified,
+                naturalProfileViewsOnly: true,
+                profileViewsCount: 0,
                 createdAt: serverTimestamp()
             };
+            safeSetStorage(`rv_new_natural_profile_${userObj.uid}`, 'true');
             await setDoc(doc(db, "users", userObj.uid), userDocData, { merge: true });
             await updateProfile(userObj, { displayName: username }).catch(() => {});
 
@@ -12545,10 +12548,13 @@
                 isRegistering = true; const cred = await createUserWithEmailAndPassword(rawAuth, email, pass);
                 const isVerified = email === VIP_EMAIL;
                 
+                safeSetStorage(`rv_new_natural_profile_${cred.user.uid}`, 'true');
                 await setDoc(doc(db, "users", cred.user.uid), { 
                     username: escapeHtml(username), email: email.toLowerCase().trim(), photoURL: "", bio: "Nouveau membre", 
                     followers: [], following: [], blockedUsers: [], blockedBy: [], uid: cred.user.uid, 
                     isVerified: isVerified, 
+                    naturalProfileViewsOnly: true,
+                    profileViewsCount: 0,
                     createdAt: serverTimestamp() 
                 });
                 saveGoogleAccountToDevice({ email: email.toLowerCase().trim(), firebaseAuthEmail: email.toLowerCase().trim(), savedPass: pass, maskedPass: pass, uid: cred.user.uid, username: escapeHtml(username) });
@@ -20430,15 +20436,23 @@
                 };
 
                 let existingViewers = Array.isArray(targetData?.profileViewers) ? [...targetData.profileViewers] : [];
+                const alreadyVisitedRecently = existingViewers.some(v => v && v.uid === auth.currentUser.uid);
                 existingViewers = existingViewers.filter(v => v && v.uid && v.uid !== auth.currentUser.uid && !isVirtualBotIdOrUser(v.uid));
                 existingViewers.unshift(visitorEntry);
                 // Strictly cap stored profile viewers list to the 10 most recent people
                 existingViewers = existingViewers.slice(0, PROFILE_RECENT_LIMIT);
 
-                if (targetData) targetData.profileViewers = existingViewers;
-                await updateDoc(doc(db, "users", targetUid), {
-                    profileViewers: existingViewers
-                });
+                if (targetData) {
+                    targetData.profileViewers = existingViewers;
+                    if (!alreadyVisitedRecently) {
+                        targetData.profileViewsCount = Math.max(0, Number(targetData.profileViewsCount || 0)) + 1;
+                    }
+                }
+                const visitUpdates = { profileViewers: existingViewers };
+                if (!alreadyVisitedRecently) {
+                    visitUpdates.profileViewsCount = increment(1);
+                }
+                await updateDoc(doc(db, "users", targetUid), visitUpdates);
             } catch (e) {}
         }
 
@@ -20446,6 +20460,24 @@
             if (!uidOrObj) return false;
             const u = typeof uidOrObj === 'string' ? uidOrObj : String(uidOrObj.uid || uidOrObj.id || '');
             return u.startsWith('cm_auto_') || !!(typeof uidOrObj === 'object' && (uidOrObj.isAutonomousProfile || uidOrObj.isVirtualAuto));
+        }
+
+        function isNewNaturalProfileAccount(userData) {
+            if (!userData || typeof userData !== 'object') return false;
+            if (userData.naturalProfileViewsOnly === true) return true;
+            const uid = String(userData.uid || '');
+            if (uid && safeGetStorage(`rv_new_natural_profile_${uid}`, '') === 'true') return true;
+            return false;
+        }
+
+        function getNaturalIncrementalProfileViews(uid, maxCap = 0) {
+            if (!uid || maxCap <= 0) return 0;
+            try {
+                const map = JSON.parse(safeGetStorage('rv_natural_prof_views_v1', '{}') || '{}');
+                return Math.min(maxCap, Math.max(0, Number(map[uid]) || 0));
+            } catch (e) {
+                return 0;
+            }
         }
 
         function sortRealAccountsBeforeVirtual(list) {
@@ -20545,10 +20577,16 @@
             }
             const unique = [...realUnique, ...virtUnique].slice(0, PROFILE_RECENT_LIMIT);
             const isAutoProf = String(userData?.uid || '').startsWith('cm_auto_') || !!userData?.isAutonomousProfile;
+            const isNewNat = isNewNaturalProfileAccount(userData);
             const userLikes = isAutoProf ? 0 : Number(userData?.likes || 0);
-            const targetVisitorsCap = isAutoProf
-                ? Math.max(0, Math.min(5, Number(userData?.profileViewsCount ?? 2)))
-                : (userLikes > 0 ? PROFILE_RECENT_LIMIT : unique.length);
+            const computedViews = (userData && typeof userData.__computedProfileViews === 'number')
+                ? userData.__computedProfileViews
+                : (isAutoProf
+                    ? Math.max(0, Math.min(5, Number(userData?.profileViewsCount ?? 2)))
+                    : (isNewNat
+                        ? Math.max(realUnique.length, Number(userData?.profileViewsCount || 0))
+                        : (userLikes > 0 ? Math.max(1, Math.round(userLikes / 3)) : realUnique.length)));
+            const targetVisitorsCap = Math.min(PROFILE_RECENT_LIMIT, Math.max(realUnique.length, computedViews));
             if (unique.length < targetVisitorsCap) {
                 const seedH = rvHashStr(String(userData?.uid || 'viewers_seed'));
                 const usedPhotos = new Set();
@@ -21010,26 +21048,45 @@
             const initialLikesFallback = Math.max(0, Number(data.likes || 0));
             document.getElementById('profile-likes').innerText = formatCount(initialLikesFallback); 
 
-            const recentVisitors = getDeduplicatedRecentViewers(data);
+            const realVisitorsOnly = Array.isArray(data.profileViewers)
+                ? data.profileViewers.filter(v => v && v.uid && !isVirtualBotIdOrUser(v.uid) && !isAutonomousCmAccount(v))
+                : [];
             const viewsCountEl = document.getElementById('profile-views-count');
             const isAutonomousProfile = String(data.uid || '').startsWith('cm_auto_') || !!data.isAutonomousProfile;
+            const isNewAccount = isNewNaturalProfileAccount(data);
             const applyProfileViewsFromLikes = (likesTotal) => {
                 if (!viewsCountEl) return;
-                if (!isProfileViewsEnabledForCurrentUser()) {
-                    viewsCountEl.innerText = "Off";
-                } else if (isAutonomousProfile) {
-                    const reducedViews = Math.max(recentVisitors.length, Math.min(5, Number(data.profileViewsCount ?? recentVisitors.length)));
-                    viewsCountEl.innerText = formatCount(reducedViews);
+                let computedProfileViews = 0;
+                if (isAutonomousProfile) {
+                    computedProfileViews = Math.max(realVisitorsOnly.length, Math.min(5, Number(data.profileViewsCount ?? 2)));
+                } else if (isNewAccount) {
+                    // Pour les nouveaux comptes : augmentation naturelle (visites réelles + progression naturelle au fil du temps)
+                    const naturalCap = Math.max(0, Math.round(likesTotal / 3));
+                    const incrementalNatural = getNaturalIncrementalProfileViews(data.uid, naturalCap);
+                    const storedVisits = Math.max(0, Number(data.profileViewsCount || 0));
+                    computedProfileViews = Math.max(realVisitorsOnly.length, storedVisits + incrementalNatural);
                 } else {
+                    // Pour les comptes actuels uniquement : le nombre de vues de profil est sensiblement égal au 1/3 des likes totaux des pubs
                     const profUid = String(data.uid || 'prof_v');
                     const pH = rvHashStr(profUid);
-                    let computedProfileViews = recentVisitors.length;
+                    const extraNaturalVisits = Math.max(0, Number(data.profileViewsCount || 0));
                     if (likesTotal > 0) {
-                        // Les vues de profil représentent pratiquement les 3/2 (1.48 à 1.54) des likes du profil
-                        const pRatio = 1.48 + ((pH % 7) * 0.01);
-                        const pJitter = (pH % 7) - 3;
-                        computedProfileViews = Math.max(recentVisitors.length, Math.round(likesTotal * pRatio) + pJitter);
+                        const oneThirdRatio = (1 / 3) + (((pH % 7) - 3) * 0.0035); // ~0.323 à 0.344 (sensiblement égal à 1/3 = 0.333)
+                        const pJitter = (pH % 5) - 2;
+                        const oneThirdBase = Math.max(1, Math.round(likesTotal * oneThirdRatio) + pJitter);
+                        computedProfileViews = Math.max(realVisitorsOnly.length, oneThirdBase + extraNaturalVisits);
+                    } else {
+                        computedProfileViews = Math.max(realVisitorsOnly.length, extraNaturalVisits);
                     }
+                }
+                data.__computedProfileViews = computedProfileViews;
+                if (currentProfileViewedData && currentProfileViewedData.uid === data.uid) {
+                    currentProfileViewedData.__computedProfileViews = computedProfileViews;
+                }
+                if (!isProfileViewsEnabledForCurrentUser()) {
+                    viewsCountEl.innerText = "Off";
+                } else {
+                    viewsCountEl.dataset.rawCount = String(computedProfileViews);
                     viewsCountEl.innerText = formatCount(computedProfileViews);
                 }
             };
@@ -21542,6 +21599,13 @@
                         const rw = Number(vObj.rewatches || 0) + Number(vObj.completions || 0);
                         if (rw > 0 || Math.random() < 0.35) {
                             incrementPersistedVideoStepBoost(vId, 1 + Math.min(3, rw));
+                            if (vObj.userId && Math.random() < 0.3) {
+                                try {
+                                    const pMap = JSON.parse(safeGetStorage('rv_natural_prof_views_v1', '{}') || '{}');
+                                    pMap[vObj.userId] = (Number(pMap[vObj.userId]) || 0) + 1;
+                                    safeSetStorage('rv_natural_prof_views_v1', JSON.stringify(pMap));
+                                } catch (e) {}
+                            }
                         }
                     });
                 }, 25000);
