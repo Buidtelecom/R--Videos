@@ -4479,6 +4479,58 @@
             </div>
         </div>
 
+        <!-- PLAY STORE RATING MODAL (R-VIDEOS GLASSMORPHISM) -->
+        <div id="playstore-rating-modal" class="modal-overlay" onclick="if(event.target === this) dismissPlayStoreRatingPrompt()">
+            <div class="glass-panel relative w-11/12 max-w-sm p-6 rounded-3xl text-center shadow-2xl border border-white/15 bg-[#0c1222]/90 backdrop-blur-2xl overflow-hidden">
+                <!-- Ambient decorative glow -->
+                <div class="pointer-events-none absolute -top-16 -left-16 w-36 h-36 rounded-full bg-[#ff2a5f]/20 blur-3xl"></div>
+                <div class="pointer-events-none absolute -bottom-16 -right-16 w-36 h-36 rounded-full bg-amber-500/15 blur-3xl"></div>
+
+                <!-- Close button (5-day cooldown) -->
+                <button type="button" onclick="dismissPlayStoreRatingPrompt()" aria-label="Fermer" class="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white flex items-center justify-center transition active:scale-90">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+
+                <!-- App Icon & Badge -->
+                <div class="relative mx-auto mb-3.5 w-16 h-16 rounded-2xl bg-gradient-to-br from-[#ff2a5f] to-[#ec514c] p-[2px] shadow-lg shadow-rose-600/30 flex items-center justify-center">
+                    <div class="w-full h-full bg-[#0c1222] rounded-[14px] flex items-center justify-center">
+                        <span class="rv-brand-logo-icon w-10 h-10" aria-hidden="true"></span>
+                    </div>
+                    <div class="absolute -bottom-1.5 -right-1.5 px-1.5 py-0.5 rounded-full bg-amber-400 text-[#0c1222] text-[10px] font-black shadow-md flex items-center gap-0.5">
+                        <span>5.0</span>
+                        <span>★</span>
+                    </div>
+                </div>
+
+                <!-- Title & Subtitle -->
+                <h3 class="text-lg font-extrabold text-white font-display tracking-tight mb-1.5">
+                    Vous appréciez R-Videos ?
+                </h3>
+                <p class="text-xs text-gray-300 leading-relaxed mb-4 px-1">
+                    Votre avis nous aide énormément à faire grandir la communauté ! Prenez quelques secondes pour nous soutenir sur le Google Play Store.
+                </p>
+
+                <!-- 5 Stars Visual Banner -->
+                <div class="flex items-center justify-center gap-1.5 py-2.5 px-4 mb-5 rounded-2xl bg-white/5 border border-white/10 shadow-inner">
+                    <span class="text-amber-400 text-xl drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">⭐</span>
+                    <span class="text-amber-400 text-xl drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">⭐</span>
+                    <span class="text-amber-400 text-xl drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">⭐</span>
+                    <span class="text-amber-400 text-xl drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">⭐</span>
+                    <span class="text-amber-400 text-xl drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">⭐</span>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex flex-col gap-2.5">
+                    <a id="btn-rate-playstore-now" href="https://play.google.com/store/apps/details?id=com.ralphnyame.rvideos" target="_blank" rel="noopener noreferrer external" onclick="handlePlayStoreRateNow(event)" class="w-full py-3 px-4 bg-gradient-to-r from-[#ff2a5f] to-[#ec514c] hover:brightness-110 text-white rounded-2xl font-extrabold text-xs tracking-wide shadow-lg shadow-rose-600/35 active:scale-95 transition flex items-center justify-center gap-2 no-underline cursor-pointer">
+                        <span>Noter 5 étoiles ⭐</span>
+                    </a>
+                    <button type="button" id="btn-rate-playstore-later" onclick="dismissPlayStoreRatingPrompt()" class="w-full py-2.5 px-4 bg-white/10 hover:bg-white/15 text-gray-300 hover:text-white rounded-2xl font-semibold text-xs active:scale-95 transition">
+                        Plus tard
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- R-STUDIO CREATOR PRO MODAL (STAGE 1: SNAPCHAT-STYLE CAMERA & EDITOR | STAGE 2: ZONE DE POSTE) -->
         <div id="upload-modal" class="modal-overlay !p-0">
             <div class="bg-black w-full h-full max-w-3xl mx-auto flex flex-col relative overflow-hidden shadow-2xl md:rounded-3xl md:h-[96vh] md:border md:border-white/15">
@@ -9191,6 +9243,9 @@
 
         function recordUniqueVideoView(vidId) {
             if (!vidId) return;
+            if (typeof window.trackPlayStoreVideoWatched === 'function') {
+                try { window.trackPlayStoreVideoWatched(vidId); } catch (e) {}
+            }
             const uid = auth.currentUser?.uid || null;
             const vData = profileVideosData[vidId];
             if (vData && vData.username) {
@@ -24880,7 +24935,229 @@
             };
             window.lucide.__rvOptimized = true;
         }
-        lucide.createIcons();        
+        lucide.createIcons();
+
+        /* ============================================================================
+         * GOOGLE PLAY STORE RATING PROMPT (com.ralphnyame.rvideos)
+         * Déclenchement : >= 4 minutes cumulées (240s) OU >= 6 vidéos regardées
+         * Cooldown "Plus tard" / fermeture : 5 jours
+         * Redirection Web2App sans blocage (lien externe <a target="_blank"> + market:// + intent://)
+         * ============================================================================ */
+        (function initPlayStoreRatingSystem() {
+            const PLAYSTORE_PACKAGE_ID = 'com.ralphnyame.rvideos';
+            const PLAYSTORE_MARKET_URI = 'market://details?id=' + PLAYSTORE_PACKAGE_ID;
+            const PLAYSTORE_WEB_URL = 'https://play.google.com/store/apps/details?id=' + PLAYSTORE_PACKAGE_ID;
+            const PLAYSTORE_ANDROID_INTENT = 'intent://details?id=' + PLAYSTORE_PACKAGE_ID + '#Intent;scheme=market;package=com.android.vending;S.browser_fallback_url=' + encodeURIComponent(PLAYSTORE_WEB_URL) + ';end';
+
+            const STORAGE_KEYS = {
+                RATED: 'rv_playstore_rated_v1',
+                NEXT_PROMPT_TS: 'rv_playstore_next_prompt_ts_v1',
+                TIME_SPENT_SEC: 'rv_playstore_time_spent_sec_v1',
+                VIDEOS_WATCHED_COUNT: 'rv_playstore_videos_watched_count_v1',
+                VIDEOS_WATCHED_IDS: 'rv_playstore_videos_watched_ids_v1'
+            };
+
+            const REQUIRED_SECONDS = 4 * 60; // 4 minutes cumulées (240 secondes)
+            const REQUIRED_VIDEOS = 6;       // 6 vidéos regardées
+            const COOLDOWN_MS = 5 * 24 * 60 * 60 * 1000; // 5 jours
+
+            let ratingTimerInterval = null;
+            let promptDisplayedThisSession = false;
+
+            function readStorage(key, fallback) {
+                try {
+                    const val = localStorage.getItem(key);
+                    return val !== null ? val : fallback;
+                } catch (e) {
+                    return fallback;
+                }
+            }
+
+            function writeStorage(key, value) {
+                try {
+                    localStorage.setItem(key, String(value));
+                } catch (e) {}
+            }
+
+            function isEligibleToShowPrompt() {
+                if (promptDisplayedThisSession) return false;
+                if (readStorage(STORAGE_KEYS.RATED, 'false') === 'true') return false;
+
+                const nextPromptTs = parseInt(readStorage(STORAGE_KEYS.NEXT_PROMPT_TS, '0'), 10) || 0;
+                if (nextPromptTs > 0 && Date.now() < nextPromptTs) {
+                    return false;
+                }
+
+                const splash = document.getElementById('splash-screen');
+                if (splash && splash.classList.contains('active')) return false;
+
+                return true;
+            }
+
+            function checkAndTriggerPlayStorePrompt() {
+                if (!isEligibleToShowPrompt()) return;
+
+                const totalSeconds = parseInt(readStorage(STORAGE_KEYS.TIME_SPENT_SEC, '0'), 10) || 0;
+                const videosWatched = parseInt(readStorage(STORAGE_KEYS.VIDEOS_WATCHED_COUNT, '0'), 10) || 0;
+
+                if (totalSeconds >= REQUIRED_SECONDS || videosWatched >= REQUIRED_VIDEOS) {
+                    showPlayStoreRatingModal();
+                }
+            }
+
+            function showPlayStoreRatingModal() {
+                const modal = document.getElementById('playstore-rating-modal');
+                if (!modal || modal.classList.contains('open')) return;
+
+                promptDisplayedThisSession = true;
+                modal.classList.add('open');
+                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                    try { window.lucide.createIcons(); } catch (e) {}
+                }
+            }
+
+            window.openPlayStoreRatingModal = showPlayStoreRatingModal;
+
+            window.dismissPlayStoreRatingPrompt = function() {
+                const nextAllowedTimestamp = Date.now() + COOLDOWN_MS;
+                writeStorage(STORAGE_KEYS.NEXT_PROMPT_TS, nextAllowedTimestamp);
+
+                const modal = document.getElementById('playstore-rating-modal');
+                if (modal) {
+                    modal.classList.remove('open');
+                }
+            };
+
+            function triggerHiddenMarketSchemeIframe(uri) {
+                try {
+                    const iframe = document.createElement('iframe');
+                    iframe.style.display = 'none';
+                    iframe.style.width = '0';
+                    iframe.style.height = '0';
+                    iframe.style.border = '0';
+                    iframe.src = uri;
+                    document.body.appendChild(iframe);
+                    setTimeout(function() {
+                        if (iframe && iframe.parentNode) {
+                            iframe.parentNode.removeChild(iframe);
+                        }
+                    }, 2000);
+                } catch (e) {}
+            }
+
+            window.handlePlayStoreRateNow = function(event) {
+                writeStorage(STORAGE_KEYS.RATED, 'true');
+                if (ratingTimerInterval) {
+                    clearInterval(ratingTimerInterval);
+                    ratingTimerInterval = null;
+                }
+
+                // Fermer la modale après un court délai pour ne pas interrompre le clic natif sur <a target="_blank"> dans Web2App
+                setTimeout(function() {
+                    const modal = document.getElementById('playstore-rating-modal');
+                    if (modal) {
+                        modal.classList.remove('open');
+                    }
+                }, 250);
+
+                const isAndroid = /Android/i.test(navigator.userAgent || '');
+
+                // 1. Bridges natifs Web2App / Cordova / Capacitor / WebView s'ils sont présents
+                try {
+                    if (window.cordova && window.cordova.InAppBrowser && typeof window.cordova.InAppBrowser.open === 'function') {
+                        if (event) event.preventDefault();
+                        window.cordova.InAppBrowser.open(isAndroid ? PLAYSTORE_MARKET_URI : PLAYSTORE_WEB_URL, '_system');
+                        return false;
+                    }
+                    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser && typeof window.Capacitor.Plugins.Browser.open === 'function') {
+                        if (event) event.preventDefault();
+                        window.Capacitor.Plugins.Browser.open({ url: PLAYSTORE_WEB_URL });
+                        return false;
+                    }
+                    if (window.Android && typeof window.Android.openExternalUrl === 'function') {
+                        if (event) event.preventDefault();
+                        window.Android.openExternalUrl(PLAYSTORE_WEB_URL);
+                        return false;
+                    }
+                } catch (e) {}
+
+                // 2. Sur Android (Web2App / WebView) :
+                // - Solliciter market:// via un iframe invisible (intercepté par shouldOverrideUrlLoading sans jamais provoquer ERR_UNKNOWN_URL_SCHEME sur l'écran principal)
+                // - Laisser le clic natif synchrone sur <a href="https://play.google.com/..." target="_blank" rel="noopener noreferrer external"> sortir de la WebView vers l'application Google Play Store (App Links) ou le navigateur système sans blocage de popup.
+                if (isAndroid) {
+                    triggerHiddenMarketSchemeIframe(PLAYSTORE_MARKET_URI);
+                    try {
+                        window.open(PLAYSTORE_ANDROID_INTENT, '_system');
+                    } catch (e) {}
+                }
+
+                return true;
+            };
+
+            window.trackPlayStoreVideoWatched = function(vidId) {
+                if (readStorage(STORAGE_KEYS.RATED, 'false') === 'true') return;
+
+                let watchedIds = [];
+                try {
+                    watchedIds = JSON.parse(readStorage(STORAGE_KEYS.VIDEOS_WATCHED_IDS, '[]'));
+                    if (!Array.isArray(watchedIds)) watchedIds = [];
+                } catch (e) {
+                    watchedIds = [];
+                }
+
+                const cleanId = String(vidId || '').trim();
+                let count = parseInt(readStorage(STORAGE_KEYS.VIDEOS_WATCHED_COUNT, '0'), 10) || 0;
+
+                if (cleanId) {
+                    if (!watchedIds.includes(cleanId)) {
+                        watchedIds.push(cleanId);
+                        if (watchedIds.length > 200) watchedIds = watchedIds.slice(-200);
+                        writeStorage(STORAGE_KEYS.VIDEOS_WATCHED_IDS, JSON.stringify(watchedIds));
+                        count = Math.max(count + 1, watchedIds.length);
+                        writeStorage(STORAGE_KEYS.VIDEOS_WATCHED_COUNT, count);
+                    }
+                } else {
+                    count += 1;
+                    writeStorage(STORAGE_KEYS.VIDEOS_WATCHED_COUNT, count);
+                }
+
+                checkAndTriggerPlayStorePrompt();
+            };
+
+            function startPlayStoreUsageTimer() {
+                if (ratingTimerInterval) return;
+                if (readStorage(STORAGE_KEYS.RATED, 'false') === 'true') return;
+
+                ratingTimerInterval = setInterval(function() {
+                    if (document.hidden) return;
+                    if (readStorage(STORAGE_KEYS.RATED, 'false') === 'true') {
+                        clearInterval(ratingTimerInterval);
+                        ratingTimerInterval = null;
+                        return;
+                    }
+
+                    const currentSec = parseInt(readStorage(STORAGE_KEYS.TIME_SPENT_SEC, '0'), 10) || 0;
+                    const updatedSec = currentSec + 1;
+                    writeStorage(STORAGE_KEYS.TIME_SPENT_SEC, updatedSec);
+
+                    checkAndTriggerPlayStorePrompt();
+                }, 1000);
+            }
+
+            if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                setTimeout(function() {
+                    startPlayStoreUsageTimer();
+                    checkAndTriggerPlayStorePrompt();
+                }, 1500);
+            } else {
+                window.addEventListener('DOMContentLoaded', function() {
+                    setTimeout(function() {
+                        startPlayStoreUsageTimer();
+                        checkAndTriggerPlayStorePrompt();
+                    }, 1500);
+                });
+            }
+        })();
     </script>
 </body>
 </html>
