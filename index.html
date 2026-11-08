@@ -32,22 +32,21 @@
         } catch (e) {}
       })();
       window.OneSignalDeferred = window.OneSignalDeferred || [];
+      window.__rvOneSignalReady = false;
       OneSignalDeferred.push(async function(OneSignal) {
         try {
+            var host = String(window.location.hostname || "").toLowerCase();
+            var isAllowedHost = (host === "rvideosapp.vercel.app" || host.endsWith(".rvideosapp.vercel.app"));
+            if (!isAllowedHost) return;
+            var swUrl = String(window.location.origin || "") + "/" + "OneSignalSDKWorker.js";
+            var swCheck = await fetch(swUrl, { method: "HEAD" }).catch(function() { return null; });
+            if (!swCheck || !swCheck.ok) return;
             await OneSignal.init({
               appId: "db22c4d3-fcc7-4e30-9ddc-d286ee29a9ae",
               allowLocalhostAsSecureOrigin: true,
-              notifyButton: { enable: false },
-              promptOptions: {
-                slidedown: {
-                  enabled: true,
-                  autoPrompt: true,
-                  actionMessage: "Active les notifications pour recevoir tes likes, commentaires, partages, messages, stories et favoris 🔔",
-                  acceptButtonText: "Autoriser",
-                  cancelButtonText: "Plus tard"
-                }
-              }
+              notifyButton: { enable: false }
             });
+            window.__rvOneSignalReady = true;
             if (OneSignal.Notifications && typeof OneSignal.Notifications.addEventListener === "function") {
                 OneSignal.Notifications.addEventListener("click", function(event) {
                     try {
@@ -64,8 +63,9 @@
                     } catch (err) {}
                 });
             }
-            OneSignal.Slidedown.promptPush();
-        } catch (e) { console.warn("Erreur OneSignal:", e); }
+        } catch (e) {
+            window.__rvOneSignalReady = false;
+        }
       });
     </script>
     <style>
@@ -6662,6 +6662,9 @@
 
         window.activeSharedVideoId = null;
         window.pendingReturnVideoId = null;
+        window.pendingFeedPriorityVideoId = null;
+        window.lastRestoredReturnVideoId = null;
+        window.lastRestoredReturnVideoAt = 0;
         window.currentFullscreenVideoId = null;
         window.isHandlingSharedVideoLink = false;
 
@@ -6685,12 +6688,15 @@
                     if (fid) window.pendingReturnVideoId = String(fid);
                 } else if (document.getElementById('comments-sheet')?.classList.contains('open') && currentVideoIdForComments) {
                     window.pendingReturnVideoId = String(currentVideoIdForComments);
+                } else {
+                    const activeFeedCard = (activePlayingVideo && activePlayingVideo.closest('.video-card'))
+                        || document.querySelector('#feed-container .video-card[data-in-view="true"]')
+                        || document.querySelector('#feed-container .video-card');
+                    if (activeFeedCard) {
+                        const fid = activeFeedCard.getAttribute('data-id');
+                        if (fid) window.pendingReturnVideoId = String(fid);
+                    }
                 }
-            }
-            stopMasterAudio();
-            const fv = document.getElementById('fullscreen-active-video');
-            if (fv && !fv.paused) {
-                try { fv.pause(); } catch (e) {}
             }
         }
 
@@ -8245,7 +8251,9 @@
             } else if (activeUnderlying.id === 'feed-screen') {
                 const fullOverlay = document.getElementById('fullscreen-video-overlay');
                 if (!fullOverlay || fullOverlay.classList.contains('hidden')) {
-                    setTimeout(handleVideoPlayback, 100);
+                    if (!activePlayingVideo || activePlayingVideo.paused) {
+                        setTimeout(handleVideoPlayback, 100);
+                    }
                 }
             }
         };
@@ -10049,22 +10057,55 @@
         });
 
         function requestNotificationPermission() {
-            if ("Notification" in window && Notification.permission !== "granted") {
-                try { Notification.requestPermission(); } catch (e) {}
+            if ("Notification" in window && Notification.permission === "default") {
+                try {
+                    const permPromise = Notification.requestPermission();
+                    if (permPromise && typeof permPromise.then === "function") {
+                        permPromise.then((res) => {
+                            if (res === "granted" && auth.currentUser) {
+                                syncWeb2AppAndOneSignalUserIdentity(auth.currentUser.uid, currentUserData?.username || "");
+                            }
+                        }).catch(() => {});
+                    }
+                } catch (e) {}
             }
-            if (window.OneSignalDeferred) {
+            if (window.OneSignalDeferred && window.__rvOneSignalReady) {
                 window.OneSignalDeferred.push(function(OneSignal) {
+                    if (!window.__rvOneSignalReady) return;
                     try {
                         if (OneSignal.Notifications && typeof OneSignal.Notifications.requestPermission === "function") {
                             OneSignal.Notifications.requestPermission().catch(() => {});
-                        }
-                        if (OneSignal.Slidedown && typeof OneSignal.Slidedown.promptPush === "function") {
-                            OneSignal.Slidedown.promptPush();
                         }
                     } catch(e) {}
                 });
             }
         }
+
+        let hasBoundConnectedUserNotifGesture = false;
+        function bindConnectedUserNotificationGesture() {
+            if (hasBoundConnectedUserNotifGesture) return;
+            hasBoundConnectedUserNotifGesture = true;
+            const onFirstConnectedGesture = () => {
+                if (!auth.currentUser) return;
+                if ("Notification" in window && Notification.permission === "default") {
+                    requestNotificationPermission();
+                }
+                if (!unreadObserver || !unreadChatsObserver) {
+                    subscribeToUnreadCount();
+                }
+            };
+            document.addEventListener("click", onFirstConnectedGesture, { passive: true });
+            document.addEventListener("touchstart", onFirstConnectedGesture, { passive: true });
+            document.addEventListener("keydown", onFirstConnectedGesture, { passive: true });
+            document.addEventListener("visibilitychange", () => {
+                if (document.visibilityState === "visible" && auth.currentUser) {
+                    if (!unreadObserver || !unreadChatsObserver) {
+                        subscribeToUnreadCount();
+                    }
+                }
+            });
+        }
+        bindConnectedUserNotificationGesture();
         
         let latestUnreadChatSignatures = {};
 
@@ -10683,19 +10724,50 @@
             const data = await response.json(); return data.secure_url;
         }
 
+        window.myAllAccountUids = [];
+
+        function getMyAccountUidsList(primaryUid = null) {
+            const base = primaryUid || auth.currentUser?.uid || activeCanonicalUid || rawAuth.currentUser?.uid || "";
+            return Array.from(new Set([
+                base,
+                activeCanonicalUid,
+                rawAuth.currentUser?.uid,
+                ...(Array.isArray(window.myAllAccountUids) ? window.myAllAccountUids : []),
+                ...(Array.isArray(currentUserData?.aliasUids) ? currentUserData.aliasUids : [])
+            ].filter(Boolean).map(String)));
+        }
+
+        function isMyAccountUid(candidateUid, primaryUid = null) {
+            if (!candidateUid) return false;
+            return getMyAccountUidsList(primaryUid).includes(String(candidateUid));
+        }
+
+        function getChatUnreadCountForUser(chatData, primaryUid = null) {
+            if (!chatData) return 0;
+            const myUids = getMyAccountUidsList(primaryUid);
+            let total = 0;
+            myUids.forEach(u => {
+                const nestedVal = (chatData.unreadCounts && chatData.unreadCounts[u] !== undefined) ? Number(chatData.unreadCounts[u]) : 0;
+                const flatVal = chatData['unreadCounts.' + u] !== undefined ? Number(chatData['unreadCounts.' + u]) : 0;
+                const best = Math.max(isNaN(nestedVal) ? 0 : nestedVal, isNaN(flatVal) ? 0 : flatVal);
+                total += Math.max(0, best);
+            });
+            return total;
+        }
+
         function isNotificationStrictlyForUser(n, myUid) {
             if (!n || !myUid) return false;
             if (isVirtualBotIdOrUser(n.fromUid, '', n.isBot)) return false;
-            // Strict recipient ownership check: if targetUid/toUid is stored, it MUST match myUid
-            if (n.targetUid && n.targetUid !== myUid) return false;
-            if (n.toUid && n.toUid !== myUid) return false;
-            if (n.recipientUid && n.recipientUid !== myUid) return false;
+            // Strict recipient ownership check across all consolidated UIDs of the current user
+            if (n.targetUid && !isMyAccountUid(n.targetUid, myUid)) return false;
+            if (n.toUid && !isMyAccountUid(n.toUid, myUid)) return false;
+            if (n.recipientUid && !isMyAccountUid(n.recipientUid, myUid)) return false;
             // Self-actions on likes/comments/follows should never appear in one's own notifications
-            if (n.fromUid === myUid && n.type !== 'report' && n.type !== 'info') return false;
+            if (isMyAccountUid(n.fromUid, myUid) && n.type !== 'report' && n.type !== 'info') return false;
             // If videoId is known in cache and this is a video-owner notification, verify video belongs to myUid
             if ((n.type === 'like' || n.type === 'comment' || n.type === 'favorite' || n.type === 'share' || n.type === 'repost') && n.videoId && profileVideosData[n.videoId]) {
                 const vidOwner = profileVideosData[n.videoId].userId;
-                if (vidOwner && vidOwner !== myUid) return false;
+                if (vidOwner && !isMyAccountUid(vidOwner, myUid)) return false;
             }
             return true;
         }
@@ -10720,7 +10792,7 @@
                 const k = String(notifKey);
                 if (!list.includes(k)) {
                     list.push(k);
-                    if (list.length > 160) list = list.slice(-160);
+                    if (list.length > 220) list = list.slice(-220);
                     safeSetStorage(`rv_delivered_notifs_${uid}`, JSON.stringify(list));
                 }
             } catch (e) {}
@@ -10733,12 +10805,14 @@
             const cleanIcon = String(icon || "");
             const notifOptions = {
                 body: cleanBody,
-                icon: cleanIcon || undefined,
-                badge: cleanIcon || undefined,
                 tag: String(tag || `rv_${Date.now()}`),
                 renotify: false,
                 data: data
             };
+            if (cleanIcon && cleanIcon.startsWith("http")) {
+                notifOptions.icon = cleanIcon;
+                notifOptions.badge = cleanIcon;
+            }
             try {
                 if ("Notification" in window && Notification.permission === "granted") {
                     if ("serviceWorker" in navigator) {
@@ -10756,7 +10830,7 @@
                         } else if (data.storyOwnerUid && typeof window.openStoryViewer === "function") {
                             window.openStoryViewer(String(data.storyOwnerUid), 0);
                         } else if (data.chatSenderUid && typeof window.startChatWith === "function") {
-                            window.startChatWith(String(data.chatSenderUid), String(data.chatSenderName || "utilisateur"), String(data.chatSenderPhoto || ""));
+                            window.startChatWith(String(data.chatSenderUid), String(data.chatSenderName || "utilisateur"), String(data.chatSenderPhoto || ""), data.chatId || null);
                         } else if (typeof window.navigateTo === "function") {
                             window.navigateTo("inbox");
                         }
@@ -10768,30 +10842,36 @@
 
         const RV_ONESIGNAL_APP_ID = "db22c4d3-fcc7-4e30-9ddc-d286ee29a9ae";
         const RV_ONESIGNAL_REST_API_KEY = "os_v2_app_3mrmju74y5hdbho42kdo4knjv3liq5yqfjhuxamvfeibifw6ouimoflkyebsavtpphmgwsiaysxuvbm3ouoqcagolacdlcyimn276hy";
+        const RV_UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
         function syncWeb2AppAndOneSignalUserIdentity(uid, username = "") {
             if (!uid) return;
             const cleanUid = String(uid).trim();
             const cleanUsername = String(username || "").replace(/^@+/, "").trim();
+            const allUids = getMyAccountUidsList(cleanUid);
 
-            const persistSubIdToFirestore = (subId) => {
-                if (!subId || String(subId).length < 8) return;
+            const persistSubIdToFirestore = (subId, isOptedIn = true) => {
+                if (!subId) return;
                 const cleanSub = String(subId).trim();
+                if (!RV_UUID_REGEX.test(cleanSub)) return;
                 safeSetStorage("rv_web2app_onesignal_id", cleanSub);
                 updateDoc(doc(db, "users", cleanUid), {
                     onesignalSubId: cleanSub,
                     onesignalSubIds: arrayUnion(cleanSub),
-                    onesignalExternalId: cleanUid
+                    onesignalExternalId: cleanUid,
+                    onesignalOptedIn: !!isOptedIn,
+                    aliasUids: allUids
                 }).catch(() => {});
             };
 
             // 1. Check any stored Web2App player/subscription ID from URL params or native bridge
             const cachedWeb2AppId = safeGetStorage("rv_web2app_onesignal_id", "");
-            if (cachedWeb2AppId) {
-                persistSubIdToFirestore(cachedWeb2AppId);
+            if (cachedWeb2AppId && RV_UUID_REGEX.test(cachedWeb2AppId.trim())) {
+                persistSubIdToFirestore(cachedWeb2AppId, true);
             } else {
                 updateDoc(doc(db, "users", cleanUid), {
-                    onesignalExternalId: cleanUid
+                    onesignalExternalId: cleanUid,
+                    aliasUids: allUids
                 }).catch(() => {});
             }
 
@@ -10802,7 +10882,7 @@
                     if (typeof window.Android.loginOneSignal === "function") window.Android.loginOneSignal(cleanUid);
                     if (typeof window.Android.getOneSignalUserId === "function") {
                         const nativeId = window.Android.getOneSignalUserId();
-                        if (nativeId) persistSubIdToFirestore(nativeId);
+                        if (nativeId) persistSubIdToFirestore(nativeId, true);
                     }
                 }
                 if (window.web2app && window.web2app.onesignal) {
@@ -10820,22 +10900,25 @@
                 }
             } catch (e) {}
 
-            // 3. Sync with OneSignal Web SDK v16
-            if (window.OneSignalDeferred) {
+            // 3. Sync with OneSignal Web SDK v16 only when initialized and ready
+            if (window.OneSignalDeferred && window.__rvOneSignalReady) {
                 window.OneSignalDeferred.push(async function(OneSignal) {
+                    if (!window.__rvOneSignalReady) return;
                     try {
                         await OneSignal.login(cleanUid);
                         if (OneSignal.User && typeof OneSignal.User.addTag === "function") {
                             OneSignal.User.addTag("uid", cleanUid);
                             if (cleanUsername) OneSignal.User.addTag("username", cleanUsername);
                         }
+                        const isOpted = !!(OneSignal.User?.PushSubscription?.optedIn);
                         const subId = OneSignal.User?.PushSubscription?.id || null;
-                        if (subId) persistSubIdToFirestore(subId);
+                        if (subId && isOpted) persistSubIdToFirestore(subId, true);
                         if (OneSignal.User?.PushSubscription && typeof OneSignal.User.PushSubscription.addEventListener === "function") {
                             OneSignal.User.PushSubscription.addEventListener("change", (ev) => {
                                 const nextSubId = ev?.current?.id || OneSignal.User?.PushSubscription?.id || null;
-                                if (nextSubId && auth.currentUser && String(auth.currentUser.uid) === cleanUid) {
-                                    persistSubIdToFirestore(nextSubId);
+                                const nextOpted = !!(ev?.current?.optedIn ?? OneSignal.User?.PushSubscription?.optedIn);
+                                if (nextSubId && nextOpted && auth.currentUser && String(auth.currentUser.uid) === cleanUid) {
+                                    persistSubIdToFirestore(nextSubId, true);
                                 }
                             });
                         }
@@ -10846,12 +10929,34 @@
 
         async function dispatchOneSignalPersonalPush({ targetUid, targetUserData = null, type = "activity", title = "", body = "", extraData = {} }) {
             if (!targetUid || !RV_ONESIGNAL_APP_ID || !RV_ONESIGNAL_REST_API_KEY) return;
-            if (auth.currentUser && String(targetUid) === String(auth.currentUser.uid)) return;
+            if (window.__rvOneSignalRestDisabled) return;
+            if (auth.currentUser && isMyAccountUid(targetUid, auth.currentUser.uid)) return;
 
             const cleanTargetUid = String(targetUid).trim();
+            let resolvedTargetData = targetUserData;
+            if (!resolvedTargetData) {
+                try {
+                    const tSnap = await getDoc(doc(db, "users", cleanTargetUid));
+                    if (tSnap.exists()) resolvedTargetData = tSnap.data();
+                } catch (e) {}
+            }
+
+            const validSubIds = Array.from(new Set([
+                ...(Array.isArray(resolvedTargetData?.onesignalSubIds) ? resolvedTargetData.onesignalSubIds : []),
+                resolvedTargetData?.onesignalSubId,
+                resolvedTargetData?.onesignalPlayerId
+            ].filter(Boolean).map(s => String(s).trim()).filter(s => RV_UUID_REGEX.test(s))));
+
+            // Only call OneSignal REST API when the recipient has an active valid UUID subscription ID;
+            // prevents 400 Bad Request console errors when messaging or notifying web accounts without a OneSignal push token.
+            if (validSubIds.length === 0 || resolvedTargetData?.onesignalOptedIn !== true) {
+                return;
+            }
+
             const cleanTitle = String(title || "R-Videos").trim();
             const cleanBody = String(body || "Vous avez reçu une nouvelle notification sur R-Videos").trim();
-            const collapseId = `rv_${type}_${auth.currentUser?.uid || "u"}_${extraData.videoId || extraData.storyId || extraData.chatId || Date.now()}`.slice(0, 64);
+            const rawCollapse = `rv_${type}_${auth.currentUser?.uid || "u"}_${extraData.videoId || extraData.storyId || extraData.chatId || Date.now()}`;
+            const collapseId = rawCollapse.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 60);
 
             let deepLinkUrl = RV_APP_DEEP_LINK_BASE;
             if (extraData.videoId) {
@@ -10860,9 +10965,9 @@
                 deepLinkUrl = `${RV_APP_DEEP_LINK_BASE}/?story=${encodeURIComponent(String(extraData.storyOwnerUid))}`;
             }
 
-            const basePayload = {
+            const payload = {
                 app_id: RV_ONESIGNAL_APP_ID,
-                target_channel: "push",
+                include_subscription_ids: validSubIds,
                 headings: { fr: cleanTitle, en: cleanTitle },
                 contents: { fr: cleanBody, en: cleanBody },
                 url: deepLinkUrl,
@@ -10882,61 +10987,35 @@
 
             const senderAvatar = String(extraData.fromPhoto || currentUserData?.photoURL || "");
             if (senderAvatar.startsWith("https://")) {
-                basePayload.large_icon = senderAvatar;
-                basePayload.chrome_web_icon = senderAvatar;
+                payload.large_icon = senderAvatar;
+                payload.chrome_web_icon = senderAvatar;
             }
             const mediaThumb = String(extraData.videoThumb || "");
             if (mediaThumb.startsWith("https://")) {
-                basePayload.big_picture = mediaThumb;
-                basePayload.chrome_web_image = mediaThumb;
-                basePayload.ios_attachments = { media: mediaThumb };
+                payload.big_picture = mediaThumb;
+                payload.chrome_web_image = mediaThumb;
+                payload.ios_attachments = { media: mediaThumb };
             }
 
-            const sendOneSignalRequest = async (targetingFields) => {
-                try {
-                    const resp = await fetch("https://api.onesignal.com/notifications", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json; charset=utf-8",
-                            "Authorization": `Key ${RV_ONESIGNAL_REST_API_KEY}`
-                        },
-                        body: JSON.stringify({ ...basePayload, ...targetingFields })
-                    });
-                    if (!resp.ok) return null;
-                    return await resp.json();
-                } catch (err) {
-                    return null;
-                }
-            };
-
             try {
-                const subIds = Array.from(new Set([
-                    ...(Array.isArray(targetUserData?.onesignalSubIds) ? targetUserData.onesignalSubIds : []),
-                    targetUserData?.onesignalSubId,
-                    targetUserData?.onesignalPlayerId
-                ].filter(Boolean).map(String)));
-
-                // 1. If the recipient has registered OneSignal Subscription/Player IDs, target them directly
-                if (subIds.length > 0) {
-                    await sendOneSignalRequest({ include_subscription_ids: subIds });
-                }
-
-                // 2. Target the recipient by their personal OneSignal External ID (OneSignal.login(uid))
-                const aliasRes = await sendOneSignalRequest({
-                    include_aliases: { external_id: [cleanTargetUid] }
+                const resp = await fetch("https://api.onesignal.com/notifications", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Authorization": `Key ${RV_ONESIGNAL_REST_API_KEY}`
+                    },
+                    body: JSON.stringify(payload)
                 });
-
-                // 3. Fallback: Target by tag "uid" if alias had no active match yet
-                if (!aliasRes || (!aliasRes.id && subIds.length === 0)) {
-                    await sendOneSignalRequest({
-                        filters: [{ field: "tag", key: "uid", relation: "=", value: cleanTargetUid }]
-                    });
+                if (!resp.ok) {
+                    window.__rvOneSignalRestDisabled = true;
                 }
-            } catch (e) {}
+            } catch (err) {
+                window.__rvOneSignalRestDisabled = true;
+            }
         }
 
         async function sendNotification(targetUid, type, text, extraData = {}) {
-            if(!auth.currentUser || !targetUid || targetUid === auth.currentUser.uid) return;
+            if(!auth.currentUser || !targetUid || isMyAccountUid(targetUid, auth.currentUser.uid)) return;
             try {
                 const targetUser = await getDoc(doc(db, "users", targetUid));
                 let targetUserData = null;
@@ -10947,22 +11026,27 @@
                 }
                 const senderUsername = String(currentUserData?.username || auth.currentUser.displayName || "utilisateur").replace(/^@+/, "");
                 const senderPhoto = currentUserData?.photoURL || auth.currentUser.photoURL || "";
+                const canonicalTargetUid = (targetUserData && targetUserData.uid) ? String(targetUserData.uid) : String(targetUid);
                 const payload = {
                     type,
                     text,
-                    targetUid: targetUid,
-                    toUid: targetUid,
+                    targetUid: canonicalTargetUid,
+                    toUid: canonicalTargetUid,
                     fromUid: auth.currentUser.uid,
                     fromUsername: senderUsername,
                     fromPhoto: senderPhoto,
                     fromVerified: !!(currentUserData?.isVerified || currentUserData?.email === VIP_EMAIL),
                     createdAt: serverTimestamp(),
+                    createdAtMs: Date.now(),
                     read: false,
                     ...extraData
                 };
-                await addDoc(collection(db, "users", targetUid, "notifications"), payload);
+                await addDoc(collection(db, "users", String(targetUid), "notifications"), payload);
+                if (canonicalTargetUid !== String(targetUid)) {
+                    await addDoc(collection(db, "users", canonicalTargetUid, "notifications"), payload).catch(() => {});
+                }
 
-                // Automatically trigger a targeted personal OneSignal Push Notification to targetUid
+                // Trigger OneSignal push if the target user has an active OneSignal subscription
                 const titleMap = {
                     like: `❤️ Nouveau J'aime de @${senderUsername}`,
                     comment: `💬 Nouveau commentaire de @${senderUsername}`,
@@ -10979,7 +11063,7 @@
                 const pushTitle = titleMap[type] || `🔔 @${senderUsername} sur R-Videos`;
                 const pushBody = `@${senderUsername} ${unescapeHtml(String(text || ""))}`;
                 dispatchOneSignalPersonalPush({
-                    targetUid,
+                    targetUid: canonicalTargetUid,
                     targetUserData,
                     type,
                     title: pushTitle,
@@ -10993,19 +11077,27 @@
         }
 
         let unreadChatsObserver = null;
+        let extraNotifObservers = [];
 
         function subscribeToUnreadCount() {
             if (unreadObserver) { unreadObserver(); unreadObserver = null; }
             if (unreadChatsObserver) { unreadChatsObserver(); unreadChatsObserver = null; }
+            if (Array.isArray(extraNotifObservers)) {
+                extraNotifObservers.forEach(unsub => { try { unsub(); } catch (e) {} });
+                extraNotifObservers = [];
+            }
             if (!auth.currentUser) return;
             const myUid = auth.currentUser.uid;
+            const myUidsList = getMyAccountUidsList(myUid).slice(0, 10);
             let isInitialChatsLoad = true;
-            let isInitialNotifsLoad = true;
             let previousChatSigs = {};
 
-            const qChats = query(collection(db, "chats"), where("participants", "array-contains", myUid));
+            const qChats = myUidsList.length > 1
+                ? query(collection(db, "chats"), where("participants", "array-contains-any", myUidsList))
+                : query(collection(db, "chats"), where("participants", "array-contains", myUid));
+
             unreadChatsObserver = onSnapshot(qChats, (snapshot) => {
-                if (!auth.currentUser || auth.currentUser.uid !== myUid) return;
+                if (!auth.currentUser || !isMyAccountUid(auth.currentUser.uid, myUid)) return;
                 const seenMap = getSeenMessagesTabMap(myUid);
                 let seenChanged = false;
                 let unacknowledgedUnread = 0;
@@ -11016,30 +11108,34 @@
 
                 snapshot.forEach(d => {
                     const c = d.data();
-                    if (!Array.isArray(c.participants) || !c.participants.includes(myUid)) return;
-                    const myUnread = (c.unreadCounts && c.unreadCounts[myUid]) ? Number(c.unreadCounts[myUid]) : (Number(c['unreadCounts.' + myUid]) || 0);
+                    if (!Array.isArray(c.participants) || !c.participants.some(p => isMyAccountUid(p, myUid))) return;
+                    const myUnread = getChatUnreadCountForUser(c, myUid);
                     if (myUnread > 0) {
-                        const sig = `${myUnread}_${c.lastMessage || ''}`;
+                        const lastTs = c.lastMessageAtMs || (c.lastUpdated && (c.lastUpdated.seconds ? c.lastUpdated.seconds * 1000 : (typeof c.lastUpdated.toMillis === 'function' ? c.lastUpdated.toMillis() : 0))) || 0;
+                        const sig = `${myUnread}_${lastTs}_${c.lastMessage || ''}`;
                         currentSigs[d.id] = sig;
                         if (seenMap[d.id] !== sig) {
                             unacknowledgedUnread += myUnread;
                         }
+                        if (c.lastSenderId && isMyAccountUid(c.lastSenderId, myUid)) {
+                            return;
+                        }
                         const notifMsgKey = `chat_${d.id}_${sig}`;
-                        if (isInitialChatsLoad) {
+                        const shouldNotifyNow = (!isInitialChatsLoad && previousChatSigs[d.id] !== sig && !hasDeliveredPersonalNotifKey(myUid, notifMsgKey))
+                            || (isInitialChatsLoad && seenMap[d.id] !== sig && !hasDeliveredPersonalNotifKey(myUid, notifMsgKey));
+                        if (shouldNotifyNow) {
                             markDeliveredPersonalNotifKey(myUid, notifMsgKey);
-                        } else if (previousChatSigs[d.id] !== sig && !hasDeliveredPersonalNotifKey(myUid, notifMsgKey)) {
-                            markDeliveredPersonalNotifKey(myUid, notifMsgKey);
-                            const otherUid = c.participants.find(p => p !== myUid) || "";
+                            const otherUid = c.participants.find(p => !isMyAccountUid(p, myUid)) || "";
                             const senderName = String((c.names && otherUid && c.names[otherUid]) || "utilisateur").replace(/^@+/, "");
                             const senderPhoto = (c.photos && otherUid && c.photos[otherUid]) || "";
                             const msgPreview = unescapeHtml(String(c.lastMessage || "Vous a envoyé un message"));
-                            const activelyReadingThisChat = isChatModalOpen && String(currentChatId) === String(d.id);
+                            const activelyReadingThisChat = isChatModalOpen && (String(currentChatId) === String(d.id) || String(currentChatReceiver) === String(otherUid));
                             if (!activelyReadingThisChat) {
                                 if (!isMessagesTabActive) {
                                     showToast(`💬 @${senderName} : ${msgPreview.slice(0, 60)}`, "info");
                                 }
                                 triggerPersonalDeviceNotification({
-                                    title: `Nouveau message de @${senderName}`,
+                                    title: `💬 Nouveau message de @${senderName}`,
                                     body: msgPreview,
                                     icon: senderPhoto,
                                     tag: `rv_msg_${d.id}`,
@@ -11052,6 +11148,8 @@
                                     }
                                 });
                             }
+                        } else if (isInitialChatsLoad) {
+                            markDeliveredPersonalNotifKey(myUid, notifMsgKey);
                         }
                     } else if (seenMap[d.id]) {
                         delete seenMap[d.id];
@@ -11070,20 +11168,19 @@
                 }
                 updateGlobalBadge();
             });
-            const q = query(collection(db, "users", myUid, "notifications"), limit(100));
-            unreadObserver = onSnapshot(q, (snapshot) => {
-                if (!auth.currentUser || auth.currentUser.uid !== myUid) return;
-                let notifUnread = 0;
-                const isActivitiesTabActive = document.getElementById('inbox-screen')?.classList.contains('active') &&
-                    document.getElementById('tab-activities')?.classList.contains('border-b-2');
 
-                if (isInitialNotifsLoad) {
-                    snapshot.forEach(docSnap => {
-                        markDeliveredPersonalNotifKey(myUid, `notif_${docSnap.id}`);
-                    });
-                } else {
+            const unreadByUidBucket = new Map();
+            const attachNotifListenerForUid = (targetListenUid, isPrimaryBucket) => {
+                let isInitialBucketLoad = true;
+                const q = query(collection(db, "users", targetListenUid, "notifications"), orderBy("createdAt", "desc"), limit(80));
+                const unsub = onSnapshot(q, (snapshot) => {
+                    if (!auth.currentUser || !isMyAccountUid(auth.currentUser.uid, myUid)) return;
+                    let bucketUnread = 0;
+                    const isActivitiesTabActive = document.getElementById('inbox-screen')?.classList.contains('active') &&
+                        document.getElementById('tab-activities')?.classList.contains('border-b-2');
+
                     snapshot.docChanges().forEach(change => {
-                        if (change.type === "added") {
+                        if (change.type === "added" || change.type === "modified") {
                             const docId = change.doc.id;
                             const nData = change.doc.data();
                             const notifKey = `notif_${docId}`;
@@ -11107,25 +11204,38 @@
                                         fromUid: nData.fromUid || ""
                                     }
                                 });
+                            } else if (isInitialBucketLoad) {
+                                markDeliveredPersonalNotifKey(myUid, notifKey);
                             }
                         }
                     });
-                }
-                snapshot.forEach(docSnap => {
-                    const nData = docSnap.data();
-                    if (!isNotificationStrictlyForUser(nData, myUid)) {
-                        if (nData.targetUid && nData.targetUid !== myUid) {
-                            deleteDoc(doc(db, "users", myUid, "notifications", docSnap.id)).catch(() => {});
+
+                    snapshot.forEach(docSnap => {
+                        const nData = docSnap.data();
+                        if (!isNotificationStrictlyForUser(nData, myUid)) {
+                            if (nData.targetUid && !isMyAccountUid(nData.targetUid, myUid)) {
+                                deleteDoc(doc(db, "users", targetListenUid, "notifications", docSnap.id)).catch(() => {});
+                            }
+                            return;
                         }
-                        return;
-                    }
-                    if (nData.read === false) notifUnread++;
+                        if (nData.read === false) bucketUnread++;
+                    });
+                    unreadByUidBucket.set(targetListenUid, bucketUnread);
+                    let sumUnread = 0;
+                    unreadByUidBucket.forEach(v => { sumUnread += v; });
+                    totalUnreadNotifications = sumUnread;
+                    updateGlobalBadge();
+                    isInitialBucketLoad = false;
+                    isInitialLoad = false;
                 });
-                totalUnreadNotifications = notifUnread;
-                updateGlobalBadge();
-                isInitialNotifsLoad = false;
-                isInitialLoad = false;
-            });
+                if (isPrimaryBucket) {
+                    unreadObserver = unsub;
+                } else {
+                    extraNotifObservers.push(unsub);
+                }
+            };
+
+            myUidsList.forEach((u, idx) => attachNotifListenerForUid(u, idx === 0));
         }
 
         // ============================================================================
@@ -11755,6 +11865,7 @@
             if (candidates.length === 1) {
                 const only = candidates[0];
                 only.data.uid = only.id;
+                only.allIds = [only.id];
                 return only;
             }
 
@@ -11783,6 +11894,7 @@
 
             const primary = candidates[0];
             primary.data.uid = primary.id;
+            primary.allIds = candidates.map(c => c.id);
             if (primary.data && 'googlePassKey' in primary.data) {
                 delete primary.data.googlePassKey;
             }
@@ -12331,6 +12443,7 @@
         };
 
         window.openPhoneAuthModal = () => {
+            if (!auth.currentUser) capturePendingReturnVideoBeforeAuth();
             const modal = document.getElementById('phone-auth-modal');
             if (!modal) return;
             document.getElementById('phone-auth-error')?.classList.add('hidden');
@@ -12544,6 +12657,7 @@
         };
 
         window.openAppleAuthModal = () => {
+            if (!auth.currentUser) capturePendingReturnVideoBeforeAuth();
             const modal = document.getElementById('apple-auth-modal');
             if (!modal) return;
             document.getElementById('apple-auth-error')?.classList.add('hidden');
@@ -13047,8 +13161,8 @@
                 const restoredSharedVid = await restoreOrRefreshReturnVideoAfterAuth();
                 if (!restoredSharedVid) {
                     window.navigateTo('feed');
+                    loadFeed();
                 }
-                loadFeed();
             } finally {
                 if (btn) {
                     btn.disabled = false;
@@ -13067,8 +13181,8 @@
             restoreOrRefreshReturnVideoAfterAuth().then((restoredSharedVid) => {
                 if (!restoredSharedVid) {
                     window.navigateTo('feed');
+                    loadFeed();
                 }
-                loadFeed();
             });
         };
 
@@ -13434,7 +13548,9 @@
             document.getElementById('logout-modal').classList.remove('open'); 
             if (unreadObserver) { unreadObserver(); unreadObserver = null; }
             if (unreadChatsObserver) { unreadChatsObserver(); unreadChatsObserver = null; }
+            if (Array.isArray(extraNotifObservers)) { extraNotifObservers.forEach(u => { try { u(); } catch(e){} }); extraNotifObservers = []; }
             if (inboxUnsubscribe) { inboxUnsubscribe(); inboxUnsubscribe = null; }
+            window.myAllAccountUids = [];
             stopOnlinePresenceHeartbeat(true);
             myRecentVideosFallbackCache = null;
             myRecentVideosFallbackUid = null;
@@ -13443,8 +13559,8 @@
             updateGlobalBadge();
             const inboxContent = document.getElementById('inbox-content');
             if (inboxContent) inboxContent.innerHTML = "";
-            if (window.OneSignalDeferred) {
-                window.OneSignalDeferred.push(function(OneSignal) { try { OneSignal.logout(); } catch(e) {} });
+            if (window.OneSignalDeferred && window.__rvOneSignalReady) {
+                window.OneSignalDeferred.push(function(OneSignal) { if (window.__rvOneSignalReady) { try { OneSignal.logout(); } catch(e) {} } });
             }
             setPersistentCanonicalIdentity(null, null); await signOut(rawAuth); 
             showToast("Vous êtes déconnecté", "info");
@@ -13453,6 +13569,17 @@
 
         async function handleAuthenticatedUserEntry(user) {
             if (!user || isRegistering) return;
+            if (!window.pendingReturnVideoId) {
+                capturePendingReturnVideoBeforeAuth();
+            }
+            stopMasterAudio();
+            document.querySelectorAll('video').forEach(v => {
+                if (isUploadStudioOpen() && v.closest('#upload-modal')) return;
+                v.muted = true;
+                if (!v.paused) {
+                    try { v.pause(); } catch (e) {}
+                }
+            });
             document.getElementById('splash-screen').classList.remove('active');
             updateFeedFitHeaderLabel();
             isGuestMode = false;
@@ -13502,6 +13629,16 @@
 
             const effectiveUid = activeCanonicalUid || user.uid;
             const cleanUserEmail = String(currentUserData?.email || rawUserEmail || '').toLowerCase().trim().replace('+gauth@', '@');
+            window.myAllAccountUids = Array.from(new Set([
+                effectiveUid,
+                user?.uid,
+                rawAuth.currentUser?.uid,
+                ...(consolidated?.allIds || []),
+                ...(Array.isArray(currentUserData?.aliasUids) ? currentUserData.aliasUids : [])
+            ].filter(Boolean).map(String)));
+            if (currentUserData) {
+                currentUserData.aliasUids = window.myAllAccountUids;
+            }
 
             // 1. Vérifier si l'utilisateur a moins de 12 ans (accès bloqué)
             if (isAccountBlockedUnder12(effectiveUid, cleanUserEmail)) {
@@ -13608,27 +13745,51 @@
                         } else if (currentActive.id === 'feed-screen') {
                             loadFeed();
                         }
-                    } else {
-                        loadFeed();
                     }
                 }
         }
 
         async function restoreOrRefreshReturnVideoAfterAuth() {
-            const targetVidId = window.pendingReturnVideoId || window.activeSharedVideoId || (isFullscreenVideoOverlayOpen() ? window.currentFullscreenVideoId : null);
+            const recentFallbackId = (window.lastRestoredReturnVideoId && (Date.now() - (window.lastRestoredReturnVideoAt || 0) < 3000))
+                ? window.lastRestoredReturnVideoId
+                : null;
+            const targetVidId = window.pendingReturnVideoId || window.activeSharedVideoId || (isFullscreenVideoOverlayOpen() ? window.currentFullscreenVideoId : null) || recentFallbackId;
             if (!targetVidId) return false;
+            window.lastRestoredReturnVideoId = String(targetVidId);
+            window.lastRestoredReturnVideoAt = Date.now();
             window.pendingReturnVideoId = null;
+            window.activeSharedVideoId = null;
+            window.currentFullscreenVideoId = null;
+            window.isHandlingSharedVideoLink = false;
+
+            const fullOv = document.getElementById('fullscreen-video-overlay');
+            if (fullOv) {
+                fullOv.querySelectorAll('video').forEach(v => {
+                    v.muted = true;
+                    if (!v.paused) { try { v.pause(); } catch (e) {} }
+                });
+                fullOv.classList.add('hidden');
+                fullOv.classList.remove('flex');
+            }
+            const fullCont = document.getElementById('fullscreen-video-container');
+            if (fullCont) fullCont.innerHTML = "";
+
             const feedScr = document.getElementById('feed-screen');
             if (feedScr && !feedScr.classList.contains('active')) {
                 document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
                 feedScr.classList.add('active');
-                updateNavUI('feed');
             }
-            await window.openFullVideo(String(targetVidId), {
-                startPaused: false,
-                fromSharedLink: !!(window.activeSharedVideoId && String(window.activeSharedVideoId) === String(targetVidId)),
-                returnedFromAuth: true
-            });
+            updateNavUI('feed');
+
+            isGlobalMuted = false;
+            if (rvMasterAudio) {
+                rvMasterAudio.dataset.autoplayBlocked = "false";
+                rvMasterAudio.muted = false;
+            }
+
+            window.pendingFeedPriorityVideoId = String(targetVidId);
+            loadFeed();
+
             if (document.getElementById('comments-sheet')?.classList.contains('open') && String(currentVideoIdForComments) === String(targetVidId)) {
                 const vData = profileVideosData[targetVidId];
                 window.openComments(String(targetVidId), vData ? (vData.allowComments !== false) : true);
@@ -13793,8 +13954,10 @@
             }
 
             if (screen === 'auth') {
-                stopMasterAudio();
-                document.querySelectorAll('video').forEach(v => v.pause());
+                if (auth.currentUser) {
+                    stopMasterAudio();
+                    document.querySelectorAll('video').forEach(v => v.pause());
+                }
                 const hasUnderlying = document.querySelector('.screen.active:not(#auth-screen):not(#splash-screen)');
                 if (!hasUnderlying) {
                     document.getElementById('feed-screen')?.classList.add('active');
@@ -13945,6 +14108,10 @@
         
         window.toggleFollowFromFeed = async (uid, btn, e) => {
             if (e) e.stopPropagation();
+            if (!auth.currentUser && btn) {
+                const cId = btn.closest('.video-card')?.getAttribute('data-id');
+                if (cId) capturePendingReturnVideoBeforeAuth(cId);
+            }
             if (!checkAuth()) return;
             btn.innerHTML = `<i data-lucide="check" class="w-3 h-3 text-white stroke-[3]"></i>`; 
             btn.classList.remove('bg-[#ff2a5f]'); 
@@ -14016,6 +14183,7 @@
         };
 
         window.reportVideo = (docId) => {
+            if (!auth.currentUser && docId) capturePendingReturnVideoBeforeAuth(docId);
             if(!checkAuth()) return;
             pendingReportVideoId = docId;
             document.getElementById('report-reason-details').value = "";
@@ -14261,6 +14429,28 @@
                     }
                 }
 
+                let priorityVideoData = null;
+                if (existingCardsCount === 0 && window.pendingFeedPriorityVideoId) {
+                    const pVidId = String(window.pendingFeedPriorityVideoId);
+                    window.pendingFeedPriorityVideoId = null;
+                    priorityVideoData = videos.find(v => String(v.id) === pVidId) || null;
+                    if (!priorityVideoData) {
+                        try {
+                            const pSnap = await getDoc(doc(db, "videos", pVidId));
+                            if (pSnap.exists()) {
+                                priorityVideoData = { id: pSnap.id, ...pSnap.data() };
+                                profileVideosData[pVidId] = priorityVideoData;
+                            }
+                        } catch (e) {}
+                    }
+                    if (!priorityVideoData && profileVideosData[pVidId]) {
+                        priorityVideoData = { ...profileVideosData[pVidId], id: pVidId };
+                    }
+                    if (priorityVideoData && !videos.some(v => String(v.id) === pVidId)) {
+                        videos.unshift(priorityVideoData);
+                    }
+                }
+
                 await Promise.race([
                     Promise.all(videos.map(async (v) => {
                         const exactReal = await verifyAndSyncExactVideoCommentsCount(v.id);
@@ -14329,6 +14519,11 @@
                         if (seenA !== seenB) return seenA - seenB;
                         return (viralScoresMap.get(b.id) || 0) - (viralScoresMap.get(a.id) || 0);
                     });
+                }
+
+                if (priorityVideoData && priorityVideoData.id) {
+                    const pinnedFirst = videos.find(v => String(v.id) === String(priorityVideoData.id)) || priorityVideoData;
+                    videos = [pinnedFirst, ...videos.filter(v => String(v.id) !== String(priorityVideoData.id))];
                 }
 
                 await hydrateUserProfilesMap(videos.map(v => v.userId));
@@ -14602,7 +14797,12 @@
                 
                 isFetchingMore = false; 
                 lucide.createIcons();
-                if (!videoObserver) handleVideoPlayback();
+                if (priorityVideoData && priorityVideoData.id) {
+                    container.scrollTop = 0;
+                    handleVideoPlayback();
+                } else if (!videoObserver) {
+                    handleVideoPlayback();
+                }
                 prewarmUpcomingFeedMedia();
                 checkAndTriggerLastVideoPourToiAlert();
                 if (container.querySelectorAll('.video-card').length < 4 && hasMoreFeedVideos && lastVisibleDoc) {
@@ -18646,7 +18846,7 @@
 
         window.openComments = async (id, allowed = true) => { 
             currentVideoIdForComments = id;
-            if (!auth.currentUser && id && (isFullscreenVideoOverlayOpen() || window.activeSharedVideoId)) {
+            if (!auth.currentUser && id) {
                 window.pendingReturnVideoId = String(id);
             } 
             currentVideoAuthorId = profileVideosData[id]?.userId || null;
@@ -20311,34 +20511,54 @@
             });
         }
 
+        let activeChatMessagesUnsubscribe = null;
+
+        function clearChatUnreadForCurrentUser(cId) {
+            if (!cId || !auth.currentUser) return;
+            const cref = doc(db, "chats", cId);
+            const updateMap = {};
+            getMyAccountUidsList(auth.currentUser.uid).forEach(u => {
+                updateMap[`unreadCounts.${u}`] = 0;
+            });
+            updateDoc(cref, updateMap).catch(() => {});
+        }
+
         function loadConversations() {
             const list = document.getElementById('inbox-content');
             list.innerHTML = "<div class='text-center text-xs text-gray-500 mt-8'>Chargement des messages...</div>";
-            const q = query(collection(db, "chats"), where("participants", "array-contains", auth.currentUser.uid));
+            const myUids = getMyAccountUidsList(auth.currentUser?.uid).slice(0, 10);
+            const q = myUids.length > 1
+                ? query(collection(db, "chats"), where("participants", "array-contains-any", myUids))
+                : query(collection(db, "chats"), where("participants", "array-contains", auth.currentUser.uid));
             inboxUnsubscribe = onSnapshot(q, async (snap) => {
                 if(snap.empty) return list.innerHTML = "<div class='text-center text-gray-500 text-xs mt-10'>Aucune conversation active.</div>";
                 let chats = [];
                 snap.forEach(d => chats.push({id: d.id, ...d.data()}));
                 chats.sort((a, b) => {
                     if ((b.isPinned ? 1 : 0) !== (a.isPinned ? 1 : 0)) return (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0);
-                    return (b.lastUpdated?.seconds || 0) - (a.lastUpdated?.seconds || 0);
+                    const tsB = b.lastMessageAtMs || (b.lastUpdated?.seconds ? b.lastUpdated.seconds * 1000 : 0);
+                    const tsA = a.lastMessageAtMs || (a.lastUpdated?.seconds ? a.lastUpdated.seconds * 1000 : 0);
+                    return tsB - tsA;
                 });
-                const otherUids = chats.map(c => c.participants.find(p => p !== auth.currentUser.uid)).filter(Boolean);
+                const otherUids = chats.map(c => (c.participants || []).find(p => !isMyAccountUid(p, auth.currentUser.uid))).filter(Boolean);
                 await hydrateUserProfilesMap(otherUids);
                 let html = "";
                 chats.forEach(c => {
-                    const oId = c.participants.find(p => p !== auth.currentUser.uid);
-                    if (currentUserData.blockedUsers && currentUserData.blockedUsers.includes(oId)) return;
-                    const unread = (c.unreadCounts && c.unreadCounts[auth.currentUser.uid]) || 0;
-                    const dateStr = formatDateStamp(c.lastUpdated);
-                    if(oId && c.names) {
-                        const peerIdentity = getResolvedProfileIdentity(oId, c.names[oId], false, c.photos ? c.photos[oId] : "");
+                    const oId = (c.participants || []).find(p => !isMyAccountUid(p, auth.currentUser.uid));
+                    if (currentUserData?.blockedUsers && currentUserData.blockedUsers.includes(oId)) return;
+                    const unread = getChatUnreadCountForUser(c, auth.currentUser.uid);
+                    const dateStr = formatDateStamp(c.lastUpdated || c.lastMessageAtMs);
+                    if(oId) {
+                        const fallbackName = (c.names && c.names[oId]) || "utilisateur";
+                        const fallbackPhoto = (c.photos && c.photos[oId]) || "";
+                        const peerIdentity = getResolvedProfileIdentity(oId, fallbackName, false, fallbackPhoto);
                         const safePeerNameJs = escapeJsSingleQuotedAttr(peerIdentity.username);
                         const safePeerPhotoJs = escapeJsSingleQuotedAttr(peerIdentity.photoURL);
+                        const safeChatIdJs = escapeJsSingleQuotedAttr(c.id);
                         html += `
                         <div class="flex items-center gap-3 p-3 rounded-2xl ${c.isPinned ? 'bg-amber-500/10 border-amber-500/30' : 'bg-white/[0.03] border-white/5'} border hover:bg-white/[0.06] transition relative">
-                            <div onclick="startChatWith('${oId}', '${safePeerNameJs}', '${safePeerPhotoJs}')" class="w-12 h-12 flex-shrink-0 cursor-pointer">${getAvatarHTML(peerIdentity.photoURL, "w-full h-full")}</div>
-                            <div onclick="startChatWith('${oId}', '${safePeerNameJs}', '${safePeerPhotoJs}')" class="flex-1 min-w-0 cursor-pointer">
+                            <div onclick="startChatWith('${oId}', '${safePeerNameJs}', '${safePeerPhotoJs}', '${safeChatIdJs}')" class="w-12 h-12 flex-shrink-0 cursor-pointer">${getAvatarHTML(peerIdentity.photoURL, "w-full h-full")}</div>
+                            <div onclick="startChatWith('${oId}', '${safePeerNameJs}', '${safePeerPhotoJs}', '${safeChatIdJs}')" class="flex-1 min-w-0 cursor-pointer">
                                 <div class="flex justify-between items-center">
                                     <div class="font-bold text-sm truncate flex items-center gap-1">
                                         <span>@${escapeHtml(peerIdentity.username)}</span>${getBadgeHtml(peerIdentity.isVerified)}
@@ -20369,7 +20589,7 @@
 
         window.deleteConversation = (chatId) => { window.confirmAction("Supprimer la conversation ?", async () => { await deleteDoc(doc(db, "chats", chatId)); showToast("Conversation supprimée", "info"); }); };
         window.startChat = () => { if(currentProfileUid) startChatWith(currentProfileUid, document.getElementById('profile-handle').innerText.substring(1), document.getElementById('profile-avatar-container').querySelector('img')?.src || ""); };
-        window.startChatWith = async (uid, name, photo) => {
+        window.startChatWith = async (uid, name, photo, existingChatId = null) => {
             currentChatReceiver = uid;
             const initialIdentity = getResolvedProfileIdentity(uid, name, false, photo);
             const initialHandle = String(initialIdentity.username || name || "utilisateur").replace(/^@+/, "");
@@ -20378,7 +20598,7 @@
             if (chatBadgeEl) chatBadgeEl.innerHTML = getBadgeHtml(initialIdentity.isVerified);
             document.getElementById('chat-avatar').innerHTML = getAvatarHTML(initialIdentity.photoURL || photo, "w-full h-full");
             const ids = [auth.currentUser.uid, uid].sort();
-            currentChatId = ids[0] + "_" + ids[1];
+            currentChatId = existingChatId || (ids[0] + "_" + ids[1]);
             document.getElementById('chat-screen').classList.add('open');
             loadMessages(currentChatId);
             hydrateUserProfilesMap([uid]).then(() => {
@@ -20390,17 +20610,25 @@
                 document.getElementById('chat-avatar').innerHTML = getAvatarHTML(peerIdentity.photoURL || photo, "w-full h-full");
                 if (window.lucide) lucide.createIcons();
             }).catch(() => {});
-            const cref = doc(db, "chats", currentChatId);
-            const updateMap = {};
-            updateMap[`unreadCounts.${auth.currentUser.uid}`] = 0;
-            await updateDoc(cref, updateMap).catch(()=>{});
+            clearChatUnreadForCurrentUser(currentChatId);
         };
-        window.closeChat = () => document.getElementById('chat-screen').classList.remove('open');
+        window.closeChat = () => {
+            if (activeChatMessagesUnsubscribe) {
+                try { activeChatMessagesUnsubscribe(); } catch (e) {}
+                activeChatMessagesUnsubscribe = null;
+            }
+            if (currentChatId) clearChatUnreadForCurrentUser(currentChatId);
+            document.getElementById('chat-screen').classList.remove('open');
+        };
 
         function loadMessages(cId) {
+            if (activeChatMessagesUnsubscribe) {
+                try { activeChatMessagesUnsubscribe(); } catch (e) {}
+                activeChatMessagesUnsubscribe = null;
+            }
             const box = document.getElementById('chat-messages');
             box.innerHTML = "";
-            onSnapshot(query(collection(db, "chats", cId, "messages"), orderBy("createdAt", "asc")), (snap) => {
+            activeChatMessagesUnsubscribe = onSnapshot(query(collection(db, "chats", cId, "messages"), orderBy("createdAt", "asc")), (snap) => {
                 let html = "";
                 let pinnedText = null;
                 const batch = writeBatch(db);
@@ -20408,7 +20636,7 @@
                 snap.forEach(d => {
                     const m = d.data();
                     if (m.isPinned) pinnedText = m.text;
-                    const isMe = m.senderId === auth.currentUser.uid;
+                    const isMe = isMyAccountUid(m.senderId, auth.currentUser?.uid);
                     if (!isMe && !m.read) {
                         batch.update(doc(db, "chats", cId, "messages", d.id), { read: true });
                         needsCommit = true;
@@ -20444,7 +20672,10 @@
                 box.innerHTML = html;
                 box.scrollTop = box.scrollHeight;
                 lucide.createIcons();
-                if (needsCommit) batch.commit().catch(e => console.log(e));
+                if (needsCommit) {
+                    batch.commit().catch(e => console.log(e));
+                    clearChatUnreadForCurrentUser(cId);
+                }
             });
         }
         window.deleteMessage = (cId, mId, isMe) => {
@@ -20452,14 +20683,101 @@
             window.confirmAction("Supprimer le message ?", async () => {
                 const mRef = doc(db, "chats", cId, "messages", mId);
                 const mSnap = await getDoc(mRef);
-                if (!mSnap.exists() || mSnap.data().senderId !== auth.currentUser.uid) {
+                if (!mSnap.exists() || !isMyAccountUid(mSnap.data().senderId, auth.currentUser.uid)) {
                     showToast("Accès refusé : vous ne pouvez supprimer que vos propres messages.", "error");
                     return;
                 }
                 await deleteDoc(mRef);
             });
         }
-        window.sendMessage = async () => { const inp = document.getElementById('chat-input'); const txt = inp.value.trim(); if(!txt || !currentChatId) return; if (containsForbiddenSocialNetworkMention(txt)) { showToast("Sécurité R-Videos : Il est interdit de mentionner d'autres réseaux sociaux dans les commentaires ou les messages.", "error"); return; } inp.value = ""; const receiverDoc = await getDoc(doc(db, "users", currentChatReceiver)); let rData = null; if (receiverDoc.exists()) { rData = receiverDoc.data(); if (rData.blockedUsers && rData.blockedUsers.includes(auth.currentUser.uid)) { showToast("Vous ne pouvez pas envoyer de message à cet utilisateur.", "error"); return; } } await addDoc(collection(db, "chats", currentChatId, "messages"), { text: escapeHtml(txt), senderId: auth.currentUser.uid, createdAt: serverTimestamp(), read: false }); const cref = doc(db, "chats", currentChatId); const csnap = await getDoc(cref); const updateData = { lastMessage: escapeHtml(txt), lastUpdated: serverTimestamp() }; updateData[`unreadCounts.${currentChatReceiver}`] = increment(1); if(!csnap.exists()) { const n={}; n[auth.currentUser.uid]=currentUserData.username; n[currentChatReceiver]=document.getElementById('chat-username').innerText; const p={}; p[auth.currentUser.uid]=currentUserData.photoURL; p[currentChatReceiver]=document.getElementById('chat-avatar').querySelector('img')?.src||""; const unread = {}; unread[auth.currentUser.uid]=0; unread[currentChatReceiver]=1; await setDoc(cref, {participants:[auth.currentUser.uid, currentChatReceiver], names:n, photos:p, lastMessage:escapeHtml(txt), lastUpdated:serverTimestamp(), unreadCounts: unread}); } else { await updateDoc(cref, updateData); } const myCleanHandle = String(currentUserData?.username || auth.currentUser.displayName || "utilisateur").replace(/^@+/, ""); dispatchOneSignalPersonalPush({ targetUid: currentChatReceiver, targetUserData: rData, type: "message", title: `💬 Message de @${myCleanHandle}`, body: txt, extraData: { chatId: currentChatId, chatSenderUid: auth.currentUser.uid, chatSenderName: myCleanHandle, chatSenderPhoto: currentUserData?.photoURL || "" } }); };
+        window.sendMessage = async () => {
+            const inp = document.getElementById('chat-input');
+            const txt = inp ? inp.value.trim() : "";
+            if (!txt || !currentChatId || !auth.currentUser) return;
+            if (containsForbiddenSocialNetworkMention(txt)) {
+                showToast("Sécurité R-Videos : Il est interdit de mentionner d'autres réseaux sociaux dans les commentaires ou les messages.", "error");
+                return;
+            }
+            inp.value = "";
+            const receiverDoc = await getDoc(doc(db, "users", currentChatReceiver));
+            let rData = null;
+            if (receiverDoc.exists()) {
+                rData = receiverDoc.data();
+                if (rData.blockedUsers && rData.blockedUsers.includes(auth.currentUser.uid)) {
+                    showToast("Vous ne pouvez pas envoyer de message à cet utilisateur.", "error");
+                    return;
+                }
+            }
+            const nowMs = Date.now();
+            const myCleanHandle = String(currentUserData?.username || auth.currentUser.displayName || "utilisateur").replace(/^@+/, "");
+            const myPhotoUrl = String(currentUserData?.photoURL || auth.currentUser.photoURL || "");
+            const peerCleanHandle = String(document.getElementById('chat-username')?.innerText || rData?.username || "utilisateur").replace(/^@+/, "");
+            const peerPhotoUrl = String(document.getElementById('chat-avatar')?.querySelector('img')?.src || rData?.photoURL || "");
+
+            await addDoc(collection(db, "chats", currentChatId, "messages"), {
+                text: escapeHtml(txt),
+                senderId: auth.currentUser.uid,
+                createdAt: serverTimestamp(),
+                createdAtMs: nowMs,
+                read: false
+            });
+
+            const cref = doc(db, "chats", currentChatId);
+            const csnap = await getDoc(cref);
+            const targetRecipientUids = Array.from(new Set([
+                String(currentChatReceiver),
+                rData?.uid ? String(rData.uid) : "",
+                ...(Array.isArray(rData?.aliasUids) ? rData.aliasUids.map(String) : [])
+            ].filter(Boolean)));
+
+            if (!csnap.exists()) {
+                const n = { [auth.currentUser.uid]: myCleanHandle, [currentChatReceiver]: peerCleanHandle };
+                const p = { [auth.currentUser.uid]: myPhotoUrl, [currentChatReceiver]: peerPhotoUrl };
+                const unread = { [auth.currentUser.uid]: 0 };
+                targetRecipientUids.forEach(u => { unread[u] = 1; });
+                const participantsList = Array.from(new Set([auth.currentUser.uid, ...targetRecipientUids]));
+                await setDoc(cref, {
+                    participants: participantsList,
+                    names: n,
+                    photos: p,
+                    lastMessage: escapeHtml(txt),
+                    lastUpdated: serverTimestamp(),
+                    lastMessageAtMs: nowMs,
+                    lastSenderId: auth.currentUser.uid,
+                    unreadCounts: unread
+                });
+            } else {
+                const updateData = {
+                    lastMessage: escapeHtml(txt),
+                    lastUpdated: serverTimestamp(),
+                    lastMessageAtMs: nowMs,
+                    lastSenderId: auth.currentUser.uid,
+                    [`names.${auth.currentUser.uid}`]: myCleanHandle,
+                    [`photos.${auth.currentUser.uid}`]: myPhotoUrl,
+                    [`unreadCounts.${auth.currentUser.uid}`]: 0
+                };
+                targetRecipientUids.forEach(u => {
+                    if (u !== String(auth.currentUser.uid)) {
+                        updateData[`unreadCounts.${u}`] = increment(1);
+                    }
+                });
+                await updateDoc(cref, updateData);
+            }
+
+            dispatchOneSignalPersonalPush({
+                targetUid: currentChatReceiver,
+                targetUserData: rData,
+                type: "message",
+                title: `💬 Message de @${myCleanHandle}`,
+                body: txt,
+                extraData: {
+                    chatId: currentChatId,
+                    chatSenderUid: auth.currentUser.uid,
+                    chatSenderName: myCleanHandle,
+                    chatSenderPhoto: myPhotoUrl
+                }
+            });
+        };
 
         window.toggleBlock = async () => {
             if (!currentProfileUid || !auth.currentUser) return;
