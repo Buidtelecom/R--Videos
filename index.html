@@ -22,23 +22,48 @@
     <!-- ONESIGNAL SDK INTEGRATION -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
+      (function captureWeb2AppPushParams() {
+        try {
+          var sp = new URLSearchParams(window.location.search || "");
+          var candidate = sp.get("onesignal_push_id") || sp.get("onesignal_id") || sp.get("onesignal_player_id") || sp.get("player_id") || sp.get("push_id") || sp.get("sub_id") || "";
+          if (candidate && candidate.length > 8) {
+            localStorage.setItem("rv_web2app_onesignal_id", String(candidate).trim());
+          }
+        } catch (e) {}
+      })();
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function(OneSignal) {
         try {
             await OneSignal.init({
-              appId: "784b7423-3539-448c-8d8d-80e8b0bed456",
-              safari_web_id: "web.onesignal.auto.35c3b21f-3634-4ed2-bd52-fd09e2637415",
+              appId: "db22c4d3-fcc7-4e30-9ddc-d286ee29a9ae",
+              allowLocalhostAsSecureOrigin: true,
               notifyButton: { enable: false },
               promptOptions: {
                 slidedown: {
                   enabled: true,
                   autoPrompt: true,
-                  actionMessage: "Active les notifications pour recevoir les likes et commentaires 🔔",
+                  actionMessage: "Active les notifications pour recevoir tes likes, commentaires, partages, messages, stories et favoris 🔔",
                   acceptButtonText: "Autoriser",
                   cancelButtonText: "Plus tard"
                 }
               }
             });
+            if (OneSignal.Notifications && typeof OneSignal.Notifications.addEventListener === "function") {
+                OneSignal.Notifications.addEventListener("click", function(event) {
+                    try {
+                        const data = (event && event.notification && event.notification.additionalData) || {};
+                        if (data.videoId && typeof window.openFullVideo === "function") {
+                            window.openFullVideo(String(data.videoId));
+                        } else if (data.storyOwnerUid && typeof window.openStoryViewer === "function") {
+                            window.openStoryViewer(String(data.storyOwnerUid), 0);
+                        } else if (data.chatSenderUid && typeof window.startChatWith === "function") {
+                            window.startChatWith(String(data.chatSenderUid), String(data.chatSenderName || "utilisateur"), String(data.chatSenderPhoto || ""));
+                        } else if (typeof window.navigateTo === "function") {
+                            window.navigateTo("inbox");
+                        }
+                    } catch (err) {}
+                });
+            }
             OneSignal.Slidedown.promptPush();
         } catch (e) { console.warn("Erreur OneSignal:", e); }
       });
@@ -7978,6 +8003,14 @@
             try {
                 if (nextRepostedState) {
                     await updateDoc(doc(db, "videos", docId), { reposts: vData.reposts, repostedBy: arrayUnion(uid) }).catch(()=>{});
+                    if (vData.userId && vData.userId !== uid && markUserInteractionOnce('repost_notif', docId)) {
+                        const vThumb = vData.url ? getVideoThumbnail(vData.url, vData.thumbnailOffset || 0) : "";
+                        sendNotification(vData.userId, "repost", "a republié votre vidéo 🔁", {
+                            videoId: docId,
+                            videoUrl: vData.url || "",
+                            videoThumb: vThumb
+                        });
+                    }
                 } else {
                     await updateDoc(doc(db, "videos", docId), { reposts: vData.reposts, repostedBy: arrayRemove(uid) }).catch(()=>{});
                 }
@@ -10016,9 +10049,20 @@
         });
 
         function requestNotificationPermission() {
-            if ("Notification" in window && Notification.permission !== "granted") Notification.requestPermission();
-            if (window.OneSignalDeferred && window.location.hostname === 'buidtelecom.github.io') {
-                window.OneSignalDeferred.push(function(OneSignal) { try { OneSignal.Slidedown.promptPush(); } catch(e) {} });
+            if ("Notification" in window && Notification.permission !== "granted") {
+                try { Notification.requestPermission(); } catch (e) {}
+            }
+            if (window.OneSignalDeferred) {
+                window.OneSignalDeferred.push(function(OneSignal) {
+                    try {
+                        if (OneSignal.Notifications && typeof OneSignal.Notifications.requestPermission === "function") {
+                            OneSignal.Notifications.requestPermission().catch(() => {});
+                        }
+                        if (OneSignal.Slidedown && typeof OneSignal.Slidedown.promptPush === "function") {
+                            OneSignal.Slidedown.promptPush();
+                        }
+                    } catch(e) {}
+                });
             }
         }
         
@@ -10316,6 +10360,14 @@
                         shares: vData.shares,
                         sharedBy: arrayUnion(uid)
                     }).catch(() => {});
+                    if (vData.userId && vData.userId !== uid) {
+                        const vThumb = vData.url ? getVideoThumbnail(vData.url, vData.thumbnailOffset || 0) : "";
+                        sendNotification(vData.userId, "share", "a partagé votre vidéo 🔗", {
+                            videoId: videoId,
+                            videoUrl: vData.url || "",
+                            videoThumb: vThumb
+                        });
+                    }
                 }
             } finally {
                 pendingInteractionLocks.delete(lockKey);
@@ -10640,37 +10692,303 @@
             if (n.recipientUid && n.recipientUid !== myUid) return false;
             // Self-actions on likes/comments/follows should never appear in one's own notifications
             if (n.fromUid === myUid && n.type !== 'report' && n.type !== 'info') return false;
-            // If videoId is known in cache and this is a video-owner notification ('like' or 'comment'), verify video belongs to myUid
-            if ((n.type === 'like' || n.type === 'comment') && n.videoId && profileVideosData[n.videoId]) {
+            // If videoId is known in cache and this is a video-owner notification, verify video belongs to myUid
+            if ((n.type === 'like' || n.type === 'comment' || n.type === 'favorite' || n.type === 'share' || n.type === 'repost') && n.videoId && profileVideosData[n.videoId]) {
                 const vidOwner = profileVideosData[n.videoId].userId;
                 if (vidOwner && vidOwner !== myUid) return false;
             }
             return true;
         }
 
+        function hasDeliveredPersonalNotifKey(uid, notifKey) {
+            if (!uid || !notifKey) return true;
+            try {
+                const raw = safeGetStorage(`rv_delivered_notifs_${uid}`, '[]');
+                const list = JSON.parse(raw);
+                return Array.isArray(list) && list.includes(String(notifKey));
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function markDeliveredPersonalNotifKey(uid, notifKey) {
+            if (!uid || !notifKey) return;
+            try {
+                const raw = safeGetStorage(`rv_delivered_notifs_${uid}`, '[]');
+                let list = JSON.parse(raw);
+                if (!Array.isArray(list)) list = [];
+                const k = String(notifKey);
+                if (!list.includes(k)) {
+                    list.push(k);
+                    if (list.length > 160) list = list.slice(-160);
+                    safeSetStorage(`rv_delivered_notifs_${uid}`, JSON.stringify(list));
+                }
+            } catch (e) {}
+        }
+
+        async function triggerPersonalDeviceNotification({ title, body, icon, tag, data = {} }) {
+            if (!title && !body) return;
+            const cleanTitle = String(title || "R-Videos");
+            const cleanBody = String(body || "");
+            const cleanIcon = String(icon || "");
+            const notifOptions = {
+                body: cleanBody,
+                icon: cleanIcon || undefined,
+                badge: cleanIcon || undefined,
+                tag: String(tag || `rv_${Date.now()}`),
+                renotify: false,
+                data: data
+            };
+            try {
+                if ("Notification" in window && Notification.permission === "granted") {
+                    if ("serviceWorker" in navigator) {
+                        const reg = await navigator.serviceWorker.getRegistration();
+                        if (reg && typeof reg.showNotification === "function") {
+                            await reg.showNotification(cleanTitle, notifOptions);
+                            return;
+                        }
+                    }
+                    const sysNotif = new Notification(cleanTitle, notifOptions);
+                    sysNotif.onclick = () => {
+                        try { window.focus(); } catch (e) {}
+                        if (data.videoId && typeof window.openFullVideo === "function") {
+                            window.openFullVideo(String(data.videoId));
+                        } else if (data.storyOwnerUid && typeof window.openStoryViewer === "function") {
+                            window.openStoryViewer(String(data.storyOwnerUid), 0);
+                        } else if (data.chatSenderUid && typeof window.startChatWith === "function") {
+                            window.startChatWith(String(data.chatSenderUid), String(data.chatSenderName || "utilisateur"), String(data.chatSenderPhoto || ""));
+                        } else if (typeof window.navigateTo === "function") {
+                            window.navigateTo("inbox");
+                        }
+                        sysNotif.close();
+                    };
+                }
+            } catch (e) {}
+        }
+
+        const RV_ONESIGNAL_APP_ID = "db22c4d3-fcc7-4e30-9ddc-d286ee29a9ae";
+        const RV_ONESIGNAL_REST_API_KEY = "os_v2_app_3mrmju74y5hdbho42kdo4knjv3liq5yqfjhuxamvfeibifw6ouimoflkyebsavtpphmgwsiaysxuvbm3ouoqcagolacdlcyimn276hy";
+
+        function syncWeb2AppAndOneSignalUserIdentity(uid, username = "") {
+            if (!uid) return;
+            const cleanUid = String(uid).trim();
+            const cleanUsername = String(username || "").replace(/^@+/, "").trim();
+
+            const persistSubIdToFirestore = (subId) => {
+                if (!subId || String(subId).length < 8) return;
+                const cleanSub = String(subId).trim();
+                safeSetStorage("rv_web2app_onesignal_id", cleanSub);
+                updateDoc(doc(db, "users", cleanUid), {
+                    onesignalSubId: cleanSub,
+                    onesignalSubIds: arrayUnion(cleanSub),
+                    onesignalExternalId: cleanUid
+                }).catch(() => {});
+            };
+
+            // 1. Check any stored Web2App player/subscription ID from URL params or native bridge
+            const cachedWeb2AppId = safeGetStorage("rv_web2app_onesignal_id", "");
+            if (cachedWeb2AppId) {
+                persistSubIdToFirestore(cachedWeb2AppId);
+            } else {
+                updateDoc(doc(db, "users", cleanUid), {
+                    onesignalExternalId: cleanUid
+                }).catch(() => {});
+            }
+
+            // 2. Sync with Web2App / Android / iOS native OneSignal bridges if present
+            try {
+                if (window.Android) {
+                    if (typeof window.Android.setOneSignalExternalUserId === "function") window.Android.setOneSignalExternalUserId(cleanUid);
+                    if (typeof window.Android.loginOneSignal === "function") window.Android.loginOneSignal(cleanUid);
+                    if (typeof window.Android.getOneSignalUserId === "function") {
+                        const nativeId = window.Android.getOneSignalUserId();
+                        if (nativeId) persistSubIdToFirestore(nativeId);
+                    }
+                }
+                if (window.web2app && window.web2app.onesignal) {
+                    if (typeof window.web2app.onesignal.login === "function") window.web2app.onesignal.login(cleanUid);
+                    if (typeof window.web2app.onesignal.setExternalUserId === "function") window.web2app.onesignal.setExternalUserId(cleanUid);
+                    if (typeof window.web2app.onesignal.sendTag === "function") window.web2app.onesignal.sendTag("uid", cleanUid);
+                }
+                if (window.webkit && window.webkit.messageHandlers) {
+                    if (window.webkit.messageHandlers.onesignalSetExternalUserId) {
+                        window.webkit.messageHandlers.onesignalSetExternalUserId.postMessage(cleanUid);
+                    }
+                    if (window.webkit.messageHandlers.OneSignal) {
+                        window.webkit.messageHandlers.OneSignal.postMessage({ action: "login", externalId: cleanUid, uid: cleanUid });
+                    }
+                }
+            } catch (e) {}
+
+            // 3. Sync with OneSignal Web SDK v16
+            if (window.OneSignalDeferred) {
+                window.OneSignalDeferred.push(async function(OneSignal) {
+                    try {
+                        await OneSignal.login(cleanUid);
+                        if (OneSignal.User && typeof OneSignal.User.addTag === "function") {
+                            OneSignal.User.addTag("uid", cleanUid);
+                            if (cleanUsername) OneSignal.User.addTag("username", cleanUsername);
+                        }
+                        const subId = OneSignal.User?.PushSubscription?.id || null;
+                        if (subId) persistSubIdToFirestore(subId);
+                        if (OneSignal.User?.PushSubscription && typeof OneSignal.User.PushSubscription.addEventListener === "function") {
+                            OneSignal.User.PushSubscription.addEventListener("change", (ev) => {
+                                const nextSubId = ev?.current?.id || OneSignal.User?.PushSubscription?.id || null;
+                                if (nextSubId && auth.currentUser && String(auth.currentUser.uid) === cleanUid) {
+                                    persistSubIdToFirestore(nextSubId);
+                                }
+                            });
+                        }
+                    } catch (e) {}
+                });
+            }
+        }
+
+        async function dispatchOneSignalPersonalPush({ targetUid, targetUserData = null, type = "activity", title = "", body = "", extraData = {} }) {
+            if (!targetUid || !RV_ONESIGNAL_APP_ID || !RV_ONESIGNAL_REST_API_KEY) return;
+            if (auth.currentUser && String(targetUid) === String(auth.currentUser.uid)) return;
+
+            const cleanTargetUid = String(targetUid).trim();
+            const cleanTitle = String(title || "R-Videos").trim();
+            const cleanBody = String(body || "Vous avez reçu une nouvelle notification sur R-Videos").trim();
+            const collapseId = `rv_${type}_${auth.currentUser?.uid || "u"}_${extraData.videoId || extraData.storyId || extraData.chatId || Date.now()}`.slice(0, 64);
+
+            let deepLinkUrl = RV_APP_DEEP_LINK_BASE;
+            if (extraData.videoId) {
+                deepLinkUrl = `${RV_APP_DEEP_LINK_BASE}/?video=${encodeURIComponent(String(extraData.videoId))}`;
+            } else if (extraData.storyOwnerUid) {
+                deepLinkUrl = `${RV_APP_DEEP_LINK_BASE}/?story=${encodeURIComponent(String(extraData.storyOwnerUid))}`;
+            }
+
+            const basePayload = {
+                app_id: RV_ONESIGNAL_APP_ID,
+                target_channel: "push",
+                headings: { fr: cleanTitle, en: cleanTitle },
+                contents: { fr: cleanBody, en: cleanBody },
+                url: deepLinkUrl,
+                collapse_id: collapseId,
+                priority: 10,
+                data: {
+                    type: String(type || "activity"),
+                    targetUid: cleanTargetUid,
+                    videoId: String(extraData.videoId || ""),
+                    storyOwnerUid: String(extraData.storyOwnerUid || ""),
+                    chatId: String(extraData.chatId || ""),
+                    chatSenderUid: String(extraData.chatSenderUid || auth.currentUser?.uid || ""),
+                    chatSenderName: String(extraData.chatSenderName || currentUserData?.username || ""),
+                    chatSenderPhoto: String(extraData.chatSenderPhoto || currentUserData?.photoURL || "")
+                }
+            };
+
+            const senderAvatar = String(extraData.fromPhoto || currentUserData?.photoURL || "");
+            if (senderAvatar.startsWith("https://")) {
+                basePayload.large_icon = senderAvatar;
+                basePayload.chrome_web_icon = senderAvatar;
+            }
+            const mediaThumb = String(extraData.videoThumb || "");
+            if (mediaThumb.startsWith("https://")) {
+                basePayload.big_picture = mediaThumb;
+                basePayload.chrome_web_image = mediaThumb;
+                basePayload.ios_attachments = { media: mediaThumb };
+            }
+
+            const sendOneSignalRequest = async (targetingFields) => {
+                try {
+                    const resp = await fetch("https://api.onesignal.com/notifications", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json; charset=utf-8",
+                            "Authorization": `Key ${RV_ONESIGNAL_REST_API_KEY}`
+                        },
+                        body: JSON.stringify({ ...basePayload, ...targetingFields })
+                    });
+                    if (!resp.ok) return null;
+                    return await resp.json();
+                } catch (err) {
+                    return null;
+                }
+            };
+
+            try {
+                const subIds = Array.from(new Set([
+                    ...(Array.isArray(targetUserData?.onesignalSubIds) ? targetUserData.onesignalSubIds : []),
+                    targetUserData?.onesignalSubId,
+                    targetUserData?.onesignalPlayerId
+                ].filter(Boolean).map(String)));
+
+                // 1. If the recipient has registered OneSignal Subscription/Player IDs, target them directly
+                if (subIds.length > 0) {
+                    await sendOneSignalRequest({ include_subscription_ids: subIds });
+                }
+
+                // 2. Target the recipient by their personal OneSignal External ID (OneSignal.login(uid))
+                const aliasRes = await sendOneSignalRequest({
+                    include_aliases: { external_id: [cleanTargetUid] }
+                });
+
+                // 3. Fallback: Target by tag "uid" if alias had no active match yet
+                if (!aliasRes || (!aliasRes.id && subIds.length === 0)) {
+                    await sendOneSignalRequest({
+                        filters: [{ field: "tag", key: "uid", relation: "=", value: cleanTargetUid }]
+                    });
+                }
+            } catch (e) {}
+        }
+
         async function sendNotification(targetUid, type, text, extraData = {}) {
             if(!auth.currentUser || !targetUid || targetUid === auth.currentUser.uid) return;
             try {
                 const targetUser = await getDoc(doc(db, "users", targetUid));
+                let targetUserData = null;
                 if (targetUser.exists()) {
-                    const data = targetUser.data();
-                    if (data.blockedBy && data.blockedBy.includes(auth.currentUser.uid)) return; 
-                    if (data.blockedUsers && data.blockedUsers.includes(auth.currentUser.uid)) return;
+                    targetUserData = targetUser.data();
+                    if (targetUserData.blockedBy && targetUserData.blockedBy.includes(auth.currentUser.uid)) return; 
+                    if (targetUserData.blockedUsers && targetUserData.blockedUsers.includes(auth.currentUser.uid)) return;
                 }
+                const senderUsername = String(currentUserData?.username || auth.currentUser.displayName || "utilisateur").replace(/^@+/, "");
+                const senderPhoto = currentUserData?.photoURL || auth.currentUser.photoURL || "";
                 const payload = {
                     type,
                     text,
                     targetUid: targetUid,
                     toUid: targetUid,
                     fromUid: auth.currentUser.uid,
-                    fromUsername: currentUserData.username,
-                    fromPhoto: currentUserData.photoURL,
-                    fromVerified: !!(currentUserData.isVerified || currentUserData.email === VIP_EMAIL),
+                    fromUsername: senderUsername,
+                    fromPhoto: senderPhoto,
+                    fromVerified: !!(currentUserData?.isVerified || currentUserData?.email === VIP_EMAIL),
                     createdAt: serverTimestamp(),
                     read: false,
                     ...extraData
                 };
                 await addDoc(collection(db, "users", targetUid, "notifications"), payload);
+
+                // Automatically trigger a targeted personal OneSignal Push Notification to targetUid
+                const titleMap = {
+                    like: `❤️ Nouveau J'aime de @${senderUsername}`,
+                    comment: `💬 Nouveau commentaire de @${senderUsername}`,
+                    reply: `💬 Nouvelle réponse de @${senderUsername}`,
+                    comment_like: `❤️ @${senderUsername} a aimé ton commentaire`,
+                    share: `🔗 @${senderUsername} a partagé ta vidéo`,
+                    repost: `🔁 @${senderUsername} a republié ta vidéo`,
+                    favorite: `⭐ @${senderUsername} a mis ta vidéo en favori`,
+                    story_like: `❤️ @${senderUsername} a aimé ta story`,
+                    story_view: `👀 @${senderUsername} a vu ta story`,
+                    story: `✨ Nouvelle story de @${senderUsername}`,
+                    follow: `👤 @${senderUsername} s'est abonné à toi`
+                };
+                const pushTitle = titleMap[type] || `🔔 @${senderUsername} sur R-Videos`;
+                const pushBody = `@${senderUsername} ${unescapeHtml(String(text || ""))}`;
+                dispatchOneSignalPersonalPush({
+                    targetUid,
+                    targetUserData,
+                    type,
+                    title: pushTitle,
+                    body: pushBody,
+                    extraData: {
+                        ...extraData,
+                        fromPhoto: senderPhoto
+                    }
+                });
             } catch(e) { console.log("Notif error:", e); }
         }
 
@@ -10681,6 +10999,9 @@
             if (unreadChatsObserver) { unreadChatsObserver(); unreadChatsObserver = null; }
             if (!auth.currentUser) return;
             const myUid = auth.currentUser.uid;
+            let isInitialChatsLoad = true;
+            let isInitialNotifsLoad = true;
+            let previousChatSigs = {};
 
             const qChats = query(collection(db, "chats"), where("participants", "array-contains", myUid));
             unreadChatsObserver = onSnapshot(qChats, (snapshot) => {
@@ -10689,6 +11010,10 @@
                 let seenChanged = false;
                 let unacknowledgedUnread = 0;
                 const currentSigs = {};
+                const isMessagesTabActive = document.getElementById('inbox-screen')?.classList.contains('active') &&
+                    document.getElementById('tab-messages')?.classList.contains('border-b-2');
+                const isChatModalOpen = document.getElementById('chat-screen')?.classList.contains('open');
+
                 snapshot.forEach(d => {
                     const c = d.data();
                     if (!Array.isArray(c.participants) || !c.participants.includes(myUid)) return;
@@ -10699,15 +11024,44 @@
                         if (seenMap[d.id] !== sig) {
                             unacknowledgedUnread += myUnread;
                         }
+                        const notifMsgKey = `chat_${d.id}_${sig}`;
+                        if (isInitialChatsLoad) {
+                            markDeliveredPersonalNotifKey(myUid, notifMsgKey);
+                        } else if (previousChatSigs[d.id] !== sig && !hasDeliveredPersonalNotifKey(myUid, notifMsgKey)) {
+                            markDeliveredPersonalNotifKey(myUid, notifMsgKey);
+                            const otherUid = c.participants.find(p => p !== myUid) || "";
+                            const senderName = String((c.names && otherUid && c.names[otherUid]) || "utilisateur").replace(/^@+/, "");
+                            const senderPhoto = (c.photos && otherUid && c.photos[otherUid]) || "";
+                            const msgPreview = unescapeHtml(String(c.lastMessage || "Vous a envoyé un message"));
+                            const activelyReadingThisChat = isChatModalOpen && String(currentChatId) === String(d.id);
+                            if (!activelyReadingThisChat) {
+                                if (!isMessagesTabActive) {
+                                    showToast(`💬 @${senderName} : ${msgPreview.slice(0, 60)}`, "info");
+                                }
+                                triggerPersonalDeviceNotification({
+                                    title: `Nouveau message de @${senderName}`,
+                                    body: msgPreview,
+                                    icon: senderPhoto,
+                                    tag: `rv_msg_${d.id}`,
+                                    data: {
+                                        type: "message",
+                                        chatId: d.id,
+                                        chatSenderUid: otherUid,
+                                        chatSenderName: senderName,
+                                        chatSenderPhoto: senderPhoto
+                                    }
+                                });
+                            }
+                        }
                     } else if (seenMap[d.id]) {
                         delete seenMap[d.id];
                         seenChanged = true;
                     }
                 });
+                previousChatSigs = { ...currentSigs };
+                isInitialChatsLoad = false;
                 if (seenChanged) saveSeenMessagesTabMap(myUid, seenMap);
                 latestUnreadChatSignatures = currentSigs;
-                const isMessagesTabActive = document.getElementById('inbox-screen')?.classList.contains('active') &&
-                    document.getElementById('tab-messages')?.classList.contains('border-b-2');
                 if (isMessagesTabActive && unacknowledgedUnread > 0) {
                     saveSeenMessagesTabMap(myUid, { ...currentSigs });
                     totalUnreadChats = 0;
@@ -10720,15 +11074,39 @@
             unreadObserver = onSnapshot(q, (snapshot) => {
                 if (!auth.currentUser || auth.currentUser.uid !== myUid) return;
                 let notifUnread = 0;
-                if (!isInitialLoad) {
+                const isActivitiesTabActive = document.getElementById('inbox-screen')?.classList.contains('active') &&
+                    document.getElementById('tab-activities')?.classList.contains('border-b-2');
+
+                if (isInitialNotifsLoad) {
+                    snapshot.forEach(docSnap => {
+                        markDeliveredPersonalNotifKey(myUid, `notif_${docSnap.id}`);
+                    });
+                } else {
                     snapshot.docChanges().forEach(change => {
                         if (change.type === "added") {
+                            const docId = change.doc.id;
                             const nData = change.doc.data();
-                            if (nData && nData.read === false && isNotificationStrictlyForUser(nData, myUid)) {
-                                if (nData.type === "story_like" || nData.type === "story_view") {
-                                    const senderName = String(nData.fromUsername || "utilisateur").replace(/^@+/, "");
-                                    showToast(`@${senderName} ${nData.text || (nData.type === "story_like" ? "a aimé votre story ❤️" : "a vu votre story 👀")}`, nData.type === "story_like" ? "success" : "info");
+                            const notifKey = `notif_${docId}`;
+                            if (nData && nData.read === false && isNotificationStrictlyForUser(nData, myUid) && !hasDeliveredPersonalNotifKey(myUid, notifKey)) {
+                                markDeliveredPersonalNotifKey(myUid, notifKey);
+                                const senderName = String(nData.fromUsername || "utilisateur").replace(/^@+/, "");
+                                const rawActionText = unescapeHtml(String(nData.text || "a interagi avec votre contenu"));
+                                const toastType = (nData.type === "like" || nData.type === "story_like" || nData.type === "favorite" || nData.type === "comment") ? "success" : "info";
+                                if (!isActivitiesTabActive) {
+                                    showToast(`@${senderName} ${rawActionText}`, toastType);
                                 }
+                                triggerPersonalDeviceNotification({
+                                    title: `@${senderName} sur R-Videos`,
+                                    body: `@${senderName} ${rawActionText}`,
+                                    icon: nData.fromPhoto || nData.videoThumb || "",
+                                    tag: `rv_notif_${docId}`,
+                                    data: {
+                                        type: nData.type || "activity",
+                                        videoId: nData.videoId || nData.targetVideoId || "",
+                                        storyOwnerUid: nData.storyOwnerUid || "",
+                                        fromUid: nData.fromUid || ""
+                                    }
+                                });
                             }
                         }
                     });
@@ -10745,6 +11123,7 @@
                 });
                 totalUnreadNotifications = notifUnread;
                 updateGlobalBadge();
+                isInitialNotifsLoad = false;
                 isInitialLoad = false;
             });
         }
@@ -11227,6 +11606,14 @@
             try {
                 if (nextFavState) { 
                     await updateDoc(ref, { favorites: arrayUnion(uid) }); 
+                    if (vData.userId && vData.userId !== uid && markUserInteractionOnce('fav_notif', docId)) {
+                        const vThumb = vData.url ? getVideoThumbnail(vData.url, vData.thumbnailOffset || 0) : "";
+                        sendNotification(vData.userId, "favorite", "a ajouté votre vidéo aux favoris ⭐", {
+                            videoId: docId,
+                            videoUrl: vData.url || "",
+                            videoThumb: vThumb
+                        });
+                    }
                     if (markUserInteractionOnce('fav_boost', docId)) {
                         await updateUserPreferences(tags);
                     }
@@ -13056,7 +13443,7 @@
             updateGlobalBadge();
             const inboxContent = document.getElementById('inbox-content');
             if (inboxContent) inboxContent.innerHTML = "";
-            if (window.OneSignalDeferred && window.location.hostname === 'buidtelecom.github.io') {
+            if (window.OneSignalDeferred) {
                 window.OneSignalDeferred.push(function(OneSignal) { try { OneSignal.logout(); } catch(e) {} });
             }
             setPersistentCanonicalIdentity(null, null); await signOut(rawAuth); 
@@ -13167,9 +13554,7 @@
                 }
                 
                 requestNotificationPermission();
-                if (window.OneSignalDeferred && window.location.hostname === 'buidtelecom.github.io') {
-                    window.OneSignalDeferred.push(function(OneSignal) { try { OneSignal.login(effectiveUid); } catch(e) {} });
-                }
+                syncWeb2AppAndOneSignalUserIdentity(effectiveUid, currentUserData?.username || "");
                 
                 closeGoogleAccountChooserModal();
                 if (window.closePhoneAuthModal) window.closePhoneAuthModal();
@@ -19578,7 +19963,7 @@
             notifs.forEach(n => {
                 const vId = n.videoId || n.targetVideoId;
                 if (vId && !profileVideosData[vId]) missingVideoIds.add(vId);
-                if (!vId && (n.type === 'like' || n.type === 'comment' || n.type === 'reply' || n.type === 'comment_like' || n.type === 'rewatch')) {
+                if (!vId && (n.type === 'like' || n.type === 'comment' || n.type === 'reply' || n.type === 'comment_like' || n.type === 'rewatch' || n.type === 'favorite' || n.type === 'share' || n.type === 'repost')) {
                     needsFallbackVideos = true;
                 }
             });
@@ -19854,6 +20239,9 @@
                     let icon = "bell"; let color = "text-yellow-400";
                     if(n.type === 'like' || n.type === 'comment_like' || n.type === 'story_like') { icon = "heart"; color = "text-[#ff2a5f]"; }
                     if(n.type === 'story_view') { icon = "eye"; color = "text-cyan-400"; }
+                    if(n.type === 'story') { icon = "sparkles"; color = "text-purple-400"; }
+                    if(n.type === 'favorite') { icon = "bookmark"; color = "text-amber-400"; }
+                    if(n.type === 'share' || n.type === 'repost') { icon = "share-2"; color = "text-cyan-400"; }
                     if(n.type === 'follow') { icon = "user-plus"; color = "text-cyan-400"; }
                     if(n.type === 'comment') { icon = "message-circle"; color = "text-emerald-400"; }
                     if(n.type === 'reply') { icon = "message-square"; color = "text-indigo-400"; }
@@ -19873,7 +20261,7 @@
                     const safeCommentIdJs = escapeJsSingleQuotedAttr(n.commentId || "");
                     const safeParentCommentIdJs = escapeJsSingleQuotedAttr(n.parentCommentId || n.commentId || "");
 
-                    const isStoryNotif = (n.type === 'story_like' || n.type === 'story_view');
+                    const isStoryNotif = (n.type === 'story_like' || n.type === 'story_view' || n.type === 'story');
                     const safeStoryOwnerJs = escapeJsSingleQuotedAttr(n.storyOwnerUid || (auth.currentUser ? auth.currentUser.uid : ""));
                     const thumbHtml = thumbUrl ? `
                         <div onclick="event.stopPropagation(); ${isStoryNotif && safeStoryOwnerJs ? `openStoryViewer('${safeStoryOwnerJs}')` : (vId ? `openFullVideo('${safeVidIdJs}')` : `viewUserProfile('${n.fromUid}')`)}" class="relative w-12 h-16 rounded-xl overflow-hidden bg-[#0c1222] border border-white/15 shrink-0 shadow-md group cursor-pointer" title="${isStoryNotif ? 'Voir la story' : 'Voir la publication'}">
@@ -20071,7 +20459,7 @@
                 await deleteDoc(mRef);
             });
         }
-        window.sendMessage = async () => { const inp = document.getElementById('chat-input'); const txt = inp.value.trim(); if(!txt || !currentChatId) return; if (containsForbiddenSocialNetworkMention(txt)) { showToast("Sécurité R-Videos : Il est interdit de mentionner d'autres réseaux sociaux dans les commentaires ou les messages.", "error"); return; } inp.value = ""; const receiverDoc = await getDoc(doc(db, "users", currentChatReceiver)); if (receiverDoc.exists()) { const rData = receiverDoc.data(); if (rData.blockedUsers && rData.blockedUsers.includes(auth.currentUser.uid)) { showToast("Vous ne pouvez pas envoyer de message à cet utilisateur.", "error"); return; } } await addDoc(collection(db, "chats", currentChatId, "messages"), { text: escapeHtml(txt), senderId: auth.currentUser.uid, createdAt: serverTimestamp(), read: false }); const cref = doc(db, "chats", currentChatId); const csnap = await getDoc(cref); const updateData = { lastMessage: escapeHtml(txt), lastUpdated: serverTimestamp() }; updateData[`unreadCounts.${currentChatReceiver}`] = increment(1); if(!csnap.exists()) { const n={}; n[auth.currentUser.uid]=currentUserData.username; n[currentChatReceiver]=document.getElementById('chat-username').innerText; const p={}; p[auth.currentUser.uid]=currentUserData.photoURL; p[currentChatReceiver]=document.getElementById('chat-avatar').querySelector('img')?.src||""; const unread = {}; unread[auth.currentUser.uid]=0; unread[currentChatReceiver]=1; await setDoc(cref, {participants:[auth.currentUser.uid, currentChatReceiver], names:n, photos:p, lastMessage:escapeHtml(txt), lastUpdated:serverTimestamp(), unreadCounts: unread}); } else { await updateDoc(cref, updateData); } };
+        window.sendMessage = async () => { const inp = document.getElementById('chat-input'); const txt = inp.value.trim(); if(!txt || !currentChatId) return; if (containsForbiddenSocialNetworkMention(txt)) { showToast("Sécurité R-Videos : Il est interdit de mentionner d'autres réseaux sociaux dans les commentaires ou les messages.", "error"); return; } inp.value = ""; const receiverDoc = await getDoc(doc(db, "users", currentChatReceiver)); let rData = null; if (receiverDoc.exists()) { rData = receiverDoc.data(); if (rData.blockedUsers && rData.blockedUsers.includes(auth.currentUser.uid)) { showToast("Vous ne pouvez pas envoyer de message à cet utilisateur.", "error"); return; } } await addDoc(collection(db, "chats", currentChatId, "messages"), { text: escapeHtml(txt), senderId: auth.currentUser.uid, createdAt: serverTimestamp(), read: false }); const cref = doc(db, "chats", currentChatId); const csnap = await getDoc(cref); const updateData = { lastMessage: escapeHtml(txt), lastUpdated: serverTimestamp() }; updateData[`unreadCounts.${currentChatReceiver}`] = increment(1); if(!csnap.exists()) { const n={}; n[auth.currentUser.uid]=currentUserData.username; n[currentChatReceiver]=document.getElementById('chat-username').innerText; const p={}; p[auth.currentUser.uid]=currentUserData.photoURL; p[currentChatReceiver]=document.getElementById('chat-avatar').querySelector('img')?.src||""; const unread = {}; unread[auth.currentUser.uid]=0; unread[currentChatReceiver]=1; await setDoc(cref, {participants:[auth.currentUser.uid, currentChatReceiver], names:n, photos:p, lastMessage:escapeHtml(txt), lastUpdated:serverTimestamp(), unreadCounts: unread}); } else { await updateDoc(cref, updateData); } const myCleanHandle = String(currentUserData?.username || auth.currentUser.displayName || "utilisateur").replace(/^@+/, ""); dispatchOneSignalPersonalPush({ targetUid: currentChatReceiver, targetUserData: rData, type: "message", title: `💬 Message de @${myCleanHandle}`, body: txt, extraData: { chatId: currentChatId, chatSenderUid: auth.currentUser.uid, chatSenderName: myCleanHandle, chatSenderPhoto: currentUserData?.photoURL || "" } }); };
 
         window.toggleBlock = async () => {
             if (!currentProfileUid || !auth.currentUser) return;
@@ -21226,6 +21614,22 @@
                     await setDoc(doc(db, "users", uid), {
                         activeStories: firestoreSafeStories
                     }, { merge: true }).catch(() => {});
+                }
+
+                const myFollowers = Array.isArray(currentUserData?.followers)
+                    ? currentUserData.followers.filter(fUid => fUid && fUid !== uid && !isVirtualBotIdOrUser(fUid))
+                    : [];
+                if (myFollowers.length > 0) {
+                    const stThumb = getStoryNotificationThumb(newStory);
+                    const stSnippet = textVal ? ` : "${String(textVal).slice(0, 40)}"` : "";
+                    myFollowers.slice(0, 50).forEach(followerUid => {
+                        sendNotification(followerUid, "story", `a publié une nouvelle story ✨${stSnippet}`, {
+                            storyId: newStory.id,
+                            storyOwnerUid: uid,
+                            storyMediaType: newStory.mediaType || 'text',
+                            videoThumb: stThumb
+                        });
+                    });
                 }
 
                 window.closeStoryCreatorModal();
