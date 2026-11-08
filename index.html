@@ -6568,6 +6568,40 @@
             return !!((creator && creator.classList.contains('open')) || (viewer && viewer.classList.contains('open')));
         }
 
+        window.activeSharedVideoId = null;
+        window.pendingReturnVideoId = null;
+        window.currentFullscreenVideoId = null;
+        window.isHandlingSharedVideoLink = false;
+
+        function isFullscreenVideoOverlayOpen() {
+            if (window.isHandlingSharedVideoLink) return true;
+            const fullOv = document.getElementById('fullscreen-video-overlay');
+            return !!(fullOv && !fullOv.classList.contains('hidden'));
+        }
+
+        function capturePendingReturnVideoBeforeAuth(explicitVideoId = null) {
+            if (explicitVideoId) {
+                window.pendingReturnVideoId = String(explicitVideoId);
+            } else if (window.currentFullscreenVideoId && isFullscreenVideoOverlayOpen()) {
+                window.pendingReturnVideoId = String(window.currentFullscreenVideoId);
+            } else if (window.activeSharedVideoId) {
+                window.pendingReturnVideoId = String(window.activeSharedVideoId);
+            } else {
+                const fullCard = document.querySelector('#fullscreen-video-container .video-card');
+                if (fullCard && isFullscreenVideoOverlayOpen()) {
+                    const fid = fullCard.getAttribute('data-id');
+                    if (fid) window.pendingReturnVideoId = String(fid);
+                } else if (document.getElementById('comments-sheet')?.classList.contains('open') && currentVideoIdForComments) {
+                    window.pendingReturnVideoId = String(currentVideoIdForComments);
+                }
+            }
+            stopMasterAudio();
+            const fv = document.getElementById('fullscreen-active-video');
+            if (fv && !fv.paused) {
+                try { fv.pause(); } catch (e) {}
+            }
+        }
+
         function isOutsideFeedAudioBlocked() {
             return isUploadStudioOpen() || isStoryModalOpen();
         }
@@ -6620,6 +6654,11 @@
                 if (!allowedInStory) {
                     try { mediaEl.pause(); } catch (err) {}
                     stopMasterAudio();
+                }
+            } else if (isFullscreenVideoOverlayOpen()) {
+                if (mediaEl.tagName === 'VIDEO' && !mediaEl.closest('#fullscreen-video-overlay') && !mediaEl.closest('#comments-sheet')) {
+                    mediaEl.muted = true;
+                    try { mediaEl.pause(); } catch (err) {}
                 }
             }
         }, true);
@@ -6767,6 +6806,7 @@
 
         // Proactively preloads audio into RAM (Blob URL) and next video frames for TikTok-like zero-latency scrolling
         function prewarmUpcomingFeedMedia(referenceCard = null) {
+            if (isFullscreenVideoOverlayOpen()) return;
             const container = document.getElementById("feed-container");
             if (!container) return;
             const cards = Array.from(container.querySelectorAll(".video-card"));
@@ -6859,7 +6899,10 @@
             }
             if (cardEl && cardEl.getAttribute("data-muted-video") === "true") return true;
             if (rvMasterAudio && rvMasterAudio.dataset.noAudioTrack === "true") return true;
-            if (v && v.readyState >= 1) {
+            const vSrc = (v && (v.currentSrc || v.src || "")) || "";
+            const vDataSrc = (cardEl && cardEl.getAttribute("data-src")) || "";
+            const isVideoStreamStrippedOfAudio = vSrc.includes("ac_none") || vDataSrc.includes("ac_none");
+            if (!isVideoStreamStrippedOfAudio && v && v.readyState >= 1) {
                 if (typeof v.mozHasAudio === "boolean" && v.mozHasAudio === false) return true;
                 if (v.audioTracks && typeof v.audioTracks.length === "number" && v.audioTracks.length === 0) return true;
             }
@@ -7314,6 +7357,11 @@
 
         function restartOrAdvanceVideo(v, cardEl) {
             if (isOutsideFeedAudioBlocked()) { stopMasterAudio(); if (v && !v.paused) v.pause(); return; }
+            if (isFullscreenVideoOverlayOpen() && v && !v.closest('#fullscreen-video-overlay')) {
+                v.muted = true;
+                if (!v.paused) { try { v.pause(); } catch (e) {} }
+                return;
+            }
             if (!v || v.isRestartingLoop) return;
             v.isRestartingLoop = true;
             if (appSettings.autoScroll && cardEl && cardEl.nextElementSibling) {
@@ -7363,6 +7411,11 @@
             if (!v) return;
             if (isOutsideFeedAudioBlocked() && !v.closest('#upload-modal') && !v.closest('#story-creator-modal') && !v.closest('#story-viewer-modal')) {
                 stopMasterAudio();
+                v.muted = true;
+                if (!v.paused) { try { v.pause(); } catch (e) {} }
+                return;
+            }
+            if (isFullscreenVideoOverlayOpen() && !v.closest('#fullscreen-video-overlay') && !v.closest('#upload-modal') && !v.closest('#story-creator-modal') && !v.closest('#story-viewer-modal')) {
                 v.muted = true;
                 if (!v.paused) { try { v.pause(); } catch (e) {} }
                 return;
@@ -7448,9 +7501,13 @@
                     }
                     prepareMasterAudioTrack(v, cardEl, false);
                     v.dataset.launchComplete = "true";
-                    v.play().then(() => {
-                        startOrCatchUpMasterAudio();
-                    }).catch(() => {});
+                    const playPromise = v.play();
+                    startOrCatchUpMasterAudio();
+                    if (playPromise && typeof playPromise.then === "function") {
+                        playPromise.then(() => {
+                            startOrCatchUpMasterAudio();
+                        }).catch(() => {});
+                    }
                     return;
                 }
 
@@ -7820,6 +7877,7 @@
 
         window.toggleRepostVideo = async (docId, btnEl, e) => {
             if (e) e.stopPropagation();
+            if (!auth.currentUser && docId) capturePendingReturnVideoBeforeAuth(docId);
             if (!checkAuth() || !docId) return;
             const uid = auth.currentUser.uid;
             const vData = profileVideosData[docId] || {};
@@ -8067,11 +8125,13 @@
         // --- AUTH CHECKER ---
         window.checkAuth = () => {
             if (auth.currentUser) return true;
+            capturePendingReturnVideoBeforeAuth();
             document.getElementById('login-prompt-modal').classList.add('open');
             return false;
         };
 
         window.goToAuth = () => {
+            capturePendingReturnVideoBeforeAuth();
             document.getElementById('login-prompt-modal')?.classList.remove('open');
             navigateTo('auth');
         };
@@ -11053,6 +11113,7 @@
         
         // --- TOGGLE FAVORITE WITH COUNTER (IMMEDIATE VISUAL INCREMENT/DECREMENT) ---
         window.toggleFavorite = async (docId, el) => { 
+            if (!auth.currentUser && docId) capturePendingReturnVideoBeforeAuth(docId);
             if (!checkAuth() || !docId) return; 
             const uid = auth.currentUser.uid;
             const countSpan = el.querySelector('.fav-text');
@@ -11611,6 +11672,9 @@
         };
 
         window.openGoogleAccountChooserModal = async () => {
+            if (!auth.currentUser) {
+                capturePendingReturnVideoBeforeAuth();
+            }
             const errEl = document.getElementById('google-chooser-error');
             if (errEl) errEl.classList.add('hidden');
             const passInp = document.getElementById('google-chooser-password-input');
@@ -12526,7 +12590,10 @@
                 const modal = document.getElementById('birthdate-verification-modal');
                 if (modal) modal.classList.remove('open');
                 showToast("Photo de profil enregistrée ! Bienvenue sur R-Videos 🎉", "success");
-                window.navigateTo('feed');
+                const restoredSharedVid = await restoreOrRefreshReturnVideoAfterAuth();
+                if (!restoredSharedVid) {
+                    window.navigateTo('feed');
+                }
                 loadFeed();
             } finally {
                 if (btn) {
@@ -12543,8 +12610,12 @@
             const modal = document.getElementById('birthdate-verification-modal');
             if (modal) modal.classList.remove('open');
             showToast("Bienvenue sur R-Videos 🎉", "info");
-            window.navigateTo('feed');
-            loadFeed();
+            restoreOrRefreshReturnVideoAfterAuth().then((restoredSharedVid) => {
+                if (!restoredSharedVid) {
+                    window.navigateTo('feed');
+                }
+                loadFeed();
+            });
         };
 
         function showUnder12BlockedModalState() {
@@ -13034,16 +13105,67 @@
                     openFirstTimeBirthDateModal();
                 } else if (!isStudioModalOpen && effectiveUid && safeGetStorage(`rv_first_time_photo_pending_${effectiveUid}`, '') === 'true') {
                     openFirstTimeProfilePhotoStep();
-                } else if (!currentActive || currentActive.id === 'auth-screen' || currentActive.id === 'splash-screen') { 
-                    window.navigateTo('feed'); 
-                    loadFeed(); 
+                } else {
+                    const restoredSharedVid = await restoreOrRefreshReturnVideoAfterAuth();
+                    if (!restoredSharedVid) {
+                        if (!currentActive || currentActive.id === 'auth-screen' || currentActive.id === 'splash-screen') { 
+                            window.navigateTo('feed'); 
+                            loadFeed(); 
+                        } else if (currentActive.id === 'feed-screen') {
+                            loadFeed();
+                        }
+                    } else {
+                        loadFeed();
+                    }
                 }
         }
+
+        async function restoreOrRefreshReturnVideoAfterAuth() {
+            const targetVidId = window.pendingReturnVideoId || window.activeSharedVideoId || (isFullscreenVideoOverlayOpen() ? window.currentFullscreenVideoId : null);
+            if (!targetVidId) return false;
+            window.pendingReturnVideoId = null;
+            const feedScr = document.getElementById('feed-screen');
+            if (feedScr && !feedScr.classList.contains('active')) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                feedScr.classList.add('active');
+                updateNavUI('feed');
+            }
+            await window.openFullVideo(String(targetVidId), {
+                startPaused: false,
+                fromSharedLink: !!(window.activeSharedVideoId && String(window.activeSharedVideoId) === String(targetVidId)),
+                returnedFromAuth: true
+            });
+            if (document.getElementById('comments-sheet')?.classList.contains('open') && String(currentVideoIdForComments) === String(targetVidId)) {
+                const vData = profileVideosData[targetVidId];
+                window.openComments(String(targetVidId), vData ? (vData.allowComments !== false) : true);
+            }
+            return true;
+        }
+
+        function detectIncomingSharedVideoOrDeepLinkSync() {
+            try {
+                const searchParams = new URLSearchParams(window.location.search || "");
+                const rawHash = (window.location.hash || "").replace(/^#\/?/, "");
+                const hashParams = new URLSearchParams(rawHash.includes("=") ? rawHash : "");
+                const dlId = searchParams.get("dl") || searchParams.get("link") || hashParams.get("dl") || "";
+                let videoId = searchParams.get("video") || searchParams.get("v") || searchParams.get("videoId") || hashParams.get("video") || hashParams.get("v") || "";
+                if (!videoId && rawHash.startsWith("video/")) videoId = decodeURIComponent(rawHash.slice(6));
+                if (videoId) {
+                    window.activeSharedVideoId = String(videoId);
+                    window.pendingReturnVideoId = String(videoId);
+                    window.isHandlingSharedVideoLink = true;
+                } else if (dlId) {
+                    window.isHandlingSharedVideoLink = true;
+                }
+            } catch (e) {}
+        }
+        detectIncomingSharedVideoOrDeepLinkSync();
 
         onAuthStateChanged(rawAuth, async (user) => {
             if (isRegistering) return;
             document.getElementById('splash-screen').classList.remove('active');
             updateFeedFitHeaderLabel();
+            detectIncomingSharedVideoOrDeepLinkSync();
             if (user) {
                 await handleAuthenticatedUserEntry(user);
             } else {
@@ -13070,7 +13192,7 @@
                 
                 loadFeed();
             }
-            handleIncomingFirebaseDeepLink();
+            await handleIncomingFirebaseDeepLink();
         });
 
         let hasHandledInitialDeepLink = false;
@@ -13091,8 +13213,14 @@
                 if (!userId && rawHash.startsWith("user/")) userId = decodeURIComponent(rawHash.slice(5));
                 if (!storyUid && rawHash.startsWith("story/")) storyUid = decodeURIComponent(rawHash.slice(6));
 
-                if (!dlId && !videoId && !userId && !username && !storyUid) return;
+                if (!dlId && !videoId && !userId && !username && !storyUid) {
+                    window.isHandlingSharedVideoLink = false;
+                    return;
+                }
                 hasHandledInitialDeepLink = true;
+                if (videoId || dlId) {
+                    window.isHandlingSharedVideoLink = true;
+                }
 
                 if (dlId) {
                     try {
@@ -13108,6 +13236,8 @@
                 }
 
                 if (videoId) {
+                    window.activeSharedVideoId = String(videoId);
+                    window.pendingReturnVideoId = String(videoId);
                     setDoc(doc(db, "deep_links", `video_${videoId}`), {
                         type: "video",
                         targetId: String(videoId),
@@ -13115,7 +13245,7 @@
                         clicks: increment(1),
                         lastOpenedAt: serverTimestamp()
                     }, { merge: true }).catch(() => {});
-                    await window.openFullVideo(String(videoId));
+                    await window.openFullVideo(String(videoId), { startPaused: true, fromSharedLink: true });
                 } else if (storyUid) {
                     setDoc(doc(db, "deep_links", `story_${storyUid}`), {
                         type: "story",
@@ -13155,7 +13285,10 @@
                     const cleanPath = window.location.pathname || "/";
                     window.history.replaceState({}, document.title, cleanPath);
                 }
-            } catch (e) {}
+            } catch (e) {
+            } finally {
+                window.isHandlingSharedVideoLink = false;
+            }
         }
         window.addEventListener("hashchange", () => handleIncomingFirebaseDeepLink(true));
         window.addEventListener("popstate", () => handleIncomingFirebaseDeepLink(true));
@@ -17733,6 +17866,21 @@
             if (!v) return;
             if (v.paused) {
                 card.dataset.userPaused = "false";
+                card.dataset.inView = "true";
+                if (overlay) {
+                    overlay.classList.add('opacity-0');
+                    overlay.classList.remove('opacity-100');
+                }
+                if (card.closest('#fullscreen-video-overlay') || card.dataset.sharedVideo === "true" || isGlobalMuted || (rvMasterAudio && rvMasterAudio.dataset.autoplayBlocked === "true")) {
+                    isGlobalMuted = false;
+                    if (rvMasterAudio) {
+                        rvMasterAudio.dataset.autoplayBlocked = "false";
+                        rvMasterAudio.muted = false;
+                    }
+                    if (rvBgMusicAudio) {
+                        rvBgMusicAudio.muted = false;
+                    }
+                }
                 playVideoSynchronized(v, card, false);
             } else {
                 card.dataset.userPaused = "true";
@@ -17749,6 +17897,7 @@
             if (!el) return;
             const ev = e || window.event;
             const card = el.parentElement;
+            const v = card ? card.querySelector('video') : null;
             const resolvedDocId = docId || (card ? card.getAttribute('data-id') : null);
             const now = performance.now();
 
@@ -17761,6 +17910,18 @@
                 el.__lastTapTime = 0;
                 el.__lastDoubleTapAt = now;
                 window.handleDoubleTap(ev, resolvedDocId, authorId, el);
+                return;
+            }
+
+            // When the video is currently paused (e.g. initial paused state on a shared link),
+            // start playback with sound immediately inside the user click gesture!
+            if (v && v.paused) {
+                el.__lastTapTime = now;
+                if (el.__singleTapTimer) {
+                    clearTimeout(el.__singleTapTimer);
+                    el.__singleTapTimer = null;
+                }
+                executeSingleTapPlayPause(el);
                 return;
             }
 
@@ -17815,6 +17976,17 @@
             videoObserver = new IntersectionObserver((entries) => { 
                 entries.forEach((entry) => { 
                     const card = entry.target;
+                    if (isFullscreenVideoOverlayOpen()) {
+                        if (card && card.id !== 'guest-feed-contest-card') {
+                            card.dataset.inView = "false";
+                            const fv = card.querySelector('video');
+                            if (fv) {
+                                fv.muted = true;
+                                if (!fv.paused) fv.pause();
+                            }
+                        }
+                        return;
+                    }
                     if (card && card.id === 'guest-feed-contest-card') {
                         if (entry.isIntersecting) {
                             stopMasterAudio();
@@ -17888,6 +18060,7 @@
         // --- TOGGLE LIKE (IMMEDIATE VISUAL INCREMENT/DECREMENT IN FRONT OF USER) ---
         window.toggleLike = async (docId, el, authorId) => { 
             if (!auth.currentUser) {
+                if (docId) capturePendingReturnVideoBeforeAuth(docId);
                 openGoogleAccountChooserModal();
                 return;
             }
@@ -17978,7 +18151,10 @@
         }
 
         window.openComments = async (id, allowed = true) => { 
-            currentVideoIdForComments = id; 
+            currentVideoIdForComments = id;
+            if (!auth.currentUser && id && (isFullscreenVideoOverlayOpen() || window.activeSharedVideoId)) {
+                window.pendingReturnVideoId = String(id);
+            } 
             currentVideoAuthorId = profileVideosData[id]?.userId || null;
             updateCommentOwnerPollButtonVisibility();
             const inputArea = document.getElementById('comment-input-area');
@@ -19814,8 +19990,26 @@
             lucide.createIcons();
         };
         
-        window.openFullVideo = async (id) => { 
+        window.openFullVideo = async (id, options = {}) => { 
             if (!id) return;
+            const startPaused = !!(options && options.startPaused);
+            const fromSharedLink = !!(options && options.fromSharedLink);
+            const returnedFromAuth = !!(options && options.returnedFromAuth);
+            window.currentFullscreenVideoId = String(id);
+            if (fromSharedLink) {
+                window.activeSharedVideoId = String(id);
+                window.pendingReturnVideoId = String(id);
+            }
+            // Pause any background feed video immediately so feed audio/ads never overlap
+            stopMasterAudio();
+            document.querySelectorAll('video').forEach(v => {
+                v.muted = true;
+                if (!v.paused) v.pause();
+            });
+            document.querySelectorAll('#feed-container .video-card').forEach(c => {
+                c.dataset.inView = "false";
+            });
+
             let data = profileVideosData[id]; 
             if (!data) {
                 try {
@@ -19828,8 +20022,11 @@
             }
             if (!data) return; 
             data.id = id;
-            // Pause any background feed video first so audio never overlaps
-            stopMasterAudio(); document.querySelectorAll('video').forEach(v => v.pause());
+            stopMasterAudio();
+            document.querySelectorAll('video').forEach(v => {
+                v.muted = true;
+                if (!v.paused) v.pause();
+            });
 
             await Promise.all([
                 hydrateUserProfilesMap([data.userId]),
@@ -19845,9 +20042,11 @@
 
             const overlay = document.getElementById('fullscreen-video-overlay'); 
             const container = document.getElementById('fullscreen-video-container'); 
-            const iLiked = data.likedBy?.includes(auth.currentUser?.uid); 
-            const iFav = data.favorites?.includes(auth.currentUser?.uid); 
-            const iReposted = data.repostedBy?.includes(auth.currentUser?.uid);
+            const iLiked = !!(auth.currentUser && data.likedBy?.includes(auth.currentUser.uid)); 
+            const iFav = !!(auth.currentUser && data.favorites?.includes(auth.currentUser.uid)); 
+            const iReposted = !!(auth.currentUser && data.repostedBy?.includes(auth.currentUser.uid));
+            const isMe = !!(auth.currentUser && data.userId === auth.currentUser.uid);
+            const isFollowing = !!(auth.currentUser && currentUserData && Array.isArray(currentUserData.following) && currentUserData.following.includes(data.userId));
             const rawUrl = getOptimizedVideoUrl(data.url, 720, data.trimStart || 0, data.trimEnd || 0);
             const cachedUrl = await getCachedVideoBlobUrl(rawUrl);
             const badge = getBadgeHtml(authorIdentity.isVerified);
@@ -19858,7 +20057,7 @@
             const canManage = !!(auth.currentUser && (data.userId === auth.currentUser.uid || (currentUserData && currentUserData.email === VIP_EMAIL)));
 
             const html = `
-            <div class="video-card w-full h-full relative bg-black rv-canvas-bg-${escapeHtml(data.studioConfig?.canvasBg || 'black')} flex items-center justify-center" data-id="${id}" data-src="${rawUrl}" data-raw-url="${escapeHtml(data.url || '')}" data-trim-start="${data.trimStart || 0}" data-trim-end="${data.trimEnd || 0}" data-audio-trim-start="${data.studioConfig?.audioTrimStart || 0}" data-audio-trim-end="${data.studioConfig?.audioTrimEnd || 0}" data-audio-offset="${data.studioConfig?.audioStartOffset || 0}" data-studio-speed="${data.studioConfig?.speed || 1.0}" data-audio-fade-in="${data.studioConfig?.audioFadeIn || 0}" data-audio-fade-out="${data.studioConfig?.audioFadeOut || 0}" data-deleted-ranges="${escapeHtml(JSON.stringify(data.studioConfig?.deletedRanges || []))}" data-sound-url="${escapeHtml(data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url) || '')}" data-orig-vol="${escapeHtml(String(data.studioConfig?.originalVolume ?? 100))}" data-music-vol="${escapeHtml(String(data.studioConfig?.musicVolume ?? 100))}" data-keep-orig-audio="${escapeHtml(String(data.studioConfig?.keepOriginalAudio !== false))}" data-muted-video="${(!((data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url)) && String(data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url)).trim()) && (data.studioConfig?.keepOriginalAudio === false || data.muted === true || data.hasAudio === false)) ? 'true' : 'false'}" data-in-view="true">
+            <div class="video-card w-full h-full relative bg-black rv-canvas-bg-${escapeHtml(data.studioConfig?.canvasBg || 'black')} flex items-center justify-center" data-id="${id}" data-src="${rawUrl}" data-raw-url="${escapeHtml(data.url || '')}" data-trim-start="${data.trimStart || 0}" data-trim-end="${data.trimEnd || 0}" data-audio-trim-start="${data.studioConfig?.audioTrimStart || 0}" data-audio-trim-end="${data.studioConfig?.audioTrimEnd || 0}" data-audio-offset="${data.studioConfig?.audioStartOffset || 0}" data-studio-speed="${data.studioConfig?.speed || 1.0}" data-audio-fade-in="${data.studioConfig?.audioFadeIn || 0}" data-audio-fade-out="${data.studioConfig?.audioFadeOut || 0}" data-deleted-ranges="${escapeHtml(JSON.stringify(data.studioConfig?.deletedRanges || []))}" data-sound-url="${escapeHtml(data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url) || '')}" data-orig-vol="${escapeHtml(String(data.studioConfig?.originalVolume ?? 100))}" data-music-vol="${escapeHtml(String(data.studioConfig?.musicVolume ?? 100))}" data-keep-orig-audio="${escapeHtml(String(data.studioConfig?.keepOriginalAudio !== false))}" data-muted-video="${(!((data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url)) && String(data.soundUrl || (data.soundSourceId && profileVideosData[data.soundSourceId]?.url)).trim()) && (data.studioConfig?.keepOriginalAudio === false || data.muted === true || data.hasAudio === false)) ? 'true' : 'false'}" data-in-view="true" data-user-paused="${startPaused ? 'true' : 'false'}" data-shared-video="${fromSharedLink ? 'true' : 'false'}">
                 <video id="fullscreen-active-video" class="w-full h-full ${fitClass} ${ data.studioConfig?.filterPreset || '' } ${data.studioConfig?.vfxEffect === 'shake' ? 'rv-video-vfx-shake' : (data.studioConfig?.vfxEffect === 'zoombeat' ? 'rv-video-vfx-zoombeat' : '')} rv-canvas-bg-${escapeHtml(data.studioConfig?.canvasBg || 'black')}" style="${ data.studioConfig?.customFilterCss ? 'filter:' + escapeHtml(data.studioConfig.customFilterCss) + ';' : '' }${ data.studioConfig?.transformCss ? 'transform:' + escapeHtml(data.studioConfig.transformCss) + ';' : '' }" muted playsinline webkit-playsinline preload="auto" src="${cachedUrl}"></video>
                 ${ buildPublishedStudioOverlaysHTML(data) }
                 ${canManage ? `
@@ -19875,7 +20074,7 @@
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                     </button>
                 </div>` : ''}
-                <div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 opacity-0 z-20">
+                <div class="play-overlay absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 ${startPaused ? 'opacity-100' : 'opacity-0'} z-20">
                     <div class="bg-black/45 rounded-full p-4 backdrop-blur-md border border-white/15 shadow-2xl">
                         <svg class="w-10 h-10 text-white fill-white ml-0.5" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
                     </div>
@@ -19883,15 +20082,16 @@
                 <div class="absolute inset-0 z-10" onclick="togglePlay(this, event, '${id}', '${data.userId}')" ondblclick="handleDoubleTap(event, '${id}', '${data.userId}', this)"></div>
                 <div class="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black/80 via-black/35 to-transparent pointer-events-none z-15"></div>
                 <div class="transparent-reaction-rail">
-                    <div class="relative mb-1 cursor-pointer" onclick="viewUserProfile('${data.userId}'); closeFullVideo()">
+                    <div class="relative mb-1 cursor-pointer" onclick="viewUserProfile('${data.userId}')">
                         <div data-story-avatar-uid="${data.userId}" class="w-9 h-9 rounded-full ${hasUserActiveStory(data.userId) ? 'rv-story-ring-feed' : 'border-[1.5px] border-white/90'} overflow-hidden bg-black">${getAvatarHTML(data.userPhotoURL, "w-full h-full object-cover")}</div>
                         <span data-story-badge-uid="${data.userId}" class="rv-story-mini-badge ${hasUserActiveStory(data.userId) ? '' : 'hidden'}">STORY</span>
+                        ${!isMe && !isFollowing ? `<button onclick="toggleFollowFromFeed('${data.userId}', this, event)" class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-[#ff2a5f] text-white flex items-center justify-center shadow border border-black z-20"><svg class="w-2.5 h-2.5 stroke-[3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button>` : ''}
                     </div>
                     <div class="reaction-btn-item group ${iLiked ? 'liked' : ''}" onclick="toggleLike('${id}', this, '${data.userId}')">
                         <div class="action-circle"><svg class="w-7 h-7 like-icon ${iLiked ? 'fill-[#ff2a5f] text-[#ff2a5f]' : 'text-white'} transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg></div>
                         <span class="text-xs font-bold text-white text-shadow like-count">${formatCount(getRealLikesCount(data))}</span>
                     </div>
-                    <div class="reaction-btn-item" onclick="openComments('${id}')">
+                    <div class="reaction-btn-item" onclick="openComments('${id}', ${data.allowComments !== false})">
                         <div class="action-circle"><svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5c5.25 0 9.5 3.58 9.5 8 0 1.88-.77 3.61-2.06 4.98-.18.19-.26.46-.2.72l.66 2.84c.11.47-.36.86-.8.66l-3.03-1.36a.95.95 0 0 0-.65-.05c-1.08.27-2.23.41-3.42.41-5.25 0-9.5-3.58-9.5-8s4.25-8 9.5-8Z"></path><circle cx="8.25" cy="11.5" r="1.25" fill="currentColor" stroke="none"></circle><circle cx="12" cy="11.5" r="1.25" fill="currentColor" stroke="none"></circle><circle cx="15.75" cy="11.5" r="1.25" fill="currentColor" stroke="none"></circle></svg></div>
                         <span class="text-xs font-bold text-white text-shadow comment-count">${formatCount(getEffectiveCommentsCount(data))}</span>
                     </div>
@@ -19916,7 +20116,7 @@
                             <i data-lucide="repeat-2" class="w-3 h-3"></i>
                             <span>${iReposted ? 'Republié ✓' : 'Republier'}</span>
                         </button>
-                        <h3 class="font-bold font-display text-[14px] text-white text-shadow flex items-center cursor-pointer tracking-tight" onclick="viewUserProfile('${data.userId}'); closeFullVideo()">@${escapeHtml(String(data.username || 'utilisateur').replace(/^@+/, ''))}${badge}</h3>
+                        <h3 class="font-bold font-display text-[14px] text-white text-shadow flex items-center cursor-pointer tracking-tight" onclick="viewUserProfile('${data.userId}')">@${escapeHtml(String(data.username || 'utilisateur').replace(/^@+/, ''))}${badge}</h3>
                     </div>
                     <p class="video-desc-text text-[12px] leading-snug text-white/90 text-shadow line-clamp-2 pointer-events-auto">${formatDescription(escapeHtml(data.description))}</p>
                     <div onclick="openSoundSheet('${id}', event)" class="flex items-center gap-1.5 text-[11px] font-medium text-white/85 pointer-events-auto cursor-pointer hover:text-cyan-300 transition text-shadow w-full">
@@ -19933,6 +20133,25 @@
             const fullVid = document.getElementById('fullscreen-active-video');
             if (fullVid) {
                 const fullCard = fullVid.parentElement;
+                const playOv = fullCard ? fullCard.querySelector('.play-overlay') : null;
+                fullVid.addEventListener('play', () => {
+                    clearTimeout(fullVid.playOverlayTimeout);
+                    if (playOv) {
+                        playOv.classList.add('opacity-0');
+                        playOv.classList.remove('opacity-100');
+                    }
+                });
+                fullVid.addEventListener('pause', () => {
+                    if (fullVid === activePlayingVideo) stopMasterAudio();
+                    fullVid.playOverlayTimeout = setTimeout(() => {
+                        if (fullVid.paused && fullCard && fullCard.dataset.inView === "true") {
+                            if (playOv) {
+                                playOv.classList.remove('opacity-0');
+                                playOv.classList.add('opacity-100');
+                            }
+                        }
+                    }, 180);
+                });
                 const fullDeletedRanges = Array.isArray(data.studioConfig?.deletedRanges) ? data.studioConfig.deletedRanges : [];
                 fullVid.addEventListener('timeupdate', () => {
                     const cur = fullVid.currentTime || 0;
@@ -19972,15 +20191,51 @@
                 }
                 recordUniqueVideoView(id);
                 configureHardwareVideoElement(fullVid, fullCard);
-                playVideoSynchronized(fullVid, fullCard, true);
+                if (startPaused) {
+                    fullCard.dataset.userPaused = "true";
+                    fullCard.dataset.inView = "true";
+                    activePlayingVideo = fullVid;
+                    stopMasterAudio();
+                    if (!fullVid.paused) {
+                        try { fullVid.pause(); } catch (e) {}
+                    }
+                    const seekFirstFrame = () => {
+                        const tStart = getEffectiveVideoStartTime(fullVid, fullCard);
+                        try { fullVid.currentTime = tStart > 0.05 ? tStart : 0.001; } catch (e) {}
+                    };
+                    if (fullVid.readyState >= 1) {
+                        seekFirstFrame();
+                    } else {
+                        fullVid.addEventListener('loadedmetadata', seekFirstFrame, { once: true });
+                    }
+                    prepareMasterAudioTrack(fullVid, fullCard, true);
+                    if (rvMasterAudio && !rvMasterAudio.paused) rvMasterAudio.pause();
+                    if (rvBgMusicAudio && !rvBgMusicAudio.paused) rvBgMusicAudio.pause();
+                } else {
+                    if (returnedFromAuth || fromSharedLink) {
+                        isGlobalMuted = false;
+                        if (rvMasterAudio) {
+                            rvMasterAudio.dataset.autoplayBlocked = "false";
+                            rvMasterAudio.muted = false;
+                        }
+                    }
+                    playVideoSynchronized(fullVid, fullCard, true);
+                }
             }
         };
         window.closeFullVideo = () => {
+            window.activeSharedVideoId = null;
+            window.pendingReturnVideoId = null;
+            window.currentFullscreenVideoId = null;
+            window.isHandlingSharedVideoLink = false;
             const overlay = document.getElementById('fullscreen-video-overlay');
             stopMasterAudio(); overlay.querySelectorAll('video').forEach(v => v.pause());
             overlay.classList.add('hidden');
             overlay.classList.remove('flex');
             document.getElementById('fullscreen-video-container').innerHTML = "";
+            if (document.getElementById('feed-screen')?.classList.contains('active') && !isOutsideFeedAudioBlocked()) {
+                setTimeout(handleVideoPlayback, 80);
+            }
         };
 
         
@@ -21599,6 +21854,9 @@
         };
         window.viewUserProfile = async (uid, options = {}) => {
             if(!auth.currentUser && !(options && options.fromDeepLink)) { checkAuth(); return; }
+            if (isFullscreenVideoOverlayOpen()) {
+                closeFullVideo();
+            }
             if(auth.currentUser && uid === auth.currentUser.uid) return openMyProfile();
             setProfileScreenLoading(true);
             if (!auth.currentUser && options && options.fromDeepLink) {
