@@ -2458,10 +2458,77 @@
             border: 1px solid rgba(34, 211, 238, 0.45) !important;
             color: #67e8f9 !important;
         }
-        /* Keep dark-surface buttons (bg-black/...) readable in Light Theme */
-        body.light-theme :is(.bg-black\/45, .bg-black\/50, .bg-black\/65, .bg-black\/70, .bg-black\/75),
-        body.light-theme :is(.bg-black\/45, .bg-black\/50, .bg-black\/65, .bg-black\/70, .bg-black\/75) :is(span, i, svg) {
+        /* Keep dark-surface buttons (bg-black/...) readable in Light Theme without putting dark boxes behind inner text/icons */
+        body.light-theme :is(.bg-black\/45, .bg-black\/50, .bg-black\/65, .bg-black\/70, .bg-black\/75):not(.rv-contest-poster-card) {
             background-color: rgba(15, 23, 42, 0.78) !important;
+            color: #ffffff !important;
+        }
+        body.light-theme :is(.bg-black\/45, .bg-black\/50, .bg-black\/65, .bg-black\/70, .bg-black\/75) :is(span, i, svg) {
+            background-color: transparent !important;
+            color: #ffffff !important;
+        }
+
+        /* Premium Official Contest Poster (#guest-feed-contest-card) - Protected in both Dark & Light Themes */
+        #guest-feed-contest-card {
+            background: radial-gradient(circle at 50% 18%, #3b0d54 0%, #17082a 48%, #070410 100%) !important;
+        }
+        #guest-feed-contest-card .rv-contest-poster-card {
+            background: linear-gradient(165deg, rgba(26, 14, 46, 0.92) 0%, rgba(14, 9, 28, 0.96) 55%, rgba(34, 10, 32, 0.94) 100%) !important;
+            border: 1.5px solid rgba(251, 191, 36, 0.48) !important;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75), 0 0 40px rgba(255, 42, 95, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+        }
+        #guest-feed-contest-card .rv-contest-top-badge {
+            background: linear-gradient(90deg, rgba(255, 42, 95, 0.24) 0%, rgba(245, 158, 11, 0.24) 100%) !important;
+            border: 1px solid rgba(251, 191, 36, 0.55) !important;
+            box-shadow: 0 4px 16px rgba(255, 42, 95, 0.28) !important;
+        }
+        #guest-feed-contest-card .rv-contest-top-badge :is(span, i, svg) {
+            background: transparent !important;
+            background-color: transparent !important;
+            color: #fde68a !important;
+        }
+        #guest-feed-contest-card .rv-contest-prize-box {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.16) 0%, rgba(255, 42, 95, 0.18) 100%) !important;
+            border: 1px solid rgba(251, 191, 36, 0.42) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+        }
+        #guest-feed-contest-card :is(h3, h4, p, span, i, svg) {
+            background: transparent !important;
+            background-color: transparent !important;
+        }
+        #guest-feed-contest-card .rv-contest-prize-amount {
+            color: #fde047 !important;
+            text-shadow: 0 2px 16px rgba(245, 158, 11, 0.45) !important;
+        }
+        #guest-feed-contest-card .rv-contest-spec-pill {
+            background: rgba(255, 255, 255, 0.06) !important;
+            border: 1px solid rgba(255, 255, 255, 0.14) !important;
+            color: #f8fafc !important;
+        }
+        #guest-feed-contest-card .rv-contest-cta-btn {
+            position: relative !important;
+            overflow: hidden !important;
+            background: linear-gradient(135deg, #f59e0b 0%, #ff2a5f 52%, #e11d48 100%) !important;
+            border: 1px solid rgba(254, 240, 138, 0.65) !important;
+            box-shadow: 0 12px 30px rgba(255, 42, 95, 0.5), 0 0 20px rgba(245, 158, 11, 0.35) !important;
+            color: #ffffff !important;
+            animation: rvTalentPreregBtnPulse 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite !important;
+        }
+        #guest-feed-contest-card .rv-contest-cta-btn::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 50%;
+            background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.42) 50%, transparent 100%);
+            transform: translateX(-140%) skewX(-22deg);
+            animation: rvTalentPreregSheen 3s ease-in-out infinite;
+            pointer-events: none;
+        }
+        #guest-feed-contest-card .rv-contest-cta-btn :is(span, i, svg, div) {
+            background: transparent !important;
+            background-color: transparent !important;
             color: #ffffff !important;
         }
         /* Fix bottom navigation bar icons & active states in Light Theme so Home icon never blends into white background */
@@ -12822,32 +12889,74 @@
         function createGuestFeedContestCardElement() {
             const slide = document.createElement('div');
             slide.id = 'guest-feed-contest-card';
-            slide.className = 'w-full h-full relative snap-start bg-gradient-to-br from-[#0d0826] via-[#2a0b3f] to-[#4a0b2d] overflow-hidden flex items-center justify-center p-5 select-none';
+            slide.className = 'w-full h-full relative snap-start overflow-hidden flex items-center justify-center px-4 py-6 select-none';
             slide.innerHTML = `
-                <div class="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-amber-400/20 blur-3xl pointer-events-none"></div>
-                <div class="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-[#ff2a5f]/25 blur-3xl pointer-events-none"></div>
-                <div onclick="openTalentEventRulesModal()" class="relative z-10 w-full max-w-md rounded-3xl p-6 bg-black/45 backdrop-blur-xl border-2 border-amber-400/45 shadow-2xl flex flex-col items-center text-center space-y-4 cursor-pointer transition-transform active:scale-[0.99]">
-                    <div class="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white shadow-lg">
-                        <i data-lucide="trophy" class="w-3.5 h-3.5"></i>
+                <div class="absolute -top-28 -right-24 w-80 h-80 rounded-full bg-amber-400/25 blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-28 -left-24 w-80 h-80 rounded-full bg-[#ff2a5f]/30 blur-3xl pointer-events-none"></div>
+                <div class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-fuchsia-600/15 blur-3xl pointer-events-none"></div>
+
+                <div onclick="openTalentEventRulesModal()" class="rv-contest-poster-card relative z-10 w-full max-w-[400px] rounded-[28px] p-5 sm:p-6 backdrop-blur-2xl flex flex-col items-center text-center space-y-4 cursor-pointer transition-transform duration-200 active:scale-[0.99]">
+                    <!-- Top Official Event Pill -->
+                    <div class="rv-contest-top-badge inline-flex items-center gap-2 text-[10.5px] sm:text-[11px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full">
+                        <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
                         <span>Événement Officiel #RVideosTalent2026</span>
                     </div>
-                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-[#ff2a5f] p-0.5 shadow-xl shadow-rose-500/30">
-                        <div class="w-full h-full rounded-[14px] bg-[#160d2e] flex items-center justify-center text-3xl">🏆</div>
+
+                    <!-- Trophy Emblem & Main Title -->
+                    <div class="flex flex-col items-center space-y-2.5 pt-0.5">
+                        <div class="relative">
+                            <div class="absolute -inset-2 rounded-3xl bg-gradient-to-r from-amber-400 via-[#ff2a5f] to-amber-400 opacity-55 blur-md"></div>
+                            <div class="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-300 via-orange-500 to-[#ff2a5f] p-[2px] shadow-2xl">
+                                <div class="w-full h-full rounded-[14px] bg-[#140a29] flex items-center justify-center text-3xl shadow-inner">🏆</div>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <h3 class="text-2xl sm:text-[26px] font-black font-display text-white tracking-tight leading-none">Grand Concours Créateurs</h3>
+                            <p class="text-[11.5px] text-gray-300 font-medium">Fais briller ton talent sur R-Videos et remporte le grand prix</p>
+                        </div>
                     </div>
-                    <div class="space-y-1.5">
-                        <h3 class="text-xl sm:text-2xl font-black font-display text-white tracking-tight leading-tight">Grand Concours Créateurs</h3>
-                        <p class="text-xs sm:text-sm text-amber-200 font-bold">100 000 FCFA à gagner • Paiement direct Orange Money &amp; Mobile Money</p>
+
+                    <!-- Highlighted Prize Box -->
+                    <div class="rv-contest-prize-box w-full rounded-2xl py-3 px-4 flex flex-col items-center justify-center space-y-1">
+                        <span class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-amber-200/90">Cagnotte Officielle à Gagner</span>
+                        <div class="rv-contest-prize-amount text-2xl sm:text-3xl font-black font-display tracking-tight leading-tight">100 000 FCFA</div>
+                        <div class="inline-flex items-center gap-1.5 text-[11px] text-emerald-300 font-bold pt-0.5">
+                            <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-300"></i>
+                            <span>Paiement direct Orange Money &amp; Mobile Money</span>
+                        </div>
                     </div>
-                    <div class="w-full grid grid-cols-2 gap-2 text-left text-[11px] text-gray-200 pt-1">
-                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10 font-bold">🎬 Vidéo originale ≤ 60s</div>
-                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10 font-bold">🎂 18 à 30 ans</div>
-                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10 font-bold">❤️ 500 – 1 000+ Likes</div>
-                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10 font-bold text-amber-300">📅 1er – 31 Déc. 2026</div>
+
+                    <!-- 2x2 Criteria Grid -->
+                    <div class="w-full grid grid-cols-2 gap-2 text-left text-[11.5px]">
+                        <div class="rv-contest-spec-pill p-2.5 rounded-xl font-bold flex items-center gap-2">
+                            <span class="text-base leading-none">🎬</span>
+                            <span class="leading-tight text-white">Vidéo originale ≤ 60s</span>
+                        </div>
+                        <div class="rv-contest-spec-pill p-2.5 rounded-xl font-bold flex items-center gap-2">
+                            <span class="text-base leading-none">🎂</span>
+                            <span class="leading-tight text-white">18 à 30 ans</span>
+                        </div>
+                        <div class="rv-contest-spec-pill p-2.5 rounded-xl font-bold flex items-center gap-2">
+                            <span class="text-base leading-none">❤️</span>
+                            <span class="leading-tight text-white">500 – 1 000+ Likes</span>
+                        </div>
+                        <div class="rv-contest-spec-pill p-2.5 rounded-xl font-bold flex items-center gap-2">
+                            <span class="text-base leading-none">📅</span>
+                            <span class="leading-tight text-amber-300">1er – 31 Déc. 2026</span>
+                        </div>
                     </div>
-                    <button type="button" onclick="event.stopPropagation(); openTalentEventRulesModal()" class="w-full py-4 px-4 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-[#ff2a5f] text-white font-black text-xs sm:text-sm leading-snug shadow-xl shadow-rose-600/35 active:scale-95 transition flex items-center justify-center text-center">
-                        <span>🏆 Concours 100 000 FCFA : Crée ton compte en 1 clic pour valider ta participation</span>
+
+                    <!-- Captivating Animated CTA Button -->
+                    <button type="button" onclick="event.stopPropagation(); openTalentEventRulesModal()" class="rv-contest-cta-btn w-full py-3.5 px-4 rounded-2xl font-black text-xs sm:text-[13.5px] leading-snug active:scale-95 transition flex items-center justify-center gap-2 text-center">
+                        <span class="text-base leading-none">🏆</span>
+                        <span>Concours 100 000 FCFA : Crée ton compte en 1 clic pour valider ta participation</span>
                     </button>
-                    <span class="text-[11px] text-gray-300 font-medium">Appuie pour consulter le règlement officiel (#talent-event-rules-modal) • Glisse pour continuer</span>
+
+                    <!-- Clean Footer Instruction -->
+                    <div class="flex items-center justify-center gap-1.5 text-[11px] text-gray-300/90 font-medium pt-0.5">
+                        <span>Appuie pour consulter le règlement officiel • Glisse pour continuer</span>
+                    </div>
                 </div>
             `;
             return slide;
