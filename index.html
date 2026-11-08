@@ -4479,15 +4479,74 @@
             </div>
         </div>
 
-        <!-- PLAY STORE RATING MODAL (R-VIDEOS GLASSMORPHISM) -->
+        <!-- PLAY STORE RATING MODAL (R-VIDEOS GLASSMORPHISM - HIGH CONTRAST DARK & LIGHT THEME) -->
         <div id="playstore-rating-modal" class="modal-overlay" onclick="if(event.target === this) dismissPlayStoreRatingPrompt()">
-            <div class="glass-panel relative w-11/12 max-w-sm p-6 rounded-3xl text-center shadow-2xl border border-white/15 bg-[#0c1222]/90 backdrop-blur-2xl overflow-hidden">
+            <style>
+                #playstore-rating-modal .rv-rate-card {
+                    background: rgba(12, 18, 34, 0.96);
+                    border: 1px solid rgba(255, 255, 255, 0.18);
+                    color: #ffffff;
+                }
+                #playstore-rating-modal .rv-rate-title {
+                    color: #ffffff !important;
+                }
+                #playstore-rating-modal .rv-rate-desc {
+                    color: #e2e8f0 !important;
+                }
+                #playstore-rating-modal .rv-rate-stars-box {
+                    background: rgba(255, 255, 255, 0.07);
+                    border: 1px solid rgba(255, 255, 255, 0.14);
+                }
+                #playstore-rating-modal #btn-rate-playstore-now,
+                #playstore-rating-modal #btn-rate-playstore-now span {
+                    color: #ffffff !important;
+                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+                }
+                #playstore-rating-modal #btn-rate-playstore-later {
+                    background: rgba(255, 255, 255, 0.12);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    color: #f8fafc !important;
+                }
+                #playstore-rating-modal #btn-rate-playstore-close {
+                    background: rgba(255, 255, 255, 0.12);
+                    border: 1px solid rgba(255, 255, 255, 0.18);
+                    color: #f8fafc !important;
+                }
+                /* Contraste élevé sur fond clair (light-theme) */
+                body.light-theme #playstore-rating-modal .rv-rate-card {
+                    background: #ffffff !important;
+                    border: 1px solid rgba(15, 23, 42, 0.15) !important;
+                    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.22) !important;
+                    color: #0f172a !important;
+                }
+                body.light-theme #playstore-rating-modal .rv-rate-title {
+                    color: #0f172a !important;
+                }
+                body.light-theme #playstore-rating-modal .rv-rate-desc {
+                    color: #1e293b !important;
+                }
+                body.light-theme #playstore-rating-modal .rv-rate-stars-box {
+                    background: #fffbeb !important;
+                    border: 1px solid #fcd34d !important;
+                }
+                body.light-theme #playstore-rating-modal #btn-rate-playstore-later {
+                    background: #e2e8f0 !important;
+                    border: 1px solid #cbd5e1 !important;
+                    color: #0f172a !important;
+                }
+                body.light-theme #playstore-rating-modal #btn-rate-playstore-close {
+                    background: #f1f5f9 !important;
+                    border: 1px solid #cbd5e1 !important;
+                    color: #0f172a !important;
+                }
+            </style>
+            <div class="glass-panel rv-rate-card relative w-11/12 max-w-sm p-6 rounded-3xl text-center shadow-2xl backdrop-blur-2xl overflow-hidden">
                 <!-- Ambient decorative glow -->
-                <div class="pointer-events-none absolute -top-16 -left-16 w-36 h-36 rounded-full bg-[#ff2a5f]/20 blur-3xl"></div>
+                <div class="pointer-events-none absolute -top-16 -left-16 w-36 h-36 rounded-full bg-[#ff2a5f]/15 blur-3xl"></div>
                 <div class="pointer-events-none absolute -bottom-16 -right-16 w-36 h-36 rounded-full bg-amber-500/15 blur-3xl"></div>
 
                 <!-- Close button (5-day cooldown) -->
-                <button type="button" onclick="dismissPlayStoreRatingPrompt()" aria-label="Fermer" class="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white flex items-center justify-center transition active:scale-90">
+                <button type="button" id="btn-rate-playstore-close" onclick="dismissPlayStoreRatingPrompt()" aria-label="Fermer" class="absolute top-3.5 right-3.5 w-8 h-8 rounded-full flex items-center justify-center transition active:scale-90">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
 
@@ -4503,28 +4562,28 @@
                 </div>
 
                 <!-- Title & Subtitle -->
-                <h3 class="text-lg font-extrabold text-white font-display tracking-tight mb-1.5">
+                <h3 class="rv-rate-title text-lg font-extrabold font-display tracking-tight mb-2">
                     Vous appréciez R-Videos ?
                 </h3>
-                <p class="text-xs text-gray-300 leading-relaxed mb-4 px-1">
+                <p class="rv-rate-desc text-xs font-medium leading-relaxed mb-4 px-1">
                     Votre avis nous aide énormément à faire grandir la communauté ! Prenez quelques secondes pour nous soutenir sur le Google Play Store.
                 </p>
 
                 <!-- 5 Stars Visual Banner -->
-                <div class="flex items-center justify-center gap-1.5 py-2.5 px-4 mb-5 rounded-2xl bg-white/5 border border-white/10 shadow-inner">
-                    <span class="text-amber-400 text-xl drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">⭐</span>
-                    <span class="text-amber-400 text-xl drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">⭐</span>
-                    <span class="text-amber-400 text-xl drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">⭐</span>
-                    <span class="text-amber-400 text-xl drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">⭐</span>
-                    <span class="text-amber-400 text-xl drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">⭐</span>
+                <div class="rv-rate-stars-box flex items-center justify-center gap-1.5 py-2.5 px-4 mb-5 rounded-2xl shadow-inner">
+                    <span class="text-amber-400 text-xl drop-shadow-[0_1px_4px_rgba(245,158,11,0.45)]">⭐</span>
+                    <span class="text-amber-400 text-xl drop-shadow-[0_1px_4px_rgba(245,158,11,0.45)]">⭐</span>
+                    <span class="text-amber-400 text-xl drop-shadow-[0_1px_4px_rgba(245,158,11,0.45)]">⭐</span>
+                    <span class="text-amber-400 text-xl drop-shadow-[0_1px_4px_rgba(245,158,11,0.45)]">⭐</span>
+                    <span class="text-amber-400 text-xl drop-shadow-[0_1px_4px_rgba(245,158,11,0.45)]">⭐</span>
                 </div>
 
                 <!-- Actions -->
                 <div class="flex flex-col gap-2.5">
-                    <a id="btn-rate-playstore-now" href="https://play.google.com/store/apps/details?id=com.ralphnyame.rvideos" target="_blank" rel="noopener noreferrer external" onclick="handlePlayStoreRateNow(event)" class="w-full py-3 px-4 bg-gradient-to-r from-[#ff2a5f] to-[#ec514c] hover:brightness-110 text-white rounded-2xl font-extrabold text-xs tracking-wide shadow-lg shadow-rose-600/35 active:scale-95 transition flex items-center justify-center gap-2 no-underline cursor-pointer">
+                    <a id="btn-rate-playstore-now" href="https://play.google.com/store/apps/details?id=com.rvideos.applicaton" target="_top" rel="noopener noreferrer external" onclick="return handlePlayStoreRateNow(event)" class="w-full py-3 px-4 bg-gradient-to-r from-[#ff2a5f] to-[#ec514c] hover:brightness-110 text-white rounded-2xl font-extrabold text-xs tracking-wide shadow-lg shadow-rose-600/35 active:scale-95 transition flex items-center justify-center gap-2 no-underline cursor-pointer">
                         <span>Noter 5 étoiles ⭐</span>
                     </a>
-                    <button type="button" id="btn-rate-playstore-later" onclick="dismissPlayStoreRatingPrompt()" class="w-full py-2.5 px-4 bg-white/10 hover:bg-white/15 text-gray-300 hover:text-white rounded-2xl font-semibold text-xs active:scale-95 transition">
+                    <button type="button" id="btn-rate-playstore-later" onclick="dismissPlayStoreRatingPrompt()" class="w-full py-2.5 px-4 rounded-2xl font-bold text-xs active:scale-95 transition">
                         Plus tard
                     </button>
                 </div>
@@ -24938,20 +24997,19 @@
         lucide.createIcons();
 
         /* ============================================================================
-         * GOOGLE PLAY STORE RATING PROMPT (com.ralphnyame.rvideos)
+         * GOOGLE PLAY STORE RATING PROMPT (com.rvideos.applicaton)
+         * Lien officiel : https://play.google.com/store/apps/details?id=com.rvideos.applicaton
          * Déclenchement : >= 4 minutes cumulées (240s) OU >= 6 vidéos regardées
          * Cooldown "Plus tard" / fermeture : 5 jours
-         * Redirection Web2App sans blocage (lien externe <a target="_blank"> + market:// + intent://)
          * ============================================================================ */
         (function initPlayStoreRatingSystem() {
-            const PLAYSTORE_PACKAGE_ID = 'com.ralphnyame.rvideos';
+            const PLAYSTORE_PACKAGE_ID = 'com.rvideos.applicaton';
             const PLAYSTORE_MARKET_URI = 'market://details?id=' + PLAYSTORE_PACKAGE_ID;
             const PLAYSTORE_WEB_URL = 'https://play.google.com/store/apps/details?id=' + PLAYSTORE_PACKAGE_ID;
-            const PLAYSTORE_ANDROID_INTENT = 'intent://details?id=' + PLAYSTORE_PACKAGE_ID + '#Intent;scheme=market;package=com.android.vending;S.browser_fallback_url=' + encodeURIComponent(PLAYSTORE_WEB_URL) + ';end';
 
             const STORAGE_KEYS = {
-                RATED: 'rv_playstore_rated_v1',
-                NEXT_PROMPT_TS: 'rv_playstore_next_prompt_ts_v1',
+                RATED: 'rv_playstore_rated_v2',
+                NEXT_PROMPT_TS: 'rv_playstore_next_prompt_ts_v2',
                 TIME_SPENT_SEC: 'rv_playstore_time_spent_sec_v1',
                 VIDEOS_WATCHED_COUNT: 'rv_playstore_videos_watched_count_v1',
                 VIDEOS_WATCHED_IDS: 'rv_playstore_videos_watched_ids_v1'
@@ -24963,6 +25021,12 @@
 
             let ratingTimerInterval = null;
             let promptDisplayedThisSession = false;
+
+            // Nettoyer l'ancien état v1 lié à l'ancien identifiant de package
+            try {
+                localStorage.removeItem('rv_playstore_rated_v1');
+                localStorage.removeItem('rv_playstore_next_prompt_ts_v1');
+            } catch (e) {}
 
             function readStorage(key, fallback) {
                 try {
@@ -25028,23 +25092,6 @@
                 }
             };
 
-            function triggerHiddenMarketSchemeIframe(uri) {
-                try {
-                    const iframe = document.createElement('iframe');
-                    iframe.style.display = 'none';
-                    iframe.style.width = '0';
-                    iframe.style.height = '0';
-                    iframe.style.border = '0';
-                    iframe.src = uri;
-                    document.body.appendChild(iframe);
-                    setTimeout(function() {
-                        if (iframe && iframe.parentNode) {
-                            iframe.parentNode.removeChild(iframe);
-                        }
-                    }, 2000);
-                } catch (e) {}
-            }
-
             window.handlePlayStoreRateNow = function(event) {
                 writeStorage(STORAGE_KEYS.RATED, 'true');
                 if (ratingTimerInterval) {
@@ -25052,21 +25099,18 @@
                     ratingTimerInterval = null;
                 }
 
-                // Fermer la modale après un court délai pour ne pas interrompre le clic natif sur <a target="_blank"> dans Web2App
                 setTimeout(function() {
                     const modal = document.getElementById('playstore-rating-modal');
                     if (modal) {
                         modal.classList.remove('open');
                     }
-                }, 250);
+                }, 300);
 
-                const isAndroid = /Android/i.test(navigator.userAgent || '');
-
-                // 1. Bridges natifs Web2App / Cordova / Capacitor / WebView s'ils sont présents
+                // 1. Ponts natifs Web2App / Cordova / Capacitor s'ils existent
                 try {
                     if (window.cordova && window.cordova.InAppBrowser && typeof window.cordova.InAppBrowser.open === 'function') {
                         if (event) event.preventDefault();
-                        window.cordova.InAppBrowser.open(isAndroid ? PLAYSTORE_MARKET_URI : PLAYSTORE_WEB_URL, '_system');
+                        window.cordova.InAppBrowser.open(PLAYSTORE_WEB_URL, '_system');
                         return false;
                     }
                     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser && typeof window.Capacitor.Plugins.Browser.open === 'function') {
@@ -25081,15 +25125,16 @@
                     }
                 } catch (e) {}
 
-                // 2. Sur Android (Web2App / WebView) :
-                // - Solliciter market:// via un iframe invisible (intercepté par shouldOverrideUrlLoading sans jamais provoquer ERR_UNKNOWN_URL_SCHEME sur l'écran principal)
-                // - Laisser le clic natif synchrone sur <a href="https://play.google.com/..." target="_blank" rel="noopener noreferrer external"> sortir de la WebView vers l'application Google Play Store (App Links) ou le navigateur système sans blocage de popup.
-                if (isAndroid) {
-                    triggerHiddenMarketSchemeIframe(PLAYSTORE_MARKET_URI);
-                    try {
-                        window.open(PLAYSTORE_ANDROID_INTENT, '_system');
-                    } catch (e) {}
-                }
+                // 2. Tentative d'ouverture externe (_blank / _system) puis navigation directe vers https://play.google.com/store/apps/details?id=com.rvideos.applicaton
+                try {
+                    window.open(PLAYSTORE_WEB_URL, '_blank', 'noopener,noreferrer');
+                } catch (e) {}
+
+                setTimeout(function() {
+                    if (!document.hidden) {
+                        window.location.href = PLAYSTORE_WEB_URL;
+                    }
+                }, 150);
 
                 return true;
             };
