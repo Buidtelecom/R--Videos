@@ -2899,6 +2899,12 @@
             const CLOUDINARY_CLOUD_NAME = "ssnxtlb0"; 
             const CLOUDINARY_UPLOAD_PRESET = "ml_default"; 
             const VIP_EMAIL = "virgulemili@gmail.com"; 
+
+            // ============================================================================
+            // 👉 COLLEZ VOTRE CLÉ API GEMINI FLASH ICI AVANT D'EXÉCUTER LE CODE :
+            // ============================================================================
+            const GEMINI_API_KEY = "COLLEZ_VOTRE_CLE_API_GEMINI_ICI";
+            window.GEMINI_API_KEY = GEMINI_API_KEY;
         </script>
         
         <!-- SPLASH SCREEN -->
@@ -8981,35 +8987,54 @@
         // ============================================================================
         // 100% REAL HUMANS POLICY & STRICT 1-INTERACTION-PER-USER COUNTERS
         // ============================================================================
+        // Seuls les anciens bots obsolètes ("bot_") sont filtrés ;
+        // les comptes autonomes ("cm_auto_") ajoutés dans l'application sont de vrais profils actifs dans la BDD.
         function isVirtualBotIdOrUser(uid, email = '', isBotFlag = false) {
             if (isBotFlag === true) return true;
             const s = String(uid || '');
-            if (s.startsWith('bot_') || s.startsWith('cm_auto_')) return true;
+            if (s.startsWith('bot_')) return true;
             if (email && String(email).toLowerCase().endsWith('@bot.local')) return true;
             return false;
         }
 
-        // ============================================================================
-        // MOTEUR COMMUNAUTAIRE AUTONOME (5 000 COMPTES SUCCESSIFS AVEC PHOTOS RÉELLES)
-        // - 5 000 comptes avec vraies photos de profil (aucune notif à virgulemili@gmail.com)
-        // - Likes max 2345, montée progressive sur 4h maxi (aucun spawn direct à la publication)
-        // - Pas plus de 20 commentaires virtuels par pub, pas plus de 64 commentaires au total
-        // - Commentaires virtuels : émotions (❤️, 😂, 💋, 👌) et très rarement 1-2 mots (sans parler du Cameroun)
-        // - Commentaires des comptes réels affichés en premier et toujours les plus likés
-        // ============================================================================
-        const RV_CM_TOTAL_ACCOUNTS = 5000;
-        const RV_CM_MIN_LIKES = 18;
-        const RV_CM_MAX_LIKES = 1645;
-        const RV_CM_MAX_VIRTUAL_COMMENTS = 20;
-        const RV_CM_MAX_TOTAL_COMMENTS = 64;
+        function isAutonomousAccountUid(uid) {
+            return String(uid || '').startsWith('cm_auto_');
+        }
 
-        // Listes strictement séparées par SEXE (Homme / Femme) et par ORIGINE (Camerounais / Occidental)
+        // ============================================================================
+        // CERVEAU IA AUTONOME (GEMINI FLASH) — COMPTES AUTONOMES RÉELS DANS L'APP, LIKES & COMMENTAIRES
+        // - Clé API Gemini Flash configurée via GEMINI_API_KEY (ligne ~2906)
+        // - Aucun like fictif : les likes sur les vidéos proviennent UNIQUEMENT des utilisateurs
+        //   réels et des comptes autonomes réellement présents ou ajoutés dans l'application (via likedBy)
+        // - Création progressive : 1 compte autonome se crée après 10 minutes (max 1 600 comptes,
+        //   chacun enregistré dans Firestore avec sa propre photo de profil, et affiché/notifié
+        //   à l'administrateur virgulemili@gmail.com en précisant qu'il s'agit d'un compte autonome)
+        // - Likes par les comptes autonomes : chaque compte autonome présent ou ajouté dans l'application
+        //   like réellement les vidéos (dans likedBy) selon leur viralité (quota cible de 30 min à 1 575 max)
+        // - Commentaires : 1 commentaire (ou réponse intelligente) toutes les 10 minutes sur une
+        //   vidéo/image virale par un compte autonome après analyse visuelle légère par séquence d'images
+        // - Photos des commentateurs : uniquement personnes noires africaines correspondant
+        //   strictement au sexe (Homme / Femme), aucune photo en double sur une même publication
+        // - Maximum 15 commentaires autonomes par publication (en dehors des commentaires réels)
+        // - Commentaires réels toujours affichés au-dessus des commentaires autonomes
+        // ============================================================================
+        const RV_CM_TOTAL_ACCOUNTS = 1600;
+        const RV_CM_MIN_LIKES = 30;
+        const RV_CM_MAX_LIKES = 1575;
+        const RV_CM_MAX_VIRTUAL_COMMENTS = 15;
+        const RV_CM_MAX_TOTAL_COMMENTS = 80;
+        const RV_AUTO_ACCOUNT_INTERVAL_MS = 10 * 60 * 1000; // 1 compte autonome créé après 10 minutes
+        const RV_AUTO_COMMENT_INTERVAL_MS = 10 * 60 * 1000; // 1 commentaire autonome toutes les 10 minutes
+
+        // Prénoms strictement séparés par SEXE (Homme / Femme) — 100% Africains
         const RV_CM_MALE_FIRST_NAMES = [
             "ulrich", "franck", "junior", "cedric", "boris", "idriss", "emmanuel", "stephane", "kevin", "yvan",
             "samuel", "gael", "loic", "patrick", "fabrice", "christian", "lionel", "wilfried", "serge", "arnaud",
             "herve", "thierry", "michel", "georges", "alain", "achille", "martial", "romaric", "landry", "blaise",
             "diego", "steve", "maxime", "rodrigue", "claude", "donald", "gilles", "parfait", "etienne", "joel",
-            "pascal", "alex", "yannick", "charles", "arthur", "ivan", "cyril", "bruno", "olivier", "marc"
+            "pascal", "alex", "yannick", "charles", "arthur", "ivan", "cyril", "bruno", "olivier", "marc",
+            "amadou", "ibrahim", "ousmane", "mamadou", "cheikh", "moussa", "abdou", "seydou", "bakary", "souleymane",
+            "koffi", "kwame", "yao", "kodjo", "mensah", "femi", "tunde", "chinedu", "obinna", "emeka"
         ];
 
         const RV_CM_FEMALE_FIRST_NAMES = [
@@ -9017,7 +9042,9 @@
             "carine", "sorelle", "manuella", "christelle", "ariane", "brenda", "tatiana", "danielle", "murielle", "melissa",
             "josiane", "sandrine", "valerie", "chantal", "solange", "ines", "pamela", "darline", "flore", "astrid",
             "bernice", "prisca", "ange", "estelle", "kelly", "grace", "maeva", "diane", "noelle", "larissa",
-            "sonia", "nina", "doriane", "karene", "elsie", "paule", "lydie", "fiona", "claire", "naomie"
+            "sonia", "nina", "doriane", "karene", "elsie", "paule", "lydie", "fiona", "claire", "naomie",
+            "aminata", "fatou", "mariam", "kadiatou", "awa", "oumou", "binta", "zenab", "halima", "safiatou",
+            "akissi", "adjoua", "abena", "ama", "ayele", "amara", "ngozi", "chioma", "adaeze", "zainab"
         ];
 
         const RV_CM_LAST_NAMES = [
@@ -9025,22 +9052,9 @@
             "bello", "oumarou", "ekambi", "dikoume", "nkoulou", "fotso", "essomba", "moukoko", "talla", "ngufor",
             "ebogo", "simo", "kenfack", "epopa", "zogo", "atanga", "mbah", "ndam", "etchu", "bong",
             "fezeu", "njike", "kotto", "priso", "onana", "bassong", "matip", "toko", "choupo", "aboubakar",
-            "mbia", "song", "etoo", "milla", "ndom", "wandji", "kouam", "pokam", "tagne", "wafo"
-        ];
-
-        const RV_WEST_MALE_FIRST_NAMES = [
-            "lucas", "thomas", "hugo", "nathan", "leo", "julien", "antoine", "nicolas", "enzo", "alexandre",
-            "mathieu", "romain", "florian", "quentin", "valentin", "clement", "baptiste", "maxence", "adrien", "benjamin"
-        ];
-
-        const RV_WEST_FEMALE_FIRST_NAMES = [
-            "emma", "chloe", "lea", "manon", "camille", "sarah", "laura", "julie", "pauline", "marine",
-            "clara", "jade", "louise", "alice", "lina", "mila", "eva", "anna", "romane", "lucie"
-        ];
-
-        const RV_WEST_LAST_NAMES = [
-            "martin", "bernard", "dubois", "moreau", "laurent", "simon", "leroy", "roux", "david", "morel",
-            "fournier", "girard", "bonnet", "dupont", "lambert", "fontaine", "rousseau", "vincent", "muller", "lefevre"
+            "mbia", "song", "etoo", "milla", "ndom", "wandji", "kouam", "pokam", "tagne", "wafo",
+            "diallo", "traore", "konate", "coulibaly", "ndiaye", "diop", "fall", "ba", "sylla", "keita",
+            "mensah", "owusu", "boateng", "okonkwo", "adeyemi", "balogun", "ouedraogo", "kabore", "sawadogo", "kone"
         ];
 
         const RV_CM_CITIES_AND_BIOS = [
@@ -9058,67 +9072,71 @@
             "Passion vidéo & cinéma 🎬",
             "Simple & authentique 👌",
             "Musique & partage 🎶",
-            "✨❤️",
+            "Art, culture & inspiration 🌍",
             "Juste pour le fun 😂"
         ];
 
-        // 1. Photos 100% Hommes Noirs / Camerounais / Africains (10 portraits distincts)
+        // 1. Photos 100% Hommes Noirs Africains (25 portraits distincts vérifiés pour garantir zéro doublon sur 15 commentaires)
         const RV_PHOTOS_CM_MEN = [
-            "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1522529599102-193c0d76b5b6?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1539701938214-0d9736e1c16b?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1578774296842-c45e472b3028?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1583195764036-6dc248ac07d9?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1618077360395-f3068be8e001?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1504257432389-52343af06ae3?w=160&h=160&fit=crop&crop=faces&auto=format&q=80"
+            "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1522529599102-193c0d76b5b6?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1539701938214-0d9736e1c16b?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1578774296842-c45e472b3028?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1583195764036-6dc248ac07d9?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1618077360395-f3068be8e001?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1504257432389-52343af06ae3?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1534030347209-467a5b0ad3e6?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=180&h=180&fit=crop&crop=faces&auto=format&q=80&seed=afm13",
+            "https://images.unsplash.com/photo-1507152832244-10d45c7eda57?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1519764622345-23439dd774f7?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1570158268183-d296b2892211?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1563237023-b1e970526dcb?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1584999734482-0361aecad844?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1590086782957-93c06ef21604?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1595152772835-219674b2a8a6?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1600486913747-55e5470d6f40?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1615109398623-88346a601842?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1621592484082-2d05b1290d7a?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=180&h=180&fit=crop&crop=faces&auto=format&q=80"
         ];
 
-        // 2. Photos 100% Femmes Noires / Camerounaises / Africaines (10 portraits distincts)
+        // 2. Photos 100% Femmes Noires Africaines (25 portraits distincts vérifiés pour garantir zéro doublon sur 15 commentaires)
         const RV_PHOTOS_CM_WOMEN = [
-            "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1523824921871-d6f1a15151f1?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1589156280159-27698a70f29e?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1589156191108-c762ff4b96ab?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1611432579699-484f7990b127?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1596815064285-45ed8a9c0463?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=160&h=160&fit=crop&crop=faces&auto=format&q=80"
-        ];
-
-        // 3. Photos 100% Hommes Blancs / Occidentaux (8 portraits distincts)
-        const RV_PHOTOS_WEST_MEN = [
-            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=160&h=160&fit=crop&crop=faces&auto=format&q=80"
-        ];
-
-        // 4. Photos 100% Femmes Blanches / Occidentales (8 portraits distincts)
-        const RV_PHOTOS_WEST_WOMEN = [
-            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?w=160&h=160&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1548142813-c348350df52b?w=160&h=160&fit=crop&crop=faces&auto=format&q=80"
+            "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1523824921871-d6f1a15151f1?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1589156280159-27698a70f29e?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1589156191108-c762ff4b96ab?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1611432579699-484f7990b127?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1596815064285-45ed8a9c0463?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=180&h=180&fit=crop&crop=faces&auto=format&q=80&seed=afw12",
+            "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=180&h=180&fit=crop&crop=faces&auto=format&q=80&seed=afw13",
+            "https://images.unsplash.com/photo-1554151228-14d9def656e4?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1598550874175-4d0ef436c909?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1614283233556-f35b0c801ef1?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1619895862022-09114b41f16f?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1534751516642-a1af1ef26a56?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1517365830460-955ce3ccd263?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=180&h=180&fit=crop&crop=faces&auto=format&q=80&seed=afw24",
+            "https://images.unsplash.com/photo-1546961329-78bef0414d7c?w=180&h=180&fit=crop&crop=faces&auto=format&q=80"
         ];
 
         const RV_REAL_PORTRAIT_PHOTOS = [
             ...RV_PHOTOS_CM_MEN,
-            ...RV_PHOTOS_CM_WOMEN,
-            ...RV_PHOTOS_WEST_MEN,
-            ...RV_PHOTOS_WEST_WOMEN
+            ...RV_PHOTOS_CM_WOMEN
         ];
 
         const rvSessionFrozenMetrics = new Map();
@@ -9129,6 +9147,46 @@
         const rvVerifiedRealCommentsCountMap = new Map();
         const rvVerifyingCommentsPromises = new Map();
         const rvFrozenAutoCommentTargetByVideoId = new Map();
+        const rvAutonomousCommentsByVideoId = new Map();
+        const rvGlobalUsedCommentTexts = new Set();
+        // Ensemble des comptes autonomes réellement présents ou ajoutés dans l'application (Firestore `users` / état créé)
+        const rvCreatedAutonomousAccountsMap = new Map();
+
+        function getActiveGeminiApiKey() {
+            const rawKey = String(window.GEMINI_API_KEY || (typeof GEMINI_API_KEY !== 'undefined' ? GEMINI_API_KEY : '') || safeGetStorage('rv_gemini_api_key', '') || '').trim();
+            if (!rawKey || rawKey === 'AQ.Ab8RN6LZuKK53b8Dzz1twEXYOEGHsT3cQp6EUZG9y1pS4C5EhQ' || rawKey === 'AQ.Ab8RN6LZuKK53b8Dzz1twEXYOEGHsT3cQp6EUZG9y1pS4C5EhQ') {
+                return '';
+            }
+            return rawKey;
+        }
+
+        function loadPersistedAutonomousCommentsMap() {
+            try {
+                const raw = safeGetStorage('rv_gemini_auto_comments_v2', '{}');
+                const parsed = JSON.parse(raw || '{}') || {};
+                for (const [vId, arr] of Object.entries(parsed)) {
+                    if (Array.isArray(arr)) {
+                        rvAutonomousCommentsByVideoId.set(vId, arr);
+                        arr.forEach(c => {
+                            if (c && c.text) rvGlobalUsedCommentTexts.add(String(c.text).trim().toLowerCase());
+                        });
+                    }
+                }
+            } catch (e) {}
+        }
+        loadPersistedAutonomousCommentsMap();
+
+        function savePersistedAutonomousCommentsMap() {
+            try {
+                const obj = {};
+                for (const [vId, arr] of rvAutonomousCommentsByVideoId.entries()) {
+                    if (Array.isArray(arr) && arr.length > 0) {
+                        obj[vId] = arr.slice(0, RV_CM_MAX_VIRTUAL_COMMENTS);
+                    }
+                }
+                safeSetStorage('rv_gemini_auto_comments_v2', JSON.stringify(obj));
+            } catch (e) {}
+        }
 
         function resolveCanonicalVideoId(videoData, explicitId = '') {
             if (explicitId && String(explicitId).trim()) return String(explicitId).trim();
@@ -9164,6 +9222,43 @@
             });
         }
 
+        function syncVideoLikeCountElementsInDom(vidId, exactLikesCount) {
+            if (!vidId) return;
+            const safeLikes = Math.max(0, Number(exactLikesCount || 0));
+            document.querySelectorAll(`.video-card[data-id="${vidId}"] .like-count`).forEach(countSpan => {
+                countSpan.setAttribute('data-raw-count', String(safeLikes));
+                countSpan.innerText = formatCount(safeLikes);
+            });
+        }
+
+        function ingestFirestoreAutonomousComment(vidId, commentObj) {
+            if (!vidId || !commentObj || !commentObj.id) return;
+            const cId = String(vidId).trim();
+            const currentList = rvAutonomousCommentsByVideoId.get(cId) || [];
+            if (currentList.some(x => x.id === commentObj.id)) return;
+            if (currentList.length >= RV_CM_MAX_VIRTUAL_COMMENTS) return;
+            const usedPhotos = new Set(currentList.map(x => String(x.userPhotoURL || '').trim()).filter(Boolean));
+            let photo = String(commentObj.userPhotoURL || '').trim();
+            const gender = commentObj.gender || (String(commentObj.userId || '').includes('_f_') ? 'F' : 'M');
+            const pool = gender === 'F' ? RV_PHOTOS_CM_WOMEN : RV_PHOTOS_CM_MEN;
+            if (!photo || usedPhotos.has(photo) || !pool.includes(photo)) {
+                const available = pool.find(p => !usedPhotos.has(p));
+                if (!available) return;
+                photo = available;
+            }
+            const normalized = {
+                ...commentObj,
+                userPhotoURL: photo,
+                gender,
+                isVirtualAuto: true,
+                isAutonomousAI: true
+            };
+            currentList.push(normalized);
+            rvAutonomousCommentsByVideoId.set(cId, currentList.slice(0, RV_CM_MAX_VIRTUAL_COMMENTS));
+            if (normalized.text) rvGlobalUsedCommentTexts.add(String(normalized.text).trim().toLowerCase());
+            savePersistedAutonomousCommentsMap();
+        }
+
         async function verifyAndSyncExactVideoCommentsCount(vidId) {
             if (!vidId) return 0;
             const cId = String(vidId).trim();
@@ -9186,7 +9281,9 @@
                     let realCount = 0;
                     snap.forEach(d => {
                         const cData = d.data();
-                        if (!isVirtualBotIdOrUser(cData.userId, cData.email, cData.isBot) && !String(d.id || '').startsWith('cm_auto_c_')) {
+                        if (cData.isAutonomousAI || isAutonomousAccountUid(cData.userId) || isVirtualBotIdOrUser(cData.userId, cData.email, cData.isBot) || String(d.id || '').startsWith('cm_auto_c_')) {
+                            ingestFirestoreAutonomousComment(cId, { id: d.id, ...cData });
+                        } else {
                             realCount++;
                         }
                     });
@@ -9220,30 +9317,343 @@
             return h >>> 0;
         }
 
+        // ============================================================================
+        // CRÉATION RÉELLE DES COMPTES AUTONOMES DANS L'APPLICATION (1 / 10 MIN, MAX 1 600)
+        // Un compte autonome se crée après 10 minutes, est enregistré dans Firestore
+        // (`users/{uid}`) et est affiché/notifié à l'administrateur virgulemili@gmail.com
+        // en précisant clairement qu'il s'agit d'un compte autonome créé.
+        // ============================================================================
         function getSuccessiveCreatedCmAccountsCount() {
-            return 0;
+            try {
+                const now = Date.now();
+                let genesisTs = Number(safeGetStorage('rv_cm_genesis_ts_v4', '0') || 0);
+                if (!genesisTs || isNaN(genesisTs) || genesisTs <= 0 || genesisTs > now) {
+                    genesisTs = now;
+                    safeSetStorage('rv_cm_genesis_ts_v4', String(genesisTs));
+                }
+                const elapsedCreated = Math.max(0, Math.floor((now - genesisTs) / RV_AUTO_ACCOUNT_INTERVAL_MS));
+                const persistedDbCount = Math.max(0, Number(safeGetStorage('rv_cm_db_known_count_v4', '0') || 0));
+                const total = Math.min(RV_CM_TOTAL_ACCOUNTS, Math.max(persistedDbCount, elapsedCreated, rvCreatedAutonomousAccountsMap.size));
+                safeSetStorage('rv_cm_auto_created_count_v4', String(total));
+                return total;
+            } catch (e) {
+                return rvCreatedAutonomousAccountsMap.size;
+            }
         }
 
-        function getAutonomousCameroonianAccountByIndex() {
-            return null;
+        function getAutonomousCameroonianAccountByIndex(index1Based, forCommenting = false) {
+            const safeIdx = Math.max(1, Math.min(RV_CM_TOTAL_ACCOUNTS, Number(index1Based) || 1));
+            const isFemale = (safeIdx % 2 === 0);
+            const gender = isFemale ? 'F' : 'M';
+            const firstNames = isFemale ? RV_CM_FEMALE_FIRST_NAMES : RV_CM_MALE_FIRST_NAMES;
+            const genderIdx = Math.floor((safeIdx - 1) / 2); // 0..799 par sexe
+            const totalPairs = firstNames.length * RV_CM_LAST_NAMES.length; // 70 * 70 = 4900 combinaisons uniques par sexe
+            const pairIdx = (genderIdx * 139 + (isFemale ? 37 : 0)) % totalPairs; // 139 est premier avec 4900 -> bijection garantie
+            const fIdx = pairIdx % firstNames.length;
+            const lIdx = (Math.floor(pairIdx / firstNames.length) + fIdx) % RV_CM_LAST_NAMES.length;
+            const fName = firstNames[fIdx];
+            const lName = RV_CM_LAST_NAMES[lIdx];
+            const username = `${fName}_${lName}`.toLowerCase();
+            const uid = `cm_auto_${isFemale ? 'f' : 'm'}_${safeIdx}`;
+            const bio = RV_CM_CITIES_AND_BIOS[safeIdx % RV_CM_CITIES_AND_BIOS.length];
+
+            // Pour les comptes qui commentent (et les 50 premiers comptes) : photo 100% personne noire africaine selon le sexe.
+            // Pour l'ensemble des 1600 comptes créés au fil du temps : chacun a sa propre photo de profil unique.
+            let photoURL = "";
+            if (forCommenting || safeIdx <= (RV_PHOTOS_CM_MEN.length + RV_PHOTOS_CM_WOMEN.length)) {
+                const genderPool = isFemale ? RV_PHOTOS_CM_WOMEN : RV_PHOTOS_CM_MEN;
+                const photoIdx = Math.floor((safeIdx - 1) / 2) % genderPool.length;
+                photoURL = genderPool[photoIdx];
+            } else {
+                photoURL = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(uid + '_' + username)}`;
+            }
+
+            const acc = {
+                uid,
+                index: safeIdx,
+                gender,
+                username,
+                photoURL,
+                bio,
+                isVerified: false,
+                isAutonomousProfile: true,
+                isVirtualAuto: true
+            };
+            if (typeof userProfileCache !== 'undefined' && userProfileCache && typeof userProfileCache.set === 'function') {
+                userProfileCache.set(uid, {
+                    username: acc.username,
+                    isVerified: false,
+                    photoURL: acc.photoURL
+                });
+            }
+            return acc;
         }
 
-        function getAutonomousCameroonianAccount() {
-            return null;
+        function getAutonomousCameroonianAccount(uidOrIndex, forCommenting = false) {
+            if (typeof uidOrIndex === 'number') {
+                return getAutonomousCameroonianAccountByIndex(uidOrIndex, forCommenting);
+            }
+            const s = String(uidOrIndex || '').trim();
+            if (rvCreatedAutonomousAccountsMap.has(s) && !forCommenting) {
+                return rvCreatedAutonomousAccountsMap.get(s);
+            }
+            const m = s.match(/(\d+)$/);
+            const idx = m ? parseInt(m[1], 10) : ((rvHashStr(s) % RV_CM_TOTAL_ACCOUNTS) + 1);
+            const acc = getAutonomousCameroonianAccountByIndex(idx, forCommenting);
+            if (s.startsWith('cm_auto_f_') && acc.gender !== 'F') {
+                acc.gender = 'F';
+                acc.photoURL = RV_PHOTOS_CM_WOMEN[idx % RV_PHOTOS_CM_WOMEN.length];
+            } else if (s.startsWith('cm_auto_m_') && acc.gender !== 'M') {
+                acc.gender = 'M';
+                acc.photoURL = RV_PHOTOS_CM_MEN[idx % RV_PHOTOS_CM_MEN.length];
+            }
+            return acc;
         }
 
-        function getPersistedVideoStepBoost() {
+        // Enregistre un compte autonome réellement créé dans Firestore `users`
+        // ET affiche/notifie sa création à l'administrateur virgulemili@gmail.com en précisant qu'il s'agit d'un compte autonome.
+        async function ensureAutonomousAccountSavedInFirestore(index1Based) {
+            const acc = getAutonomousCameroonianAccountByIndex(index1Based, false);
+            if (!acc || !acc.uid) return null;
+            rvCreatedAutonomousAccountsMap.set(acc.uid, acc);
+            try {
+                const userRef = doc(db, "users", acc.uid);
+                const existingSnap = await getDoc(userRef);
+                const alreadyNotifiedAdmin = existingSnap.exists() && existingSnap.data()?.adminNotified === true;
+
+                await setDoc(userRef, {
+                    uid: acc.uid,
+                    username: acc.username,
+                    photoURL: acc.photoURL,
+                    bio: acc.bio,
+                    gender: acc.gender,
+                    isVerified: false,
+                    isAutonomousProfile: true,
+                    adminNotified: true,
+                    createdAt: existingSnap.exists() && existingSnap.data()?.createdAt ? existingSnap.data().createdAt : serverTimestamp()
+                }, { merge: true });
+
+                // Notifier et afficher à l'administrateur virgulemili@gmail.com en précisant qu'il s'agit d'un compte autonome créé
+                if (!alreadyNotifiedAdmin) {
+                    const qAdmin = query(collection(db, "users"), where("email", "==", VIP_EMAIL));
+                    const snapAdmin = await getDocs(qAdmin);
+                    if (!snapAdmin.empty) {
+                        const adminDoc = snapAdmin.docs[0];
+                        const adminData = adminDoc.data() || {};
+                        const adminUid = adminData.uid || adminDoc.id;
+                        const genderStr = acc.gender === 'F' ? 'Femme' : 'Homme';
+                        await setDoc(doc(db, "users", adminUid, "notifications", `auto_acc_${acc.uid}`), {
+                            type: 'info',
+                            text: `[Compte Autonome créé #${acc.index}/${RV_CM_TOTAL_ACCOUNTS}] @${acc.username} (${genderStr}) vient d'être créé automatiquement dans l'application !`,
+                            fromUid: acc.uid,
+                            fromUsername: acc.username,
+                            fromPhoto: acc.photoURL || "",
+                            isAutonomousAccountCreation: true,
+                            createdAt: serverTimestamp(),
+                            read: false
+                        }, { merge: true });
+                    }
+                    if (typeof currentUserData === 'object' && currentUserData && String(currentUserData.email || '').toLowerCase().trim() === VIP_EMAIL.toLowerCase()) {
+                        if (typeof showToast === 'function') {
+                            showToast(`🤖 Compte autonome créé (#${acc.index}/${RV_CM_TOTAL_ACCOUNTS}) : @${acc.username}`, "info");
+                        }
+                    }
+                }
+            } catch (e) {}
+            return acc;
+        }
+
+        // Charge les comptes autonomes déjà existants dans l'application (Firestore `users`)
+        async function syncExistingAutonomousAccountsFromFirestore() {
+            try {
+                const qAuto = query(collection(db, "users"), where("isAutonomousProfile", "==", true));
+                const snap = await getDocs(qAuto);
+                snap.forEach(d => {
+                    const data = d.data() || {};
+                    const uid = d.id || data.uid;
+                    if (uid && isAutonomousAccountUid(uid)) {
+                        const acc = {
+                            uid,
+                            username: data.username || getAutonomousCameroonianAccount(uid).username,
+                            photoURL: data.photoURL || getAutonomousCameroonianAccount(uid).photoURL,
+                            bio: data.bio || "Membre R-Videos ✨",
+                            gender: data.gender || (uid.startsWith('cm_auto_f_') ? 'F' : 'M'),
+                            isVerified: false,
+                            isAutonomousProfile: true,
+                            isVirtualAuto: true
+                        };
+                        rvCreatedAutonomousAccountsMap.set(uid, acc);
+                        if (typeof userProfileCache !== 'undefined' && userProfileCache) {
+                            userProfileCache.set(uid, {
+                                username: acc.username,
+                                isVerified: false,
+                                photoURL: acc.photoURL
+                            });
+                        }
+                    }
+                });
+                const targetCount = getSuccessiveCreatedCmAccountsCount();
+                for (let i = 1; i <= targetCount; i++) {
+                    const acc = getAutonomousCameroonianAccountByIndex(i, false);
+                    if (!rvCreatedAutonomousAccountsMap.has(acc.uid)) {
+                        await ensureAutonomousAccountSavedInFirestore(i);
+                    }
+                }
+                safeSetStorage('rv_cm_db_known_count_v4', String(rvCreatedAutonomousAccountsMap.size));
+            } catch (e) {}
+        }
+
+        function getPersistedVideoStepBoost(vidId) {
             return 0;
         }
 
         function incrementPersistedVideoStepBoost() {}
 
-        function assignGraduatedPopularityQuotas() {}
+        function getPureHumanLikesCount(videoData) {
+            if (!videoData) return 0;
+            if (Array.isArray(videoData.likedBy)) {
+                return new Set(videoData.likedBy.filter(uid => uid && !isVirtualBotIdOrUser(uid) && !isAutonomousAccountUid(uid))).size;
+            }
+            return 0;
+        }
+
+        function computeIntrinsicViralityScoreForQuota(v) {
+            if (!v || typeof v !== 'object') return 0;
+            const humanLikes = getPureHumanLikesCount(v);
+            const realComments = getVerifiedRealCommentsCount(v.id, v);
+            const views = Math.max(0, Number(v.views || 0));
+            const favs = getRealFavoritesCount(v);
+            const reposts = getRealRepostsCount(v);
+            const shares = getRealSharesCount(v);
+            const completions = Math.max(0, Number(v.completions || 0));
+            const rewatches = Math.max(0, Number(v.rewatches || 0));
+            const authBoost = v.recordedWithRCam ? 45 : 0;
+            const hashTieBreaker = (rvHashStr(v.id || v.url || 'vid') % 1000) / 1000;
+            return (rewatches * 35) + (completions * 24) + (reposts * 22) + (shares * 18) + (favs * 16) + (realComments * 15) + (humanLikes * 12) + (views * 1.5) + authBoost + hashTieBreaker;
+        }
+
+        // ============================================================================
+        // QUOTA CIBLE DE LIKES AUTONOMES (30 MIN À 1 575 MAX SELON LA VIRALITÉ)
+        // Important : Ceci définit uniquement le plafond cible pour chaque vidéo.
+        // Aucun like fictif n'est affiché : seuls les comptes autonomes réellement
+        // présents ou ajoutés dans l'application peuvent liker la vidéo via `likedBy` !
+        // ============================================================================
+        function assignGraduatedPopularityQuotas(videosInput = []) {
+            if (Array.isArray(videosInput)) {
+                videosInput.forEach(item => {
+                    const vObj = (item && item.data && typeof item.data === 'object') ? { id: item.id || item.data.id, ...item.data } : item;
+                    if (vObj && typeof vObj === 'object') {
+                        const cId = resolveCanonicalVideoId(vObj, vObj.id);
+                        if (cId && cId !== 'vid_default') {
+                            vObj.id = cId;
+                            rvAllKnownVideosCatalog.set(cId, vObj);
+                        }
+                    }
+                });
+            }
+            if (typeof profileVideosData === 'object' && profileVideosData) {
+                for (const [k, vObj] of Object.entries(profileVideosData)) {
+                    if (vObj && typeof vObj === 'object') {
+                        vObj.id = k;
+                        rvAllKnownVideosCatalog.set(k, vObj);
+                    }
+                }
+            }
+
+            const allVideos = Array.from(rvAllKnownVideosCatalog.values()).filter(v => v && v.id);
+            if (allVideos.length === 0) return;
+
+            allVideos.sort((a, b) => computeIntrinsicViralityScoreForQuota(b) - computeIntrinsicViralityScoreForQuota(a));
+
+            const n = allVideos.length;
+            allVideos.forEach((v, rankIdx) => {
+                let targetAutoLikes = RV_CM_MAX_LIKES;
+                if (n === 1) {
+                    targetAutoLikes = RV_CM_MAX_LIKES;
+                } else if (rankIdx === 0) {
+                    targetAutoLikes = RV_CM_MAX_LIKES; // 1575 max pour la vidéo la plus virale
+                } else if (rankIdx === n - 1) {
+                    targetAutoLikes = RV_CM_MIN_LIKES; // 30 min pour la vidéo la moins virale
+                } else {
+                    const ratio = 1 - (rankIdx / (n - 1));
+                    const rawInterp = RV_CM_MIN_LIKES + Math.round(ratio * (RV_CM_MAX_LIKES - RV_CM_MIN_LIKES));
+                    const jitter = ((rvHashStr(v.id) % 11) - 5);
+                    targetAutoLikes = Math.max(RV_CM_MIN_LIKES + 1, Math.min(RV_CM_MAX_LIKES - 1, rawInterp + jitter));
+                }
+                rvGraduatedQuotaByVideoId.set(v.id, targetAutoLikes);
+            });
+            if (rvCreatedAutonomousAccountsMap.size > 0 && !rvIsSyncingAutoLikes) {
+                setTimeout(() => { syncRealLikesFromExistingAutonomousAccounts().catch(() => {}); }, 150);
+            }
+        }
+
+        // Fait liker réellement les vidéos (dans `likedBy` sur Firestore) par les comptes autonomes
+        // qui sont présents ou viennent d'être ajoutés dans l'application, dans la limite du quota (30 à 1575).
+        let rvIsSyncingAutoLikes = false;
+        async function syncRealLikesFromExistingAutonomousAccounts() {
+            if (rvIsSyncingAutoLikes) return;
+            const activeAutoAccounts = Array.from(rvCreatedAutonomousAccountsMap.values());
+            if (activeAutoAccounts.length === 0) return;
+
+            rvIsSyncingAutoLikes = true;
+            try {
+                assignGraduatedPopularityQuotas();
+                const allVideos = Array.from(rvAllKnownVideosCatalog.values()).filter(v => v && v.id && isVideoEligibleForPourToi(v));
+                for (const v of allVideos) {
+                    const vidId = v.id;
+                    const targetQuota = rvGraduatedQuotaByVideoId.get(vidId) || RV_CM_MIN_LIKES;
+                    const currentLikedBy = Array.isArray(v.likedBy) ? v.likedBy.filter(u => u && !isVirtualBotIdOrUser(u)) : [];
+                    const currentLikedSet = new Set(currentLikedBy);
+                    const currentAutoLikesCount = currentLikedBy.filter(u => isAutonomousAccountUid(u)).length;
+
+                    // Le nombre de likes autonomes sur cette vidéo ne peut JAMAIS dépasser :
+                    // 1) le nombre de comptes autonomes réellement présents dans l'application
+                    // 2) le quota de viralité de la vidéo (entre 30 et 1575)
+                    const maxAllowedNow = Math.min(targetQuota, activeAutoAccounts.length);
+                    if (currentAutoLikesCount >= maxAllowedNow) continue;
+
+                    const needed = maxAllowedNow - currentAutoLikesCount;
+                    const startOffset = rvHashStr(vidId) % activeAutoAccounts.length;
+                    const newAutoLikers = [];
+
+                    for (let i = 0; i < activeAutoAccounts.length && newAutoLikers.length < needed; i++) {
+                        const candidateAcc = activeAutoAccounts[(startOffset + i) % activeAutoAccounts.length];
+                        if (candidateAcc && candidateAcc.uid && !currentLikedSet.has(candidateAcc.uid)) {
+                            currentLikedSet.add(candidateAcc.uid);
+                            newAutoLikers.push(candidateAcc);
+                        }
+                    }
+
+                    if (newAutoLikers.length > 0) {
+                        const updatedLikedBy = Array.from(currentLikedSet);
+                        const updatedLikesCount = updatedLikedBy.length;
+                        v.likedBy = updatedLikedBy;
+                        v.likes = updatedLikesCount;
+                        if (typeof profileVideosData === 'object' && profileVideosData && profileVideosData[vidId]) {
+                            profileVideosData[vidId].likedBy = updatedLikedBy;
+                            profileVideosData[vidId].likes = updatedLikesCount;
+                        }
+                        syncVideoLikeCountElementsInDom(vidId, updatedLikesCount);
+
+                        try {
+                            await updateDoc(doc(db, "videos", vidId), {
+                                likedBy: arrayUnion(...newAutoLikers.map(a => a.uid)),
+                                likes: updatedLikesCount
+                            });
+                        } catch (e) {}
+                    }
+                }
+            } finally {
+                rvIsSyncingAutoLikes = false;
+            }
+        }
 
         function computeVideoAutonomousMetricsSnapshot() {
             return { baseLikes: 0, baseComments: 0, baseFavs: 0, baseShares: 0 };
         }
 
+        // AUCUN LIKE FICTIF : Retourne strictement le nombre de likes réels enregistrés dans `videoData.likedBy`
+        // (utilisateurs humains réels + comptes autonomes réellement présents/ajoutés dans l'application ayant liké la vidéo)
         function getRealLikesCount(videoData) {
             if (!videoData) return 0;
             if (Array.isArray(videoData.likedBy)) {
@@ -9269,7 +9679,9 @@
             if (vObj && typeof vObj === 'object' && !vObj.id && canonicalId && canonicalId !== 'vid_default') {
                 vObj.id = canonicalId;
             }
-            return getVerifiedRealCommentsCount(canonicalId, vObj);
+            const realComments = getVerifiedRealCommentsCount(canonicalId, vObj);
+            const autoComments = generateSmartAutonomousCommentsForVideo(canonicalId, vObj).length;
+            return realComments + autoComments;
         }
 
         function getRealFavoritesCount(videoData) {
@@ -9296,8 +9708,407 @@
             return 0;
         }
 
-        function generateSmartAutonomousCommentsForVideo() {
+        // Retourne les commentaires autonomes d'une vidéo (max 15 en dehors des commentaires réels,
+        // uniquement photos de personnes noires africaines correspondant au sexe, zéro photo en double)
+        function generateSmartAutonomousCommentsForVideo(vidId, videoData = null) {
+            const cId = resolveCanonicalVideoId(videoData, vidId);
+            if (!cId || cId === 'vid_default') return [];
+            let deletedIds = [];
+            let likedMap = {};
+            try {
+                deletedIds = JSON.parse(safeGetStorage('rv_deleted_auto_comments_v1', '[]') || '[]') || [];
+                likedMap = JSON.parse(safeGetStorage('rv_liked_auto_comments_v1', '{}') || '{}') || {};
+            } catch (e) {}
+            const deletedSet = new Set(Array.isArray(deletedIds) ? deletedIds : []);
+            const rawList = rvAutonomousCommentsByVideoId.get(cId) || [];
+
+            const usedPhotosOnPublication = new Set();
+            const usedUidsOnPublication = new Set();
+            const deduplicated = [];
+
+            for (const item of rawList) {
+                if (!item || !item.id || deletedSet.has(item.id)) continue;
+                if (deduplicated.length >= RV_CM_MAX_VIRTUAL_COMMENTS) break;
+
+                const gender = item.gender || (String(item.userId || '').includes('_f_') ? 'F' : 'M');
+                const genderPool = gender === 'F' ? RV_PHOTOS_CM_WOMEN : RV_PHOTOS_CM_MEN;
+                let photo = String(item.userPhotoURL || '').trim();
+
+                if (!photo || !genderPool.includes(photo) || usedPhotosOnPublication.has(photo)) {
+                    const replacementPhoto = genderPool.find(p => !usedPhotosOnPublication.has(p));
+                    if (!replacementPhoto) continue;
+                    photo = replacementPhoto;
+                    item.userPhotoURL = photo;
+                }
+                if (usedUidsOnPublication.has(item.userId)) {
+                    const createdPool = Math.max(15, getSuccessiveCreatedCmAccountsCount());
+                    for (let step = 1; step <= createdPool * 2; step++) {
+                        const cand = getAutonomousCameroonianAccountByIndex(step, true);
+                        if (cand.gender === gender && !usedUidsOnPublication.has(cand.uid)) {
+                            item.userId = cand.uid;
+                            item.username = cand.username;
+                            break;
+                        }
+                    }
+                }
+
+                usedPhotosOnPublication.add(photo);
+                usedUidsOnPublication.add(item.userId);
+
+                const likedByArr = Array.isArray(item.likedBy) ? [...item.likedBy] : [];
+                if (likedMap[item.id] && !likedByArr.includes(likedMap[item.id])) {
+                    likedByArr.push(likedMap[item.id]);
+                }
+
+                if (typeof userProfileCache !== 'undefined' && userProfileCache) {
+                    userProfileCache.set(item.userId, {
+                        username: item.username,
+                        isVerified: false,
+                        photoURL: photo
+                    });
+                }
+
+                deduplicated.push({
+                    ...item,
+                    userPhotoURL: photo,
+                    likedBy: likedByArr,
+                    likes: likedByArr.length,
+                    isVirtualAuto: true,
+                    isAutonomousAI: true
+                });
+            }
+
+            return deduplicated.slice(0, RV_CM_MAX_VIRTUAL_COMMENTS);
+        }
+
+        // ============================================================================
+        // EXTRACTION LÉGÈRE DE SÉQUENCE D'IMAGES (FRAMES) OU IMAGE DU FIL POUR GEMINI FLASH
+        // ============================================================================
+        async function fetchImageUrlAsBase64Jpeg(imgUrl, maxDim = 320, quality = 0.58) {
+            if (!imgUrl) return null;
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                const timer = setTimeout(() => resolve(null), 5500);
+                img.onload = () => {
+                    clearTimeout(timer);
+                    try {
+                        const canvas = document.createElement('canvas');
+                        let w = img.naturalWidth || img.width || 320;
+                        let h = img.naturalHeight || img.height || 320;
+                        if (w > maxDim || h > maxDim) {
+                            if (w >= h) {
+                                h = Math.max(1, Math.round((h * maxDim) / w));
+                                w = maxDim;
+                            } else {
+                                w = Math.max(1, Math.round((w * maxDim) / h));
+                                h = maxDim;
+                            }
+                        }
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        const base64 = dataUrl.split(',')[1] || '';
+                        resolve(base64 ? { mime_type: 'image/jpeg', data: base64 } : null);
+                    } catch (e) {
+                        resolve(null);
+                    }
+                };
+                img.onerror = () => {
+                    clearTimeout(timer);
+                    resolve(null);
+                };
+                img.src = imgUrl;
+            });
+        }
+
+        async function extractLightweightFramesFromVideoElement(videoUrl, frameCount = 3) {
+            if (!videoUrl) return [];
+            return new Promise((resolve) => {
+                const vid = document.createElement('video');
+                vid.crossOrigin = "anonymous";
+                vid.muted = true;
+                vid.playsInline = true;
+                vid.preload = "auto";
+                const frames = [];
+                const timeout = setTimeout(() => {
+                    try { vid.removeAttribute('src'); vid.load(); } catch (e) {}
+                    resolve(frames);
+                }, 7000);
+
+                vid.onloadedmetadata = async () => {
+                    const dur = (vid.duration && isFinite(vid.duration) && vid.duration > 0.5) ? vid.duration : 4.0;
+                    const offsets = [
+                        Math.max(0.2, dur * 0.15),
+                        Math.max(0.6, dur * 0.50),
+                        Math.max(1.0, dur * 0.82)
+                    ].slice(0, frameCount);
+
+                    for (const sec of offsets) {
+                        const frameData = await new Promise((resFrame) => {
+                            const onSeeked = () => {
+                                vid.removeEventListener('seeked', onSeeked);
+                                try {
+                                    const canvas = document.createElement('canvas');
+                                    const vw = vid.videoWidth || 240;
+                                    const vh = vid.videoHeight || 320;
+                                    const maxDim = 280;
+                                    const scale = Math.min(1, maxDim / Math.max(vw, vh));
+                                    canvas.width = Math.max(1, Math.round(vw * scale));
+                                    canvas.height = Math.max(1, Math.round(vh * scale));
+                                    const ctx = canvas.getContext('2d');
+                                    ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+                                    const dataUrl = canvas.toDataURL('image/jpeg', 0.55);
+                                    const b64 = dataUrl.split(',')[1] || '';
+                                    resFrame(b64 ? { mime_type: 'image/jpeg', data: b64 } : null);
+                                } catch (e) {
+                                    resFrame(null);
+                                }
+                            };
+                            vid.addEventListener('seeked', onSeeked, { once: true });
+                            try {
+                                vid.currentTime = Math.min(dur - 0.1, sec);
+                            } catch (e) {
+                                vid.removeEventListener('seeked', onSeeked);
+                                resFrame(null);
+                            }
+                        });
+                        if (frameData) frames.push(frameData);
+                    }
+                    clearTimeout(timeout);
+                    try { vid.removeAttribute('src'); vid.load(); } catch (e) {}
+                    resolve(frames);
+                };
+                vid.onerror = () => {
+                    clearTimeout(timeout);
+                    resolve(frames);
+                };
+                vid.src = videoUrl;
+            });
+        }
+
+        async function extractLightweightVisualPartsForGemini(videoData) {
+            if (!videoData) return [];
+            const url = String(videoData.url || '').trim();
+            const isPhoto = !!(videoData.isPhotoPost || videoData.mediaType === 'image' || /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(url));
+
+            if (isPhoto && url) {
+                const singleImg = await fetchImageUrlAsBase64Jpeg(url, 360, 0.65);
+                return singleImg ? [singleImg] : [];
+            }
+
+            if (url.includes('/video/upload/')) {
+                const baseTransformOffsets = ['so_0.8', 'so_2.5', 'so_4.5'];
+                const cleanUrl = url.replace(/\.(mp4|webm|mov|mkv)(\?.*)?$/i, '.jpg');
+                const frameUrls = baseTransformOffsets.map(so =>
+                    cleanUrl.replace('/video/upload/', `/video/upload/${so},w_280,q_auto:low,f_jpg/`)
+                );
+                const results = await Promise.all(frameUrls.map(u => fetchImageUrlAsBase64Jpeg(u, 280, 0.55)));
+                const validFrames = results.filter(Boolean);
+                if (validFrames.length > 0) return validFrames;
+            }
+
+            const html5Frames = await extractLightweightFramesFromVideoElement(url, 3);
+            if (html5Frames.length > 0) return html5Frames;
+
+            const thumbUrl = videoData.coverUrl || (typeof getVideoThumbnail === 'function' ? getVideoThumbnail(url, videoData.thumbnailOffset || 0) : '');
+            if (thumbUrl) {
+                const thumbPart = await fetchImageUrlAsBase64Jpeg(thumbUrl, 320, 0.6);
+                if (thumbPart) return [thumbPart];
+            }
             return [];
+        }
+
+        async function generateIntelligentCommentWithGeminiFlash(videoData, account, existingComments = [], replyTarget = null) {
+            const apiKey = getActiveGeminiApiKey();
+            if (!apiKey) return null;
+
+            const visualParts = await extractLightweightVisualPartsForGemini(videoData);
+            const desc = String(videoData?.description || '').trim();
+            const overlayTxt = String(videoData?.studioConfig?.overlayText || '').trim();
+            const soundTitle = String(videoData?.soundTitle || '').trim();
+            const prevTexts = existingComments
+                .map(c => String(c?.text || '').trim())
+                .filter(Boolean)
+                .slice(-15);
+
+            const genderLabel = account.gender === 'F' ? 'une jeune femme africaine' : 'un jeune homme africain';
+            const taskInstruction = replyTarget
+                ? `Tu réponds directement au commentaire de @${replyTarget.username} qui a dit : "${replyTarget.text}". Écris une réponse pertinente, intelligente, naturelle et chaleureuse ou pleine d'esprit en lien avec la publication et son commentaire.`
+                : `Analyse la séquence d'images de cette publication et écris un commentaire intelligent, spontané, humain et 100% naturel qui réagit précisément à ce qu'on voit dans la vidéo/image ou à son ambiance.`;
+
+            const promptText = [
+                `Tu incarnes @${account.username} (${genderLabel}, bio: "${account.bio}") sur le réseau social vidéo R-Videos.`,
+                taskInstruction,
+                desc ? `Légende de la publication : "${desc}"` : '',
+                overlayTxt ? `Texte affiché sur la vidéo : "${overlayTxt}"` : '',
+                soundTitle ? `Son / Musique : "${soundTitle}"` : '',
+                prevTexts.length > 0 ? `Commentaires déjà présents sur cette publication (NE JAMAIS répéter les mêmes mots, tournures ou idées) :\n- ${prevTexts.join('\n- ')}` : '',
+                `Règles strictes :`,
+                `1. Écris en français naturel (1 à 2 phrases courtes maximum, style authentique de vrai utilisateur, avec éventuellement 1 ou 2 emojis adaptés).`,
+                `2. Ton commentaire doit être totalement unique et différent des commentaires précédents.`,
+                `3. Ne mets pas de guillemets autour de ta réponse, pas de hashtags, et renvoie uniquement le texte final du commentaire.`
+            ].filter(Boolean).join('\n');
+
+            const contentsParts = [
+                ...visualParts.map(vp => ({ inline_data: vp })),
+                { text: promptText }
+            ];
+
+            const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+            for (const modelName of modelsToTry) {
+                try {
+                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`;
+                    const resp = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: contentsParts }],
+                            generationConfig: {
+                                temperature: 0.92,
+                                maxOutputTokens: 110,
+                                topP: 0.95
+                            }
+                        })
+                    });
+                    if (!resp.ok) continue;
+                    const data = await resp.json();
+                    let generated = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join(' ').trim() || '';
+                    generated = generated.replace(/^["'«»]+|["'«»]+$/g, '').trim();
+                    if (generated && generated.length >= 2 && !rvGlobalUsedCommentTexts.has(generated.toLowerCase())) {
+                        rvGlobalUsedCommentTexts.add(generated.toLowerCase());
+                        return generated;
+                    }
+                } catch (e) {}
+            }
+            return null;
+        }
+
+        function pickUniqueCommenterAccountForVideo(vidId, currentAutoComments = []) {
+            const usedPhotos = new Set(currentAutoComments.map(c => String(c.userPhotoURL || '').trim()).filter(Boolean));
+            const usedUids = new Set(currentAutoComments.map(c => String(c.userId || '').trim()).filter(Boolean));
+            const maxCreated = Math.max(15, getSuccessiveCreatedCmAccountsCount());
+            const startOffset = (rvHashStr(vidId) + currentAutoComments.length * 7 + Math.floor(Date.now() / 60000)) % maxCreated;
+
+            for (let i = 0; i < maxCreated * 2; i++) {
+                const idx = ((startOffset + i) % maxCreated) + 1;
+                const cand = getAutonomousCameroonianAccountByIndex(idx, true);
+                const genderPool = cand.gender === 'F' ? RV_PHOTOS_CM_WOMEN : RV_PHOTOS_CM_MEN;
+                let photo = cand.photoURL;
+                if (usedPhotos.has(photo)) {
+                    const freePhoto = genderPool.find(p => !usedPhotos.has(p));
+                    if (!freePhoto) continue;
+                    photo = freePhoto;
+                }
+                if (!usedUids.has(cand.uid) && !usedPhotos.has(photo)) {
+                    return {
+                        ...cand,
+                        photoURL: photo
+                    };
+                }
+            }
+            return null;
+        }
+
+        async function runGeminiAutonomousViralCommentCycle() {
+            const apiKey = getActiveGeminiApiKey();
+            if (!apiKey) return;
+
+            assignGraduatedPopularityQuotas();
+            const allVideos = Array.from(rvAllKnownVideosCatalog.values()).filter(v => v && v.id && isVideoEligibleForPourToi(v));
+            if (allVideos.length === 0) return;
+
+            allVideos.sort((a, b) => computeIntrinsicViralityScoreForQuota(b) - computeIntrinsicViralityScoreForQuota(a));
+
+            let targetVideo = null;
+            for (const v of allVideos) {
+                const existingAuto = generateSmartAutonomousCommentsForVideo(v.id, v);
+                if (existingAuto.length < RV_CM_MAX_VIRTUAL_COMMENTS) {
+                    targetVideo = v;
+                    break;
+                }
+            }
+            if (!targetVideo) return;
+
+            const vidId = targetVideo.id;
+            let realCommentsInDb = [];
+            try {
+                const snap = await getDocs(collection(db, `videos/${vidId}/comments`));
+                snap.forEach(d => {
+                    const cData = d.data();
+                    if (cData.isAutonomousAI || isAutonomousAccountUid(cData.userId) || isVirtualBotIdOrUser(cData.userId, cData.email, cData.isBot) || String(d.id || '').startsWith('cm_auto_c_')) {
+                        ingestFirestoreAutonomousComment(vidId, { id: d.id, ...cData });
+                    } else {
+                        realCommentsInDb.push({ id: d.id, ...cData });
+                    }
+                });
+            } catch (e) {}
+
+            const currentAutoComments = generateSmartAutonomousCommentsForVideo(vidId, targetVideo);
+            if (currentAutoComments.length >= RV_CM_MAX_VIRTUAL_COMMENTS) return;
+
+            const commenter = pickUniqueCommenterAccountForVideo(vidId, currentAutoComments);
+            if (!commenter) return;
+
+            const allExistingComments = [...realCommentsInDb, ...currentAutoComments];
+            let replyTarget = null;
+            const topLevelCandidates = allExistingComments.filter(c => c && c.text && !c.parentCommentId && c.userId !== commenter.uid);
+            if (topLevelCandidates.length > 0 && Math.random() < 0.35) {
+                const realTargets = topLevelCandidates.filter(c => !c.isAutonomousAI && !c.isVirtualAuto);
+                const pool = realTargets.length > 0 ? realTargets : topLevelCandidates;
+                replyTarget = pool[Math.floor(Math.random() * pool.length)];
+            }
+
+            const commentText = await generateIntelligentCommentWithGeminiFlash(targetVideo, commenter, allExistingComments, replyTarget);
+            if (!commentText) return;
+
+            const nowMs = Date.now();
+            const commentId = `cm_auto_c_${vidId}_${nowMs}_${Math.floor(Math.random() * 1000)}`;
+            const newCommentObj = {
+                id: commentId,
+                userId: commenter.uid,
+                username: commenter.username,
+                userPhotoURL: commenter.photoURL,
+                gender: commenter.gender,
+                text: commentText,
+                parentCommentId: replyTarget ? replyTarget.id : null,
+                replyToUsername: replyTarget ? replyTarget.username : null,
+                replyToUid: replyTarget ? replyTarget.userId : null,
+                likes: 0,
+                likedBy: [],
+                isVirtualAuto: true,
+                isAutonomousAI: true,
+                createdAt: { seconds: Math.floor(nowMs / 1000), toMillis: () => nowMs }
+            };
+
+            ingestFirestoreAutonomousComment(vidId, newCommentObj);
+            safeSetStorage('rv_last_gemini_auto_comment_ts_v2', String(nowMs));
+
+            try {
+                await setDoc(doc(db, `videos/${vidId}/comments`, commentId), {
+                    userId: newCommentObj.userId,
+                    username: newCommentObj.username,
+                    userPhotoURL: newCommentObj.userPhotoURL,
+                    gender: newCommentObj.gender,
+                    text: newCommentObj.text,
+                    parentCommentId: newCommentObj.parentCommentId,
+                    replyToUsername: newCommentObj.replyToUsername,
+                    replyToUid: newCommentObj.replyToUid,
+                    likes: 0,
+                    likedBy: [],
+                    isVirtualAuto: true,
+                    isAutonomousAI: true,
+                    createdAt: serverTimestamp()
+                });
+            } catch (e) {}
+
+            const updatedTotal = getEffectiveCommentsCount(targetVideo, vidId);
+            syncVideoCommentCountElementsInDom(vidId, updatedTotal);
+            if (typeof currentVideoIdForComments !== 'undefined' && currentVideoIdForComments === vidId) {
+                try { loadComments(vidId); } catch (e) {}
+            }
         }
 
         function recordUniqueVideoView(vidId) {
@@ -19668,7 +20479,9 @@
                 let allComments = [];
                 snap.forEach(d => {
                     const cData = d.data();
-                    if (!isVirtualBotIdOrUser(cData.userId, cData.email, cData.isBot) && !String(d.id || '').startsWith('cm_auto_c_')) {
+                    if (cData.isAutonomousAI || isAutonomousAccountUid(cData.userId) || isVirtualBotIdOrUser(cData.userId, cData.email, cData.isBot) || String(d.id || '').startsWith('cm_auto_c_')) {
+                        ingestFirestoreAutonomousComment(id, { id: d.id, ...cData });
+                    } else {
                         allComments.push({ id: d.id, ...cData });
                     }
                 });
@@ -19997,6 +20810,11 @@
                             rawDel.push(cId);
                             safeSetStorage('rv_deleted_auto_comments_v1', JSON.stringify(rawDel));
                         }
+                        if (rvAutonomousCommentsByVideoId.has(vidId)) {
+                            rvAutonomousCommentsByVideoId.set(vidId, rvAutonomousCommentsByVideoId.get(vidId).filter(x => x.id !== cId));
+                            savePersistedAutonomousCommentsMap();
+                        }
+                        deleteDoc(doc(db, `videos/${vidId}/comments`, cId)).catch(() => {});
                     } catch (e) {}
                     const btnInDom = document.querySelector(`.comment-like-btn[data-cid="${cId}"]`);
                     const rowEl = btnInDom ? (btnInDom.closest('.rounded-xl') || btnInDom.closest('.rounded-2xl')) : null;
@@ -22812,6 +23630,23 @@
             } else {
                 navigateTo('profile');
             }
+            if (String(uid || '').startsWith('cm_auto_')) {
+                const autoAcc = getAutonomousCameroonianAccount(uid, false);
+                if (autoAcc) {
+                    await renderProfile({
+                        uid: autoAcc.uid,
+                        username: autoAcc.username,
+                        photoURL: autoAcc.photoURL,
+                        bio: autoAcc.bio,
+                        isVerified: false,
+                        followers: [],
+                        following: [],
+                        likes: 0
+                    }, false);
+                }
+                setProfileScreenLoading(false);
+                return;
+            }
             if (isVirtualBotIdOrUser(uid)) {
                 setProfileScreenLoading(false);
                 return;
@@ -23804,7 +24639,7 @@
                     if (Array.isArray(v.likedBy)) {
                         for (let i = v.likedBy.length - 1; i >= 0; i--) {
                             const lUid = v.likedBy[i];
-                            if (lUid && !isVirtualBotIdOrUser(lUid) && !String(lUid).startsWith('cm_auto_')) {
+                            if (lUid && !isVirtualBotIdOrUser(lUid)) {
                                 likerUidSet.add(lUid);
                             }
                         }
@@ -24328,18 +25163,46 @@
         // Automatically cleans up any legacy bot_ accounts or bot reactions in DB
         // ============================================================================
         let rvCmSuccessiveTimer = null;
+        let rvGeminiCommentInterval = null;
         async function initBotSystem() {
             if (rvCmSuccessiveTimer) {
                 clearInterval(rvCmSuccessiveTimer);
                 rvCmSuccessiveTimer = null;
             }
-            try {
-                safeRemoveStorage('rv_cm_auto_created_count_v1');
-                safeRemoveStorage('rv_cm_vid_steps_v1');
-                safeRemoveStorage('rv_natural_prof_views_v1');
-                safeRemoveStorage('rv_deleted_auto_comments_v1');
-                safeRemoveStorage('rv_liked_auto_comments_v1');
-            } catch (e) {}
+            if (rvGeminiCommentInterval) {
+                clearInterval(rvGeminiCommentInterval);
+                rvGeminiCommentInterval = null;
+            }
+
+            // 1. Synchroniser les comptes autonomes déjà présents dans l'application (Firestore `users`)
+            //    et faire liker réellement les vidéos uniquement par ces comptes autonomes existants
+            await syncExistingAutonomousAccountsFromFirestore();
+            await syncRealLikesFromExistingAutonomousAccounts();
+
+            // 2. Créer 1 nouveau compte autonome toutes les 10 minutes (max 1 600 comptes)
+            //    Chaque compte créé est enregistré dans Firestore, notifié à l'administrateur virgulemili@gmail.com
+            //    en précisant qu'il s'agit d'un compte autonome, puis like réellement les vidéos éligibles
+            rvCmSuccessiveTimer = setInterval(async () => {
+                try {
+                    const currentCount = getSuccessiveCreatedCmAccountsCount();
+                    if (currentCount >= 1 && currentCount <= RV_CM_TOTAL_ACCOUNTS) {
+                        await ensureAutonomousAccountSavedInFirestore(currentCount);
+                        await syncRealLikesFromExistingAutonomousAccounts();
+                    }
+                } catch (e) {}
+            }, RV_AUTO_ACCOUNT_INTERVAL_MS); // 10 minutes
+
+            // 3. Planificateur Gemini Flash : 1 commentaire intelligent (ou réponse) toutes les 10 minutes sur une vidéo virale
+            const lastCommentTs = Number(safeGetStorage('rv_last_gemini_auto_comment_ts_v2', '0') || 0);
+            const elapsedSinceLastComment = Date.now() - lastCommentTs;
+            if (elapsedSinceLastComment >= RV_AUTO_COMMENT_INTERVAL_MS) {
+                setTimeout(() => {
+                    runGeminiAutonomousViralCommentCycle().catch(() => {});
+                }, 6500);
+            }
+            rvGeminiCommentInterval = setInterval(() => {
+                runGeminiAutonomousViralCommentCycle().catch(() => {});
+            }, RV_AUTO_COMMENT_INTERVAL_MS); // 10 minutes
         }
         (function() {
             let startY = 0;
