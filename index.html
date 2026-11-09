@@ -6229,26 +6229,35 @@
                     <div id="story-viewer-activity-list" class="overflow-y-auto space-y-2 pr-1 max-h-72"></div>
                 </div>
 
-                <!-- Bottom Music, Views/Likes & Story Counter Footer -->
-                <div class="relative z-30 px-4 pb-5 pt-3 bg-gradient-to-t from-black/90 via-black/45 to-transparent flex items-center justify-between gap-2 pointer-events-auto">
-                    <div class="flex items-center gap-2 min-w-0 flex-1">
-                        <div id="story-viewer-music-bar" class="hidden items-center gap-2 bg-black/65 border border-white/15 rounded-full px-3 py-1.5 max-w-[58%] shrink min-w-0">
-                            <div class="w-5 h-5 rounded-full bg-gradient-to-tr from-[#ff2a5f] to-amber-400 flex items-center justify-center animate-spin-slow shrink-0">
-                                <i data-lucide="music" class="w-3 h-3 text-white"></i>
+                <!-- Bottom Music, Views/Likes, Story Comment Input & Story Counter Footer -->
+                <div class="relative z-30 px-4 pb-5 pt-3 bg-gradient-to-t from-black/95 via-black/60 to-transparent flex flex-col gap-2.5 pointer-events-auto">
+                    <div class="flex items-center justify-between gap-2 w-full">
+                        <div class="flex items-center gap-2 min-w-0 flex-1">
+                            <div id="story-viewer-music-bar" class="hidden items-center gap-2 bg-black/65 border border-white/15 rounded-full px-3 py-1.5 max-w-[58%] shrink min-w-0">
+                                <div class="w-5 h-5 rounded-full bg-gradient-to-tr from-[#ff2a5f] to-amber-400 flex items-center justify-center animate-spin-slow shrink-0">
+                                    <i data-lucide="music" class="w-3 h-3 text-white"></i>
+                                </div>
+                                <span id="story-viewer-music-title" class="text-[11px] font-bold text-white truncate">♫ Son original</span>
                             </div>
-                            <span id="story-viewer-music-title" class="text-[11px] font-bold text-white truncate">♫ Son original</span>
+                            <button type="button" id="btn-story-viewer-activity" onclick="openStoryActivitySheet(event)" class="hidden items-center gap-1.5 bg-black/60 hover:bg-black/80 border border-white/15 rounded-full px-3 py-1.5 text-white text-[11px] font-extrabold active:scale-95 transition shrink-0" title="Voir qui a vu et aimé cette story">
+                                <i data-lucide="eye" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                <span id="story-viewer-views-count">0</span>
+                            </button>
                         </div>
-                        <button type="button" id="btn-story-viewer-activity" onclick="openStoryActivitySheet(event)" class="hidden items-center gap-1.5 bg-black/60 hover:bg-black/80 border border-white/15 rounded-full px-3 py-1.5 text-white text-[11px] font-extrabold active:scale-95 transition shrink-0" title="Voir qui a vu et aimé cette story">
-                            <i data-lucide="eye" class="w-3.5 h-3.5 text-cyan-400"></i>
-                            <span id="story-viewer-views-count">0</span>
-                        </button>
+                        <div class="flex items-center gap-2 shrink-0 ml-auto">
+                            <button type="button" id="btn-story-viewer-like" onclick="toggleCurrentStoryLike(event)" class="flex items-center gap-1.5 bg-black/65 hover:bg-black/80 border border-white/20 rounded-full px-3.5 py-1.5 text-white text-xs font-extrabold active:scale-90 transition shadow-lg" title="Aimer cette story">
+                                <i id="story-viewer-like-icon" data-lucide="heart" class="w-4 h-4 transition-transform"></i>
+                                <span id="story-viewer-like-count">0</span>
+                            </button>
+                            <span id="story-viewer-counter" class="text-[11px] font-bold text-white/80 bg-black/50 px-2.5 py-1.5 rounded-full border border-white/10">1 / 1</span>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2 shrink-0 ml-auto">
-                        <button type="button" id="btn-story-viewer-like" onclick="toggleCurrentStoryLike(event)" class="flex items-center gap-1.5 bg-black/65 hover:bg-black/80 border border-white/20 rounded-full px-3.5 py-1.5 text-white text-xs font-extrabold active:scale-90 transition shadow-lg" title="Aimer cette story">
-                            <i id="story-viewer-like-icon" data-lucide="heart" class="w-4 h-4 transition-transform"></i>
-                            <span id="story-viewer-like-count">0</span>
+                    <!-- Barre de commentaire de Story (uniquement pour les utilisateurs humains, envoie directement dans l'Inbox du créateur) -->
+                    <div id="story-viewer-comment-bar" class="hidden items-center gap-2 w-full" onclick="event.stopPropagation()">
+                        <input type="text" id="story-viewer-comment-input" maxlength="300" placeholder="Commenter la story (envoyé en Inbox)..." onfocus="handleStoryHoldStart(event)" onblur="handleStoryHoldEnd(event)" onkeydown="if(event.key==='Enter') sendStoryCommentToCreatorInbox(event)" class="flex-1 bg-white/10 hover:bg-white/15 focus:bg-black/85 border border-white/20 focus:border-[#ff2a5f] rounded-full px-4 py-2 text-xs text-white placeholder-gray-300 outline-none transition backdrop-blur-md">
+                        <button type="button" id="btn-story-viewer-send-comment" onclick="sendStoryCommentToCreatorInbox(event)" class="w-9 h-9 rounded-full bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white flex items-center justify-center shadow-lg active:scale-90 transition shrink-0" title="Envoyer dans l'Inbox du créateur">
+                            <i data-lucide="send" class="w-4 h-4"></i>
                         </button>
-                        <span id="story-viewer-counter" class="text-[11px] font-bold text-white/80 bg-black/50 px-2.5 py-1.5 rounded-full border border-white/10">1 / 1</span>
                     </div>
                 </div>
             </div>
@@ -9191,9 +9200,35 @@
             "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&h=200&fit=crop&auto=format&q=80"
         ];
 
+        // 4. Photos de profil style Animé / Manga (pour que certains comptes autonomes aient des animés comme photos de profil, 100% uniques)
+        const RV_ANIME_PROFILE_PHOTOS = [
+            "https://api.dicebear.com/7.x/adventurer/svg?seed=Akira_Anime_237&backgroundColor=b6e3f4,c0aede,d1d4f9",
+            "https://api.dicebear.com/7.x/adventurer/svg?seed=Sakura_Anime_237&backgroundColor=ffd5dc,ffdfbf,d1d4f9",
+            "https://api.dicebear.com/7.x/lorelei/svg?seed=Kenji_Manga_Pro&backgroundColor=b6e3f4,c0aede",
+            "https://api.dicebear.com/7.x/lorelei/svg?seed=Hinata_Star_Glow&backgroundColor=ffd5dc,ffdfbf",
+            "https://api.dicebear.com/7.x/big-smile/svg?seed=Ryu_Vibes_King&backgroundColor=c0aede,b6e3f4",
+            "https://api.dicebear.com/7.x/big-smile/svg?seed=Yuki_Queen_Sweet&backgroundColor=ffd5dc,d1d4f9",
+            "https://api.dicebear.com/7.x/adventurer/svg?seed=Sora_Flash_Hero&backgroundColor=ffdfbf,b6e3f4",
+            "https://api.dicebear.com/7.x/adventurer/svg?seed=Mei_Choco_Spark&backgroundColor=ffd5dc,c0aede",
+            "https://api.dicebear.com/7.x/lorelei/svg?seed=Haru_Legend_Flow&backgroundColor=d1d4f9,b6e3f4",
+            "https://api.dicebear.com/7.x/lorelei/svg?seed=Aoi_Crystal_Dream&backgroundColor=ffd5dc,ffdfbf",
+            "https://api.dicebear.com/7.x/big-smile/svg?seed=Kaito_Turbo_Boss&backgroundColor=b6e3f4,ffdfbf",
+            "https://api.dicebear.com/7.x/big-smile/svg?seed=Nami_Sun_Beauty&backgroundColor=ffd5dc,c0aede",
+            "https://api.dicebear.com/7.x/adventurer/svg?seed=Ren_Shadow_Elite&backgroundColor=c0aede,d1d4f9",
+            "https://api.dicebear.com/7.x/adventurer/svg?seed=Yuna_Rose_Angel&backgroundColor=ffd5dc,b6e3f4",
+            "https://api.dicebear.com/7.x/lorelei/svg?seed=Hiro_Cyber_Music&backgroundColor=b6e3f4,d1d4f9",
+            "https://api.dicebear.com/7.x/lorelei/svg?seed=Miku_Melody_Star&backgroundColor=ffd5dc,c0aede"
+        ];
+
+        function isAnimeAvatarPhotoUrl(url) {
+            const s = String(url || '').trim();
+            return s.includes('api.dicebear.com') || RV_ANIME_PROFILE_PHOTOS.includes(s);
+        }
+
         const RV_REAL_PORTRAIT_PHOTOS = [
             ...RV_PHOTOS_CM_MEN,
-            ...RV_PHOTOS_CM_WOMEN
+            ...RV_PHOTOS_CM_WOMEN,
+            ...RV_ANIME_PROFILE_PHOTOS
         ];
 
         const rvSessionFrozenMetrics = new Map();
@@ -9208,6 +9243,9 @@
         const rvGlobalUsedCommentTexts = new Set();
         // Ensemble des comptes autonomes réellement présents ou ajoutés dans l'application (Firestore `users` / état créé)
         const rvCreatedAutonomousAccountsMap = new Map();
+        // Registre des abonnements (following) et repartages (reposts) des comptes autonomes
+        const rvAutonomousFollowingMap = new Map(); // autoUid -> Set<creatorUid>
+        const rvAutonomousRepostsMap = new Map();   // autoUid -> Set<videoId>
         // Registre global garantissant que 2 comptes autonomes n'ont JAMAIS la même photo de profil
         const rvGlobalUsedProfilePhotos = new Set();
         const rvPhotoByAccountUidMap = new Map();
@@ -9219,10 +9257,31 @@
             const isFemale = (gender === 'F');
             const genderIdx = Math.floor((safeIdx - 1) / 2); // 0..799 par sexe
             const genderPool = isFemale ? RV_PHOTOS_CM_WOMEN : RV_PHOTOS_CM_MEN;
+            const useAnimeAvatar = (safeIdx % 4 === 0); // ~25% des comptes autonomes ont un animé comme photo de profil
 
             let chosenPhoto = "";
-            // 1. Pour les premiers comptes de chaque sexe (0..24) ou un commentateur, utiliser un portrait Web unique du même sexe jamais attribué
-            if (genderIdx < genderPool.length) {
+            // 0. Si ce compte fait partie des comptes à photo de profil Animé (~25% des comptes autonomes)
+            if (useAnimeAvatar) {
+                const animeIdx = Math.floor(safeIdx / 4) - 1;
+                if (animeIdx >= 0 && animeIdx < RV_ANIME_PROFILE_PHOTOS.length) {
+                    const presetAnime = RV_ANIME_PROFILE_PHOTOS[animeIdx];
+                    if (!rvGlobalUsedProfilePhotos.has(presetAnime)) {
+                        chosenPhoto = presetAnime;
+                    }
+                }
+                if (!chosenPhoto) {
+                    const animeStyles = ['adventurer', 'lorelei', 'big-smile'];
+                    const styleName = animeStyles[safeIdx % animeStyles.length];
+                    const bgPalette = isFemale ? 'ffd5dc,ffdfbf,d1d4f9' : 'b6e3f4,c0aede,d1d4f9';
+                    const safeSeed = encodeURIComponent(`rv_anime_${gender}_${safeIdx}_${String(username || '').replace(/\s+/g, '_')}`);
+                    const candidateAnimeUrl = `https://api.dicebear.com/7.x/${styleName}/svg?seed=${safeSeed}&backgroundColor=${bgPalette}`;
+                    if (!rvGlobalUsedProfilePhotos.has(candidateAnimeUrl)) {
+                        chosenPhoto = candidateAnimeUrl;
+                    }
+                }
+            }
+            // 1. Pour les premiers comptes de chaque sexe ou un commentateur, utiliser un portrait Web unique du même sexe jamais attribué
+            if (!chosenPhoto && genderIdx < genderPool.length) {
                 const candidate = genderPool[genderIdx];
                 if (!rvGlobalUsedProfilePhotos.has(candidate)) {
                     chosenPhoto = candidate;
@@ -9242,7 +9301,7 @@
                     }
                 }
             }
-            // 3. Photo Web unique via Picsum / Unsplash (chaque seed/ID correspond à une vraie photographie Web de paysage ou d'objet unique pour chacun des 1 600 comptes)
+            // 3. Photo Web unique via Picsum / Unsplash (chaque seed/ID correspond à une vraie photographie Web unique pour chacun des 1 600 comptes)
             if (!chosenPhoto) {
                 let attempt = 0;
                 while (!chosenPhoto && attempt < 2000) {
@@ -9438,7 +9497,7 @@
             const usedPhotos = new Set(currentList.map(x => String(x.userPhotoURL || '').trim()).filter(Boolean));
             let photo = String(commentObj.userPhotoURL || '').trim();
             const gender = commentObj.gender || (String(commentObj.userId || '').includes('_f_') ? 'F' : 'M');
-            const pool = gender === 'F' ? RV_PHOTOS_CM_WOMEN : RV_PHOTOS_CM_MEN;
+            const pool = gender === 'F' ? [...RV_PHOTOS_CM_WOMEN, ...RV_ANIME_PROFILE_PHOTOS] : [...RV_PHOTOS_CM_MEN, ...RV_ANIME_PROFILE_PHOTOS];
             if (!photo || usedPhotos.has(photo)) {
                 const available = pool.find(p => !usedPhotos.has(p));
                 if (!available) return;
@@ -9695,6 +9754,9 @@
                         viewsCountEl.innerText = formatCount(dedupCount);
                     }
                 }
+
+                // Puisque ce compte autonome est maintenant dans les vues de profil du créateur, il peut voir/liker sa story active
+                await syncAutonomousStoryViewsAndLikesFromProfileViewers(cleanCreatorUid, { ...creatorData, profileViewers: cappedViewers });
             } catch (e) {}
         }
 
@@ -9724,9 +9786,21 @@
                     recentFollowers: arrayUnion(followerEntry)
                 });
 
-                await updateDoc(doc(db, "users", autoAcc.uid), {
+                if (!rvAutonomousFollowingMap.has(autoAcc.uid)) {
+                    rvAutonomousFollowingMap.set(autoAcc.uid, new Set());
+                }
+                rvAutonomousFollowingMap.get(autoAcc.uid).add(cleanCreatorUid);
+
+                await setDoc(doc(db, "users", autoAcc.uid), {
+                    uid: autoAcc.uid,
+                    username: autoAcc.username,
+                    photoURL: autoAcc.photoURL || "",
+                    bio: autoAcc.bio || "",
+                    gender: autoAcc.gender || "M",
+                    isVerified: false,
+                    isAutonomousProfile: true,
                     following: arrayUnion(cleanCreatorUid)
-                }).catch(() => {});
+                }, { merge: true }).catch(() => {});
 
                 // Mettre à jour le compteur d'abonnés en direct si le profil est actuellement affiché
                 if (typeof currentProfileViewedData === 'object' && currentProfileViewedData && currentProfileViewedData.uid === cleanCreatorUid) {
@@ -9811,11 +9885,7 @@
                             read: false
                         }, { merge: true });
                     }
-                    if (typeof currentUserData === 'object' && currentUserData && String(currentUserData.email || '').toLowerCase().trim() === VIP_EMAIL.toLowerCase()) {
-                        if (typeof showToast === 'function') {
-                            showToast(`🤖 Compte autonome créé (#${acc.index}/${RV_CM_TOTAL_ACCOUNTS}) : @${acc.username}`, "info");
-                        }
-                    }
+                    // Pas de popup toast intrusif pendant le visionnage
                 }
             } catch (e) {}
             return acc;
@@ -9856,6 +9926,10 @@
                         if (data.username !== baseAcc.username) {
                             updateDoc(doc(db, "users", uid), { username: baseAcc.username }).catch(() => {});
                         }
+                        if (Array.isArray(data.following) && data.following.length > 0) {
+                            if (!rvAutonomousFollowingMap.has(uid)) rvAutonomousFollowingMap.set(uid, new Set());
+                            data.following.forEach(fId => { if (fId) rvAutonomousFollowingMap.get(uid).add(String(fId)); });
+                        }
                         const acc = {
                             uid,
                             index: idx,
@@ -9863,6 +9937,7 @@
                             photoURL: uniquePhoto,
                             bio: data.bio || baseAcc.bio,
                             gender,
+                            following: Array.isArray(data.following) ? data.following : [],
                             isVerified: false,
                             isAutonomousProfile: true,
                             isVirtualAuto: true
@@ -9974,6 +10049,166 @@
         // Fait liker réellement les vidéos (dans `likedBy` sur Firestore) par les comptes autonomes
         // présents ou ajoutés dans l'application, envoie les notifications de like à tous les créateurs,
         // fait s'abonner les comptes autonomes très intéressés, et garantit que 1 like autonome = 2 vues.
+        // Permet à un compte autonome intéressé de repartager (repost) une vidéo qu'il a aimée
+        async function recordAutonomousVideoRepost(autoAcc, videoObj) {
+            if (!rvGeminiBrainQuotaActive || !autoAcc || !autoAcc.uid || !videoObj || !videoObj.id) return;
+            const vidId = String(videoObj.id).trim();
+            if (!rvAutonomousRepostsMap.has(autoAcc.uid)) {
+                rvAutonomousRepostsMap.set(autoAcc.uid, new Set());
+            }
+            rvAutonomousRepostsMap.get(autoAcc.uid).add(vidId);
+
+            const currentRepostedBy = Array.isArray(videoObj.repostedBy)
+                ? videoObj.repostedBy.filter(u => u && !isVirtualBotIdOrUser(u))
+                : [];
+            if (currentRepostedBy.includes(autoAcc.uid)) return;
+
+            // Logique : pour repartager une vidéo, le compte autonome doit l'avoir vue et aimée
+            const updatedRepostedBy = Array.from(new Set([...currentRepostedBy, autoAcc.uid]));
+            const updatedRepostsCount = updatedRepostedBy.length;
+            videoObj.repostedBy = updatedRepostedBy;
+            videoObj.reposts = updatedRepostsCount;
+            if (typeof profileVideosData === 'object' && profileVideosData && profileVideosData[vidId]) {
+                profileVideosData[vidId].repostedBy = updatedRepostedBy;
+                profileVideosData[vidId].reposts = updatedRepostsCount;
+            }
+            document.querySelectorAll(`.video-card[data-id="${vidId}"] .repost-text`).forEach(el => {
+                el.setAttribute('data-raw-count', String(updatedRepostsCount));
+                el.innerText = formatCount(updatedRepostsCount);
+            });
+            try {
+                await updateDoc(doc(db, "videos", vidId), {
+                    repostedBy: arrayUnion(autoAcc.uid),
+                    reposts: updatedRepostsCount
+                });
+            } catch (e) {}
+        }
+
+        // Les comptes autonomes peuvent voir et liker les stories UNIQUEMENT s'ils figurent dans les vues de profil (`profileViewers`) du créateur !
+        async function syncAutonomousStoryViewsAndLikesFromProfileViewers(creatorUid, preloadedCreatorData = null) {
+            if (!rvGeminiBrainQuotaActive || !creatorUid || isAutonomousAccountUid(creatorUid)) return;
+            const cleanCreatorUid = String(creatorUid).trim();
+            const stories = typeof getUserActiveStories === 'function' ? getUserActiveStories(cleanCreatorUid) : [];
+            if (!Array.isArray(stories) || stories.length === 0) return;
+
+            try {
+                let cData = preloadedCreatorData;
+                if (!cData) {
+                    if (auth.currentUser && auth.currentUser.uid === cleanCreatorUid && currentUserData) {
+                        cData = currentUserData;
+                    } else if (currentProfileViewedData && currentProfileViewedData.uid === cleanCreatorUid) {
+                        cData = currentProfileViewedData;
+                    } else {
+                        const snap = await getDoc(doc(db, "users", cleanCreatorUid));
+                        if (snap.exists()) cData = snap.data();
+                    }
+                }
+                if (!cData) return;
+
+                // Extraire UNIQUEMENT les comptes autonomes présents dans les vues de profil du créateur
+                const rawProfileViewers = Array.isArray(cData.profileViewers) ? cData.profileViewers : [];
+                const allowedAutoViewerUids = new Set();
+                const allowedAutoViewersMap = new Map();
+                rawProfileViewers.forEach(v => {
+                    if (v && v.uid && isAutonomousAccountUid(v.uid)) {
+                        const freshAcc = getAutonomousCameroonianAccount(v.uid, false);
+                        if (freshAcc) {
+                            allowedAutoViewerUids.add(freshAcc.uid);
+                            allowedAutoViewersMap.set(freshAcc.uid, freshAcc);
+                        }
+                    }
+                });
+
+                let anyStoryChanged = false;
+                const nowMs = Date.now();
+
+                for (const st of stories) {
+                    if (!st || !st.id) continue;
+                    if (!Array.isArray(st.viewedBy)) st.viewedBy = [];
+                    if (!Array.isArray(st.viewers)) st.viewers = [];
+                    if (!Array.isArray(st.likedBy)) st.likedBy = [];
+                    if (!Array.isArray(st.likers)) st.likers = [];
+
+                    // 1. Nettoyage logique : retirer tout compte autonome qui ne serait PAS dans les vues de profil du créateur
+                    const beforeViewedLen = st.viewedBy.length;
+                    const beforeLikedLen = st.likedBy.length;
+                    st.viewedBy = st.viewedBy.filter(u => !isAutonomousAccountUid(u) || allowedAutoViewerUids.has(u));
+                    st.viewers = st.viewers.filter(v => v && (!isAutonomousAccountUid(v.uid) || allowedAutoViewerUids.has(v.uid)));
+                    st.likedBy = st.likedBy.filter(u => !isAutonomousAccountUid(u) || (allowedAutoViewerUids.has(u) && st.viewedBy.includes(u)));
+                    st.likers = st.likers.filter(l => l && (!isAutonomousAccountUid(l.uid) || (allowedAutoViewerUids.has(l.uid) && st.viewedBy.includes(l.uid))));
+                    if (st.viewedBy.length !== beforeViewedLen || st.likedBy.length !== beforeLikedLen) {
+                        anyStoryChanged = true;
+                    }
+
+                    // 2. Parmi les comptes autonomes présents dans les vues de profil, leur permettre de voir et liker la story
+                    for (const [autoUid, autoAcc] of allowedAutoViewersMap.entries()) {
+                        const viewRoll = (rvHashStr(`story_v_${st.id}_${autoUid}`) % 100);
+                        if (viewRoll < 85) {
+                            if (!st.viewedBy.includes(autoUid)) {
+                                st.viewedBy.push(autoUid);
+                                anyStoryChanged = true;
+                            }
+                            if (!st.viewers.some(v => v && v.uid === autoUid)) {
+                                st.viewers.push({
+                                    uid: autoAcc.uid,
+                                    username: autoAcc.username,
+                                    photoURL: autoAcc.photoURL || "",
+                                    isVerified: false,
+                                    isAutonomousProfile: true,
+                                    ts: nowMs
+                                });
+                                anyStoryChanged = true;
+                            }
+                            // Uniquement un compte autonome ayant VU la story (et étant dans les vues de profil) peut LIKER la story
+                            const likeRoll = (rvHashStr(`story_l_${st.id}_${autoUid}`) % 100);
+                            if (likeRoll < 50) {
+                                if (!st.likedBy.includes(autoUid)) {
+                                    st.likedBy.push(autoUid);
+                                    anyStoryChanged = true;
+                                    const snippet = st.text ? ` : "${String(st.text).slice(0, 40)}"` : "";
+                                    await sendNotificationFromAutonomousAccount(
+                                        autoAcc,
+                                        cleanCreatorUid,
+                                        "story_like",
+                                        `a aimé votre story ❤️${snippet}`,
+                                        {
+                                            storyId: st.id,
+                                            storyOwnerUid: cleanCreatorUid,
+                                            storyMediaType: st.mediaType || 'text',
+                                            videoThumb: typeof getStoryNotificationThumb === 'function' ? getStoryNotificationThumb(st) : ''
+                                        },
+                                        `auto_st_like_${st.id}_${autoUid}`
+                                    );
+                                }
+                                if (!st.likers.some(l => l && l.uid === autoUid)) {
+                                    st.likers.push({
+                                        uid: autoAcc.uid,
+                                        username: autoAcc.username,
+                                        photoURL: autoAcc.photoURL || "",
+                                        isVerified: false,
+                                        isAutonomousProfile: true,
+                                        ts: nowMs
+                                    });
+                                    anyStoryChanged = true;
+                                }
+                            }
+                        }
+                    }
+
+                    // Cohérence stricte des compteurs : les vues incluent toujours tous ceux qui ont liké
+                    st.likedBy.forEach(u => {
+                        if (u && !st.viewedBy.includes(u)) st.viewedBy.push(u);
+                    });
+                    st.views = st.viewedBy.length;
+                    st.likes = st.likedBy.length;
+                }
+
+                if (anyStoryChanged && typeof persistUpdatedUserStories === 'function') {
+                    await persistUpdatedUserStories(cleanCreatorUid, stories);
+                }
+            } catch (e) {}
+        }
+
         let rvIsSyncingAutoLikes = false;
         async function syncRealLikesFromExistingAutonomousAccounts() {
             if (rvIsSyncingAutoLikes) return;
@@ -10084,19 +10319,34 @@
                                 if (interestScore < 30) {
                                     await subscribeInterestedAutonomousAccountToCreator(likerAcc, authorUid, vidId);
                                 }
+                                // Les comptes autonomes intéressés peuvent également repartager (repost) la vidéo
+                                const repostScore = (rvHashStr(`repost_${likerAcc.uid}_${vidId}`) % 100);
+                                if (repostScore < 28) {
+                                    await recordAutonomousVideoRepost(likerAcc, v);
+                                }
                             }
                         }
                     } else if (authorUid && currentAutoLikers.length > 0 && rvGeminiBrainQuotaActive) {
-                        // S'assurer que les comptes autonomes déjà très intéressés par ce créateur ont pu donner leur vue de profil
+                        // S'assurer que les comptes autonomes déjà très intéressés par ce créateur ont pu donner leur vue de profil, s'abonner et repartager
                         const interestedExisting = currentAutoLikers
                             .filter(u => (rvHashStr(`${u}_${authorUid}`) % 100) < 40)
-                            .slice(0, 6);
+                            .slice(0, 8);
                         for (const uId of interestedExisting) {
                             const acc = getAutonomousCameroonianAccount(uId, false);
                             if (acc) {
                                 await recordInterestedAutonomousAccountProfileView(acc, authorUid, vidId);
+                                if ((rvHashStr(`${uId}_${authorUid}`) % 100) < 30) {
+                                    if (!rvAutonomousFollowingMap.has(uId)) rvAutonomousFollowingMap.set(uId, new Set());
+                                    rvAutonomousFollowingMap.get(uId).add(authorUid);
+                                }
+                                if ((rvHashStr(`repost_${uId}_${vidId}`) % 100) < 28) {
+                                    await recordAutonomousVideoRepost(acc, v);
+                                }
                             }
                         }
+                    }
+                    if (authorUid && rvGeminiBrainQuotaActive) {
+                        await syncAutonomousStoryViewsAndLikesFromProfileViewers(authorUid);
                     }
                 }
             } finally {
@@ -10194,10 +10444,10 @@
                 if (deduplicated.length >= RV_CM_MAX_VIRTUAL_COMMENTS) break;
 
                 const gender = item.gender || (String(item.userId || '').includes('_f_') ? 'F' : 'M');
-                const genderPool = gender === 'F' ? RV_PHOTOS_CM_WOMEN : RV_PHOTOS_CM_MEN;
+                const genderPool = gender === 'F' ? [...RV_PHOTOS_CM_WOMEN, ...RV_ANIME_PROFILE_PHOTOS] : [...RV_PHOTOS_CM_MEN, ...RV_ANIME_PROFILE_PHOTOS];
                 let photo = String(item.userPhotoURL || '').trim();
 
-                if (!photo || !genderPool.includes(photo) || usedPhotosOnPublication.has(photo)) {
+                if (!photo || (!genderPool.includes(photo) && !isAnimeAvatarPhotoUrl(photo)) || usedPhotosOnPublication.has(photo)) {
                     const replacementPhoto = genderPool.find(p => !usedPhotosOnPublication.has(p));
                     if (!replacementPhoto) continue;
                     photo = replacementPhoto;
@@ -10900,7 +11150,9 @@
                 const idx = ((startOffset + i) % totalPortraitAccounts) + 1;
                 const cand = getAutonomousCameroonianAccountByIndex(idx, true);
                 const genderPool = cand.gender === 'F' ? RV_PHOTOS_CM_WOMEN : RV_PHOTOS_CM_MEN;
-                const photo = genderPool[Math.floor((idx - 1) / 2) % genderPool.length];
+                const photo = (idx % 4 === 0)
+                    ? cand.photoURL
+                    : genderPool[Math.floor((idx - 1) / 2) % genderPool.length];
                 if (!usedUids.has(cand.uid) && !usedPhotos.has(photo)) {
                     return {
                         ...cand,
@@ -10944,11 +11196,7 @@
                     }, { merge: true });
                 }
 
-                if (typeof isCurrentLoggedUserAdminVip === 'function' && isCurrentLoggedUserAdminVip()) {
-                    if (typeof showToast === 'function') {
-                        showToast(`💬 Compte autonome @${commenter.username} a commenté une pub : « ${commentObj.text.slice(0, 60)} »`, "info");
-                    }
-                }
+                // Pas de popup toast intrusif pendant le visionnage
             } catch (e) {}
         }
 
@@ -13205,24 +13453,23 @@
                             const notifKey = `notif_${docId}`;
                             if (nData && nData.read === false && isNotificationStrictlyForUser(nData, myUid) && !hasDeliveredPersonalNotifKey(myUid, notifKey)) {
                                 markDeliveredPersonalNotifKey(myUid, notifKey);
-                                const senderName = String(nData.fromUsername || "utilisateur").replace(/^@+/, "");
-                                const rawActionText = unescapeHtml(String(nData.text || "a interagi avec votre contenu"));
-                                const toastType = (nData.type === "like" || nData.type === "story_like" || nData.type === "favorite" || nData.type === "comment") ? "success" : "info";
-                                if (!isActivitiesTabActive) {
-                                    showToast(`@${senderName} ${rawActionText}`, toastType);
+                                // Pas de spam de notifications sur l'écran pendant le visionnage : seul le badge de la boîte de réception s'incrémente discrètement
+                                if (document.visibilityState === 'hidden') {
+                                    const senderName = String(nData.fromUsername || "utilisateur").replace(/^@+/, "");
+                                    const rawActionText = unescapeHtml(String(nData.text || "a interagi avec votre contenu"));
+                                    triggerPersonalDeviceNotification({
+                                        title: `@${senderName} sur R-Videos`,
+                                        body: `@${senderName} ${rawActionText}`,
+                                        icon: nData.fromPhoto || nData.videoThumb || "",
+                                        tag: `rv_notif_group_${nData.type || 'activity'}`,
+                                        data: {
+                                            type: nData.type || "activity",
+                                            videoId: nData.videoId || nData.targetVideoId || "",
+                                            storyOwnerUid: nData.storyOwnerUid || "",
+                                            fromUid: nData.fromUid || ""
+                                        }
+                                    });
                                 }
-                                triggerPersonalDeviceNotification({
-                                    title: `@${senderName} sur R-Videos`,
-                                    body: `@${senderName} ${rawActionText}`,
-                                    icon: nData.fromPhoto || nData.videoThumb || "",
-                                    tag: `rv_notif_${docId}`,
-                                    data: {
-                                        type: nData.type || "activity",
-                                        videoId: nData.videoId || nData.targetVideoId || "",
-                                        storyOwnerUid: nData.storyOwnerUid || "",
-                                        fromUid: nData.fromUid || ""
-                                    }
-                                });
                             } else if (isInitialBucketLoad) {
                                 markDeliveredPersonalNotifKey(myUid, notifKey);
                             }
@@ -16094,7 +16341,7 @@
                 el.classList.toggle('text-gray-500', !isActive);
             });
             if (currentProfileUid && currentProfileViewedData && currentProfileViewedData.uid === currentProfileUid) {
-                renderProfile(currentProfileViewedData, !!(auth.currentUser && currentProfileUid === auth.currentUser.uid), { keepVisible: true });
+                renderProfile(currentProfileViewedData, !!(auth.currentUser && currentProfileUid === auth.currentUser.uid), { keepVisible: true, manualTabSwitch: true });
             } else if (currentProfileUid) {
                 viewUserProfile(currentProfileUid);
             }
@@ -22442,6 +22689,42 @@
             showToast(`Réponse envoyée à @${fromUsername} ! 💬`, "success");
         };
 
+        let activeNotifCategoryFilter = 'all';
+        const expandedNotifGroupsSet = new Set();
+
+        window.setNotifCategoryFilter = (cat) => {
+            activeNotifCategoryFilter = cat || 'all';
+            if (typeof window.__rvRenderGroupedActivities === 'function') {
+                window.__rvRenderGroupedActivities();
+            }
+        };
+
+        window.toggleNotifGroupExpand = (groupKey, ev) => {
+            if (ev && ev.stopPropagation) ev.stopPropagation();
+            if (expandedNotifGroupsSet.has(groupKey)) {
+                expandedNotifGroupsSet.delete(groupKey);
+            } else {
+                expandedNotifGroupsSet.add(groupKey);
+            }
+            if (typeof window.__rvRenderGroupedActivities === 'function') {
+                window.__rvRenderGroupedActivities();
+            }
+        };
+
+        window.deleteNotificationGroup = async (notifIdsCsv, ev) => {
+            if (ev && ev.stopPropagation) ev.stopPropagation();
+            if (!auth.currentUser || !notifIdsCsv) return;
+            const ids = String(notifIdsCsv).split(',').map(s => s.trim()).filter(Boolean);
+            if (ids.length === 0) return;
+            try {
+                const batch = writeBatch(db);
+                ids.forEach(id => {
+                    batch.delete(doc(db, "users", auth.currentUser.uid, "notifications", id));
+                });
+                await batch.commit();
+            } catch (e) {}
+        };
+
         function loadActivities() {
             const list = document.getElementById('inbox-content');
             if (!auth.currentUser) {
@@ -22450,9 +22733,12 @@
             }
             const activeAccountUid = auth.currentUser.uid;
             list.innerHTML = "<div class='text-center text-xs text-gray-500 mt-8'>Chargement des activités...</div>";
-            inboxUnsubscribe = onSnapshot(query(collection(db, "users", activeAccountUid, "notifications"), orderBy("createdAt", "desc"), limit(30)), async (snap) => {
+            inboxUnsubscribe = onSnapshot(query(collection(db, "users", activeAccountUid, "notifications"), orderBy("createdAt", "desc"), limit(120)), async (snap) => {
                 if (!auth.currentUser || auth.currentUser.uid !== activeAccountUid) return;
-                if(snap.empty) return list.innerHTML = "<div class='text-center text-gray-500 text-xs mt-10'>Aucune activité récente.</div>";
+                if (snap.empty) {
+                    list.innerHTML = "<div class='text-center text-gray-500 text-xs mt-10'>Aucune activité récente.</div>";
+                    return;
+                }
                 let notifs = [];
                 snap.forEach(d => {
                     const n = d.data();
@@ -22468,7 +22754,6 @@
                     hydrateUserProfilesMap(notifs.map(n => n.fromUid)),
                     resolveNotificationContextData(notifs)
                 ]);
-                // Second pass after video metadata resolution: ensure video-owner reactions strictly belong to activeAccountUid
                 notifs = notifs.filter(n => {
                     if (!isNotificationStrictlyForUser(n, activeAccountUid)) {
                         deleteDoc(doc(db, "users", activeAccountUid, "notifications", n.id)).catch(() => {});
@@ -22480,22 +22765,37 @@
                     list.innerHTML = "<div class='text-center text-gray-500 text-xs mt-10'>Aucune activité récente.</div>";
                     return;
                 }
-                let html = "";
-                notifs.forEach(n => {
-                    if(!n.read) updateDoc(doc(db, "users", auth.currentUser.uid, "notifications", n.id), {read: true}).catch(()=>{});
+
+                // Marquer les notifications comme lues en lot de manière propre
+                const unreadDocs = notifs.filter(n => !n.read);
+                if (unreadDocs.length > 0) {
+                    const readBatch = writeBatch(db);
+                    unreadDocs.slice(0, 45).forEach(n => {
+                        readBatch.update(doc(db, "users", activeAccountUid, "notifications", n.id), { read: true });
+                    });
+                    readBatch.commit().catch(() => {});
+                }
+
+                const classifyNotifCategory = (n) => {
+                    const t = String(n.type || '').toLowerCase();
+                    if (t === 'comment' || t === 'reply' || /^a (commenté|répondu)/i.test(String(n.text || ''))) return 'comments';
+                    if (t === 'follow') return 'follows';
+                    if (t === 'like' || t === 'story_like' || t === 'comment_like' || t === 'favorite' || t === 'repost' || t === 'share' || t === 'story_view') return 'likes';
+                    return 'other';
+                };
+
+                const renderSingleNotifRow = (n) => {
                     const senderIdentity = getResolvedProfileIdentity(n.fromUid, n.fromUsername, n.fromVerified, n.fromPhoto);
                     let icon = "bell"; let color = "text-yellow-400";
-                    if(n.type === 'like' || n.type === 'comment_like' || n.type === 'story_like') { icon = "heart"; color = "text-[#ff2a5f]"; }
-                    if(n.type === 'story_view') { icon = "eye"; color = "text-cyan-400"; }
-                    if(n.type === 'story') { icon = "sparkles"; color = "text-purple-400"; }
-                    if(n.type === 'favorite') { icon = "bookmark"; color = "text-amber-400"; }
-                    if(n.type === 'share' || n.type === 'repost') { icon = "share-2"; color = "text-cyan-400"; }
-                    if(n.type === 'follow') { icon = "user-plus"; color = "text-cyan-400"; }
-                    if(n.type === 'comment') { icon = "message-circle"; color = "text-emerald-400"; }
-                    if(n.type === 'reply') { icon = "message-square"; color = "text-indigo-400"; }
-                    if(n.type === 'info') { icon = "sparkles"; color = "text-cyan-400"; }
-                    if(n.type === 'rewatch') { icon = "repeat"; color = "text-purple-400"; }
-                    if(n.type === 'report') { icon = "alert-triangle"; color = "text-rose-500"; }
+                    if (n.type === 'like' || n.type === 'comment_like' || n.type === 'story_like') { icon = "heart"; color = "text-[#ff2a5f]"; }
+                    if (n.type === 'story_view') { icon = "eye"; color = "text-cyan-400"; }
+                    if (n.type === 'story') { icon = "sparkles"; color = "text-purple-400"; }
+                    if (n.type === 'favorite') { icon = "bookmark"; color = "text-amber-400"; }
+                    if (n.type === 'share' || n.type === 'repost') { icon = "repeat"; color = "text-emerald-400"; }
+                    if (n.type === 'follow') { icon = "user-plus"; color = "text-cyan-400"; }
+                    if (n.type === 'comment') { icon = "message-circle"; color = "text-emerald-400"; }
+                    if (n.type === 'reply') { icon = "message-square"; color = "text-indigo-400"; }
+                    if (n.type === 'info') { icon = "sparkles"; color = "text-cyan-400"; }
                     const dateStr = formatDateStamp(n.createdAt);
 
                     const vId = n.videoId || n.targetVideoId || n._resolvedVideoId || "";
@@ -22512,10 +22812,10 @@
                     const isStoryNotif = (n.type === 'story_like' || n.type === 'story_view' || n.type === 'story');
                     const safeStoryOwnerJs = escapeJsSingleQuotedAttr(n.storyOwnerUid || (auth.currentUser ? auth.currentUser.uid : ""));
                     const thumbHtml = thumbUrl ? `
-                        <div onclick="event.stopPropagation(); ${isStoryNotif && safeStoryOwnerJs ? `openStoryViewer('${safeStoryOwnerJs}')` : (vId ? `openFullVideo('${safeVidIdJs}')` : `viewUserProfile('${n.fromUid}')`)}" class="relative w-12 h-16 rounded-xl overflow-hidden bg-[#0c1222] border border-white/15 shrink-0 shadow-md group cursor-pointer" title="${isStoryNotif ? 'Voir la story' : 'Voir la publication'}">
+                        <div onclick="event.stopPropagation(); ${isStoryNotif && safeStoryOwnerJs ? `openStoryViewer('${safeStoryOwnerJs}')` : (vId ? `openFullVideo('${safeVidIdJs}')` : `viewUserProfile('${n.fromUid}')`)}" class="relative w-11 h-15 rounded-xl overflow-hidden bg-[#0c1222] border border-white/15 shrink-0 shadow-md group cursor-pointer" title="${isStoryNotif ? 'Voir la story' : 'Voir la publication'}">
                             <img src="${escapeHtml(thumbUrl)}" loading="lazy" decoding="async" alt="Miniature" class="w-full h-full object-cover group-hover:scale-110 transition duration-200">
                             <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
-                                <i data-lucide="play" class="w-3.5 h-3.5 text-white fill-white opacity-90 drop-shadow"></i>
+                                <i data-lucide="play" class="w-3 h-3 text-white fill-white opacity-90 drop-shadow"></i>
                             </div>
                         </div>` : '';
 
@@ -22537,9 +22837,9 @@
                             </button>
                         </div>` : '';
 
-                    html += `
+                    return `
                     <div onclick="viewUserProfile('${n.fromUid}')" class="flex items-start gap-3 p-3 rounded-2xl bg-white/[0.03] border border-white/5 cursor-pointer hover:bg-white/[0.06] transition">
-                        <div class="relative w-11 h-11 shrink-0 mt-0.5">
+                        <div class="relative w-10 h-10 shrink-0 mt-0.5">
                             ${getAvatarHTML(senderIdentity.photoURL || n.fromPhoto, "w-full h-full")}
                             <div class="absolute -bottom-1 -right-1 bg-[#05070e] rounded-full p-1 border border-white/10"><i data-lucide="${icon}" class="w-3 h-3 ${color}"></i></div>
                         </div>
@@ -22553,9 +22853,208 @@
                             <i data-lucide="x" class="w-4 h-4"></i>
                         </button>
                     </div>`;
-                });
-                list.innerHTML = html;
-                lucide.createIcons();
+                };
+
+                window.__rvRenderGroupedActivities = () => {
+                    const likesList = notifs.filter(n => classifyNotifCategory(n) === 'likes');
+                    const commentsList = notifs.filter(n => classifyNotifCategory(n) === 'comments');
+                    const followsList = notifs.filter(n => classifyNotifCategory(n) === 'follows');
+                    const otherList = notifs.filter(n => classifyNotifCategory(n) === 'other');
+
+                    // Barre de synthèse professionnelle par groupe avec compteurs incrémentés
+                    const summaryBarHtml = `
+                    <div class="grid grid-cols-4 gap-1.5 mb-3 p-1.5 rounded-2xl bg-white/[0.03] border border-white/10">
+                        <button type="button" onclick="setNotifCategoryFilter('all')" class="flex flex-col items-center justify-center py-2 px-1 rounded-xl transition ${activeNotifCategoryFilter === 'all' ? 'bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white shadow-md' : 'text-gray-400 hover:text-white bg-white/[0.02]'}">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider">Tout</span>
+                            <span class="text-xs font-black mt-0.5">+${notifs.length}</span>
+                        </button>
+                        <button type="button" onclick="setNotifCategoryFilter('likes')" class="flex flex-col items-center justify-center py-2 px-1 rounded-xl transition ${activeNotifCategoryFilter === 'likes' ? 'bg-gradient-to-r from-[#ff2a5f] to-rose-600 text-white shadow-md' : 'text-gray-400 hover:text-white bg-white/[0.02]'}">
+                            <span class="text-[10px] font-extrabold flex items-center gap-1"><i data-lucide="heart" class="w-3 h-3 ${activeNotifCategoryFilter === 'likes' ? 'text-white fill-white' : 'text-[#ff2a5f] fill-[#ff2a5f]'}"></i> J'aime</span>
+                            <span class="text-xs font-black mt-0.5">+${likesList.length}</span>
+                        </button>
+                        <button type="button" onclick="setNotifCategoryFilter('comments')" class="flex flex-col items-center justify-center py-2 px-1 rounded-xl transition ${activeNotifCategoryFilter === 'comments' ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md' : 'text-gray-400 hover:text-white bg-white/[0.02]'}">
+                            <span class="text-[10px] font-extrabold flex items-center gap-1"><i data-lucide="message-circle" class="w-3 h-3 ${activeNotifCategoryFilter === 'comments' ? 'text-white' : 'text-emerald-400'}"></i> Comm.</span>
+                            <span class="text-xs font-black mt-0.5">+${commentsList.length}</span>
+                        </button>
+                        <button type="button" onclick="setNotifCategoryFilter('follows')" class="flex flex-col items-center justify-center py-2 px-1 rounded-xl transition ${activeNotifCategoryFilter === 'follows' ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md' : 'text-gray-400 hover:text-white bg-white/[0.02]'}">
+                            <span class="text-[10px] font-extrabold flex items-center gap-1"><i data-lucide="user-plus" class="w-3 h-3 ${activeNotifCategoryFilter === 'follows' ? 'text-white' : 'text-cyan-400'}"></i> Abonnés</span>
+                            <span class="text-xs font-black mt-0.5">+${followsList.length}</span>
+                        </button>
+                    </div>`;
+
+                    let sectionsHtml = "";
+
+                    // 1. GROUPE ABONNEMENTS (regroupés en une carte incrémentée extensible)
+                    if ((activeNotifCategoryFilter === 'all' || activeNotifCategoryFilter === 'follows') && followsList.length > 0) {
+                        const groupKey = 'group_follows';
+                        const isExpanded = expandedNotifGroupsSet.has(groupKey) || activeNotifCategoryFilter === 'follows';
+                        const uniqueFollowSenders = [];
+                        const seenF = new Set();
+                        followsList.forEach(n => {
+                            if (n.fromUid && !seenF.has(n.fromUid)) {
+                                seenF.add(n.fromUid);
+                                uniqueFollowSenders.push({ notif: n, identity: getResolvedProfileIdentity(n.fromUid, n.fromUsername, n.fromVerified, n.fromPhoto) });
+                            }
+                        });
+                        const topAvatarsHtml = uniqueFollowSenders.slice(0, 3).map((item, idx) => `
+                            <div class="w-9 h-9 rounded-full overflow-hidden border-2 border-[#0b101e] ${idx > 0 ? '-ml-3' : ''} shrink-0">
+                                ${getAvatarHTML(item.identity.photoURL || item.notif.fromPhoto, "w-full h-full")}
+                            </div>
+                        `).join('');
+                        const leadNames = uniqueFollowSenders.slice(0, 2).map(x => `@${escapeHtml(x.identity.username)}`).join(', ');
+                        const extraCount = Math.max(0, uniqueFollowSenders.length - 2);
+                        const labelHtml = extraCount > 0
+                            ? `<span class="font-extrabold text-white">${leadNames}</span> et <span class="font-extrabold text-cyan-300">+${extraCount} autre(s)</span> se sont abonnés à vous`
+                            : `<span class="font-extrabold text-white">${leadNames}</span> ${uniqueFollowSenders.length > 1 ? 'se sont abonnés à vous' : "s'est abonné à vous"}`;
+                        const allFollowIdsCsv = followsList.map(n => n.id).join(',');
+
+                        sectionsHtml += `
+                        <div class="rounded-2xl bg-gradient-to-r from-cyan-500/[0.08] to-blue-600/[0.05] border border-cyan-400/25 overflow-hidden mb-2.5">
+                            <div onclick="toggleNotifGroupExpand('${groupKey}', event)" class="flex items-center justify-between gap-3 p-3 cursor-pointer hover:bg-white/[0.04] transition">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <div class="flex items-center shrink-0">${topAvatarsHtml}</div>
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            <span class="px-2 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 text-[10px] font-black">+${followsList.length} Abonné${followsList.length > 1 ? 's' : ''} 👤</span>
+                                            <span class="text-[10px] text-gray-400">${formatDateStamp(followsList[0].createdAt)}</span>
+                                        </div>
+                                        <p class="text-xs text-gray-200 mt-1 leading-snug truncate">${labelHtml}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <i data-lucide="${isExpanded ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4 text-cyan-300"></i>
+                                    <button onclick="deleteNotificationGroup('${escapeJsSingleQuotedAttr(allFollowIdsCsv)}', event)" class="p-1 text-gray-500 hover:text-rose-400" title="Effacer ce groupe">
+                                        <i data-lucide="x" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            ${isExpanded ? `<div class="px-2.5 pb-2.5 pt-1 space-y-1.5 border-t border-white/10">${followsList.slice(0, 15).map(n => renderSingleNotifRow(n)).join('')}</div>` : ''}
+                        </div>`;
+                    }
+
+                    // 2. GROUPE J'AIME & RÉACTIONS (regroupés par vidéo / story avec compteur incrémenté +X)
+                    if ((activeNotifCategoryFilter === 'all' || activeNotifCategoryFilter === 'likes') && likesList.length > 0) {
+                        const byTargetMap = new Map();
+                        likesList.forEach(n => {
+                            const vId = n.videoId || n.targetVideoId || n._resolvedVideoId || "";
+                            const stId = n.storyId || "";
+                            const key = stId ? `story_${stId}` : (vId ? `vid_${vId}` : `general_likes`);
+                            if (!byTargetMap.has(key)) byTargetMap.set(key, []);
+                            byTargetMap.get(key).push(n);
+                        });
+
+                        byTargetMap.forEach((groupItems, groupKey) => {
+                            const isExpanded = expandedNotifGroupsSet.has(groupKey);
+                            const firstN = groupItems[0];
+                            const vId = firstN.videoId || firstN.targetVideoId || firstN._resolvedVideoId || "";
+                            const vData = vId ? profileVideosData[vId] : null;
+                            const thumbUrl = firstN.videoThumb || (firstN.videoUrl ? getVideoThumbnail(firstN.videoUrl) : "") || (vData && vData.url ? getVideoThumbnail(vData.url, vData.thumbnailOffset || 0) : "") || firstN._resolvedVideoThumb || "";
+                            const isStoryGroup = groupKey.startsWith('story_') || firstN.type === 'story_like' || firstN.type === 'story_view';
+                            const safeStoryOwnerJs = escapeJsSingleQuotedAttr(firstN.storyOwnerUid || (auth.currentUser ? auth.currentUser.uid : ""));
+                            const safeVidIdJs = escapeJsSingleQuotedAttr(vId || "");
+
+                            const uniqueSenders = [];
+                            const seenS = new Set();
+                            groupItems.forEach(n => {
+                                if (n.fromUid && !seenS.has(n.fromUid)) {
+                                    seenS.add(n.fromUid);
+                                    uniqueSenders.push({ notif: n, identity: getResolvedProfileIdentity(n.fromUid, n.fromUsername, n.fromVerified, n.fromPhoto) });
+                                }
+                            });
+                            const topAvatarsHtml = uniqueSenders.slice(0, 3).map((item, idx) => `
+                                <div class="w-9 h-9 rounded-full overflow-hidden border-2 border-[#0b101e] ${idx > 0 ? '-ml-3' : ''} shrink-0">
+                                    ${getAvatarHTML(item.identity.photoURL || item.notif.fromPhoto, "w-full h-full")}
+                                </div>
+                            `).join('');
+                            const leadNames = uniqueSenders.slice(0, 2).map(x => `@${escapeHtml(x.identity.username)}`).join(', ');
+                            const extraCount = Math.max(0, uniqueSenders.length - 2);
+                            const actionVerb = isStoryGroup ? "ont réagi à votre story" : "ont aimé votre publication";
+                            const singleVerb = isStoryGroup ? escapeHtml(firstN.text || "a aimé votre story ❤️") : "a aimé votre publication ❤️";
+                            const labelHtml = extraCount > 0
+                                ? `<span class="font-extrabold text-white">${leadNames}</span> et <span class="font-extrabold text-[#ff2a5f]">+${extraCount} autre(s)</span> ${actionVerb}`
+                                : `<span class="font-extrabold text-white">${leadNames}</span> ${uniqueSenders.length > 1 ? actionVerb : singleVerb}`;
+
+                            const thumbHtml = thumbUrl ? `
+                                <div onclick="event.stopPropagation(); ${isStoryGroup && safeStoryOwnerJs ? `openStoryViewer('${safeStoryOwnerJs}')` : (vId ? `openFullVideo('${safeVidIdJs}')` : '')}" class="relative w-11 h-14 rounded-xl overflow-hidden bg-[#0c1222] border border-white/15 shrink-0 shadow-md group cursor-pointer">
+                                    <img src="${escapeHtml(thumbUrl)}" loading="lazy" decoding="async" alt="Miniature" class="w-full h-full object-cover group-hover:scale-110 transition duration-200">
+                                </div>` : '';
+                            const groupIdsCsv = groupItems.map(n => n.id).join(',');
+
+                            sectionsHtml += `
+                            <div class="rounded-2xl bg-gradient-to-r from-[#ff2a5f]/[0.08] to-rose-600/[0.04] border border-[#ff2a5f]/25 overflow-hidden mb-2.5">
+                                <div onclick="toggleNotifGroupExpand('${groupKey}', event)" class="flex items-center justify-between gap-3 p-3 cursor-pointer hover:bg-white/[0.04] transition">
+                                    <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                                        <div class="flex items-center shrink-0">${topAvatarsHtml}</div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="px-2 py-0.5 rounded-full bg-[#ff2a5f]/20 border border-[#ff2a5f]/40 text-[#ff2a5f] text-[10px] font-black">+${groupItems.length} ${isStoryGroup ? 'Story ❤️' : "J'aime ❤️"}</span>
+                                                <span class="text-[10px] text-gray-400">${formatDateStamp(firstN.createdAt)}</span>
+                                            </div>
+                                            <p class="text-xs text-gray-200 mt-1 leading-snug truncate">${labelHtml}</p>
+                                        </div>
+                                    </div>
+                                    ${thumbHtml}
+                                    <div class="flex items-center gap-1 shrink-0">
+                                        <i data-lucide="${isExpanded ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4 text-rose-300"></i>
+                                        <button onclick="deleteNotificationGroup('${escapeJsSingleQuotedAttr(groupIdsCsv)}', event)" class="p-1 text-gray-500 hover:text-rose-400" title="Effacer ce groupe">
+                                            <i data-lucide="x" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                ${isExpanded ? `<div class="px-2.5 pb-2.5 pt-1 space-y-1.5 border-t border-white/10">${groupItems.slice(0, 15).map(n => renderSingleNotifRow(n)).join('')}</div>` : ''}
+                            </div>`;
+                        });
+                    }
+
+                    // 3. GROUPE COMMENTAIRES & RÉPONSES (avec compteur incrémenté et actions directes J'aime / Répondre)
+                    if ((activeNotifCategoryFilter === 'all' || activeNotifCategoryFilter === 'comments') && commentsList.length > 0) {
+                        const groupKey = 'group_comments';
+                        const isExpanded = expandedNotifGroupsSet.has(groupKey) || activeNotifCategoryFilter === 'comments' || commentsList.length <= 5;
+                        sectionsHtml += `
+                        <div class="rounded-2xl bg-gradient-to-r from-emerald-500/[0.08] to-teal-600/[0.04] border border-emerald-400/25 overflow-hidden mb-2.5">
+                            <div onclick="toggleNotifGroupExpand('${groupKey}', event)" class="flex items-center justify-between gap-3 p-3 cursor-pointer hover:bg-white/[0.04] transition">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-black">+${commentsList.length} Commentaire${commentsList.length > 1 ? 's' : ''} 💬</span>
+                                    <span class="text-xs font-bold text-white">Discussions & Réponses sur vos publications</span>
+                                </div>
+                                <i data-lucide="${isExpanded ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4 text-emerald-300"></i>
+                            </div>
+                            ${isExpanded ? `<div class="px-2.5 pb-2.5 pt-1 space-y-2 border-t border-white/10">${commentsList.map(n => renderSingleNotifRow(n)).join('')}</div>` : ''}
+                        </div>`;
+                    }
+
+                    // 4. Autres alertes système / info (uniquement si présentes)
+                    if (activeNotifCategoryFilter === 'all' && otherList.length > 0) {
+                        const groupKey = 'group_other_info';
+                        const isExpanded = expandedNotifGroupsSet.has(groupKey);
+                        const allOtherIdsCsv = otherList.map(n => n.id).join(',');
+                        sectionsHtml += `
+                        <div class="rounded-2xl bg-white/[0.03] border border-white/10 overflow-hidden mb-2.5">
+                            <div onclick="toggleNotifGroupExpand('${groupKey}', event)" class="flex items-center justify-between gap-3 p-3 cursor-pointer hover:bg-white/[0.04] transition">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2 py-0.5 rounded-full bg-white/10 text-gray-300 text-[10px] font-black">+${otherList.length} Info 🔔</span>
+                                    <span class="text-xs font-bold text-gray-300">Notifications système</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <i data-lucide="${isExpanded ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4 text-gray-400"></i>
+                                    <button onclick="deleteNotificationGroup('${escapeJsSingleQuotedAttr(allOtherIdsCsv)}', event)" class="p-1 text-gray-500 hover:text-rose-400" title="Effacer ce groupe">
+                                        <i data-lucide="x" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            ${isExpanded ? `<div class="px-2.5 pb-2.5 pt-1 space-y-1.5 border-t border-white/10">${otherList.slice(0, 15).map(n => renderSingleNotifRow(n)).join('')}</div>` : ''}
+                        </div>`;
+                    }
+
+                    if (!sectionsHtml) {
+                        sectionsHtml = "<div class='text-center text-gray-500 text-xs py-8'>Aucune activité dans cette catégorie.</div>";
+                    }
+
+                    list.innerHTML = summaryBarHtml + sectionsHtml;
+                    if (window.lucide) lucide.createIcons();
+                };
+
+                window.__rvRenderGroupedActivities();
             });
         }
 
@@ -24094,6 +24593,15 @@
             storyViewerState.stories = stories;
             storyViewerState.currentIndex = Math.max(0, Math.min(startIndex, stories.length - 1));
             renderCurrentStorySlide();
+            if (rvGeminiBrainQuotaActive) {
+                syncAutonomousStoryViewsAndLikesFromProfileViewers(targetUid).then(() => {
+                    if (document.getElementById('story-viewer-modal')?.classList.contains('open') && storyViewerState.uid === targetUid) {
+                        const refreshed = getUserActiveStories(targetUid);
+                        const curSt = refreshed[storyViewerState.currentIndex];
+                        if (curSt) updateStoryViewerLikeAndViewUI(curSt);
+                    }
+                }).catch(() => {});
+            }
         };
 
         window.closeStoryViewer = () => {
@@ -24450,6 +24958,16 @@
                 actBtn.classList.toggle('hidden', !isStrictlyStoryOwner);
                 actBtn.classList.toggle('flex', isStrictlyStoryOwner);
             }
+            const commentBar = document.getElementById('story-viewer-comment-bar');
+            const commentInp = document.getElementById('story-viewer-comment-input');
+            if (commentBar) {
+                commentBar.classList.toggle('hidden', isStrictlyStoryOwner);
+                commentBar.classList.toggle('flex', !isStrictlyStoryOwner);
+            }
+            if (commentInp && !isStrictlyStoryOwner) {
+                const ownerIdentity = getResolvedProfileIdentity(storyViewerState.uid, st.username, st.isVerified, st.userPhotoURL);
+                commentInp.placeholder = `Commenter la story de @${String(ownerIdentity.username || 'createur').replace(/^@+/, '')}...`;
+            }
 
             const likeBtn = document.getElementById('btn-story-viewer-like');
             const likeIcon = document.getElementById('story-viewer-like-icon');
@@ -24579,6 +25097,127 @@
                         videoThumb: getStoryNotificationThumb(st)
                     });
                 }
+            }
+        };
+
+        // Permet à un utilisateur humain de commenter une story, ce qui envoie directement le message dans l'Inbox du créateur
+        window.sendStoryCommentToCreatorInbox = async (ev) => {
+            if (ev && ev.stopPropagation) ev.stopPropagation();
+            if (!checkAuth()) return;
+            const inp = document.getElementById('story-viewer-comment-input');
+            const txt = inp ? inp.value.trim() : "";
+            if (!txt) return;
+            if (containsForbiddenSocialNetworkMention(txt)) {
+                showToast("Sécurité R-Videos : Il est interdit de mentionner d'autres réseaux sociaux.", "error");
+                return;
+            }
+            const targetUid = storyViewerState.uid;
+            const stories = storyViewerState.stories || getUserActiveStories(targetUid);
+            const st = stories[storyViewerState.currentIndex];
+            if (!targetUid || !st || !auth.currentUser || targetUid === auth.currentUser.uid) return;
+            // Interdiction stricte de commentaires autonomes sur les stories
+            if (isAutonomousAccountUid(auth.currentUser.uid)) return;
+
+            inp.value = "";
+            inp.blur();
+            window.handleStoryHoldEnd(ev);
+
+            try {
+                const myUid = auth.currentUser.uid;
+                const nowMs = Date.now();
+                const ids = [myUid, String(targetUid)].sort();
+                const chatId = ids[0] + "_" + ids[1];
+
+                let rData = null;
+                try {
+                    const rSnap = await getDoc(doc(db, "users", targetUid));
+                    if (rSnap.exists()) rData = rSnap.data();
+                } catch (e) {}
+                if (rData && Array.isArray(rData.blockedUsers) && rData.blockedUsers.includes(myUid)) {
+                    showToast("Vous ne pouvez pas envoyer de message à cet utilisateur.", "error");
+                    return;
+                }
+
+                const myCleanHandle = String(currentUserData?.username || auth.currentUser.displayName || "utilisateur").replace(/^@+/, "");
+                const myPhotoUrl = String(currentUserData?.photoURL || auth.currentUser.photoURL || "");
+                const peerIdentity = getResolvedProfileIdentity(targetUid, st.username || rData?.username, st.isVerified || rData?.isVerified, st.userPhotoURL || rData?.photoURL);
+                const peerCleanHandle = String(peerIdentity.username || "utilisateur").replace(/^@+/, "");
+                const peerPhotoUrl = String(peerIdentity.photoURL || "");
+
+                const storySnippet = st.text ? ` (« ${String(st.text).slice(0, 35)} »)` : "";
+                const formattedInboxMsg = `📸 Réponse à votre story${storySnippet} : ${txt}`;
+
+                await addDoc(collection(db, "chats", chatId, "messages"), {
+                    text: escapeHtml(formattedInboxMsg),
+                    senderId: myUid,
+                    isStoryReply: true,
+                    storyId: st.id,
+                    createdAt: serverTimestamp(),
+                    createdAtMs: nowMs,
+                    read: false
+                });
+
+                const cref = doc(db, "chats", chatId);
+                const csnap = await getDoc(cref);
+                const targetRecipientUids = Array.from(new Set([
+                    String(targetUid),
+                    rData?.uid ? String(rData.uid) : "",
+                    ...(Array.isArray(rData?.aliasUids) ? rData.aliasUids.map(String) : [])
+                ].filter(Boolean)));
+
+                if (!csnap.exists()) {
+                    const n = { [myUid]: myCleanHandle, [targetUid]: peerCleanHandle };
+                    const p = { [myUid]: myPhotoUrl, [targetUid]: peerPhotoUrl };
+                    const unread = { [myUid]: 0 };
+                    targetRecipientUids.forEach(u => { unread[u] = 1; });
+                    const participantsList = Array.from(new Set([myUid, ...targetRecipientUids]));
+                    await setDoc(cref, {
+                        participants: participantsList,
+                        names: n,
+                        photos: p,
+                        lastMessage: escapeHtml(formattedInboxMsg),
+                        lastUpdated: serverTimestamp(),
+                        lastMessageAtMs: nowMs,
+                        lastSenderId: myUid,
+                        unreadCounts: unread
+                    });
+                } else {
+                    const updateData = {
+                        lastMessage: escapeHtml(formattedInboxMsg),
+                        lastUpdated: serverTimestamp(),
+                        lastMessageAtMs: nowMs,
+                        lastSenderId: myUid,
+                        [`names.${myUid}`]: myCleanHandle,
+                        [`photos.${myUid}`]: myPhotoUrl,
+                        [`unreadCounts.${myUid}`]: 0
+                    };
+                    targetRecipientUids.forEach(u => {
+                        if (u !== String(myUid)) {
+                            updateData[`unreadCounts.${u}`] = increment(1);
+                        }
+                    });
+                    await updateDoc(cref, updateData);
+                }
+
+                if (typeof dispatchOneSignalPersonalPush === 'function') {
+                    dispatchOneSignalPersonalPush({
+                        targetUid: String(targetUid),
+                        targetUserData: rData,
+                        type: "message",
+                        title: `💬 @${myCleanHandle} a commenté votre story`,
+                        body: txt,
+                        extraData: {
+                            chatId,
+                            chatSenderUid: myUid,
+                            chatSenderName: myCleanHandle,
+                            chatSenderPhoto: myPhotoUrl
+                        }
+                    });
+                }
+
+                showToast(`Commentaire envoyé dans l'Inbox de @${peerCleanHandle} ! 💬`, "success");
+            } catch (e) {
+                showToast("Impossible d'envoyer le commentaire de story.", "error");
             }
         };
 
@@ -24768,16 +25407,74 @@
             if (String(uid || '').startsWith('cm_auto_')) {
                 const autoAcc = getAutonomousCameroonianAccount(uid, false);
                 if (autoAcc) {
-                    await renderProfile({
+                    let storedAutoDoc = {};
+                    try {
+                        const s = await getDoc(doc(db, "users", autoAcc.uid));
+                        if (s.exists()) storedAutoDoc = s.data() || {};
+                    } catch (e) {}
+
+                    // 1. Calculer les abonnements (following) de ce compte autonome
+                    const followingSet = new Set(Array.isArray(storedAutoDoc.following) ? storedAutoDoc.following : []);
+                    if (rvAutonomousFollowingMap.has(autoAcc.uid)) {
+                        rvAutonomousFollowingMap.get(autoAcc.uid).forEach(fId => followingSet.add(fId));
+                    }
+                    // Vérifier également les créateurs des vidéos que ce compte autonome a aimées avec grand intérêt ou commentées
+                    const allKnownVids = [
+                        ...Array.from(rvAllKnownVideosCatalog.values()),
+                        ...Object.values(profileVideosData || {})
+                    ];
+                    allKnownVids.forEach(v => {
+                        if (!v || !v.userId || isAutonomousAccountUid(v.userId)) return;
+                        if (Array.isArray(v.likedBy) && v.likedBy.includes(autoAcc.uid)) {
+                            if ((rvHashStr(`${autoAcc.uid}_${v.userId}`) % 100) < 30) {
+                                followingSet.add(v.userId);
+                            }
+                        }
+                        const autoCmts = rvAutonomousCommentsByVideoId.get(v.id) || [];
+                        if (autoCmts.some(c => c && c.userId === autoAcc.uid)) {
+                            followingSet.add(v.userId);
+                        }
+                    });
+
+                    // 2. Quelques vues de profil réalistes sur le compte autonome (2 à 6 visiteurs + visiteurs réels)
+                    const baseViewers = Array.isArray(storedAutoDoc.profileViewers) ? [...storedAutoDoc.profileViewers] : [];
+                    const viewerUidSet = new Set(baseViewers.map(v => v && v.uid).filter(Boolean));
+                    const seedViewCount = 2 + (rvHashStr(`auto_prof_views_${autoAcc.uid}`) % 5); // 2 à 6 vues de profil
+                    const totalPool = Math.max(20, getSuccessiveCreatedCmAccountsCount());
+                    for (let k = 0; k < seedViewCount; k++) {
+                        const vIdx = ((rvHashStr(`${autoAcc.uid}_v_${k}`) % totalPool) + 1);
+                        if (vIdx === autoAcc.index) continue;
+                        const vAcc = getAutonomousCameroonianAccountByIndex(vIdx, false);
+                        if (vAcc && !viewerUidSet.has(vAcc.uid)) {
+                            viewerUidSet.add(vAcc.uid);
+                            baseViewers.push({
+                                uid: vAcc.uid,
+                                username: vAcc.username,
+                                photoURL: vAcc.photoURL || "",
+                                bio: vAcc.bio || "",
+                                isVerified: false,
+                                isAutonomousProfile: true,
+                                ts: Date.now() - ((k + 1) * 3600 * 1000)
+                            });
+                        }
+                    }
+
+                    const autoProfileData = {
                         uid: autoAcc.uid,
                         username: autoAcc.username,
                         photoURL: autoAcc.photoURL,
                         bio: autoAcc.bio,
                         isVerified: false,
-                        followers: [],
-                        following: [],
-                        likes: 0
-                    }, false);
+                        isAutonomousProfile: true,
+                        followers: [], // Pas d'abonnés car les comptes autonomes ne postent pas
+                        following: Array.from(followingSet),
+                        likes: 0,      // Pas de likes car les comptes autonomes ne postent pas
+                        profileViewers: baseViewers,
+                        profileViewsCount: Math.max(baseViewers.length, Number(storedAutoDoc.profileViewsCount || 0)),
+                        repostedVideosPrivacy: 'public'
+                    };
+                    await renderProfile(autoProfileData, false);
+                    recordProfileVisitIfVisible(autoAcc.uid, autoProfileData).catch(() => {});
                 }
                 setProfileScreenLoading(false);
                 return;
@@ -25378,6 +26075,19 @@
                 if (realReversed.length >= PROFILE_RECENT_LIMIT) break;
             }
             const results = await Promise.all(realReversed.map(async (uId) => {
+                if (isAutonomousAccountUid(uId)) {
+                    const autoAcc = getAutonomousCameroonianAccount(uId, false);
+                    if (autoAcc) {
+                        return {
+                            uid: autoAcc.uid,
+                            username: autoAcc.username,
+                            photoURL: autoAcc.photoURL || "",
+                            bio: autoAcc.bio || "",
+                            isVerified: false,
+                            isAutonomousProfile: true
+                        };
+                    }
+                }
                 try {
                     const s = await getDoc(doc(db, "users", uId));
                     if (s.exists()) {
@@ -25809,9 +26519,57 @@
             let items = [];
             const likerUidSet = new Set();
             assignGraduatedPopularityQuotas(allProfileSnapVideos);
+            const isAutoProfile = isAutonomousAccountUid(data.uid) || !!data.isAutonomousProfile;
+            const myDraftsCheck = isMe ? getUserStudioDraftsList(data.uid) : [];
+
+            // Pour un compte autonome, s'assurer que ses vidéos repartagées (parmi les vidéos qu'il a aimées) sont bien associées
+            if (isAutoProfile && allProfileSnapVideos.length > 0) {
+                let hasAnyRepost = allProfileSnapVideos.some(v => Array.isArray(v.repostedBy) && v.repostedBy.includes(data.uid));
+                if (!hasAnyRepost) {
+                    const likedVids = allProfileSnapVideos.filter(v => Array.isArray(v.likedBy) && v.likedBy.includes(data.uid));
+                    const candidatePool = likedVids.length > 0 ? likedVids : allProfileSnapVideos;
+                    const repostCountForAuto = Math.min(candidatePool.length, 1 + (rvHashStr(`auto_rep_cnt_${data.uid}`) % 3));
+                    for (let r = 0; r < repostCountForAuto; r++) {
+                        const chosenV = candidatePool[(rvHashStr(`${data.uid}_rep_${r}`) + r) % candidatePool.length];
+                        if (chosenV) {
+                            if (!Array.isArray(chosenV.repostedBy)) chosenV.repostedBy = [];
+                            if (!chosenV.repostedBy.includes(data.uid)) {
+                                chosenV.repostedBy.push(data.uid);
+                                chosenV.reposts = chosenV.repostedBy.length;
+                            }
+                        }
+                    }
+                }
+            }
+
+            const publishedCountForUser = isAutoProfile ? 0 : allProfileSnapVideos.filter(v => v.userId === data.uid).length;
+            const repostedCountForUser = allProfileSnapVideos.filter(v =>
+                (Array.isArray(v.repostedBy) && v.repostedBy.includes(data.uid)) ||
+                (rvAutonomousRepostsMap.has(data.uid) && rvAutonomousRepostsMap.get(data.uid).has(v.id))
+            ).length;
+
+            // Lorsqu'un compte n'a pas de publication, afficher automatiquement ses vidéos repartagées lorsqu'on entre dans son profil
+            if (!options?.manualTabSwitch) {
+                if (publishedCountForUser === 0 && (!isMe || myDraftsCheck.length === 0) && (isAutoProfile || repostedCountForUser > 0)) {
+                    currentProfileTab = 'reposts';
+                } else {
+                    currentProfileTab = 'videos';
+                }
+                const allTabsKeys = ['videos', 'drafts', 'reposts', 'liked', 'favs'];
+                allTabsKeys.forEach(tKey => {
+                    const el = document.getElementById('tab-profile-' + tKey);
+                    if (!el) return;
+                    const isActive = (tKey === currentProfileTab);
+                    el.classList.toggle('border-[#ff2a5f]', isActive);
+                    el.classList.toggle('text-white', isActive);
+                    el.classList.toggle('border-transparent', !isActive);
+                    el.classList.toggle('text-gray-500', !isActive);
+                });
+            }
+
             allProfileSnapVideos.forEach(v => { 
                 const d = { id: v.id };
-                if (v.userId === data.uid) {
+                if (!isAutoProfile && v.userId === data.uid) {
                     likes += getRealLikesCount(v);
                     if (Array.isArray(v.likedBy)) {
                         for (let i = v.likedBy.length - 1; i >= 0; i--) {
@@ -25823,8 +26581,10 @@
                     }
                 }
                 let shouldShow = false;
-                if (currentProfileTab === 'videos') { if (v.userId === data.uid) shouldShow = true; }
-                else if (currentProfileTab === 'reposts') { if (Array.isArray(v.repostedBy) && v.repostedBy.includes(data.uid)) shouldShow = true; }
+                const isRepostedByThisUser = (Array.isArray(v.repostedBy) && v.repostedBy.includes(data.uid)) ||
+                    (rvAutonomousRepostsMap.has(data.uid) && rvAutonomousRepostsMap.get(data.uid).has(v.id));
+                if (currentProfileTab === 'videos') { if (!isAutoProfile && v.userId === data.uid) shouldShow = true; }
+                else if (currentProfileTab === 'reposts') { if (isRepostedByThisUser) shouldShow = true; }
                 else if (currentProfileTab === 'liked') { if (Array.isArray(v.likedBy) && v.likedBy.includes(data.uid)) shouldShow = true; }
                 else if (currentProfileTab === 'favs') { if (Array.isArray(v.favorites) && v.favorites.includes(data.uid)) shouldShow = true; }
                 if (shouldShow) {
@@ -25832,20 +26592,22 @@
                     items.push({ id: d.id, data: v });
                 }
             });
-            const totalUserLikes = likes;
+            // Les comptes autonomes ne postent pas : ils ont strictement 0 J'aime et 0 abonné sur leur profil
+            const totalUserLikes = isAutoProfile ? 0 : likes;
             if (currentProfileViewedData) {
                 currentProfileViewedData.likes = totalUserLikes;
+                if (isAutoProfile) currentProfileViewedData.followers = [];
             }
             applyProfileViewsFromLikes(totalUserLikes);
 
-            currentProfileVideoLikers = Array.from(likerUidSet).slice(0, PROFILE_RECENT_LIMIT);
+            currentProfileVideoLikers = isAutoProfile ? [] : Array.from(likerUidSet).slice(0, PROFILE_RECENT_LIMIT);
             const profLikesEl = document.getElementById('profile-likes');
             if (profLikesEl) {
                 profLikesEl.dataset.rawCount = String(totalUserLikes);
                 profLikesEl.innerText = formatCount(totalUserLikes);
             }
 
-            const totalFollowersDisplayed = realFollowersList.length;
+            const totalFollowersDisplayed = isAutoProfile ? 0 : realFollowersList.length;
             const profFollowersEl = document.getElementById('profile-followers');
             if (profFollowersEl) {
                 profFollowersEl.dataset.rawCount = String(totalFollowersDisplayed);
@@ -25996,6 +26758,10 @@
 
         window.toggleFollow = async () => {
             if (!currentProfileUid || !auth.currentUser) return;
+            if (isAutonomousAccountUid(currentProfileUid)) {
+                showToast("Ce compte ne publie pas de vidéos (aucun abonnement requis).", "info");
+                return;
+            }
             const myUid = auth.currentUser.uid;
             const targetUid = currentProfileUid;
             const btn = document.getElementById('btn-follow');
