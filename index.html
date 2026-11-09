@@ -2903,7 +2903,7 @@
             // ============================================================================
             // 👉 COLLEZ VOTRE CLÉ API GEMINI FLASH ICI AVANT D'EXÉCUTER LE CODE :
             // ============================================================================
-            const GEMINI_API_KEY = "COLLEZ_VOTRE_CLE_API_GEMINI_ICI";
+            const GEMINI_API_KEY = "AQ.Ab8RN6LZuKK53b8Dzz1twEXYOEGHsT3cQp6EUZG9y1pS4C5EhQ";
             window.GEMINI_API_KEY = GEMINI_API_KEY;
         </script>
         
@@ -4143,6 +4143,24 @@
                         <span>Se déconnecter</span>
                         <i data-lucide="log-out" class="w-4 h-4"></i>
                     </button>
+                </div>
+
+                <!-- 5. Option Administrateur Uniquement (virgulemili@gmail.com) : Vérification Clé API Gemini Flash -->
+                <div id="admin-gemini-verify-panel" class="glass-panel p-4 rounded-2xl space-y-3 border border-cyan-400/30 hidden">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-cyan-400 font-bold text-xs uppercase tracking-wider">
+                            <i data-lucide="cpu" class="w-4 h-4"></i> Cerveau Gemini Flash (Admin Uniquement)
+                        </div>
+                        <span class="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">ADMIN VIP</span>
+                    </div>
+                    <p class="text-[11px] text-gray-300 leading-relaxed">
+                        Testez en direct si votre clé API (<code class="text-cyan-300">GEMINI_API_KEY</code>) communique bien avec Google Gemini Flash pour piloter les comptes autonomes.
+                    </p>
+                    <button type="button" onclick="verifyAdminGeminiApiKey(this)" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/25 active:scale-95 transition">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                        <span>Vérifier si la Clé API fonctionne avec Gemini</span>
+                    </button>
+                    <div class="admin-gemini-status-box hidden"></div>
                 </div>
             </div>
         </div>
@@ -8269,6 +8287,7 @@
             if (setSel) setSel.value = currentLang;
             if (typeof updateLanguageSelectionBadges === 'function') updateLanguageSelectionBadges(currentLang);
             refreshCacheStatsUI();
+            if (typeof syncAdminGeminiVerifyVisibility === 'function') syncAdminGeminiVerifyVisibility();
             document.getElementById('settings-modal').classList.add('open');
         };
         window.closeSettingsModal = () => {
@@ -9154,7 +9173,7 @@
 
         function getActiveGeminiApiKey() {
             const rawKey = String(window.GEMINI_API_KEY || (typeof GEMINI_API_KEY !== 'undefined' ? GEMINI_API_KEY : '') || safeGetStorage('rv_gemini_api_key', '') || '').trim();
-            if (!rawKey || rawKey === 'AQ.Ab8RN6LZuKK53b8Dzz1twEXYOEGHsT3cQp6EUZG9y1pS4C5EhQ' || rawKey === 'AQ.Ab8RN6LZuKK53b8Dzz1twEXYOEGHsT3cQp6EUZG9y1pS4C5EhQ') {
+            if (!rawKey || rawKey === 'COLLEZ_VOTRE_CLE_API_GEMINI_ICI' || rawKey === 'COLLER_VOTRE_CLE_API_ICI') {
                 return '';
             }
             return rawKey;
@@ -10110,6 +10129,97 @@
                 try { loadComments(vidId); } catch (e) {}
             }
         }
+
+        function isCurrentLoggedUserAdminVip() {
+            const email1 = String(currentUserData?.email || '').toLowerCase().trim();
+            const email2 = String(auth?.currentUser?.email || '').toLowerCase().trim();
+            const vip = String(VIP_EMAIL || 'virgulemili@gmail.com').toLowerCase().trim();
+            return (email1 === vip || email2 === vip);
+        }
+
+        function syncAdminGeminiVerifyVisibility() {
+            const isVip = isCurrentLoggedUserAdminVip();
+            const settingsPanel = document.getElementById('admin-gemini-verify-panel');
+            if (settingsPanel) {
+                settingsPanel.classList.toggle('hidden', !isVip);
+            }
+        }
+
+        window.verifyAdminGeminiApiKey = async (btnEl = null) => {
+            if (!isCurrentLoggedUserAdminVip()) {
+                if (typeof showToast === 'function') showToast("Accès réservé à l'administrateur.", "error");
+                return;
+            }
+            const statusBoxes = document.querySelectorAll('.admin-gemini-status-box');
+            const setStatusHtml = (htmlStr) => {
+                statusBoxes.forEach(box => {
+                    box.classList.remove('hidden');
+                    box.innerHTML = htmlStr;
+                });
+            };
+
+            const apiKey = getActiveGeminiApiKey();
+            if (!apiKey) {
+                const msg = "❌ Clé API non détectée : veuillez coller votre clé dans la constante GEMINI_API_KEY (ligne 2906) avant d'exécuter le code.";
+                setStatusHtml(`<div class="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-200 text-[11px] font-bold">${msg}</div>`);
+                if (typeof showToast === 'function') showToast(msg, "error");
+                return;
+            }
+
+            const origBtnHtml = btnEl ? btnEl.innerHTML : '';
+            if (btnEl) {
+                btnEl.disabled = true;
+                btnEl.innerHTML = `<span>⏳ Test de connexion Gemini Flash en cours...</span>`;
+            }
+            setStatusHtml(`<div class="p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-200 text-[11px] font-bold">⏳ Vérification de la clé API auprès de Google Gemini Flash...</div>`);
+
+            const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+            let lastErrorMsg = "Impossible de joindre l'API Gemini.";
+
+            for (const modelName of modelsToTry) {
+                try {
+                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`;
+                    const resp = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: "Réponds uniquement par cette phrase exacte : Connexion Gemini Flash opérationnelle." }] }],
+                            generationConfig: { maxOutputTokens: 30, temperature: 0.1 }
+                        })
+                    });
+                    const data = await resp.json().catch(() => ({}));
+                    if (resp.ok && data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+                        const reply = String(data.candidates[0].content.parts[0].text).trim();
+                        const okHtml = `<div class="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-400/40 text-emerald-200 text-[11px] font-bold space-y-1">
+                            <div>✅ Clé API valide et fonctionnelle avec Gemini !</div>
+                            <div class="text-[10px] text-emerald-300 font-normal">Modèle connecté : <b>${modelName}</b> • Réponse : « ${escapeHtml(reply)} »</div>
+                        </div>`;
+                        setStatusHtml(okHtml);
+                        if (typeof showToast === 'function') showToast(`✅ Clé API fonctionnelle (${modelName}) !`, "success");
+                        if (btnEl) {
+                            btnEl.disabled = false;
+                            btnEl.innerHTML = origBtnHtml;
+                        }
+                        return;
+                    } else {
+                        lastErrorMsg = data?.error?.message || `Erreur HTTP ${resp.status}`;
+                    }
+                } catch (err) {
+                    lastErrorMsg = err?.message || "Erreur réseau lors de l'appel à Gemini.";
+                }
+            }
+
+            const errHtml = `<div class="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-200 text-[11px] font-bold space-y-1">
+                <div>❌ Échec de la vérification de la Clé API Gemini</div>
+                <div class="text-[10px] text-rose-300 font-normal">Détail : ${escapeHtml(lastErrorMsg)}</div>
+            </div>`;
+            setStatusHtml(errHtml);
+            if (typeof showToast === 'function') showToast(`❌ Clé API invalide : ${lastErrorMsg}`, "error");
+            if (btnEl) {
+                btnEl.disabled = false;
+                btnEl.innerHTML = origBtnHtml;
+            }
+        };
 
         function recordUniqueVideoView(vidId) {
             if (!vidId) return;
@@ -24606,6 +24716,16 @@
 
             const adminContainer = document.getElementById('admin-actions');
             adminContainer.classList.add('hidden'); adminContainer.innerHTML = '';
+            if (isMe && isCurrentLoggedUserAdminVip()) {
+                adminContainer.classList.remove('hidden');
+                adminContainer.innerHTML = `
+                    <div class="space-y-2">
+                        <button type="button" onclick="verifyAdminGeminiApiKey(this)" class="w-full bg-gradient-to-r from-cyan-600/90 to-blue-700/90 hover:from-cyan-500 hover:to-blue-600 text-white font-extrabold py-2.5 px-3 rounded-xl border border-cyan-400/40 text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition">
+                            <span>🤖 Vérifier la Clé API Gemini Flash</span>
+                        </button>
+                        <div class="admin-gemini-status-box hidden"></div>
+                    </div>`;
+            }
             if(!isMe) { 
                 const btn = document.getElementById('btn-follow'); const isF = !!(auth.currentUser && data.followers?.includes(auth.currentUser.uid)); updateFollowButtonUI(btn, isF); 
                 const isBlocked = !!(currentUserData && currentUserData.blockedUsers && currentUserData.blockedUsers.includes(data.uid));
