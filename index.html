@@ -7965,7 +7965,7 @@
                         <img src="${escapeHtml(getVideoThumbnail(vid.url, (vid.thumbnailOffset !== undefined && Number(vid.thumbnailOffset) >= (Number(vid.trimStart) || 0)) ? vid.thumbnailOffset : (vid.trimStart || 0), vid.coverUrl || ''))}" data-fb="${escapeHtml(getVideoFallbackThumbnail(vid.url))}" onerror="if(this.dataset.fb && this.src!==this.dataset.fb){this.src=this.dataset.fb;}" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent"></div>
                         <div class="absolute bottom-1.5 left-2 right-2 flex items-center justify-between text-[10px] font-bold text-white">
-                            <span class="flex items-center gap-1"><i data-lucide="play" class="w-3 h-3 fill-white"></i> ${formatCount(vid.views)}</span>
+                            <span class="flex items-center gap-1"><i data-lucide="play" class="w-3 h-3 fill-white"></i> ${formatCount(getRealVideoViewsCount(vid))}</span>
                             <span class="truncate max-w-[75px] flex items-center">@${escapeHtml(pInfo.username)}${getBadgeHtml(pInfo.isVerified)}</span>
                         </div>`;
                     grid.appendChild(div);
@@ -9021,21 +9021,19 @@
         }
 
         // ============================================================================
-        // CERVEAU IA AUTONOME (GEMINI FLASH) — COMPTES AUTONOMES RÉELS DANS L'APP, LIKES & COMMENTAIRES
+        // CERVEAU IA AUTONOME (GEMINI FLASH) — VISION + AUDIO, LIKES (1 LIKE = 2 VUES),
+        // ABONNEMENTS, NOTIFICATIONS POUR TOUS LES UTILISATEURS & PHOTOS WEB 100% UNIQUES
         // - Clé API Gemini Flash configurée via GEMINI_API_KEY (ligne ~2906)
-        // - Aucun like fictif : les likes sur les vidéos proviennent UNIQUEMENT des utilisateurs
-        //   réels et des comptes autonomes réellement présents ou ajoutés dans l'application (via likedBy)
-        // - Création progressive : 1 compte autonome se crée après 10 minutes (max 1 600 comptes,
-        //   chacun enregistré dans Firestore avec sa propre photo de profil, et affiché/notifié
-        //   à l'administrateur virgulemili@gmail.com en précisant qu'il s'agit d'un compte autonome)
-        // - Likes par les comptes autonomes : chaque compte autonome présent ou ajouté dans l'application
-        //   like réellement les vidéos (dans likedBy) selon leur viralité (quota cible de 30 min à 1 575 max)
-        // - Commentaires : 1 commentaire (ou réponse intelligente) toutes les 10 minutes sur une
-        //   vidéo/image virale par un compte autonome après analyse visuelle légère par séquence d'images
-        // - Photos des commentateurs : uniquement personnes noires africaines correspondant
-        //   strictement au sexe (Homme / Femme), aucune photo en double sur une même publication
-        // - Maximum 15 commentaires autonomes par publication (en dehors des commentaires réels)
-        // - Commentaires réels toujours affichés au-dessus des commentaires autonomes
+        // - Zéro photo de profil en double : JAMAIS deux comptes autonomes n'ont la même photo.
+        //   Chaque compte reçoit une photo unique du Web correspondant à son sexe (personnes noires
+        //   africaines) ou une vraie photo Web unique de paysage, nature, voiture, architecture ou objet.
+        // - Tous les utilisateurs reçoivent des notifications dans leur onglet Activités (et push)
+        //   lorsque leurs publications sont likées ou commentées par des comptes autonomes, et
+        //   lorsque des comptes autonomes très intéressés s'abonnent à leur profil.
+        // - Chaque like d'un compte autonome compte pour 2 vues sur la publication (y compris
+        //   rétroactivement sur toutes les publications déjà en cours).
+        // - Création progressive : 1 compte autonome toutes les 10 minutes (max 1 600 comptes),
+        //   affiché/notifié à l'administrateur virgulemili@gmail.com.
         // ============================================================================
         const RV_CM_TOTAL_ACCOUNTS = 1600;
         const RV_CM_MIN_LIKES = 30;
@@ -9066,14 +9064,25 @@
             "akissi", "adjoua", "abena", "ama", "ayele", "amara", "ngozi", "chioma", "adaeze", "zainab"
         ];
 
-        const RV_CM_LAST_NAMES = [
-            "ndjock", "ewane", "kamga", "ngono", "tchoumi", "mbarga", "fotsing", "abena", "mouelle", "njoya",
-            "bello", "oumarou", "ekambi", "dikoume", "nkoulou", "fotso", "essomba", "moukoko", "talla", "ngufor",
-            "ebogo", "simo", "kenfack", "epopa", "zogo", "atanga", "mbah", "ndam", "etchu", "bong",
-            "fezeu", "njike", "kotto", "priso", "onana", "bassong", "matip", "toko", "choupo", "aboubakar",
-            "mbia", "song", "etoo", "milla", "ndom", "wandji", "kouam", "pokam", "tagne", "wafo",
-            "diallo", "traore", "konate", "coulibaly", "ndiaye", "diop", "fall", "ba", "sylla", "keita",
-            "mensah", "owusu", "boateng", "okonkwo", "adeyemi", "balogun", "ouedraogo", "kabore", "sawadogo", "kone"
+        // Surnoms et émoticônes variés (sans aucun nom de famille africain) pour diversifier les prénoms des 1 600 comptes autonomes
+        const RV_CM_MALE_DIVERSIFIERS = [
+            " 🔥", " ✨", " 😎", " ⚡", " 👑", " 🚀", " 💯", " 🌟", " 🎧", " 🎬",
+            " 🏆", " 💎", " 🦁", " 🎯", " 🌊", " 🎶", " 💥", " 🕺", " 🌍", " ☀️",
+            "_le_boss 👑", "_vibes 🔥", "_officiel ✨", "_king 🦁", "_star ⭐", "_pro 🎯", "_237 ⚡", "_magic ✨", "_champion 🏆", "_legend 💯",
+            "_flow 🌊", "_music 🎧", "_style 😎", "_flash ⚡", "_golden 🌟", "_fresh 🍃", "_turbo 🚀", "_chic 💎", "_smile 😄", "_real 👌",
+            "_sweet ❤️", "_master 🎬", "_winner 🥇", "_cool 😎", "_power 💪", "_light ☀️", "_dream ✨", "_peace ✌️", "_bboy 🕺", "_top 🔥",
+            "_royal 👑", "_vrai 💯", "_elite 💎", "_boss", "_vibes", "_officiel", "_king", "_star", "_le_vrai", "_237",
+            "_pro", "_magic", "_flow", "_style", "_fresh", "_smile", "_cool", "_top", "_legend", "_golden"
+        ];
+
+        const RV_CM_FEMALE_DIVERSIFIERS = [
+            " ✨", " 💖", " 🌸", " 👑", " 🦋", " 💎", " 🌟", " ❤️", " 🌺", " 💃",
+            " 🍫", " 🎀", " 🌷", " 🔥", " 💫", " 🎶", " 🌈", " ☀️", " 🍒", " 🫶",
+            "_queen 👑", "_sweet 💖", "_choco 🍫", "_star ✨", "_glow 🌸", "_belle 💎", "_vibes 🔥", "_officiel ✨", "_chic 🦋", "_love ❤️",
+            "_gold 🌟", "_angel 👼", "_princess 👑", "_sun ☀️", "_beauty 🌺", "_smile 😍", "_danse 💃", "_magic ✨", "_honey 🍯", "_pearl 🦪",
+            "_rose 🌹", "_candy 🍬", "_dream 💫", "_royal 👑", "_charm 💖", "_muse 🎶", "_top 🔥", "_coco 🥥", "_fleur 🌷", "_baby 🎀",
+            "_diva 💎", "_shine ✨", "_douce 🌸", "_queen", "_sweet", "_choco", "_star", "_glow", "_belle", "_vibes",
+            "_officiel", "_chic", "_love", "_princess", "_beauty", "_angel", "_rose", "_diva", "_honey", "_coco"
         ];
 
         const RV_CM_CITIES_AND_BIOS = [
@@ -9095,62 +9104,91 @@
             "Juste pour le fun 😂"
         ];
 
-        // 1. Photos 100% Hommes Noirs Africains (25 portraits distincts vérifiés pour garantir zéro doublon sur 15 commentaires)
+        // 1. Portraits Web Hommes Noirs Africains (chaque URL de cette liste n'est attribuée qu'à UN SEUL compte)
         const RV_PHOTOS_CM_MEN = [
-            "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1522529599102-193c0d76b5b6?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1539701938214-0d9736e1c16b?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1578774296842-c45e472b3028?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1583195764036-6dc248ac07d9?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1618077360395-f3068be8e001?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1504257432389-52343af06ae3?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1534030347209-467a5b0ad3e6?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=180&h=180&fit=crop&crop=faces&auto=format&q=80&seed=afm13",
-            "https://images.unsplash.com/photo-1507152832244-10d45c7eda57?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1519764622345-23439dd774f7?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1570158268183-d296b2892211?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1563237023-b1e970526dcb?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1584999734482-0361aecad844?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1590086782957-93c06ef21604?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1595152772835-219674b2a8a6?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1600486913747-55e5470d6f40?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1615109398623-88346a601842?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1621592484082-2d05b1290d7a?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=180&h=180&fit=crop&crop=faces&auto=format&q=80"
+            "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1522529599102-193c0d76b5b6?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1539701938214-0d9736e1c16b?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1578774296842-c45e472b3028?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1583195764036-6dc248ac07d9?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1618077360395-f3068be8e001?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1504257432389-52343af06ae3?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1534030347209-467a5b0ad3e6?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1507152832244-10d45c7eda57?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1519764622345-23439dd774f7?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1570158268183-d296b2892211?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1563237023-b1e970526dcb?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1584999734482-0361aecad844?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1590086782957-93c06ef21604?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1595152772835-219674b2a8a6?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1600486913747-55e5470d6f40?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1615109398623-88346a601842?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1621592484082-2d05b1290d7a?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1548372290-8d01b6c8e78c?w=200&h=200&fit=crop&crop=faces&auto=format&q=80"
         ];
 
-        // 2. Photos 100% Femmes Noires Africaines (25 portraits distincts vérifiés pour garantir zéro doublon sur 15 commentaires)
+        // 2. Portraits Web Femmes Noires Africaines (chaque URL de cette liste n'est attribuée qu'à UN SEUL compte)
         const RV_PHOTOS_CM_WOMEN = [
-            "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1523824921871-d6f1a15151f1?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1589156280159-27698a70f29e?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1589156191108-c762ff4b96ab?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1611432579699-484f7990b127?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1596815064285-45ed8a9c0463?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=180&h=180&fit=crop&crop=faces&auto=format&q=80&seed=afw12",
-            "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=180&h=180&fit=crop&crop=faces&auto=format&q=80&seed=afw13",
-            "https://images.unsplash.com/photo-1554151228-14d9def656e4?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1598550874175-4d0ef436c909?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1614283233556-f35b0c801ef1?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1619895862022-09114b41f16f?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1534751516642-a1af1ef26a56?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1517365830460-955ce3ccd263?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=180&h=180&fit=crop&crop=faces&auto=format&q=80",
-            "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=180&h=180&fit=crop&crop=faces&auto=format&q=80&seed=afw24",
-            "https://images.unsplash.com/photo-1546961329-78bef0414d7c?w=180&h=180&fit=crop&crop=faces&auto=format&q=80"
+            "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1523824921871-d6f1a15151f1?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1589156280159-27698a70f29e?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1589156191108-c762ff4b96ab?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1611432579699-484f7990b127?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1596815064285-45ed8a9c0463?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1554151228-14d9def656e4?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1598550874175-4d0ef436c909?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1614283233556-f35b0c801ef1?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1619895862022-09114b41f16f?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1534751516642-a1af1ef26a56?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1517365830460-955ce3ccd263?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1546961329-78bef0414d7c?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1563178406-4cdc2923acbc?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1523264653568-d3d4032d1476?w=200&h=200&fit=crop&crop=faces&auto=format&q=80",
+            "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?w=200&h=200&fit=crop&crop=faces&auto=format&q=80"
+        ];
+
+        // 3. Photos Web de Paysages, Objets, Nature, Villes, Art & Lifestyle (pour que les 1 600 comptes aient 1 600 photos Web 100% différentes, jamais de doublon)
+        const RV_WEB_LANDSCAPE_AND_OBJECT_PHOTOS = [
+            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1511497584788-876760111969?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1516339901601-2e1b62dc0c45?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1525609004556-c46c7d6cf023?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?w=200&h=200&fit=crop&auto=format&q=80",
+            "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&h=200&fit=crop&auto=format&q=80"
         ];
 
         const RV_REAL_PORTRAIT_PHOTOS = [
@@ -9170,6 +9208,60 @@
         const rvGlobalUsedCommentTexts = new Set();
         // Ensemble des comptes autonomes réellement présents ou ajoutés dans l'application (Firestore `users` / état créé)
         const rvCreatedAutonomousAccountsMap = new Map();
+        // Registre global garantissant que 2 comptes autonomes n'ont JAMAIS la même photo de profil
+        const rvGlobalUsedProfilePhotos = new Set();
+        const rvPhotoByAccountUidMap = new Map();
+
+        function getUniqueWebPhotoForAutonomousAccount(safeIdx, gender, uid, username, forCommenting = false) {
+            if (rvPhotoByAccountUidMap.has(uid)) {
+                return rvPhotoByAccountUidMap.get(uid);
+            }
+            const isFemale = (gender === 'F');
+            const genderIdx = Math.floor((safeIdx - 1) / 2); // 0..799 par sexe
+            const genderPool = isFemale ? RV_PHOTOS_CM_WOMEN : RV_PHOTOS_CM_MEN;
+
+            let chosenPhoto = "";
+            // 1. Pour les premiers comptes de chaque sexe (0..24) ou un commentateur, utiliser un portrait Web unique du même sexe jamais attribué
+            if (genderIdx < genderPool.length) {
+                const candidate = genderPool[genderIdx];
+                if (!rvGlobalUsedProfilePhotos.has(candidate)) {
+                    chosenPhoto = candidate;
+                }
+            }
+            if (!chosenPhoto && forCommenting) {
+                const unusedPortrait = genderPool.find(p => !rvGlobalUsedProfilePhotos.has(p));
+                if (unusedPortrait) chosenPhoto = unusedPortrait;
+            }
+            // 2. Sinon, attribuer une nouvelle photo trouvée sur le Web (paysage, nature, voiture, architecture, objet...) 100% unique à ce compte
+            if (!chosenPhoto) {
+                const landscapeIdx = safeIdx - (RV_PHOTOS_CM_MEN.length + RV_PHOTOS_CM_WOMEN.length) - 1;
+                if (landscapeIdx >= 0 && landscapeIdx < RV_WEB_LANDSCAPE_AND_OBJECT_PHOTOS.length) {
+                    const candLandscape = RV_WEB_LANDSCAPE_AND_OBJECT_PHOTOS[landscapeIdx];
+                    if (!rvGlobalUsedProfilePhotos.has(candLandscape)) {
+                        chosenPhoto = candLandscape;
+                    }
+                }
+            }
+            // 3. Photo Web unique via Picsum / Unsplash (chaque seed/ID correspond à une vraie photographie Web de paysage ou d'objet unique pour chacun des 1 600 comptes)
+            if (!chosenPhoto) {
+                let attempt = 0;
+                while (!chosenPhoto && attempt < 2000) {
+                    const safeSeedUser = encodeURIComponent(String(username || '').replace(/\s+/g, '_'));
+                    const candidateWebUrl = attempt === 0
+                        ? `https://picsum.photos/seed/rv_web_photo_${safeIdx}_${safeSeedUser}/240/240`
+                        : `https://picsum.photos/seed/rv_web_photo_${safeIdx}_${safeSeedUser}_${attempt}/240/240`;
+                    if (!rvGlobalUsedProfilePhotos.has(candidateWebUrl)) {
+                        chosenPhoto = candidateWebUrl;
+                        break;
+                    }
+                    attempt++;
+                }
+            }
+
+            rvGlobalUsedProfilePhotos.add(chosenPhoto);
+            rvPhotoByAccountUidMap.set(uid, chosenPhoto);
+            return chosenPhoto;
+        }
 
         function getActiveGeminiApiKey() {
             const rawKey = String(window.GEMINI_API_KEY || (typeof GEMINI_API_KEY !== 'undefined' ? GEMINI_API_KEY : '') || safeGetStorage('rv_gemini_api_key', '') || '').trim();
@@ -9179,16 +9271,103 @@
             return rawKey;
         }
 
+        // ============================================================================
+        // SURVEILLANCE CONSTANTE DU QUOTA GEMINI 2.5 FLASH (LE CERVEAU DES COMPTES AUTONOMES)
+        // Si le quota est épuisé, AUCUNE réaction des comptes autonomes n'est exécutée.
+        // ============================================================================
+        let rvGeminiBrainQuotaActive = false;
+        let rvLastGeminiQuotaCheckMs = 0;
+        let rvGeminiQuotaCheckPromise = null;
+        let rvGeminiQuotaMonitorInterval = null;
+        const RV_GEMINI_QUOTA_CHECK_INTERVAL_MS = 45 * 1000; // Vérification constante toutes les 45 secondes
+
+        function markGeminiBrainQuotaState(isActive) {
+            const prev = rvGeminiBrainQuotaActive;
+            rvGeminiBrainQuotaActive = !!isActive;
+            rvLastGeminiQuotaCheckMs = Date.now();
+            if (!prev && rvGeminiBrainQuotaActive) {
+                // Dès que le quota redevient actif, relancer les réactions en attente
+                setTimeout(() => {
+                    if (typeof syncRealLikesFromExistingAutonomousAccounts === 'function') {
+                        syncRealLikesFromExistingAutonomousAccounts().catch(() => {});
+                    }
+                }, 500);
+            }
+            return rvGeminiBrainQuotaActive;
+        }
+
+        async function checkGeminiBrainQuotaActive(force = false) {
+            const apiKey = getActiveGeminiApiKey();
+            if (!apiKey) {
+                return markGeminiBrainQuotaState(false);
+            }
+            const now = Date.now();
+            if (!force && rvLastGeminiQuotaCheckMs > 0 && (now - rvLastGeminiQuotaCheckMs) < 20000) {
+                return rvGeminiBrainQuotaActive;
+            }
+            if (rvGeminiQuotaCheckPromise) {
+                return rvGeminiQuotaCheckPromise;
+            }
+            rvGeminiQuotaCheckPromise = (async () => {
+                try {
+                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+                    const resp = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: "ok" }] }],
+                            generationConfig: {
+                                maxOutputTokens: 8,
+                                temperature: 0,
+                                thinkingConfig: { thinkingBudget: 0 }
+                            }
+                        })
+                    });
+                    if (!resp.ok) {
+                        return markGeminiBrainQuotaState(false);
+                    }
+                    const data = await resp.json().catch(() => ({}));
+                    const isOk = !!(data && Array.isArray(data.candidates) && data.candidates.length > 0);
+                    return markGeminiBrainQuotaState(isOk);
+                } catch (e) {
+                    return markGeminiBrainQuotaState(false);
+                } finally {
+                    rvGeminiQuotaCheckPromise = null;
+                }
+            })();
+            return rvGeminiQuotaCheckPromise;
+        }
+
+        function startConstantGeminiQuotaMonitor() {
+            if (rvGeminiQuotaMonitorInterval) {
+                clearInterval(rvGeminiQuotaMonitorInterval);
+                rvGeminiQuotaMonitorInterval = null;
+            }
+            checkGeminiBrainQuotaActive(true).catch(() => {});
+            rvGeminiQuotaMonitorInterval = setInterval(() => {
+                checkGeminiBrainQuotaActive(true).catch(() => {});
+            }, RV_GEMINI_QUOTA_CHECK_INTERVAL_MS);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    checkGeminiBrainQuotaActive(true).catch(() => {});
+                }
+            });
+        }
+
         function loadPersistedAutonomousCommentsMap() {
             try {
                 const raw = safeGetStorage('rv_gemini_auto_comments_v2', '{}');
                 const parsed = JSON.parse(raw || '{}') || {};
                 for (const [vId, arr] of Object.entries(parsed)) {
                     if (Array.isArray(arr)) {
-                        rvAutonomousCommentsByVideoId.set(vId, arr);
                         arr.forEach(c => {
+                            if (c && c.userId && isAutonomousAccountUid(c.userId)) {
+                                const freshAcc = getAutonomousCameroonianAccount(c.userId, true);
+                                if (freshAcc && freshAcc.username) c.username = freshAcc.username;
+                            }
                             if (c && c.text) rvGlobalUsedCommentTexts.add(String(c.text).trim().toLowerCase());
                         });
+                        rvAutonomousCommentsByVideoId.set(vId, arr);
                     }
                 }
             } catch (e) {}
@@ -9260,13 +9439,17 @@
             let photo = String(commentObj.userPhotoURL || '').trim();
             const gender = commentObj.gender || (String(commentObj.userId || '').includes('_f_') ? 'F' : 'M');
             const pool = gender === 'F' ? RV_PHOTOS_CM_WOMEN : RV_PHOTOS_CM_MEN;
-            if (!photo || usedPhotos.has(photo) || !pool.includes(photo)) {
+            if (!photo || usedPhotos.has(photo)) {
                 const available = pool.find(p => !usedPhotos.has(p));
                 if (!available) return;
                 photo = available;
             }
+            const freshAutoAcc = (commentObj.userId && isAutonomousAccountUid(commentObj.userId))
+                ? getAutonomousCameroonianAccount(commentObj.userId, true)
+                : null;
             const normalized = {
                 ...commentObj,
+                username: (freshAutoAcc && freshAutoAcc.username) ? freshAutoAcc.username : commentObj.username,
                 userPhotoURL: photo,
                 gender,
                 isVirtualAuto: true,
@@ -9338,9 +9521,8 @@
 
         // ============================================================================
         // CRÉATION RÉELLE DES COMPTES AUTONOMES DANS L'APPLICATION (1 / 10 MIN, MAX 1 600)
-        // Un compte autonome se crée après 10 minutes, est enregistré dans Firestore
-        // (`users/{uid}`) et est affiché/notifié à l'administrateur virgulemili@gmail.com
-        // en précisant clairement qu'il s'agit d'un compte autonome créé.
+        // Chaque compte créé reçoit un nom 100% unique ET une photo de profil Web 100% unique
+        // (jamais deux comptes n'ont la même photo de profil).
         // ============================================================================
         function getSuccessiveCreatedCmAccountsCount() {
             try {
@@ -9365,27 +9547,20 @@
             const isFemale = (safeIdx % 2 === 0);
             const gender = isFemale ? 'F' : 'M';
             const firstNames = isFemale ? RV_CM_FEMALE_FIRST_NAMES : RV_CM_MALE_FIRST_NAMES;
+            const diversifiers = isFemale ? RV_CM_FEMALE_DIVERSIFIERS : RV_CM_MALE_DIVERSIFIERS;
             const genderIdx = Math.floor((safeIdx - 1) / 2); // 0..799 par sexe
-            const totalPairs = firstNames.length * RV_CM_LAST_NAMES.length; // 70 * 70 = 4900 combinaisons uniques par sexe
+            const totalPairs = firstNames.length * diversifiers.length; // 70 * 70 = 4900 combinaisons uniques par sexe
             const pairIdx = (genderIdx * 139 + (isFemale ? 37 : 0)) % totalPairs; // 139 est premier avec 4900 -> bijection garantie
             const fIdx = pairIdx % firstNames.length;
-            const lIdx = (Math.floor(pairIdx / firstNames.length) + fIdx) % RV_CM_LAST_NAMES.length;
+            const dIdx = (Math.floor(pairIdx / firstNames.length) + fIdx) % diversifiers.length;
             const fName = firstNames[fIdx];
-            const lName = RV_CM_LAST_NAMES[lIdx];
-            const username = `${fName}_${lName}`.toLowerCase();
+            const divSuffix = diversifiers[dIdx];
+            const username = `${fName}${divSuffix}`;
             const uid = `cm_auto_${isFemale ? 'f' : 'm'}_${safeIdx}`;
             const bio = RV_CM_CITIES_AND_BIOS[safeIdx % RV_CM_CITIES_AND_BIOS.length];
 
-            // Pour les comptes qui commentent (et les 50 premiers comptes) : photo 100% personne noire africaine selon le sexe.
-            // Pour l'ensemble des 1600 comptes créés au fil du temps : chacun a sa propre photo de profil unique.
-            let photoURL = "";
-            if (forCommenting || safeIdx <= (RV_PHOTOS_CM_MEN.length + RV_PHOTOS_CM_WOMEN.length)) {
-                const genderPool = isFemale ? RV_PHOTOS_CM_WOMEN : RV_PHOTOS_CM_MEN;
-                const photoIdx = Math.floor((safeIdx - 1) / 2) % genderPool.length;
-                photoURL = genderPool[photoIdx];
-            } else {
-                photoURL = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(uid + '_' + username)}`;
-            }
+            // Photo de profil 100% unique (jamais partagée avec un autre compte autonome)
+            const photoURL = getUniqueWebPhotoForAutonomousAccount(safeIdx, gender, uid, username, forCommenting);
 
             const acc = {
                 uid,
@@ -9418,27 +9593,191 @@
             }
             const m = s.match(/(\d+)$/);
             const idx = m ? parseInt(m[1], 10) : ((rvHashStr(s) % RV_CM_TOTAL_ACCOUNTS) + 1);
-            const acc = getAutonomousCameroonianAccountByIndex(idx, forCommenting);
-            if (s.startsWith('cm_auto_f_') && acc.gender !== 'F') {
-                acc.gender = 'F';
-                acc.photoURL = RV_PHOTOS_CM_WOMEN[idx % RV_PHOTOS_CM_WOMEN.length];
-            } else if (s.startsWith('cm_auto_m_') && acc.gender !== 'M') {
-                acc.gender = 'M';
-                acc.photoURL = RV_PHOTOS_CM_MEN[idx % RV_PHOTOS_CM_MEN.length];
-            }
-            return acc;
+            return getAutonomousCameroonianAccountByIndex(idx, forCommenting);
         }
 
-        // Enregistre un compte autonome réellement créé dans Firestore `users`
-        // ET affiche/notifie sa création à l'administrateur virgulemili@gmail.com en précisant qu'il s'agit d'un compte autonome.
+        // Envoie une notification réelle à n'importe quel utilisateur de l'application lorsqu'un compte autonome
+        // aime sa vidéo, commente sa vidéo, répond à son commentaire ou s'abonne à son profil.
+        async function sendNotificationFromAutonomousAccount(autoAcc, targetUid, type, text, extraData = {}, customDocId = '') {
+            if (!autoAcc || !autoAcc.uid || !targetUid || String(targetUid) === String(autoAcc.uid)) return;
+            const cleanTargetUid = String(targetUid).trim();
+            if (isAutonomousAccountUid(cleanTargetUid)) return;
+            try {
+                const payload = {
+                    type,
+                    text,
+                    targetUid: cleanTargetUid,
+                    toUid: cleanTargetUid,
+                    fromUid: autoAcc.uid,
+                    fromUsername: autoAcc.username,
+                    fromPhoto: autoAcc.photoURL || "",
+                    fromVerified: false,
+                    isAutonomousInteraction: true,
+                    createdAt: serverTimestamp(),
+                    createdAtMs: Date.now(),
+                    read: false,
+                    ...extraData
+                };
+                if (customDocId) {
+                    await setDoc(doc(db, "users", cleanTargetUid, "notifications", customDocId), payload, { merge: true });
+                } else {
+                    await addDoc(collection(db, "users", cleanTargetUid, "notifications"), payload);
+                }
+
+                // Déclencher également la notification push OneSignal si l'utilisateur cible est abonné
+                if (typeof dispatchOneSignalPersonalPush === 'function') {
+                    const titleMap = {
+                        like: `❤️ Nouveau J'aime de @${autoAcc.username}`,
+                        comment: `💬 Nouveau commentaire de @${autoAcc.username}`,
+                        reply: `💬 Nouvelle réponse de @${autoAcc.username}`,
+                        follow: `👤 @${autoAcc.username} s'est abonné à toi`
+                    };
+                    const pushTitle = titleMap[type] || `🔔 @${autoAcc.username} sur R-Videos`;
+                    const pushBody = `@${autoAcc.username} ${String(text || "")}`;
+                    dispatchOneSignalPersonalPush({
+                        targetUid: cleanTargetUid,
+                        targetUserData: null,
+                        type,
+                        title: pushTitle,
+                        body: pushBody,
+                        extraData: {
+                            ...extraData,
+                            fromPhoto: autoAcc.photoURL || ""
+                        }
+                    });
+                }
+            } catch (e) {}
+        }
+
+        // Permet aux comptes autonomes les plus intéressés de donner également des vues de profil au créateur
+        async function recordInterestedAutonomousAccountProfileView(autoAcc, creatorUid, sourceVideoId = '') {
+            if (!rvGeminiBrainQuotaActive) return;
+            if (!autoAcc || !autoAcc.uid || !creatorUid || isAutonomousAccountUid(creatorUid)) return;
+            const cleanCreatorUid = String(creatorUid).trim();
+            try {
+                const creatorRef = doc(db, "users", cleanCreatorUid);
+                const creatorSnap = await getDoc(creatorRef);
+                if (!creatorSnap.exists()) return;
+                const creatorData = creatorSnap.data() || {};
+                if (creatorData.profileViewsEnabled === false) return;
+
+                let existingViewers = Array.isArray(creatorData.profileViewers) ? [...creatorData.profileViewers] : [];
+                const alreadyViewed = existingViewers.some(v => v && String(v.uid) === String(autoAcc.uid));
+                if (alreadyViewed) return;
+
+                const visitorEntry = {
+                    uid: autoAcc.uid,
+                    username: autoAcc.username,
+                    photoURL: autoAcc.photoURL || "",
+                    bio: autoAcc.bio || "",
+                    isVerified: false,
+                    isAutonomousProfile: true,
+                    ts: Date.now()
+                };
+
+                existingViewers = existingViewers.filter(v => v && v.uid && String(v.uid) !== String(autoAcc.uid) && !isVirtualBotIdOrUser(v.uid));
+                existingViewers.unshift(visitorEntry);
+                const cappedViewers = existingViewers.slice(0, 40);
+                const nextViewsCount = Math.max(existingViewers.length, Number(creatorData.profileViewsCount || 0) + 1);
+
+                await updateDoc(creatorRef, {
+                    profileViewers: cappedViewers,
+                    profileViewsCount: nextViewsCount
+                });
+
+                if (typeof currentProfileViewedData === 'object' && currentProfileViewedData && currentProfileViewedData.uid === cleanCreatorUid) {
+                    currentProfileViewedData.profileViewers = cappedViewers;
+                    currentProfileViewedData.profileViewsCount = nextViewsCount;
+                    const viewsCountEl = document.getElementById('profile-views-count');
+                    if (viewsCountEl && isProfileViewsEnabledForCurrentUser()) {
+                        const dedupCount = Math.max(nextViewsCount, getDeduplicatedRecentViewers(currentProfileViewedData).length);
+                        viewsCountEl.dataset.rawCount = String(dedupCount);
+                        viewsCountEl.innerText = formatCount(dedupCount);
+                    }
+                }
+            } catch (e) {}
+        }
+
+        // Permet à un compte autonome très intéressé de s'abonner réellement au créateur d'une publication
+        async function subscribeInterestedAutonomousAccountToCreator(autoAcc, creatorUid, sourceVideoId = '') {
+            if (!rvGeminiBrainQuotaActive) return;
+            if (!autoAcc || !autoAcc.uid || !creatorUid || isAutonomousAccountUid(creatorUid)) return;
+            const cleanCreatorUid = String(creatorUid).trim();
+            try {
+                const creatorRef = doc(db, "users", cleanCreatorUid);
+                const creatorSnap = await getDoc(creatorRef);
+                if (!creatorSnap.exists()) return;
+                const creatorData = creatorSnap.data() || {};
+                const currentFollowers = Array.isArray(creatorData.followers) ? creatorData.followers : [];
+                if (currentFollowers.includes(autoAcc.uid)) return;
+
+                const followerEntry = {
+                    uid: autoAcc.uid,
+                    username: autoAcc.username,
+                    photoURL: autoAcc.photoURL || "",
+                    isVerified: false,
+                    ts: Date.now()
+                };
+
+                await updateDoc(creatorRef, {
+                    followers: arrayUnion(autoAcc.uid),
+                    recentFollowers: arrayUnion(followerEntry)
+                });
+
+                await updateDoc(doc(db, "users", autoAcc.uid), {
+                    following: arrayUnion(cleanCreatorUid)
+                }).catch(() => {});
+
+                // Mettre à jour le compteur d'abonnés en direct si le profil est actuellement affiché
+                if (typeof currentProfileViewedData === 'object' && currentProfileViewedData && currentProfileViewedData.uid === cleanCreatorUid) {
+                    if (!Array.isArray(currentProfileViewedData.followers)) currentProfileViewedData.followers = [];
+                    if (!currentProfileViewedData.followers.includes(autoAcc.uid)) {
+                        currentProfileViewedData.followers.push(autoAcc.uid);
+                        const profFollowersEl = document.getElementById('profile-followers');
+                        if (profFollowersEl) {
+                            const validCount = currentProfileViewedData.followers.filter(id => !isVirtualBotIdOrUser(id)).length;
+                            profFollowersEl.dataset.rawCount = String(validCount);
+                            profFollowersEl.innerText = formatCount(validCount);
+                        }
+                    }
+                }
+
+                // Envoyer la notification d'abonnement à l'utilisateur
+                await sendNotificationFromAutonomousAccount(
+                    autoAcc,
+                    cleanCreatorUid,
+                    "follow",
+                    "a commencé à vous suivre",
+                    { videoId: sourceVideoId || "" },
+                    `auto_follow_${cleanCreatorUid}_${autoAcc.uid}`
+                );
+
+                // Un compte autonome très intéressé qui s'abonne consulte également le profil du créateur
+                await recordInterestedAutonomousAccountProfileView(autoAcc, cleanCreatorUid, sourceVideoId);
+            } catch (e) {}
+        }
+
+        // Enregistre un compte autonome réellement créé dans Firestore `users` avec une photo Web 100% unique
+        // ET affiche/notifie sa création à l'administrateur virgulemili@gmail.com.
         async function ensureAutonomousAccountSavedInFirestore(index1Based) {
             const acc = getAutonomousCameroonianAccountByIndex(index1Based, false);
             if (!acc || !acc.uid) return null;
-            rvCreatedAutonomousAccountsMap.set(acc.uid, acc);
             try {
                 const userRef = doc(db, "users", acc.uid);
                 const existingSnap = await getDoc(userRef);
-                const alreadyNotifiedAdmin = existingSnap.exists() && existingSnap.data()?.adminNotified === true;
+                const existingData = existingSnap.exists() ? (existingSnap.data() || {}) : null;
+                const alreadyNotifiedAdmin = !!(existingData && existingData.adminNotified === true);
+
+                // Si le compte existait déjà avec sa photo unique, la conserver et la verrouiller dans rvGlobalUsedProfilePhotos
+                if (existingData && existingData.photoURL && !rvPhotoByAccountUidMap.has(acc.uid)) {
+                    if (!rvGlobalUsedProfilePhotos.has(existingData.photoURL)) {
+                        acc.photoURL = existingData.photoURL;
+                        rvGlobalUsedProfilePhotos.add(existingData.photoURL);
+                        rvPhotoByAccountUidMap.set(acc.uid, existingData.photoURL);
+                    }
+                }
+
+                rvCreatedAutonomousAccountsMap.set(acc.uid, acc);
 
                 await setDoc(userRef, {
                     uid: acc.uid,
@@ -9449,7 +9788,7 @@
                     isVerified: false,
                     isAutonomousProfile: true,
                     adminNotified: true,
-                    createdAt: existingSnap.exists() && existingSnap.data()?.createdAt ? existingSnap.data().createdAt : serverTimestamp()
+                    createdAt: existingData?.createdAt ? existingData.createdAt : serverTimestamp()
                 }, { merge: true });
 
                 // Notifier et afficher à l'administrateur virgulemili@gmail.com en précisant qu'il s'agit d'un compte autonome créé
@@ -9482,21 +9821,48 @@
             return acc;
         }
 
-        // Charge les comptes autonomes déjà existants dans l'application (Firestore `users`)
+        // Charge les comptes autonomes déjà existants dans l'application (Firestore `users`) et garantit zéro photo en double
         async function syncExistingAutonomousAccountsFromFirestore() {
             try {
                 const qAuto = query(collection(db, "users"), where("isAutonomousProfile", "==", true));
                 const snap = await getDocs(qAuto);
-                snap.forEach(d => {
-                    const data = d.data() || {};
-                    const uid = d.id || data.uid;
+                const docsList = [];
+                snap.forEach(d => docsList.push({ id: d.id, data: d.data() || {} }));
+                docsList.sort((a, b) => {
+                    const idxA = parseInt((String(a.id).match(/(\d+)$/) || [0, 99999])[1], 10);
+                    const idxB = parseInt((String(b.id).match(/(\d+)$/) || [0, 99999])[1], 10);
+                    return idxA - idxB;
+                });
+
+                for (const item of docsList) {
+                    const data = item.data;
+                    const uid = item.id || data.uid;
                     if (uid && isAutonomousAccountUid(uid)) {
+                        const m = String(uid).match(/(\d+)$/);
+                        const idx = m ? parseInt(m[1], 10) : ((rvHashStr(uid) % RV_CM_TOTAL_ACCOUNTS) + 1);
+                        const gender = data.gender || (uid.startsWith('cm_auto_f_') ? 'F' : 'M');
+                        const baseAcc = getAutonomousCameroonianAccountByIndex(idx, false);
+                        let uniquePhoto = String(data.photoURL || '').trim();
+
+                        // Si la photo en base était absente ou déjà utilisée par un autre compte, lui attribuer une nouvelle photo Web unique
+                        if (!uniquePhoto || (rvGlobalUsedProfilePhotos.has(uniquePhoto) && rvPhotoByAccountUidMap.get(uid) !== uniquePhoto)) {
+                            uniquePhoto = getUniqueWebPhotoForAutonomousAccount(idx, gender, uid, data.username || baseAcc.username, false);
+                            updateDoc(doc(db, "users", uid), { photoURL: uniquePhoto }).catch(() => {});
+                        } else {
+                            rvGlobalUsedProfilePhotos.add(uniquePhoto);
+                            rvPhotoByAccountUidMap.set(uid, uniquePhoto);
+                        }
+
+                        if (data.username !== baseAcc.username) {
+                            updateDoc(doc(db, "users", uid), { username: baseAcc.username }).catch(() => {});
+                        }
                         const acc = {
                             uid,
-                            username: data.username || getAutonomousCameroonianAccount(uid).username,
-                            photoURL: data.photoURL || getAutonomousCameroonianAccount(uid).photoURL,
-                            bio: data.bio || "Membre R-Videos ✨",
-                            gender: data.gender || (uid.startsWith('cm_auto_f_') ? 'F' : 'M'),
+                            index: idx,
+                            username: baseAcc.username,
+                            photoURL: uniquePhoto,
+                            bio: data.bio || baseAcc.bio,
+                            gender,
                             isVerified: false,
                             isAutonomousProfile: true,
                             isVirtualAuto: true
@@ -9510,7 +9876,7 @@
                             });
                         }
                     }
-                });
+                }
                 const targetCount = getSuccessiveCreatedCmAccountsCount();
                 for (let i = 1; i <= targetCount; i++) {
                     const acc = getAutonomousCameroonianAccountByIndex(i, false);
@@ -9540,7 +9906,7 @@
             if (!v || typeof v !== 'object') return 0;
             const humanLikes = getPureHumanLikesCount(v);
             const realComments = getVerifiedRealCommentsCount(v.id, v);
-            const views = Math.max(0, Number(v.views || 0));
+            const views = getRealVideoViewsCount(v);
             const favs = getRealFavoritesCount(v);
             const reposts = getRealRepostsCount(v);
             const shares = getRealSharesCount(v);
@@ -9553,9 +9919,8 @@
 
         // ============================================================================
         // QUOTA CIBLE DE LIKES AUTONOMES (30 MIN À 1 575 MAX SELON LA VIRALITÉ)
-        // Important : Ceci définit uniquement le plafond cible pour chaque vidéo.
         // Aucun like fictif n'est affiché : seuls les comptes autonomes réellement
-        // présents ou ajoutés dans l'application peuvent liker la vidéo via `likedBy` !
+        // présents ou ajoutés dans l'application peuvent liker la vidéo via `likedBy`.
         // ============================================================================
         function assignGraduatedPopularityQuotas(videosInput = []) {
             if (Array.isArray(videosInput)) {
@@ -9601,18 +9966,21 @@
                 }
                 rvGraduatedQuotaByVideoId.set(v.id, targetAutoLikes);
             });
-            if (rvCreatedAutonomousAccountsMap.size > 0 && !rvIsSyncingAutoLikes) {
+            if (!rvIsSyncingAutoLikes) {
                 setTimeout(() => { syncRealLikesFromExistingAutonomousAccounts().catch(() => {}); }, 150);
             }
         }
 
         // Fait liker réellement les vidéos (dans `likedBy` sur Firestore) par les comptes autonomes
-        // qui sont présents ou viennent d'être ajoutés dans l'application, dans la limite du quota (30 à 1575).
+        // présents ou ajoutés dans l'application, envoie les notifications de like à tous les créateurs,
+        // fait s'abonner les comptes autonomes très intéressés, et garantit que 1 like autonome = 2 vues.
         let rvIsSyncingAutoLikes = false;
         async function syncRealLikesFromExistingAutonomousAccounts() {
             if (rvIsSyncingAutoLikes) return;
+            // Pas de réaction des comptes autonomes si le quota Gemini (leur cerveau) est épuisé
+            const isQuotaActive = await checkGeminiBrainQuotaActive();
+            if (!isQuotaActive) return;
             const activeAutoAccounts = Array.from(rvCreatedAutonomousAccountsMap.values());
-            if (activeAutoAccounts.length === 0) return;
 
             rvIsSyncingAutoLikes = true;
             try {
@@ -9620,46 +9988,115 @@
                 const allVideos = Array.from(rvAllKnownVideosCatalog.values()).filter(v => v && v.id && isVideoEligibleForPourToi(v));
                 for (const v of allVideos) {
                     const vidId = v.id;
+                    const authorUid = v.userId || '';
                     const targetQuota = rvGraduatedQuotaByVideoId.get(vidId) || RV_CM_MIN_LIKES;
                     const currentLikedBy = Array.isArray(v.likedBy) ? v.likedBy.filter(u => u && !isVirtualBotIdOrUser(u)) : [];
                     const currentLikedSet = new Set(currentLikedBy);
-                    const currentAutoLikesCount = currentLikedBy.filter(u => isAutonomousAccountUid(u)).length;
+                    const currentAutoLikers = currentLikedBy.filter(u => isAutonomousAccountUid(u));
+                    const currentAutoLikesCount = currentAutoLikers.length;
 
-                    // Le nombre de likes autonomes sur cette vidéo ne peut JAMAIS dépasser :
-                    // 1) le nombre de comptes autonomes réellement présents dans l'application
-                    // 2) le quota de viralité de la vidéo (entre 30 et 1575)
                     const maxAllowedNow = Math.min(targetQuota, activeAutoAccounts.length);
-                    if (currentAutoLikesCount >= maxAllowedNow) continue;
-
-                    const needed = maxAllowedNow - currentAutoLikesCount;
-                    const startOffset = rvHashStr(vidId) % activeAutoAccounts.length;
                     const newAutoLikers = [];
 
-                    for (let i = 0; i < activeAutoAccounts.length && newAutoLikers.length < needed; i++) {
-                        const candidateAcc = activeAutoAccounts[(startOffset + i) % activeAutoAccounts.length];
-                        if (candidateAcc && candidateAcc.uid && !currentLikedSet.has(candidateAcc.uid)) {
-                            currentLikedSet.add(candidateAcc.uid);
-                            newAutoLikers.push(candidateAcc);
+                    if (currentAutoLikesCount < maxAllowedNow && activeAutoAccounts.length > 0) {
+                        const needed = maxAllowedNow - currentAutoLikesCount;
+                        const startOffset = rvHashStr(vidId) % activeAutoAccounts.length;
+                        for (let i = 0; i < activeAutoAccounts.length && newAutoLikers.length < needed; i++) {
+                            const candidateAcc = activeAutoAccounts[(startOffset + i) % activeAutoAccounts.length];
+                            if (candidateAcc && candidateAcc.uid && !currentLikedSet.has(candidateAcc.uid)) {
+                                currentLikedSet.add(candidateAcc.uid);
+                                newAutoLikers.push(candidateAcc);
+                            }
                         }
                     }
 
-                    if (newAutoLikers.length > 0) {
-                        const updatedLikedBy = Array.from(currentLikedSet);
-                        const updatedLikesCount = updatedLikedBy.length;
+                    const updatedLikedBy = Array.from(currentLikedSet);
+                    const updatedLikesCount = updatedLikedBy.length;
+                    const totalAutoLikesNow = updatedLikedBy.filter(u => isAutonomousAccountUid(u)).length;
+
+                    // Règle : Chaque like d'un compte autonome compte pour 2 vues sur la pub (même sur ce qui est déjà en cours)
+                    const humanViewedSet = Array.isArray(v.viewedBy)
+                        ? new Set(v.viewedBy.filter(u => u && !isVirtualBotIdOrUser(u) && !isAutonomousAccountUid(u)))
+                        : new Set();
+                    const minExpectedViews = humanViewedSet.size + (totalAutoLikesNow * 2);
+                    const currentStoredViews = Math.max(0, Number(v.views || 0));
+                    const updatedViewsCount = Math.max(currentStoredViews, minExpectedViews);
+                    const viewsNeedsSync = updatedViewsCount !== currentStoredViews;
+
+                    if (newAutoLikers.length > 0 || viewsNeedsSync) {
                         v.likedBy = updatedLikedBy;
                         v.likes = updatedLikesCount;
+                        v.views = updatedViewsCount;
                         if (typeof profileVideosData === 'object' && profileVideosData && profileVideosData[vidId]) {
                             profileVideosData[vidId].likedBy = updatedLikedBy;
                             profileVideosData[vidId].likes = updatedLikesCount;
+                            profileVideosData[vidId].views = updatedViewsCount;
                         }
                         syncVideoLikeCountElementsInDom(vidId, updatedLikesCount);
 
+                        const vThumb = v.url ? (typeof getVideoThumbnail === 'function' ? getVideoThumbnail(v.url, v.thumbnailOffset || 0) : '') : '';
+                        const nowTs = Date.now();
+                        const likeEntries = newAutoLikers.map(a => ({
+                            uid: a.uid,
+                            username: a.username,
+                            photoURL: a.photoURL || "",
+                            isVerified: false,
+                            videoId: vidId,
+                            ts: nowTs
+                        }));
+
                         try {
-                            await updateDoc(doc(db, "videos", vidId), {
-                                likedBy: arrayUnion(...newAutoLikers.map(a => a.uid)),
-                                likes: updatedLikesCount
-                            });
+                            const updatePayload = {
+                                likes: updatedLikesCount,
+                                views: updatedViewsCount
+                            };
+                            if (newAutoLikers.length > 0) {
+                                updatePayload.likedBy = arrayUnion(...newAutoLikers.map(a => a.uid));
+                                updatePayload.recentLikers = arrayUnion(...likeEntries.slice(-10));
+                            }
+                            await updateDoc(doc(db, "videos", vidId), updatePayload);
                         } catch (e) {}
+
+                        // Envoyer les notifications de like à l'utilisateur propriétaire de la vidéo
+                        // et permettre aux comptes autonomes très intéressés de s'abonner à son profil
+                        if (authorUid && newAutoLikers.length > 0) {
+                            try {
+                                await updateDoc(doc(db, "users", authorUid), {
+                                    recentLikesReceived: arrayUnion(...likeEntries.slice(-10))
+                                });
+                            } catch (e) {}
+
+                            for (const likerAcc of newAutoLikers) {
+                                await sendNotificationFromAutonomousAccount(
+                                    likerAcc,
+                                    authorUid,
+                                    "like",
+                                    "a aimé votre vidéo",
+                                    { videoId: vidId, videoUrl: v.url || "", videoThumb: vThumb },
+                                    `auto_like_${vidId}_${likerAcc.uid}`
+                                );
+
+                                // Si ce compte autonome est très intéressé par le contenu du créateur, il donne une vue de profil et peut s'abonner !
+                                const interestScore = (rvHashStr(`${likerAcc.uid}_${authorUid}`) % 100);
+                                if (interestScore < 45) {
+                                    await recordInterestedAutonomousAccountProfileView(likerAcc, authorUid, vidId);
+                                }
+                                if (interestScore < 30) {
+                                    await subscribeInterestedAutonomousAccountToCreator(likerAcc, authorUid, vidId);
+                                }
+                            }
+                        }
+                    } else if (authorUid && currentAutoLikers.length > 0 && rvGeminiBrainQuotaActive) {
+                        // S'assurer que les comptes autonomes déjà très intéressés par ce créateur ont pu donner leur vue de profil
+                        const interestedExisting = currentAutoLikers
+                            .filter(u => (rvHashStr(`${u}_${authorUid}`) % 100) < 40)
+                            .slice(0, 6);
+                        for (const uId of interestedExisting) {
+                            const acc = getAutonomousCameroonianAccount(uId, false);
+                            if (acc) {
+                                await recordInterestedAutonomousAccountProfileView(acc, authorUid, vidId);
+                            }
+                        }
                     }
                 }
             } finally {
@@ -9672,7 +10109,6 @@
         }
 
         // AUCUN LIKE FICTIF : Retourne strictement le nombre de likes réels enregistrés dans `videoData.likedBy`
-        // (utilisateurs humains réels + comptes autonomes réellement présents/ajoutés dans l'application ayant liké la vidéo)
         function getRealLikesCount(videoData) {
             if (!videoData) return 0;
             if (Array.isArray(videoData.likedBy)) {
@@ -9681,12 +10117,20 @@
             return 0;
         }
 
+        // Chaque like d'un compte autonome compte comme 2 vues sur la publication (y compris sur les publications déjà en cours)
         function getRealVideoViewsCount(videoData) {
             if (!videoData) return 0;
-            if (Array.isArray(videoData.viewedBy)) {
-                return new Set(videoData.viewedBy.filter(uid => uid && !isVirtualBotIdOrUser(uid))).size;
-            }
-            return Math.max(0, Number(videoData.views || 0));
+            const humanViews = Array.isArray(videoData.viewedBy)
+                ? new Set(videoData.viewedBy.filter(uid => uid && !isVirtualBotIdOrUser(uid) && !isAutonomousAccountUid(uid))).size
+                : 0;
+            const autoLikes = Array.isArray(videoData.likedBy)
+                ? new Set(videoData.likedBy.filter(uid => uid && isAutonomousAccountUid(uid))).size
+                : 0;
+            const effectiveViews = humanViews + (autoLikes * 2);
+            const storedViews = Math.max(0, Number(videoData.views || 0));
+            const finalViews = Math.max(effectiveViews, storedViews);
+            videoData.views = finalViews;
+            return finalViews;
         }
 
         function getEffectiveCommentsCount(videoData, explicitId = '') {
@@ -9779,6 +10223,10 @@
                     likedByArr.push(likedMap[item.id]);
                 }
 
+                if (item.userId && isAutonomousAccountUid(item.userId)) {
+                    const freshAcc = getAutonomousCameroonianAccount(item.userId, true);
+                    if (freshAcc && freshAcc.username) item.username = freshAcc.username;
+                }
                 if (typeof userProfileCache !== 'undefined' && userProfileCache) {
                     userProfileCache.set(item.userId, {
                         username: item.username,
@@ -9801,9 +10249,74 @@
         }
 
         // ============================================================================
-        // EXTRACTION LÉGÈRE DE SÉQUENCE D'IMAGES (FRAMES) OU IMAGE DU FIL POUR GEMINI FLASH
+        // EXTRACTION MULTIMODALE (SÉQUENCE D'IMAGES + PISTE AUDIO) POUR GEMINI FLASH
         // ============================================================================
-        async function fetchImageUrlAsBase64Jpeg(imgUrl, maxDim = 320, quality = 0.58) {
+        function arrayBufferToBase64(buffer) {
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            const len = bytes.byteLength;
+            const chunkSize = 0x8000;
+            for (let i = 0; i < len; i += chunkSize) {
+                binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + chunkSize, len)));
+            }
+            return btoa(binary);
+        }
+
+        async function fetchAudioUrlAsBase64InlinePart(audioUrl, mimeType = 'audio/mp3', maxBytes = 2200000) {
+            if (!audioUrl) return null;
+            try {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 6500);
+                const resp = await fetch(audioUrl, { signal: controller.signal });
+                clearTimeout(timer);
+                if (!resp.ok) return null;
+                const buf = await resp.arrayBuffer();
+                if (!buf || buf.byteLength === 0 || buf.byteLength > maxBytes) return null;
+                const b64 = arrayBufferToBase64(buf);
+                return b64 ? { mime_type: mimeType, data: b64 } : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function extractLightweightAudioPartForGemini(videoData) {
+            if (!videoData) return null;
+            const url = String(videoData.url || '').trim();
+            const isPhoto = !!(videoData.isPhotoPost || videoData.mediaType === 'image' || /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(url));
+            const isOriginalMuted = !!(videoData.studioConfig?.muteOriginalAudio === true || Number(videoData.studioConfig?.videoVolume ?? 1) <= 0.02);
+
+            if (!isPhoto && !isOriginalMuted && url.includes('/video/upload/')) {
+                const trimStartSec = Math.max(0, Number(videoData.trimStart || 0));
+                const cleanMp3Url = url
+                    .replace(/\.(mp4|webm|mov|mkv)(\?.*)?$/i, '.mp3')
+                    .replace('/video/upload/', `/video/upload/so_${trimStartSec.toFixed(1)},du_15.0,br_48k,f_mp3/`);
+                const audioPart = await fetchAudioUrlAsBase64InlinePart(cleanMp3Url, 'audio/mp3');
+                if (audioPart) return audioPart;
+            }
+
+            const attachedAudioUrl = String(videoData.soundUrl || videoData.studioConfig?.musicUrl || '').trim();
+            if (attachedAudioUrl) {
+                if (attachedAudioUrl.includes('/video/upload/') || attachedAudioUrl.includes('/raw/upload/')) {
+                    const cleanAttachedMp3 = attachedAudioUrl
+                        .replace(/\.(mp4|webm|mov|wav|ogg|m4a|mp3)(\?.*)?$/i, '.mp3')
+                        .replace('/video/upload/', '/video/upload/so_0,du_12.0,br_48k,f_mp3/');
+                    const attachedPart = await fetchAudioUrlAsBase64InlinePart(cleanAttachedMp3, 'audio/mp3');
+                    if (attachedPart) return attachedPart;
+                } else {
+                    const directAudioPart = await fetchAudioUrlAsBase64InlinePart(attachedAudioUrl, 'audio/mp3', 1500000);
+                    if (directAudioPart) return directAudioPart;
+                }
+            }
+
+            if (!isPhoto && !isOriginalMuted && url && /\.(mp4|webm)(\?|$)/i.test(url)) {
+                const fallbackVideoAudio = await fetchAudioUrlAsBase64InlinePart(url, 'audio/mp4', 1800000);
+                if (fallbackVideoAudio) return fallbackVideoAudio;
+            }
+
+            return null;
+        }
+
+        async function fetchImageUrlAsBase64Jpeg(imgUrl, maxDim = 320, quality = 0.62) {
             if (!imgUrl) return null;
             return new Promise((resolve) => {
                 const img = new Image();
@@ -9843,7 +10356,7 @@
             });
         }
 
-        async function extractLightweightFramesFromVideoElement(videoUrl, frameCount = 3) {
+        async function extractLightweightFramesFromVideoElement(videoUrl, frameCount = 4) {
             if (!videoUrl) return [];
             return new Promise((resolve) => {
                 const vid = document.createElement('video');
@@ -9855,14 +10368,15 @@
                 const timeout = setTimeout(() => {
                     try { vid.removeAttribute('src'); vid.load(); } catch (e) {}
                     resolve(frames);
-                }, 7000);
+                }, 7500);
 
                 vid.onloadedmetadata = async () => {
-                    const dur = (vid.duration && isFinite(vid.duration) && vid.duration > 0.5) ? vid.duration : 4.0;
+                    const dur = (vid.duration && isFinite(vid.duration) && vid.duration > 0.5) ? vid.duration : 5.0;
                     const offsets = [
-                        Math.max(0.2, dur * 0.15),
-                        Math.max(0.6, dur * 0.50),
-                        Math.max(1.0, dur * 0.82)
+                        Math.max(0.2, dur * 0.10),
+                        Math.max(0.6, dur * 0.36),
+                        Math.max(1.1, dur * 0.64),
+                        Math.max(1.5, dur * 0.88)
                     ].slice(0, frameCount);
 
                     for (const sec of offsets) {
@@ -9873,13 +10387,13 @@
                                     const canvas = document.createElement('canvas');
                                     const vw = vid.videoWidth || 240;
                                     const vh = vid.videoHeight || 320;
-                                    const maxDim = 280;
+                                    const maxDim = 320;
                                     const scale = Math.min(1, maxDim / Math.max(vw, vh));
                                     canvas.width = Math.max(1, Math.round(vw * scale));
                                     canvas.height = Math.max(1, Math.round(vh * scale));
                                     const ctx = canvas.getContext('2d');
                                     ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
-                                    const dataUrl = canvas.toDataURL('image/jpeg', 0.55);
+                                    const dataUrl = canvas.toDataURL('image/jpeg', 0.60);
                                     const b64 = dataUrl.split(',')[1] || '';
                                     resFrame(b64 ? { mime_type: 'image/jpeg', data: b64 } : null);
                                 } catch (e) {
@@ -9914,69 +10428,112 @@
             const isPhoto = !!(videoData.isPhotoPost || videoData.mediaType === 'image' || /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(url));
 
             if (isPhoto && url) {
-                const singleImg = await fetchImageUrlAsBase64Jpeg(url, 360, 0.65);
+                const singleImg = await fetchImageUrlAsBase64Jpeg(url, 380, 0.68);
                 return singleImg ? [singleImg] : [];
             }
 
             if (url.includes('/video/upload/')) {
-                const baseTransformOffsets = ['so_0.8', 'so_2.5', 'so_4.5'];
+                const trimStartSec = Math.max(0, Number(videoData.trimStart || 0));
+                const baseTransformOffsets = [
+                    `so_${(trimStartSec + 0.5).toFixed(1)}`,
+                    `so_${(trimStartSec + 2.0).toFixed(1)}`,
+                    `so_${(trimStartSec + 4.0).toFixed(1)}`,
+                    `so_${(trimStartSec + 6.5).toFixed(1)}`
+                ];
                 const cleanUrl = url.replace(/\.(mp4|webm|mov|mkv)(\?.*)?$/i, '.jpg');
                 const frameUrls = baseTransformOffsets.map(so =>
-                    cleanUrl.replace('/video/upload/', `/video/upload/${so},w_280,q_auto:low,f_jpg/`)
+                    cleanUrl.replace('/video/upload/', `/video/upload/${so},w_320,q_auto:good,f_jpg/`)
                 );
-                const results = await Promise.all(frameUrls.map(u => fetchImageUrlAsBase64Jpeg(u, 280, 0.55)));
+                const results = await Promise.all(frameUrls.map(u => fetchImageUrlAsBase64Jpeg(u, 320, 0.62)));
                 const validFrames = results.filter(Boolean);
                 if (validFrames.length > 0) return validFrames;
             }
 
-            const html5Frames = await extractLightweightFramesFromVideoElement(url, 3);
+            const html5Frames = await extractLightweightFramesFromVideoElement(url, 4);
             if (html5Frames.length > 0) return html5Frames;
 
             const thumbUrl = videoData.coverUrl || (typeof getVideoThumbnail === 'function' ? getVideoThumbnail(url, videoData.thumbnailOffset || 0) : '');
             if (thumbUrl) {
-                const thumbPart = await fetchImageUrlAsBase64Jpeg(thumbUrl, 320, 0.6);
+                const thumbPart = await fetchImageUrlAsBase64Jpeg(thumbUrl, 340, 0.65);
                 if (thumbPart) return [thumbPart];
             }
             return [];
+        }
+
+        function getAppLanguageInfoForGemini() {
+            const code = String((typeof window.getCurrentLangCode === 'function' ? window.getCurrentLangCode() : safeGetStorage('rv_lang', 'fr')) || 'fr').toLowerCase().trim();
+            const langMap = {
+                fr: { name: 'français', instruction: 'Écris OBLIGATOIREMENT en français naturel', typingLabel: 'écrit un message...' },
+                en: { name: 'English', instruction: 'Write STRICTLY in natural, casual English', typingLabel: 'is typing...' },
+                es: { name: 'español', instruction: 'Escribe OBLIGATORIAMENTE en español natural y espontáneo', typingLabel: 'está escribiendo...' },
+                pt: { name: 'português', instruction: 'Escreva OBRIGATORIAMENTE em português natural e espontâneo', typingLabel: 'está digitando...' },
+                de: { name: 'Deutsch', instruction: 'Schreibe UNBEDINGT in natürlichem, lockerem Deutsch', typingLabel: 'schreibt...' },
+                tr: { name: 'Türkçe', instruction: 'MUTLAKA doğal ve samimi bir Türkçe ile yaz', typingLabel: 'yazıyor...' },
+                id: { name: 'Bahasa Indonesia', instruction: 'Tulis WAJIB dalam Bahasa Indonesia yang alami dan santai', typingLabel: 'sedang mengetik...' },
+                vi: { name: 'Tiếng Việt', instruction: 'BẮT BUỘC viết bằng Tiếng Việt tự nhiên, gần gũi', typingLabel: 'đang nhập...' },
+                hi: { name: 'हिन्दी (Hindi)', instruction: 'अनिवार्य रूप से स्वाभाविक हिन्दी (Hindi) में लिखें', typingLabel: 'टाइप कर रहा है...' },
+                zh: { name: '中文 (Chinese)', instruction: '必须使用自然、地道的中文书写', typingLabel: '正在输入...' },
+                ja: { name: '日本語 (Japanese)', instruction: '必ず自然で親しみやすい日本語で書いてください', typingLabel: '入力中...' },
+                ko: { name: '한국어 (Korean)', instruction: '반드시 자연스럽고 친근한 한국어로 작성하세요', typingLabel: '입력 중...' },
+                ar: { name: 'العربية (Arabic)', instruction: 'اكتب حصرياً باللغة العربية الطبيعية والعفوية', typingLabel: 'يكتب الآن...' },
+                it: { name: 'italiano', instruction: 'Scrivi OBBLIGATORIAMENTE in italiano naturale e spontaneo', typingLabel: 'sta scrivendo...' },
+                ru: { name: 'русский (Russian)', instruction: 'Пиши ОБЯЗАТЕЛЬНО на естественном русском языке', typingLabel: 'печатает...' }
+            };
+            return { code, ...(langMap[code] || langMap.fr) };
         }
 
         async function generateIntelligentCommentWithGeminiFlash(videoData, account, existingComments = [], replyTarget = null) {
             const apiKey = getActiveGeminiApiKey();
             if (!apiKey) return null;
 
-            const visualParts = await extractLightweightVisualPartsForGemini(videoData);
+            const [visualParts, audioPart] = await Promise.all([
+                extractLightweightVisualPartsForGemini(videoData),
+                extractLightweightAudioPartForGemini(videoData)
+            ]);
+
+            const langInfo = getAppLanguageInfoForGemini();
             const desc = String(videoData?.description || '').trim();
             const overlayTxt = String(videoData?.studioConfig?.overlayText || '').trim();
+            const stickerTxt = String(videoData?.studioConfig?.overlaySticker || '').trim();
             const soundTitle = String(videoData?.soundTitle || '').trim();
+            const locationTxt = String(videoData?.location || '').trim();
+            const creatorHandle = String(videoData?.username || 'createur').trim();
             const prevTexts = existingComments
                 .map(c => String(c?.text || '').trim())
                 .filter(Boolean)
                 .slice(-15);
 
-            const genderLabel = account.gender === 'F' ? 'une jeune femme africaine' : 'un jeune homme africain';
+            const genderLabel = account.gender === 'F' ? 'une jeune femme' : 'un jeune homme';
             const taskInstruction = replyTarget
-                ? `Tu réponds directement au commentaire de @${replyTarget.username} qui a dit : "${replyTarget.text}". Écris une réponse pertinente, intelligente, naturelle et chaleureuse ou pleine d'esprit en lien avec la publication et son commentaire.`
-                : `Analyse la séquence d'images de cette publication et écris un commentaire intelligent, spontané, humain et 100% naturel qui réagit précisément à ce qu'on voit dans la vidéo/image ou à son ambiance.`;
+                ? `Tu réponds directement au commentaire de @${replyTarget.username} qui a dit : "${replyTarget.text}". Appuie-toi sur ta compréhension réelle de la vidéo (images + audio) et sur son commentaire pour lui répondre avec intelligence, naturel et répartie dans la langue enregistrée de l'application (${langInfo.name}).`
+                : `Avant de commenter, analyse attentivement la séquence d'images de la vidéo AINSI QUE la piste audio jointe (écoute ce qui est dit, les paroles, le ton de la voix, les rires ou la musique). Comprends exactement le sens, l'action ou l'humour de la vidéo, puis écris un commentaire intelligent, pertinent et 100% naturel dans la langue enregistrée de l'application (${langInfo.name}) qui prouve que tu as bien compris la vidéo.`;
 
             const promptText = [
-                `Tu incarnes @${account.username} (${genderLabel}, bio: "${account.bio}") sur le réseau social vidéo R-Videos.`,
+                `Tu incarnes @${account.username} (${genderLabel}, bio: "${account.bio}") sur le réseau social R-Videos.`,
                 taskInstruction,
+                `Langue enregistrée de l'application : ${langInfo.name} (${langInfo.code}).`,
+                `Créateur de la publication : @${creatorHandle}`,
                 desc ? `Légende de la publication : "${desc}"` : '',
-                overlayTxt ? `Texte affiché sur la vidéo : "${overlayTxt}"` : '',
-                soundTitle ? `Son / Musique : "${soundTitle}"` : '',
-                prevTexts.length > 0 ? `Commentaires déjà présents sur cette publication (NE JAMAIS répéter les mêmes mots, tournures ou idées) :\n- ${prevTexts.join('\n- ')}` : '',
-                `Règles strictes :`,
-                `1. Écris en français naturel (1 à 2 phrases courtes maximum, style authentique de vrai utilisateur, avec éventuellement 1 ou 2 emojis adaptés).`,
-                `2. Ton commentaire doit être totalement unique et différent des commentaires précédents.`,
-                `3. Ne mets pas de guillemets autour de ta réponse, pas de hashtags, et renvoie uniquement le texte final du commentaire.`
+                overlayTxt ? `Texte inscrit sur la vidéo : "${overlayTxt}"` : '',
+                stickerTxt ? `Sticker sur la vidéo : "${stickerTxt}"` : '',
+                soundTitle ? `Titre du son / musique : "${soundTitle}"` : '',
+                locationTxt ? `Lieu : "${locationTxt}"` : '',
+                audioPart ? `Une piste audio de la vidéo est jointe : écoute attentivement les paroles, dialogues, intonations ou la musique pour réagir avec justesse.` : '',
+                prevTexts.length > 0 ? `Commentaires déjà présents sur cette publication (INTERDICTION STRICTE de répéter les mêmes idées, mots ou formules) :\n- ${prevTexts.join('\n- ')}` : '',
+                `Consignes obligatoires :`,
+                `1. Montre que tu as vraiment compris le contenu visuel et sonore de la vidéo (réagis à un détail précis de ce qu'on voit ou de ce qu'on entend, sans jamais faire de phrase générique vague).`,
+                `2. ${langInfo.instruction} (langue de l'application : ${langInfo.name} — 1 à 2 phrases courtes maximum, ton authentique et spontané de vrai spectateur, avec éventuellement 1 ou 2 emojis adaptés).`,
+                `3. Ton commentaire doit être totalement différent de tous les commentaires précédents.`,
+                `4. Renvoie uniquement le texte final du commentaire dans la langue ${langInfo.name} (sans guillemets, sans hashtags, sans préfixe d'explication).`
             ].filter(Boolean).join('\n');
 
             const contentsParts = [
                 ...visualParts.map(vp => ({ inline_data: vp })),
+                ...(audioPart ? [{ inline_data: audioPart }] : []),
                 { text: promptText }
             ];
 
-            const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+            const modelsToTry = ['gemini-2.5-flash'];
             for (const modelName of modelsToTry) {
                 try {
                     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`;
@@ -9986,41 +10543,364 @@
                         body: JSON.stringify({
                             contents: [{ parts: contentsParts }],
                             generationConfig: {
-                                temperature: 0.92,
-                                maxOutputTokens: 110,
-                                topP: 0.95
+                                temperature: 0.88,
+                                maxOutputTokens: 300,
+                                topP: 0.95,
+                                thinkingConfig: { thinkingBudget: 0 }
                             }
                         })
                     });
-                    if (!resp.ok) continue;
+                    if (!resp.ok) {
+                        markGeminiBrainQuotaState(false);
+                        continue;
+                    }
                     const data = await resp.json();
                     let generated = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join(' ').trim() || '';
                     generated = generated.replace(/^["'«»]+|["'«»]+$/g, '').trim();
-                    if (generated && generated.length >= 2 && !rvGlobalUsedCommentTexts.has(generated.toLowerCase())) {
-                        rvGlobalUsedCommentTexts.add(generated.toLowerCase());
-                        return generated;
+                    if (generated && generated.length >= 2) {
+                        markGeminiBrainQuotaState(true);
+                        if (!rvGlobalUsedCommentTexts.has(generated.toLowerCase())) {
+                            rvGlobalUsedCommentTexts.add(generated.toLowerCase());
+                            return generated;
+                        }
                     }
                 } catch (e) {}
             }
             return null;
         }
 
+        // ============================================================================
+        // RÉPONSES RÉALISTES EN INBOX (DM) ET AUX COMMENTAIRES AVEC LE CERVEAU GEMINI
+        // (Selon la langue à laquelle est enregistrée l'application)
+        // ============================================================================
+        const rvPendingAutonomousInboxReplyTimers = new Map();
+
+        function getLocalizedInboxFallbackReply(langCode, userText = '') {
+            const clean = String(userText || '').toLowerCase();
+            const isQuestion = clean.includes('?');
+            const fallbacks = {
+                fr: isQuestion
+                    ? ["Tout va super bien de mon côté et toi ? 😊✨", "Haha grave ! Et toi tu en penses quoi ? 🔥", "Oui carrément ! Ça fait plaisir de discuter avec toi 🙌"]
+                    : ["Merci pour ton message ! Ça fait super plaisir 😊🔥", "Salut ! J'espère que tu passes une excellente journée ✨🙌", "Trop cool ! On reste connectés par ici 😄💫"],
+                en: isQuestion
+                    ? ["Doing great over here, how about you? 😊✨", "Haha totally! What do you think about it? 🔥", "Yes definitely! Great chatting with you 🙌"]
+                    : ["Thanks for your message! Really nice hearing from you 😊🔥", "Hey! Hope you're having an amazing day ✨🙌", "So cool! Let's stay in touch 😄💫"],
+                es: isQuestion
+                    ? ["¡Todo súper bien por aquí! ¿Y tú qué tal? 😊✨", "¡Jaja totalmente! ¿Tú qué opinas? 🔥", "¡Sí claro! Qué gusto hablar contigo 🙌"]
+                    : ["¡Gracias por tu mensaje! Qué alegría saludarte 😊🔥", "¡Hola! Espero que estés teniendo un gran día ✨🙌", "¡Qué genial! Seguimos en contacto 😄💫"],
+                pt: isQuestion
+                    ? ["Tudo ótimo por aqui, e com você? 😊✨", "Haha com certeza! O que você acha? 🔥", "Sim, claro! Muito bom conversar com você 🙌"]
+                    : ["Obrigado pela mensagem! Muito bom falar com você 😊🔥", "Oi! Espero que seu dia esteja incrível ✨🙌", "Muito legal! Vamos mantendo contato 😄💫"],
+                de: isQuestion
+                    ? ["Mir geht's super, und dir? 😊✨", "Haha absolut! Was meinst du dazu? 🔥", "Ja klar! Freut mich total, mit dir zu schreiben 🙌"]
+                    : ["Danke für deine Nachricht! Freut mich sehr 😊🔥", "Hey! Ich wünsche dir einen tollen Tag ✨🙌", "Mega cool! Lass uns in Kontakt bleiben 😄💫"],
+                tr: isQuestion
+                    ? ["Bende her şey harika, sende ne var ne yok? 😊✨", "Haha kesinlikle! Sen ne düşünüyorsun? 🔥", "Evet tabii ki! Seninle sohbet etmek çok güzel 🙌"]
+                    : ["Mesajın için teşekkürler! Yazman çok hoş 😊🔥", "Selam! Umarım günün harika geçiyordur ✨🙌", "Çok iyi! İletişimde kalalım 😄💫"],
+                id: isQuestion
+                    ? ["Kabar baik di sini, kalau kamu gimana? 😊✨", "Haha bener banget! Menurutmu gimana? 🔥", "Iya dong! Senang bisa ngobrol sama kamu 🙌"]
+                    : ["Makasih pesannya! Senang banget bisa kenal kamu 😊🔥", "Halo! Semoga harimu menyenangkan ya ✨🙌", "Keren banget! Tetap semangat ya 😄💫"],
+                vi: isQuestion
+                    ? ["Mình vẫn khỏe lắm, còn bạn thế nào? 😊✨", "Haha chuẩn luôn! Bạn nghĩ sao về chuyện đó? 🔥", "Đúng rồi đó! Rất vui được trò chuyện với bạn 🙌"]
+                    : ["Cảm ơn tin nhắn của bạn nhé! Rất vui được làm quen 😊🔥", "Chào bạn! Chúc bạn một ngày thật tuyệt vời nhé ✨🙌", "Tuyệt quá! Giữ liên lạc nhé 😄💫"],
+                hi: isQuestion
+                    ? ["यहाँ सब बढ़िया है, आप बताओ कैसे हो? 😊✨", "हाहा बिल्कुल! आपका क्या ख्याल है? 🔥", "हाँ बिल्कुल! आपसे बात करके बहुत अच्छा लगा 🙌"]
+                    : ["आपके मैसेज के लिए शुक्रिया! आपसे बात करके खुशी हुई 😊🔥", "नमस्ते! उम्मीद है आपका दिन शानदार हो ✨🙌", "बहुत बढ़िया! जुड़े रहते हैं 😄💫"],
+                zh: isQuestion
+                    ? ["我这边挺好的呀，你呢？😊✨", "哈哈确实！你觉得呢？🔥", "当然啦！很高兴和你聊天 🙌"]
+                    : ["谢谢你的消息！很高兴认识你 😊🔥", "嗨！希望你今天过得开心 ✨🙌", "太棒了！常联系哦 😄💫"],
+                ja: isQuestion
+                    ? ["こっちはすごく元気だよ！そっちはどう？😊✨", "笑、ほんとそれ！どう思う？🔥", "うん、もちろん！話せて嬉しいよ 🙌"]
+                    : ["メッセージありがとう！すごく嬉しいよ 😊🔥", "やっほー！今日も素敵な一日になりますように ✨🙌", "いいね！これからも仲良くしてね 😄💫"],
+                ko: isQuestion
+                    ? ["저는 아주 잘 지내요! 어떻게 지내세요? 😊✨", "하하 완전 공감해요! 어떻게 생각하세요? 🔥", "네 그럼요! 대화 나누게 되어 정말 반가워요 🙌"]
+                    : ["메시지 고마워요! 연락 주셔서 정말 기뻐요 😊🔥", "안녕하세요! 오늘도 좋은 하루 보내시길 바랄게요 ✨🙌", "정말 멋지네요! 자주 소통해요 😄💫"]
+            };
+            const pool = fallbacks[langCode] || fallbacks.fr;
+            return pool[Math.floor(Math.random() * pool.length)];
+        }
+
+        async function generateAutonomousInboxReplyWithGemini(autoAcc, userMessageText, recentMessages = [], humanHandle = 'utilisateur') {
+            const langInfo = getAppLanguageInfoForGemini();
+            const apiKey = getActiveGeminiApiKey();
+            if (!apiKey) {
+                markGeminiBrainQuotaState(false);
+                return null;
+            }
+            const quotaOk = await checkGeminiBrainQuotaActive();
+            if (!quotaOk) {
+                return null;
+            }
+
+            const genderPersona = autoAcc.gender === 'F'
+                ? 'une jeune femme sympathique, expressive, spontanée et chaleureuse'
+                : 'un jeune homme sympathique, cool, spontané et chaleureux';
+
+            const historyLines = recentMessages
+                .slice(-14)
+                .map(m => {
+                    const isAuto = String(m.senderId) === String(autoAcc.uid);
+                    const rawTxt = typeof unescapeHtml === 'function' ? unescapeHtml(String(m.text || '')) : String(m.text || '');
+                    return `${isAuto ? `Moi (@${autoAcc.username})` : `@${humanHandle}`} : ${rawTxt}`;
+                })
+                .filter(Boolean)
+                .join('\n');
+
+            const promptText = [
+                `Tu incarnes @${autoAcc.username} (${genderPersona}, bio : "${autoAcc.bio}") dans la messagerie privée (Inbox / DM) du réseau social R-Videos.`,
+                `Tu discutes en privé avec @${humanHandle}.`,
+                `Langue enregistrée de l'application : ${langInfo.name} (${langInfo.code}).`,
+                historyLines ? `Historique récent de la conversation :\n${historyLines}` : '',
+                `Dernier message envoyé par @${humanHandle} : "${userMessageText}"`,
+                `Consignes obligatoires :`,
+                `1. ${langInfo.instruction}. Tu dois OBLIGATOIREMENT répondre dans la langue enregistrée de l'application (${langInfo.name}).`,
+                `2. Réponds comme une vraie personne humaine dans une messagerie privée (ton naturel, spontané, amical, 1 à 2 phrases courtes maximum, avec 1 ou 2 emojis adaptés).`,
+                `3. Réponds directement au contenu du message de @${humanHandle} avec intelligence et réalisme, en tenant compte de l'historique de la discussion.`,
+                `4. Ne dis JAMAIS que tu es une IA, un programme, un robot ou un compte autonome. Ne mentionne aucun autre réseau social externe.`,
+                `5. Renvoie uniquement le texte final de ton message en ${langInfo.name} (sans guillemets ni préfixe de nom).`
+            ].filter(Boolean).join('\n');
+
+            const modelsToTry = ['gemini-2.5-flash'];
+            for (const modelName of modelsToTry) {
+                try {
+                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`;
+                    const resp = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: promptText }] }],
+                            generationConfig: {
+                                temperature: 0.9,
+                                maxOutputTokens: 320,
+                                topP: 0.95,
+                                thinkingConfig: { thinkingBudget: 0 }
+                            }
+                        })
+                    });
+                    if (!resp.ok) {
+                        markGeminiBrainQuotaState(false);
+                        continue;
+                    }
+                    const data = await resp.json();
+                    let generated = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join(' ').trim() || '';
+                    generated = generated.replace(/^["'«»]+|["'«»]+$/g, '').replace(/^@[^:\s]+\s*:\s*/i, '').trim();
+                    if (generated && generated.length >= 1) {
+                        markGeminiBrainQuotaState(true);
+                        return generated;
+                    }
+                } catch (e) {
+                    markGeminiBrainQuotaState(false);
+                }
+            }
+            return null;
+        }
+
+        async function scheduleAutonomousInboxReplyWithGemini(chatId, autoUid, latestUserText, humanUid, humanHandle, humanPhotoUrl) {
+            if (!chatId || !autoUid || !isAutonomousAccountUid(autoUid) || !latestUserText) return;
+            // Pas de réaction si le quota Gemini est épuisé
+            const isQuotaActive = await checkGeminiBrainQuotaActive();
+            if (!isQuotaActive) return;
+
+            const timerKey = `${chatId}__${autoUid}`;
+            if (rvPendingAutonomousInboxReplyTimers.has(timerKey)) {
+                clearTimeout(rvPendingAutonomousInboxReplyTimers.get(timerKey));
+            }
+
+            const autoAcc = getAutonomousCameroonianAccount(autoUid, false);
+            if (!autoAcc) return;
+
+            // Marquer les messages de l'utilisateur comme "lus" après un court délai réaliste (~1.1s) uniquement si le quota est actif
+            setTimeout(async () => {
+                try {
+                    if (!rvGeminiBrainQuotaActive) return;
+                    const qUnread = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "asc"));
+                    const snapUnread = await getDocs(qUnread);
+                    const batch = writeBatch(db);
+                    let hasUpdates = false;
+                    snapUnread.forEach(d => {
+                        const m = d.data();
+                        if (m && m.senderId === humanUid && !m.read) {
+                            batch.update(doc(db, "chats", chatId, "messages", d.id), { read: true });
+                            hasUpdates = true;
+                        }
+                    });
+                    if (hasUpdates) await batch.commit();
+                    await updateDoc(doc(db, "chats", chatId), { [`unreadCounts.${autoUid}`]: 0 }).catch(() => {});
+                } catch (e) {}
+            }, 1100);
+
+            const typingDelayMs = 2400 + Math.floor(Math.random() * 1800);
+            const timerId = setTimeout(async () => {
+                rvPendingAutonomousInboxReplyTimers.delete(timerKey);
+                let typingEl = null;
+                try {
+                    const langInfo = getAppLanguageInfoForGemini();
+                    const box = document.getElementById('chat-messages');
+                    const isChatOpenNow = (typeof currentChatId !== 'undefined' && currentChatId === chatId && document.getElementById('chat-screen')?.classList.contains('open'));
+                    if (isChatOpenNow && box) {
+                        typingEl = document.createElement('div');
+                        typingEl.id = `auto-typing-${chatId}`;
+                        typingEl.className = "flex items-center gap-2 text-[11px] text-cyan-400/90 italic px-2 py-1 animate-pulse";
+                        typingEl.innerText = `@${autoAcc.username} ${langInfo.typingLabel || 'écrit...'}`;
+                        box.appendChild(typingEl);
+                        box.scrollTop = box.scrollHeight;
+                    }
+
+                    // Récupérer l'historique récent de la conversation
+                    let recentMessages = [];
+                    try {
+                        const snapMsgs = await getDocs(query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "asc")));
+                        snapMsgs.forEach(d => recentMessages.push({ id: d.id, ...d.data() }));
+                    } catch (e) {}
+
+                    const replyText = await generateAutonomousInboxReplyWithGemini(autoAcc, latestUserText, recentMessages, humanHandle);
+                    if (typingEl && typingEl.parentNode) typingEl.remove();
+                    if (!replyText) return;
+
+                    const replyNowMs = Date.now();
+                    const stillOpen = (typeof currentChatId !== 'undefined' && currentChatId === chatId && document.getElementById('chat-screen')?.classList.contains('open'));
+
+                    await addDoc(collection(db, "chats", chatId, "messages"), {
+                        text: escapeHtml(replyText),
+                        senderId: autoAcc.uid,
+                        createdAt: serverTimestamp(),
+                        createdAtMs: replyNowMs,
+                        read: !!stillOpen,
+                        isAutonomousAI: true
+                    });
+
+                    const chatUpdatePayload = {
+                        lastMessage: escapeHtml(replyText),
+                        lastUpdated: serverTimestamp(),
+                        lastMessageAtMs: replyNowMs,
+                        lastSenderId: autoAcc.uid,
+                        [`names.${autoAcc.uid}`]: autoAcc.username,
+                        [`photos.${autoAcc.uid}`]: autoAcc.photoURL || "",
+                        [`unreadCounts.${autoAcc.uid}`]: 0
+                    };
+                    if (stillOpen) {
+                        chatUpdatePayload[`unreadCounts.${humanUid}`] = 0;
+                    } else {
+                        chatUpdatePayload[`unreadCounts.${humanUid}`] = increment(1);
+                    }
+                    await updateDoc(doc(db, "chats", chatId), chatUpdatePayload).catch(() => {});
+
+                    if (!stillOpen && typeof dispatchOneSignalPersonalPush === 'function') {
+                        dispatchOneSignalPersonalPush({
+                            targetUid: humanUid,
+                            targetUserData: null,
+                            type: "message",
+                            title: `💬 Message de @${autoAcc.username}`,
+                            body: replyText,
+                            extraData: {
+                                chatId,
+                                chatSenderUid: autoAcc.uid,
+                                chatSenderName: autoAcc.username,
+                                chatSenderPhoto: autoAcc.photoURL || ""
+                            }
+                        });
+                    }
+                } catch (e) {
+                    if (typingEl && typingEl.parentNode) typingEl.remove();
+                }
+            }, typingDelayMs);
+
+            rvPendingAutonomousInboxReplyTimers.set(timerKey, timerId);
+        }
+
+        async function scheduleAutonomousCommentReplyToUser(videoId, autoUid, rootCommentId, userCommentId, userHandle, userCommentText) {
+            if (!videoId || !autoUid || !isAutonomousAccountUid(autoUid) || !userCommentText) return;
+            const isQuotaActive = await checkGeminiBrainQuotaActive();
+            if (!isQuotaActive) return;
+            const autoAcc = getAutonomousCameroonianAccount(autoUid, true);
+            if (!autoAcc) return;
+            setTimeout(async () => {
+                try {
+                    if (!(await checkGeminiBrainQuotaActive())) return;
+                    const targetVideo = (typeof profileVideosData === 'object' && profileVideosData && profileVideosData[videoId])
+                        ? profileVideosData[videoId]
+                        : { id: videoId, description: '' };
+                    const existingAuto = generateSmartAutonomousCommentsForVideo(videoId, targetVideo);
+                    const replyTarget = {
+                        id: rootCommentId || userCommentId,
+                        userId: auth.currentUser?.uid || '',
+                        username: userHandle || 'utilisateur',
+                        text: userCommentText
+                    };
+                    const replyText = await generateIntelligentCommentWithGeminiFlash(targetVideo, autoAcc, existingAuto, replyTarget);
+                    if (!replyText) return;
+
+                    const nowMs = Date.now();
+                    const replyCommentId = `cm_auto_c_${videoId}_${nowMs}_${Math.floor(Math.random() * 1000)}`;
+                    const newReplyObj = {
+                        id: replyCommentId,
+                        userId: autoAcc.uid,
+                        username: autoAcc.username,
+                        userPhotoURL: autoAcc.photoURL,
+                        gender: autoAcc.gender,
+                        text: replyText,
+                        parentCommentId: rootCommentId || userCommentId,
+                        replyToCommentId: userCommentId || rootCommentId,
+                        replyToUsername: userHandle || 'utilisateur',
+                        replyToUid: auth.currentUser?.uid || null,
+                        likes: 0,
+                        likedBy: [],
+                        isVirtualAuto: true,
+                        isAutonomousAI: true,
+                        createdAt: { seconds: Math.floor(nowMs / 1000), toMillis: () => nowMs }
+                    };
+
+                    ingestFirestoreAutonomousComment(videoId, newReplyObj);
+                    await setDoc(doc(db, `videos/${videoId}/comments`, replyCommentId), {
+                        userId: newReplyObj.userId,
+                        username: newReplyObj.username,
+                        userPhotoURL: newReplyObj.userPhotoURL,
+                        gender: newReplyObj.gender,
+                        text: newReplyObj.text,
+                        parentCommentId: newReplyObj.parentCommentId,
+                        replyToCommentId: newReplyObj.replyToCommentId,
+                        replyToUsername: newReplyObj.replyToUsername,
+                        replyToUid: newReplyObj.replyToUid,
+                        likes: 0,
+                        likedBy: [],
+                        isVirtualAuto: true,
+                        isAutonomousAI: true,
+                        createdAt: serverTimestamp()
+                    }).catch(() => {});
+
+                    if (auth.currentUser?.uid) {
+                        const vThumb = targetVideo.url ? (typeof getVideoThumbnail === 'function' ? getVideoThumbnail(targetVideo.url, targetVideo.thumbnailOffset || 0) : '') : '';
+                        await sendNotificationFromAutonomousAccount(
+                            autoAcc,
+                            auth.currentUser.uid,
+                            "reply",
+                            `a répondu à votre commentaire : ${replyText}`,
+                            {
+                                videoId,
+                                targetVideoId: videoId,
+                                videoUrl: targetVideo.url || "",
+                                videoThumb: vThumb,
+                                commentId: replyCommentId,
+                                parentCommentId: newReplyObj.parentCommentId,
+                                commentText: replyText
+                            }
+                        );
+                    }
+                } catch (e) {}
+            }, 4000 + Math.floor(Math.random() * 2500));
+        }
+
         function pickUniqueCommenterAccountForVideo(vidId, currentAutoComments = []) {
             const usedPhotos = new Set(currentAutoComments.map(c => String(c.userPhotoURL || '').trim()).filter(Boolean));
             const usedUids = new Set(currentAutoComments.map(c => String(c.userId || '').trim()).filter(Boolean));
-            const maxCreated = Math.max(15, getSuccessiveCreatedCmAccountsCount());
-            const startOffset = (rvHashStr(vidId) + currentAutoComments.length * 7 + Math.floor(Date.now() / 60000)) % maxCreated;
+            const totalPortraitAccounts = RV_PHOTOS_CM_MEN.length + RV_PHOTOS_CM_WOMEN.length; // 50 comptes avec portraits noirs africains uniques
+            const startOffset = (rvHashStr(vidId) + currentAutoComments.length * 7 + Math.floor(Date.now() / 60000)) % totalPortraitAccounts;
 
-            for (let i = 0; i < maxCreated * 2; i++) {
-                const idx = ((startOffset + i) % maxCreated) + 1;
+            for (let i = 0; i < totalPortraitAccounts; i++) {
+                const idx = ((startOffset + i) % totalPortraitAccounts) + 1;
                 const cand = getAutonomousCameroonianAccountByIndex(idx, true);
                 const genderPool = cand.gender === 'F' ? RV_PHOTOS_CM_WOMEN : RV_PHOTOS_CM_MEN;
-                let photo = cand.photoURL;
-                if (usedPhotos.has(photo)) {
-                    const freePhoto = genderPool.find(p => !usedPhotos.has(p));
-                    if (!freePhoto) continue;
-                    photo = freePhoto;
-                }
+                const photo = genderPool[Math.floor((idx - 1) / 2) % genderPool.length];
                 if (!usedUids.has(cand.uid) && !usedPhotos.has(photo)) {
                     return {
                         ...cand,
@@ -10031,9 +10911,53 @@
             return null;
         }
 
+        // Notifie l'administrateur (virgulemili@gmail.com) lorsqu'un utilisateur autonome commente une publication
+        async function notifyAdminOfAutonomousComment(commenter, targetVideo, commentObj, replyTarget = null) {
+            try {
+                const qAdmin = query(collection(db, "users"), where("email", "==", VIP_EMAIL));
+                const snapAdmin = await getDocs(qAdmin);
+                const vidId = targetVideo.id;
+                const vThumb = targetVideo.url ? (typeof getVideoThumbnail === 'function' ? getVideoThumbnail(targetVideo.url, targetVideo.thumbnailOffset || 0) : '') : '';
+                const actionLabel = replyTarget
+                    ? `[Commentaire Autonome • Réponse à @${replyTarget.username}] sur la pub de @${targetVideo.username || 'createur'} : "${commentObj.text}"`
+                    : `[Commentaire Autonome] sur la pub de @${targetVideo.username || 'createur'} : "${commentObj.text}"`;
+
+                if (!snapAdmin.empty) {
+                    const adminDoc = snapAdmin.docs[0];
+                    const adminData = adminDoc.data() || {};
+                    const adminUid = adminData.uid || adminDoc.id;
+                    await setDoc(doc(db, "users", adminUid, "notifications", `auto_cmt_${commentObj.id}`), {
+                        type: replyTarget ? 'reply' : 'comment',
+                        text: actionLabel,
+                        fromUid: commenter.uid,
+                        fromUsername: commenter.username,
+                        fromPhoto: commenter.photoURL || "",
+                        videoId: vidId,
+                        targetVideoId: vidId,
+                        videoUrl: targetVideo.url || "",
+                        videoThumb: vThumb,
+                        commentId: commentObj.id,
+                        parentCommentId: replyTarget ? replyTarget.id : null,
+                        isAutonomousCommentAlert: true,
+                        createdAt: serverTimestamp(),
+                        read: false
+                    }, { merge: true });
+                }
+
+                if (typeof isCurrentLoggedUserAdminVip === 'function' && isCurrentLoggedUserAdminVip()) {
+                    if (typeof showToast === 'function') {
+                        showToast(`💬 Compte autonome @${commenter.username} a commenté une pub : « ${commentObj.text.slice(0, 60)} »`, "info");
+                    }
+                }
+            } catch (e) {}
+        }
+
         async function runGeminiAutonomousViralCommentCycle() {
             const apiKey = getActiveGeminiApiKey();
             if (!apiKey) return;
+            // Pas de réaction des comptes autonomes quand le quota Gemini est épuisé
+            const isQuotaActive = await checkGeminiBrainQuotaActive();
+            if (!isQuotaActive) return;
 
             assignGraduatedPopularityQuotas();
             const allVideos = Array.from(rvAllKnownVideosCatalog.values()).filter(v => v && v.id && isVideoEligibleForPourToi(v));
@@ -10123,6 +11047,46 @@
                 });
             } catch (e) {}
 
+            // 1. Notifier le propriétaire de la publication (et l'auteur du commentaire en cas de réponse)
+            const vThumb = targetVideo.url ? (typeof getVideoThumbnail === 'function' ? getVideoThumbnail(targetVideo.url, targetVideo.thumbnailOffset || 0) : '') : '';
+            if (targetVideo.userId) {
+                await sendNotificationFromAutonomousAccount(
+                    commenter,
+                    targetVideo.userId,
+                    replyTarget ? "reply" : "comment",
+                    replyTarget ? `a répondu : "${commentText}"` : `a commenté : "${commentText}"`,
+                    {
+                        videoId: vidId,
+                        videoUrl: targetVideo.url || "",
+                        videoThumb: vThumb,
+                        commentId: commentId,
+                        parentCommentId: replyTarget ? replyTarget.id : commentId
+                    },
+                    `notif_cmt_${commentId}`
+                );
+                // Un utilisateur autonome qui prend le temps de commenter est très intéressé : il s'abonne au créateur !
+                await subscribeInterestedAutonomousAccountToCreator(commenter, targetVideo.userId, vidId);
+            }
+            if (replyTarget && replyTarget.userId && replyTarget.userId !== targetVideo.userId) {
+                await sendNotificationFromAutonomousAccount(
+                    commenter,
+                    replyTarget.userId,
+                    "reply",
+                    `a répondu à votre commentaire : "${commentText}"`,
+                    {
+                        videoId: vidId,
+                        videoUrl: targetVideo.url || "",
+                        videoThumb: vThumb,
+                        commentId: commentId,
+                        parentCommentId: replyTarget.id
+                    },
+                    `notif_rep_${commentId}`
+                );
+            }
+
+            // 2. Signaler également à l'administrateur (virgulemili@gmail.com) qu'un utilisateur autonome a commenté la pub
+            await notifyAdminOfAutonomousComment(commenter, targetVideo, newCommentObj, replyTarget);
+
             const updatedTotal = getEffectiveCommentsCount(targetVideo, vidId);
             syncVideoCommentCountElementsInDom(vidId, updatedTotal);
             if (typeof currentVideoIdForComments !== 'undefined' && currentVideoIdForComments === vidId) {
@@ -10173,8 +11137,8 @@
             }
             setStatusHtml(`<div class="p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-200 text-[11px] font-bold">⏳ Vérification de la clé API auprès de Google Gemini Flash...</div>`);
 
-            const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-            let lastErrorMsg = "Impossible de joindre l'API Gemini.";
+            const modelsToTry = ['gemini-2.5-flash'];
+            let lastErrorMsg = "Impossible de joindre l'API Gemini 2.5 Flash.";
 
             for (const modelName of modelsToTry) {
                 try {
@@ -10184,11 +11148,12 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             contents: [{ parts: [{ text: "Réponds uniquement par cette phrase exacte : Connexion Gemini Flash opérationnelle." }] }],
-                            generationConfig: { maxOutputTokens: 30, temperature: 0.1 }
+                            generationConfig: { maxOutputTokens: 200, temperature: 0.1, thinkingConfig: { thinkingBudget: 0 } }
                         })
                     });
                     const data = await resp.json().catch(() => ({}));
                     if (resp.ok && data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+                        markGeminiBrainQuotaState(true);
                         const reply = String(data.candidates[0].content.parts[0].text).trim();
                         const okHtml = `<div class="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-400/40 text-emerald-200 text-[11px] font-bold space-y-1">
                             <div>✅ Clé API valide et fonctionnelle avec Gemini !</div>
@@ -11211,8 +12176,15 @@
                 userProfileCache.set(uid, info);
                 return info;
             }
-            if (uid && String(uid).startsWith('cm_auto_') && !userProfileCache.has(uid)) {
-                getAutonomousCameroonianAccount(uid);
+            if (uid && String(uid).startsWith('cm_auto_')) {
+                const autoAcc = getAutonomousCameroonianAccount(uid);
+                if (autoAcc) {
+                    userProfileCache.set(uid, {
+                        username: autoAcc.username,
+                        isVerified: false,
+                        photoURL: autoAcc.photoURL || fallbackPhoto || ""
+                    });
+                }
             }
             if (uid && userProfileCache.has(uid)) {
                 const cached = userProfileCache.get(uid);
@@ -11236,6 +12208,17 @@
             if (uniqueUids.length === 0) return;
             await Promise.all(uniqueUids.map(async (uId) => {
                 try {
+                    if (isAutonomousAccountUid(uId)) {
+                        const autoAcc = getAutonomousCameroonianAccount(uId);
+                        if (autoAcc) {
+                            userProfileCache.set(uId, {
+                                username: autoAcc.username,
+                                isVerified: false,
+                                photoURL: autoAcc.photoURL || ""
+                            });
+                            return;
+                        }
+                    }
                     const snap = await getDoc(doc(db, "users", uId));
                     if (snap.exists()) {
                         const d = snap.data();
@@ -11793,6 +12776,7 @@
         function isNotificationStrictlyForUser(n, myUid) {
             if (!n || !myUid) return false;
             if (isVirtualBotIdOrUser(n.fromUid, '', n.isBot)) return false;
+            if (n.isAutonomousCommentAlert === true || n.isAutonomousAccountCreation === true) return true;
             // Strict recipient ownership check across all consolidated UIDs of the current user
             if (n.targetUid && !isMyAccountUid(n.targetUid, myUid)) return false;
             if (n.toUid && !isMyAccountUid(n.toUid, myUid)) return false;
@@ -21161,7 +22145,18 @@
 
             // 1. Always notify the person whose comment was replied to (even if they are also the video owner)
             if (targetReplyUid && targetReplyUid !== auth.currentUser.uid) {
-                await sendNotification(targetReplyUid, "reply", `a répondu à votre commentaire : ${summaryLabel}`, notifExtra);
+                if (isAutonomousAccountUid(targetReplyUid) && txt) {
+                    scheduleAutonomousCommentReplyToUser(
+                        activeVideoId,
+                        targetReplyUid,
+                        replySnapState?.parentCommentId || newCommentRef.id,
+                        newCommentRef.id,
+                        currentUserData?.username || auth.currentUser?.displayName || "utilisateur",
+                        txt
+                    );
+                } else {
+                    await sendNotification(targetReplyUid, "reply", `a répondu à votre commentaire : ${summaryLabel}`, notifExtra);
+                }
             }
 
             // 2. Also notify the video owner if they are not the same person who already got the reply notification
@@ -21414,14 +22409,25 @@
             }
 
             if (fromUid && fromUid !== auth.currentUser.uid) {
-                await sendNotification(fromUid, "reply", `a répondu à votre commentaire : ${txt}`, {
-                    videoId: activeVidId || "",
-                    videoUrl: vObj.url || "",
-                    videoThumb: vThumb,
-                    commentId: newReplyId || "",
-                    parentCommentId: rootCommentId || "",
-                    commentText: txt
-                });
+                if (isAutonomousAccountUid(fromUid) && activeVidId && txt) {
+                    scheduleAutonomousCommentReplyToUser(
+                        activeVidId,
+                        fromUid,
+                        rootCommentId || newReplyId,
+                        newReplyId || rootCommentId,
+                        currentUserData?.username || auth.currentUser?.displayName || "utilisateur",
+                        txt
+                    );
+                } else {
+                    await sendNotification(fromUid, "reply", `a répondu à votre commentaire : ${txt}`, {
+                        videoId: activeVidId || "",
+                        videoUrl: vObj.url || "",
+                        videoThumb: vThumb,
+                        commentId: newReplyId || "",
+                        parentCommentId: rootCommentId || "",
+                        commentText: txt
+                    });
+                }
             }
 
             if (inp) {
@@ -21741,7 +22747,9 @@
                 return;
             }
             inp.value = "";
-            const receiverDoc = await getDoc(doc(db, "users", currentChatReceiver));
+            const targetChatIdSnap = currentChatId;
+            const targetReceiverSnap = currentChatReceiver;
+            const receiverDoc = await getDoc(doc(db, "users", targetReceiverSnap));
             let rData = null;
             if (receiverDoc.exists()) {
                 rData = receiverDoc.data();
@@ -21750,10 +22758,16 @@
                     return;
                 }
             }
+            if (isAutonomousAccountUid(targetReceiverSnap)) {
+                const autoPeer = getAutonomousCameroonianAccount(targetReceiverSnap, false);
+                if (autoPeer) {
+                    rData = { ...(rData || {}), uid: autoPeer.uid, username: autoPeer.username, photoURL: autoPeer.photoURL || rData?.photoURL || "", bio: autoPeer.bio };
+                }
+            }
             const nowMs = Date.now();
             const myCleanHandle = String(currentUserData?.username || auth.currentUser.displayName || "utilisateur").replace(/^@+/, "");
             const myPhotoUrl = String(currentUserData?.photoURL || auth.currentUser.photoURL || "");
-            const peerCleanHandle = String(document.getElementById('chat-username')?.innerText || rData?.username || "utilisateur").replace(/^@+/, "");
+            const peerCleanHandle = String((isAutonomousAccountUid(targetReceiverSnap) && rData?.username) ? rData.username : (document.getElementById('chat-username')?.innerText || rData?.username || "utilisateur")).replace(/^@+/, "");
             const peerPhotoUrl = String(document.getElementById('chat-avatar')?.querySelector('img')?.src || rData?.photoURL || "");
 
             await addDoc(collection(db, "chats", currentChatId, "messages"), {
@@ -21806,19 +22820,30 @@
                 await updateDoc(cref, updateData);
             }
 
-            dispatchOneSignalPersonalPush({
-                targetUid: currentChatReceiver,
-                targetUserData: rData,
-                type: "message",
-                title: `💬 Message de @${myCleanHandle}`,
-                body: txt,
-                extraData: {
-                    chatId: currentChatId,
-                    chatSenderUid: auth.currentUser.uid,
-                    chatSenderName: myCleanHandle,
-                    chatSenderPhoto: myPhotoUrl
-                }
-            });
+            if (isAutonomousAccountUid(targetReceiverSnap)) {
+                scheduleAutonomousInboxReplyWithGemini(
+                    targetChatIdSnap,
+                    targetReceiverSnap,
+                    txt,
+                    auth.currentUser.uid,
+                    myCleanHandle,
+                    myPhotoUrl
+                );
+            } else {
+                dispatchOneSignalPersonalPush({
+                    targetUid: targetReceiverSnap,
+                    targetUserData: rData,
+                    type: "message",
+                    title: `💬 Message de @${myCleanHandle}`,
+                    body: txt,
+                    extraData: {
+                        chatId: targetChatIdSnap,
+                        chatSenderUid: auth.currentUser.uid,
+                        chatSenderName: myCleanHandle,
+                        chatSenderPhoto: myPhotoUrl
+                    }
+                });
+            }
         };
 
         window.toggleBlock = async () => {
@@ -24217,6 +25242,12 @@
                 }
 
                 let cand = item;
+                if (isAutonomousAccountUid(cand.uid)) {
+                    const freshAcc = getAutonomousCameroonianAccount(cand.uid);
+                    if (freshAcc) {
+                        cand = { ...cand, username: freshAcc.username, photoURL: cand.photoURL || freshAcc.photoURL, bio: freshAcc.bio || cand.bio || '' };
+                    }
+                }
                 let candPhoto = String(cand.photoURL || '').trim();
                 let candUser = String(cand.username || '').trim().toLowerCase();
 
@@ -24257,20 +25288,31 @@
 
         function getDeduplicatedRecentViewers(userData) {
             const seen = new Set();
-            const realUnique = [];
+            const uniqueViewers = [];
             if (userData && Array.isArray(userData.profileViewers)) {
                 const sorted = [...userData.profileViewers]
-                    .filter(v => v && v.uid && !isVirtualBotIdOrUser(v.uid) && !isAutonomousCmAccount(v))
+                    .filter(v => v && v.uid && !isVirtualBotIdOrUser(v.uid))
                     .sort((a, b) => (Number(b.ts) || 0) - (Number(a.ts) || 0));
                 for (const item of sorted) {
                     if (!seen.has(item.uid)) {
                         seen.add(item.uid);
-                        realUnique.push(item);
+                        if (isAutonomousAccountUid(item.uid)) {
+                            const freshAcc = getAutonomousCameroonianAccount(item.uid, false);
+                            uniqueViewers.push({
+                                ...item,
+                                username: freshAcc?.username || item.username,
+                                photoURL: freshAcc?.photoURL || item.photoURL || "",
+                                bio: freshAcc?.bio || item.bio || "",
+                                isVerified: false,
+                                isAutonomousProfile: true
+                            });
+                        } else {
+                            uniqueViewers.push(item);
+                        }
                     }
-                    if (realUnique.length >= PROFILE_RECENT_LIMIT) break;
                 }
             }
-            return realUnique;
+            return uniqueViewers;
         }
 
         window.openProfileSocialModal = (tab = 'likes') => {
@@ -24604,8 +25646,22 @@
                         listEl.innerHTML = "<div class='text-center text-xs text-gray-500 py-10'>Aucun visiteur récent sur ce profil.</div>";
                         return;
                     }
-                    // Hydrate latest profile info for up to 10 most recent visitors
+                    // Hydrate latest profile info for up to 10 most recent visitors (humains + comptes autonomes intéressés)
                     const hydratedViewers = await Promise.all(rawViewers.slice(0, PROFILE_RECENT_LIMIT).map(async (vItem) => {
+                        if (String(vItem.uid || '').startsWith('cm_auto_')) {
+                            const autoAcc = getAutonomousCameroonianAccount(vItem.uid, false);
+                            if (autoAcc) {
+                                return {
+                                    uid: autoAcc.uid,
+                                    username: autoAcc.username,
+                                    photoURL: autoAcc.photoURL,
+                                    bio: autoAcc.bio || "",
+                                    isVerified: false,
+                                    isAutonomousProfile: true,
+                                    ts: vItem.ts
+                                };
+                            }
+                        }
                         try {
                             const s = await getDoc(doc(db, "users", vItem.uid));
                             if (s.exists()) {
@@ -24695,11 +25751,12 @@
             const initialLikesFallback = Math.max(0, Number(data.likes || 0));
             document.getElementById('profile-likes').innerText = formatCount(initialLikesFallback); 
 
-            const realVisitorsOnly = getDeduplicatedRecentViewers(data);
+            const allDeduplicatedVisitors = getDeduplicatedRecentViewers(data);
             const viewsCountEl = document.getElementById('profile-views-count');
             const applyProfileViewsFromLikes = () => {
                 if (!viewsCountEl) return;
-                const computedProfileViews = realVisitorsOnly.length;
+                const storedViewsCount = Math.max(0, Number(data.profileViewsCount || 0));
+                const computedProfileViews = Math.max(storedViewsCount, allDeduplicatedVisitors.length);
                 data.__computedProfileViews = computedProfileViews;
                 if (currentProfileViewedData && currentProfileViewedData.uid === data.uid) {
                     currentProfileViewedData.__computedProfileViews = computedProfileViews;
@@ -25294,16 +26351,22 @@
                 rvGeminiCommentInterval = null;
             }
 
-            // 1. Synchroniser les comptes autonomes déjà présents dans l'application (Firestore `users`)
-            //    et faire liker réellement les vidéos uniquement par ces comptes autonomes existants
-            await syncExistingAutonomousAccountsFromFirestore();
-            await syncRealLikesFromExistingAutonomousAccounts();
+            // 0. Démarrer la surveillance constante du quota Gemini 2.5 Flash (cerveau des comptes autonomes)
+            startConstantGeminiQuotaMonitor();
+            const initialQuotaOk = await checkGeminiBrainQuotaActive(true);
 
-            // 2. Créer 1 nouveau compte autonome toutes les 10 minutes (max 1 600 comptes)
-            //    Chaque compte créé est enregistré dans Firestore, notifié à l'administrateur virgulemili@gmail.com
-            //    en précisant qu'il s'agit d'un compte autonome, puis like réellement les vidéos éligibles
+            // 1. Synchroniser les comptes autonomes déjà présents dans l'application (Firestore `users`)
+            //    et, uniquement si le quota Gemini est actif, synchroniser leurs réactions (likes, vues, abonnements, vues de profil)
+            await syncExistingAutonomousAccountsFromFirestore();
+            if (initialQuotaOk) {
+                await syncRealLikesFromExistingAutonomousAccounts();
+            }
+
+            // 2. Créer 1 nouveau compte autonome toutes les 10 minutes (max 1 600 comptes) uniquement si le quota Gemini est actif
             rvCmSuccessiveTimer = setInterval(async () => {
                 try {
+                    const quotaOk = await checkGeminiBrainQuotaActive(true);
+                    if (!quotaOk) return;
                     const currentCount = getSuccessiveCreatedCmAccountsCount();
                     if (currentCount >= 1 && currentCount <= RV_CM_TOTAL_ACCOUNTS) {
                         await ensureAutonomousAccountSavedInFirestore(currentCount);
@@ -25313,6 +26376,7 @@
             }, RV_AUTO_ACCOUNT_INTERVAL_MS); // 10 minutes
 
             // 3. Planificateur Gemini Flash : 1 commentaire intelligent (ou réponse) toutes les 10 minutes sur une vidéo virale
+            //    après analyse complète des images + de l'audio, avec notification à l'auteur, abonnement et signalement à l'admin
             const lastCommentTs = Number(safeGetStorage('rv_last_gemini_auto_comment_ts_v2', '0') || 0);
             const elapsedSinceLastComment = Date.now() - lastCommentTs;
             if (elapsedSinceLastComment >= RV_AUTO_COMMENT_INTERVAL_MS) {
