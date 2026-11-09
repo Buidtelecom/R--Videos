@@ -9331,86 +9331,38 @@
         }
 
         // ============================================================================
-        // SURVEILLANCE CONSTANTE DU QUOTA GEMINI 2.5 FLASH (LE CERVEAU DES COMPTES AUTONOMES)
-        // Si le quota est épuisé, AUCUNE réaction des comptes autonomes n'est exécutée.
+        // CERVEAU GEMINI 2.5 FLASH : RÉSERVÉ UNIQUEMENT AUX COMMENTAIRES (PRIORITÉ #1)
+        // ET À LA MESSAGERIE PRIVÉE (INBOX).
+        // Les autres réactions autonomes (likes, vues, abonnements, vues de profil,
+        // repartages, vues/likes de stories) fonctionnent de manière 100% autonome
+        // selon la logique de viralité de la publication, sans consommer le quota Gemini.
         // ============================================================================
-        let rvGeminiBrainQuotaActive = false;
-        let rvLastGeminiQuotaCheckMs = 0;
-        let rvGeminiQuotaCheckPromise = null;
-        let rvGeminiQuotaMonitorInterval = null;
-        const RV_GEMINI_QUOTA_CHECK_INTERVAL_MS = 45 * 1000; // Vérification constante toutes les 45 secondes
+        let rvGeminiBrainQuotaActive = true;
+        let rvLastGeminiQuotaExhaustedMs = 0;
+        const RV_GEMINI_QUOTA_COOLDOWN_MS = 60 * 1000; // Pause de 60s sur les appels Gemini si quota 429 détecté
 
         function markGeminiBrainQuotaState(isActive) {
-            const prev = rvGeminiBrainQuotaActive;
             rvGeminiBrainQuotaActive = !!isActive;
-            rvLastGeminiQuotaCheckMs = Date.now();
-            if (!prev && rvGeminiBrainQuotaActive) {
-                // Dès que le quota redevient actif, relancer les réactions en attente
-                setTimeout(() => {
-                    if (typeof syncRealLikesFromExistingAutonomousAccounts === 'function') {
-                        syncRealLikesFromExistingAutonomousAccounts().catch(() => {});
-                    }
-                }, 500);
+            if (!isActive) {
+                rvLastGeminiQuotaExhaustedMs = Date.now();
+            } else {
+                rvLastGeminiQuotaExhaustedMs = 0;
             }
             return rvGeminiBrainQuotaActive;
         }
 
-        async function checkGeminiBrainQuotaActive(force = false) {
+        async function checkGeminiBrainQuotaActive() {
             const apiKey = getActiveGeminiApiKey();
-            if (!apiKey) {
-                return markGeminiBrainQuotaState(false);
+            if (!apiKey) return false;
+            if (!rvGeminiBrainQuotaActive && (Date.now() - rvLastGeminiQuotaExhaustedMs) < RV_GEMINI_QUOTA_COOLDOWN_MS) {
+                return false;
             }
-            const now = Date.now();
-            if (!force && rvLastGeminiQuotaCheckMs > 0 && (now - rvLastGeminiQuotaCheckMs) < 20000) {
-                return rvGeminiBrainQuotaActive;
-            }
-            if (rvGeminiQuotaCheckPromise) {
-                return rvGeminiQuotaCheckPromise;
-            }
-            rvGeminiQuotaCheckPromise = (async () => {
-                try {
-                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
-                    const resp = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: "ok" }] }],
-                            generationConfig: {
-                                maxOutputTokens: 8,
-                                temperature: 0,
-                                thinkingConfig: { thinkingBudget: 0 }
-                            }
-                        })
-                    });
-                    if (!resp.ok) {
-                        return markGeminiBrainQuotaState(false);
-                    }
-                    const data = await resp.json().catch(() => ({}));
-                    const isOk = !!(data && Array.isArray(data.candidates) && data.candidates.length > 0);
-                    return markGeminiBrainQuotaState(isOk);
-                } catch (e) {
-                    return markGeminiBrainQuotaState(false);
-                } finally {
-                    rvGeminiQuotaCheckPromise = null;
-                }
-            })();
-            return rvGeminiQuotaCheckPromise;
+            return true;
         }
 
         function startConstantGeminiQuotaMonitor() {
-            if (rvGeminiQuotaMonitorInterval) {
-                clearInterval(rvGeminiQuotaMonitorInterval);
-                rvGeminiQuotaMonitorInterval = null;
-            }
-            checkGeminiBrainQuotaActive(true).catch(() => {});
-            rvGeminiQuotaMonitorInterval = setInterval(() => {
-                checkGeminiBrainQuotaActive(true).catch(() => {});
-            }, RV_GEMINI_QUOTA_CHECK_INTERVAL_MS);
-            document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible') {
-                    checkGeminiBrainQuotaActive(true).catch(() => {});
-                }
-            });
+            // Aucun appel inutile de ping : tout le quota Gemini est préservé en priorité pour les commentaires et l'Inbox
+            rvGeminiBrainQuotaActive = !!getActiveGeminiApiKey();
         }
 
         function loadPersistedAutonomousCommentsMap() {
@@ -9708,9 +9660,8 @@
             } catch (e) {}
         }
 
-        // Permet aux comptes autonomes les plus intéressés de donner également des vues de profil au créateur
+        // Permet aux comptes autonomes les plus intéressés de donner également des vues de profil au créateur (selon la viralité)
         async function recordInterestedAutonomousAccountProfileView(autoAcc, creatorUid, sourceVideoId = '') {
-            if (!rvGeminiBrainQuotaActive) return;
             if (!autoAcc || !autoAcc.uid || !creatorUid || isAutonomousAccountUid(creatorUid)) return;
             const cleanCreatorUid = String(creatorUid).trim();
             try {
@@ -9760,9 +9711,8 @@
             } catch (e) {}
         }
 
-        // Permet à un compte autonome très intéressé de s'abonner réellement au créateur d'une publication
+        // Permet à un compte autonome très intéressé de s'abonner réellement au créateur d'une publication (selon la viralité)
         async function subscribeInterestedAutonomousAccountToCreator(autoAcc, creatorUid, sourceVideoId = '') {
-            if (!rvGeminiBrainQuotaActive) return;
             if (!autoAcc || !autoAcc.uid || !creatorUid || isAutonomousAccountUid(creatorUid)) return;
             const cleanCreatorUid = String(creatorUid).trim();
             try {
@@ -10049,9 +9999,9 @@
         // Fait liker réellement les vidéos (dans `likedBy` sur Firestore) par les comptes autonomes
         // présents ou ajoutés dans l'application, envoie les notifications de like à tous les créateurs,
         // fait s'abonner les comptes autonomes très intéressés, et garantit que 1 like autonome = 2 vues.
-        // Permet à un compte autonome intéressé de repartager (repost) une vidéo qu'il a aimée
+        // Permet à un compte autonome intéressé de repartager (repost) une vidéo qu'il a aimée (selon la viralité)
         async function recordAutonomousVideoRepost(autoAcc, videoObj) {
-            if (!rvGeminiBrainQuotaActive || !autoAcc || !autoAcc.uid || !videoObj || !videoObj.id) return;
+            if (!autoAcc || !autoAcc.uid || !videoObj || !videoObj.id) return;
             const vidId = String(videoObj.id).trim();
             if (!rvAutonomousRepostsMap.has(autoAcc.uid)) {
                 rvAutonomousRepostsMap.set(autoAcc.uid, new Set());
@@ -10086,7 +10036,7 @@
 
         // Les comptes autonomes peuvent voir et liker les stories UNIQUEMENT s'ils figurent dans les vues de profil (`profileViewers`) du créateur !
         async function syncAutonomousStoryViewsAndLikesFromProfileViewers(creatorUid, preloadedCreatorData = null) {
-            if (!rvGeminiBrainQuotaActive || !creatorUid || isAutonomousAccountUid(creatorUid)) return;
+            if (!creatorUid || isAutonomousAccountUid(creatorUid)) return;
             const cleanCreatorUid = String(creatorUid).trim();
             const stories = typeof getUserActiveStories === 'function' ? getUserActiveStories(cleanCreatorUid) : [];
             if (!Array.isArray(stories) || stories.length === 0) return;
@@ -10212,9 +10162,8 @@
         let rvIsSyncingAutoLikes = false;
         async function syncRealLikesFromExistingAutonomousAccounts() {
             if (rvIsSyncingAutoLikes) return;
-            // Pas de réaction des comptes autonomes si le quota Gemini (leur cerveau) est épuisé
-            const isQuotaActive = await checkGeminiBrainQuotaActive();
-            if (!isQuotaActive) return;
+            // Les réactions autonomes (likes, vues, repartages, vues de profil, abonnements, stories)
+            // fonctionnent directement selon la logique de viralité de la publication (sans dépendre de Gemini).
             const activeAutoAccounts = Array.from(rvCreatedAutonomousAccountsMap.values());
 
             rvIsSyncingAutoLikes = true;
@@ -10311,41 +10260,50 @@
                                     `auto_like_${vidId}_${likerAcc.uid}`
                                 );
 
-                                // Si ce compte autonome est très intéressé par le contenu du créateur, il donne une vue de profil et peut s'abonner !
+                                // Logique de viralité de la publication : plus la vidéo est virale, plus les comptes autonomes
+                                // consultent le profil, s'abonnent et repartagent la publication
+                                const viralityRatio = Math.max(0.05, Math.min(1, (targetQuota - RV_CM_MIN_LIKES) / Math.max(1, RV_CM_MAX_LIKES - RV_CM_MIN_LIKES)));
+                                const profileViewChance = Math.round(22 + viralityRatio * 43); // 22% à 65% selon la viralité
+                                const followChance = Math.round(14 + viralityRatio * 31);      // 14% à 45% selon la viralité
+                                const repostChance = Math.round(10 + viralityRatio * 26);      // 10% à 36% selon la viralité
+
                                 const interestScore = (rvHashStr(`${likerAcc.uid}_${authorUid}`) % 100);
-                                if (interestScore < 45) {
+                                if (interestScore < profileViewChance) {
                                     await recordInterestedAutonomousAccountProfileView(likerAcc, authorUid, vidId);
                                 }
-                                if (interestScore < 30) {
+                                if (interestScore < followChance) {
                                     await subscribeInterestedAutonomousAccountToCreator(likerAcc, authorUid, vidId);
                                 }
-                                // Les comptes autonomes intéressés peuvent également repartager (repost) la vidéo
                                 const repostScore = (rvHashStr(`repost_${likerAcc.uid}_${vidId}`) % 100);
-                                if (repostScore < 28) {
+                                if (repostScore < repostChance) {
                                     await recordAutonomousVideoRepost(likerAcc, v);
                                 }
                             }
                         }
-                    } else if (authorUid && currentAutoLikers.length > 0 && rvGeminiBrainQuotaActive) {
-                        // S'assurer que les comptes autonomes déjà très intéressés par ce créateur ont pu donner leur vue de profil, s'abonner et repartager
+                    } else if (authorUid && currentAutoLikers.length > 0) {
+                        const viralityRatio = Math.max(0.05, Math.min(1, (targetQuota - RV_CM_MIN_LIKES) / Math.max(1, RV_CM_MAX_LIKES - RV_CM_MIN_LIKES)));
+                        const profileViewChance = Math.round(22 + viralityRatio * 43);
+                        const followChance = Math.round(14 + viralityRatio * 31);
+                        const repostChance = Math.round(10 + viralityRatio * 26);
+
                         const interestedExisting = currentAutoLikers
-                            .filter(u => (rvHashStr(`${u}_${authorUid}`) % 100) < 40)
+                            .filter(u => (rvHashStr(`${u}_${authorUid}`) % 100) < profileViewChance)
                             .slice(0, 8);
                         for (const uId of interestedExisting) {
                             const acc = getAutonomousCameroonianAccount(uId, false);
                             if (acc) {
                                 await recordInterestedAutonomousAccountProfileView(acc, authorUid, vidId);
-                                if ((rvHashStr(`${uId}_${authorUid}`) % 100) < 30) {
+                                if ((rvHashStr(`${uId}_${authorUid}`) % 100) < followChance) {
                                     if (!rvAutonomousFollowingMap.has(uId)) rvAutonomousFollowingMap.set(uId, new Set());
                                     rvAutonomousFollowingMap.get(uId).add(authorUid);
                                 }
-                                if ((rvHashStr(`repost_${uId}_${vidId}`) % 100) < 28) {
+                                if ((rvHashStr(`repost_${uId}_${vidId}`) % 100) < repostChance) {
                                     await recordAutonomousVideoRepost(acc, v);
                                 }
                             }
                         }
                     }
-                    if (authorUid && rvGeminiBrainQuotaActive) {
+                    if (authorUid) {
                         await syncAutonomousStoryViewsAndLikesFromProfileViewers(authorUid);
                     }
                 }
@@ -12374,24 +12332,66 @@
             } catch (e) {}
         }
 
+        let rvNavBadgeBatchTimer = null;
+        let rvDisplayedNavBadgeBaseline = 0;
+        let rvLastNavBadgeShownTotal = 0;
+        const RV_NAV_BADGE_DELAY_MS = 20000; // Afficher le nouveau nombre ajouté après un délai de regroupement (20s) sans incrémenter 1 par 1
+
         function acknowledgeMessagesTabSignal() {
             const uid = auth.currentUser?.uid;
             if (uid) {
                 saveSeenMessagesTabMap(uid, { ...latestUnreadChatSignatures });
             }
             totalUnreadChats = 0;
-            updateGlobalBadge();
+            updateGlobalBadge(true);
         }
 
-        function updateGlobalBadge() {
-            const total = totalUnreadNotifications + totalUnreadChats;
+        function renderNavInboxBadgeValue(val) {
             const navBadge = document.getElementById('inbox-badge');
-            if (navBadge) {
-                if (total > 0) { 
-                    navBadge.classList.remove('hidden'); 
-                    navBadge.innerText = total > 99 ? "+99" : total; 
-                } else { 
-                    navBadge.classList.add('hidden'); 
+            if (!navBadge) return;
+            if (val > 0) {
+                navBadge.classList.remove('hidden');
+                navBadge.innerText = val > 99 ? "+99" : String(val);
+            } else {
+                navBadge.classList.add('hidden');
+                navBadge.innerText = "0";
+            }
+        }
+
+        function updateGlobalBadge(forceImmediateReset = false) {
+            const total = Math.max(0, totalUnreadNotifications + totalUnreadChats);
+            const isInboxOpenNow = !!(document.getElementById('inbox-screen')?.classList.contains('active'));
+
+            // Si l'utilisateur ouvre la boîte de réception ou que le compteur tombe à 0, effacer immédiatement
+            if (total === 0 || forceImmediateReset || isInboxOpenNow) {
+                if (rvNavBadgeBatchTimer) {
+                    clearTimeout(rvNavBadgeBatchTimer);
+                    rvNavBadgeBatchTimer = null;
+                }
+                if (total === 0 || isInboxOpenNow) {
+                    rvDisplayedNavBadgeBaseline = total;
+                    rvLastNavBadgeShownTotal = 0;
+                    renderNavInboxBadgeValue(0);
+                } else {
+                    const deltaNow = Math.max(0, total - rvDisplayedNavBadgeBaseline);
+                    rvLastNavBadgeShownTotal = deltaNow > 0 ? deltaNow : total;
+                    renderNavInboxBadgeValue(rvLastNavBadgeShownTotal);
+                }
+            } else {
+                // Ne JAMAIS incrémenter successivement 1 par 1 dans la barre de navigation :
+                // attendre la fin de la fenêtre de temps puis afficher d'un seul coup le nouveau chiffre ajouté
+                if (!rvNavBadgeBatchTimer) {
+                    rvNavBadgeBatchTimer = setTimeout(() => {
+                        rvNavBadgeBatchTimer = null;
+                        const currentTotal = Math.max(0, totalUnreadNotifications + totalUnreadChats);
+                        if (currentTotal <= 0 || document.getElementById('inbox-screen')?.classList.contains('active')) {
+                            renderNavInboxBadgeValue(0);
+                            return;
+                        }
+                        const newlyAddedCount = Math.max(1, currentTotal - rvDisplayedNavBadgeBaseline);
+                        rvLastNavBadgeShownTotal = newlyAddedCount;
+                        renderNavInboxBadgeValue(newlyAddedCount);
+                    }, RV_NAV_BADGE_DELAY_MS);
                 }
             }
 
@@ -24593,7 +24593,7 @@
             storyViewerState.stories = stories;
             storyViewerState.currentIndex = Math.max(0, Math.min(startIndex, stories.length - 1));
             renderCurrentStorySlide();
-            if (rvGeminiBrainQuotaActive) {
+            if (targetUid) {
                 syncAutonomousStoryViewsAndLikesFromProfileViewers(targetUid).then(() => {
                     if (document.getElementById('story-viewer-modal')?.classList.contains('open') && storyViewerState.uid === targetUid) {
                         const refreshed = getUserActiveStories(targetUid);
@@ -27117,22 +27117,18 @@
                 rvGeminiCommentInterval = null;
             }
 
-            // 0. Démarrer la surveillance constante du quota Gemini 2.5 Flash (cerveau des comptes autonomes)
+            // 0. Initialiser l'état du cerveau Gemini 2.5 Flash (réservé en priorité aux commentaires et à la messagerie privée)
             startConstantGeminiQuotaMonitor();
-            const initialQuotaOk = await checkGeminiBrainQuotaActive(true);
 
             // 1. Synchroniser les comptes autonomes déjà présents dans l'application (Firestore `users`)
-            //    et, uniquement si le quota Gemini est actif, synchroniser leurs réactions (likes, vues, abonnements, vues de profil)
+            //    et synchroniser leurs réactions selon la logique de viralité des publications
             await syncExistingAutonomousAccountsFromFirestore();
-            if (initialQuotaOk) {
-                await syncRealLikesFromExistingAutonomousAccounts();
-            }
+            await syncRealLikesFromExistingAutonomousAccounts();
 
-            // 2. Créer 1 nouveau compte autonome toutes les 10 minutes (max 1 600 comptes) uniquement si le quota Gemini est actif
+            // 2. Créer 1 nouveau compte autonome toutes les 10 minutes (max 1 600 comptes)
+            //    et appliquer les réactions autonomes selon la viralité des publications
             rvCmSuccessiveTimer = setInterval(async () => {
                 try {
-                    const quotaOk = await checkGeminiBrainQuotaActive(true);
-                    if (!quotaOk) return;
                     const currentCount = getSuccessiveCreatedCmAccountsCount();
                     if (currentCount >= 1 && currentCount <= RV_CM_TOTAL_ACCOUNTS) {
                         await ensureAutonomousAccountSavedInFirestore(currentCount);
