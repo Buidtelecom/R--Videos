@@ -2901,9 +2901,18 @@
             const VIP_EMAIL = "virgulemili@gmail.com"; 
 
             // ============================================================================
-            // 👉 COLLEZ VOTRE CLÉ API GEMINI FLASH ICI AVANT D'EXÉCUTER LE CODE :
+            // 👉 POOL DE 4 CLÉS API GEMINI 2.5 FLASH EN ROTATION AUTOMATIQUE :
+            // L'application bascule automatiquement sur la clé suivante dès qu'une clé
+            // épuise son quota, et s'arrête si les 4 clés sont épuisées.
             // ============================================================================
-            const GEMINI_API_KEY = "AQ.Ab8RN6LZuKK53b8Dzz1twEXYOEGHsT3cQp6EUZG9y1pS4C5EhQ";
+            const GEMINI_API_KEYS_POOL = [
+                "AQ.Ab8RN6LZuKK53b8Dzz1twEXYOEGHsT3cQp6EUZG9y1pS4C5EhQ", // Clé 1
+                "AQ.Ab8RN6IcN7OG8x25M8OpAwqHtJLWY8Sduwbo79CUMpU2uV8a5A", // Clé 2
+                "AQ.Ab8RN6IjgZS9YUUds9hqHlcshsDnjmPLPYg2DO9GNVclrzN-BQ", // Clé 3
+                "AQ.Ab8RN6Kd6plGfYIfIXiWLcOteHCBO8K7BEY8_kbSnxqU_XEzVA"  // Clé 4
+            ];
+            window.GEMINI_API_KEYS_POOL = GEMINI_API_KEYS_POOL;
+            const GEMINI_API_KEY = GEMINI_API_KEYS_POOL[0];
             window.GEMINI_API_KEY = GEMINI_API_KEY;
         </script>
         
@@ -9324,47 +9333,165 @@
             return chosenPhoto;
         }
 
-        function getActiveGeminiApiKey() {
-            const rawKey = String(window.GEMINI_API_KEY || (typeof GEMINI_API_KEY !== 'undefined' ? GEMINI_API_KEY : '') || safeGetStorage('rv_gemini_api_key', '') || '').trim();
-            if (!rawKey || rawKey === 'COLLEZ_VOTRE_CLE_API_GEMINI_ICI' || rawKey === 'COLLER_VOTRE_CLE_API_ICI') {
-                return '';
-            }
-            return rawKey;
+        // ============================================================================
+        // GESTIONNAIRE DE ROTATION AUTOMATIQUE DES 4 CLÉS GEMINI 2.5 FLASH
+        // Passe automatiquement à la clé suivante dès qu'une clé est épuisée,
+        // et arrête les réactions Gemini (commentaires & Inbox) si toutes les 4 sont épuisées.
+        // ============================================================================
+        let rvCurrentGeminiKeyIndex = 0;
+        const rvExhaustedGeminiKeysMap = new Map(); // apiKey -> exhaustedUntilMs
+        const RV_SINGLE_KEY_COOLDOWN_MS = 3 * 60 * 1000; // 3 min de repos pour une clé épuisée avant nouvel essai
+        const RV_ALL_KEYS_EXHAUSTED_COOLDOWN_MS = 60 * 1000; // 60s d'arrêt complet quand les 4 clés sont épuisées
+        let rvGeminiBrainQuotaActive = true;
+        let rvLastAllGeminiKeysExhaustedMs = 0;
+
+        function getGeminiApiKeysPool() {
+            const pool = Array.isArray(window.GEMINI_API_KEYS_POOL) && window.GEMINI_API_KEYS_POOL.length > 0
+                ? window.GEMINI_API_KEYS_POOL
+                : [window.GEMINI_API_KEY || (typeof GEMINI_API_KEY !== 'undefined' ? GEMINI_API_KEY : '') || safeGetStorage('rv_gemini_api_key', '')];
+            return pool
+                .map(k => String(k || '').trim())
+                .filter(k => k && k !== 'COLLEZ_VOTRE_CLE_API_GEMINI_ICI' && k !== 'COLLER_VOTRE_CLE_API_ICI');
         }
 
-        // ============================================================================
-        // CERVEAU GEMINI 2.5 FLASH : RÉSERVÉ UNIQUEMENT AUX COMMENTAIRES (PRIORITÉ #1)
-        // ET À LA MESSAGERIE PRIVÉE (INBOX).
-        // Les autres réactions autonomes (likes, vues, abonnements, vues de profil,
-        // repartages, vues/likes de stories) fonctionnent de manière 100% autonome
-        // selon la logique de viralité de la publication, sans consommer le quota Gemini.
-        // ============================================================================
-        let rvGeminiBrainQuotaActive = true;
-        let rvLastGeminiQuotaExhaustedMs = 0;
-        const RV_GEMINI_QUOTA_COOLDOWN_MS = 60 * 1000; // Pause de 60s sur les appels Gemini si quota 429 détecté
+        function getOrderedCandidateGeminiKeys() {
+            const pool = getGeminiApiKeysPool();
+            if (pool.length === 0) return [];
+            const now = Date.now();
+            const available = [];
+            for (let offset = 0; offset < pool.length; offset++) {
+                const idx = (rvCurrentGeminiKeyIndex + offset) % pool.length;
+                const key = pool[idx];
+                const exhaustedUntil = rvExhaustedGeminiKeysMap.get(key) || 0;
+                if (now >= exhaustedUntil) {
+                    if (exhaustedUntil > 0) rvExhaustedGeminiKeysMap.delete(key);
+                    available.push({ key, index: idx, labelNumber: idx + 1 });
+                }
+            }
+            return available;
+        }
 
-        function markGeminiBrainQuotaState(isActive) {
-            rvGeminiBrainQuotaActive = !!isActive;
-            if (!isActive) {
-                rvLastGeminiQuotaExhaustedMs = Date.now();
+        function getActiveGeminiApiKey() {
+            const candidates = getOrderedCandidateGeminiKeys();
+            if (candidates.length > 0) {
+                window.GEMINI_API_KEY = candidates[0].key;
+                return candidates[0].key;
+            }
+            const pool = getGeminiApiKeysPool();
+            if (pool.length > 0 && (Date.now() - rvLastAllGeminiKeysExhaustedMs) >= RV_ALL_KEYS_EXHAUSTED_COOLDOWN_MS) {
+                rvExhaustedGeminiKeysMap.clear();
+                rvCurrentGeminiKeyIndex = (rvCurrentGeminiKeyIndex + 1) % pool.length;
+                window.GEMINI_API_KEY = pool[rvCurrentGeminiKeyIndex];
+                return pool[rvCurrentGeminiKeyIndex];
+            }
+            return '';
+        }
+
+        function markSingleGeminiKeyExhausted(apiKey) {
+            if (!apiKey) return;
+            const pool = getGeminiApiKeysPool();
+            rvExhaustedGeminiKeysMap.set(apiKey, Date.now() + RV_SINGLE_KEY_COOLDOWN_MS);
+            const curIdx = pool.indexOf(apiKey);
+            if (curIdx !== -1 && pool.length > 1) {
+                rvCurrentGeminiKeyIndex = (curIdx + 1) % pool.length;
+            }
+            const remaining = getOrderedCandidateGeminiKeys();
+            if (remaining.length > 0) {
+                window.GEMINI_API_KEY = remaining[0].key;
+                rvGeminiBrainQuotaActive = true;
             } else {
-                rvLastGeminiQuotaExhaustedMs = 0;
+                // Toutes les 4 clés sont épuisées : arrêt des réactions Gemini
+                rvGeminiBrainQuotaActive = false;
+                rvLastAllGeminiKeysExhaustedMs = Date.now();
+            }
+        }
+
+        function markGeminiBrainQuotaState(isActive, workingKey = '') {
+            if (isActive) {
+                rvGeminiBrainQuotaActive = true;
+                rvLastAllGeminiKeysExhaustedMs = 0;
+                if (workingKey) {
+                    rvExhaustedGeminiKeysMap.delete(workingKey);
+                    const pool = getGeminiApiKeysPool();
+                    const idx = pool.indexOf(workingKey);
+                    if (idx !== -1) rvCurrentGeminiKeyIndex = idx;
+                    window.GEMINI_API_KEY = workingKey;
+                }
+            } else {
+                const remaining = getOrderedCandidateGeminiKeys();
+                if (remaining.length === 0) {
+                    rvGeminiBrainQuotaActive = false;
+                    rvLastAllGeminiKeysExhaustedMs = Date.now();
+                }
             }
             return rvGeminiBrainQuotaActive;
         }
 
         async function checkGeminiBrainQuotaActive() {
-            const apiKey = getActiveGeminiApiKey();
-            if (!apiKey) return false;
-            if (!rvGeminiBrainQuotaActive && (Date.now() - rvLastGeminiQuotaExhaustedMs) < RV_GEMINI_QUOTA_COOLDOWN_MS) {
-                return false;
+            const pool = getGeminiApiKeysPool();
+            if (pool.length === 0) return false;
+            const candidates = getOrderedCandidateGeminiKeys();
+            if (candidates.length > 0) {
+                rvGeminiBrainQuotaActive = true;
+                return true;
             }
-            return true;
+            if ((Date.now() - rvLastAllGeminiKeysExhaustedMs) >= RV_ALL_KEYS_EXHAUSTED_COOLDOWN_MS) {
+                rvExhaustedGeminiKeysMap.clear();
+                rvGeminiBrainQuotaActive = true;
+                return true;
+            }
+            return false;
+        }
+
+        // Exécute un appel Gemini 2.5 Flash en faisant tourner automatiquement les 4 clés
+        // si l'une d'elles est épuisée, et s'arrête immédiatement si les 4 sont épuisées.
+        async function executeGemini25FlashWithKeyRotation(requestBodyObject) {
+            let candidates = getOrderedCandidateGeminiKeys();
+            if (candidates.length === 0) {
+                if ((Date.now() - rvLastAllGeminiKeysExhaustedMs) >= RV_ALL_KEYS_EXHAUSTED_COOLDOWN_MS) {
+                    rvExhaustedGeminiKeysMap.clear();
+                    candidates = getOrderedCandidateGeminiKeys();
+                }
+            }
+            if (candidates.length === 0) {
+                markGeminiBrainQuotaState(false);
+                return { ok: false, allExhausted: true, errorMessage: "Les 4 clés API Gemini ont épuisé leur quota." };
+            }
+
+            let lastErrorMessage = "Quota épuisé ou clé indisponible.";
+            for (const cand of candidates) {
+                try {
+                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(cand.key)}`;
+                    const resp = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestBodyObject)
+                    });
+                    const data = await resp.json().catch(() => ({}));
+                    if (resp.ok && data?.candidates?.[0]?.content?.parts) {
+                        markGeminiBrainQuotaState(true, cand.key);
+                        return {
+                            ok: true,
+                            data,
+                            key: cand.key,
+                            keyNumber: cand.labelNumber,
+                            totalKeys: getGeminiApiKeysPool().length
+                        };
+                    }
+                    lastErrorMessage = data?.error?.message || `Erreur HTTP ${resp.status} sur Clé ${cand.labelNumber}`;
+                    markSingleGeminiKeyExhausted(cand.key);
+                } catch (err) {
+                    lastErrorMessage = err?.message || `Erreur réseau sur Clé ${cand.labelNumber}`;
+                    markSingleGeminiKeyExhausted(cand.key);
+                }
+            }
+
+            markGeminiBrainQuotaState(false);
+            return { ok: false, allExhausted: true, errorMessage: lastErrorMessage };
         }
 
         function startConstantGeminiQuotaMonitor() {
-            // Aucun appel inutile de ping : tout le quota Gemini est préservé en priorité pour les commentaires et l'Inbox
-            rvGeminiBrainQuotaActive = !!getActiveGeminiApiKey();
+            rvGeminiBrainQuotaActive = getGeminiApiKeysPool().length > 0;
         }
 
         function loadPersistedAutonomousCommentsMap() {
@@ -10976,38 +11103,22 @@
                 { text: promptText }
             ];
 
-            const modelsToTry = ['gemini-2.5-flash'];
-            for (const modelName of modelsToTry) {
-                try {
-                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`;
-                    const resp = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: contentsParts }],
-                            generationConfig: {
-                                temperature: 0.88,
-                                maxOutputTokens: 300,
-                                topP: 0.95,
-                                thinkingConfig: { thinkingBudget: 0 }
-                            }
-                        })
-                    });
-                    if (!resp.ok) {
-                        markGeminiBrainQuotaState(false);
-                        continue;
-                    }
-                    const data = await resp.json();
-                    let generated = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join(' ').trim() || '';
-                    generated = generated.replace(/^["'«»]+|["'«»]+$/g, '').trim();
-                    if (generated && generated.length >= 2) {
-                        markGeminiBrainQuotaState(true);
-                        if (!rvGlobalUsedCommentTexts.has(generated.toLowerCase())) {
-                            rvGlobalUsedCommentTexts.add(generated.toLowerCase());
-                            return generated;
-                        }
-                    }
-                } catch (e) {}
+            const result = await executeGemini25FlashWithKeyRotation({
+                contents: [{ parts: contentsParts }],
+                generationConfig: {
+                    temperature: 0.88,
+                    maxOutputTokens: 300,
+                    topP: 0.95,
+                    thinkingConfig: { thinkingBudget: 0 }
+                }
+            });
+            if (result.ok && result.data) {
+                let generated = result.data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join(' ').trim() || '';
+                generated = generated.replace(/^["'«»]+|["'«»]+$/g, '').trim();
+                if (generated && generated.length >= 2 && !rvGlobalUsedCommentTexts.has(generated.toLowerCase())) {
+                    rvGlobalUsedCommentTexts.add(generated.toLowerCase());
+                    return generated;
+                }
             }
             return null;
         }
@@ -11103,36 +11214,20 @@
                 `5. Renvoie uniquement le texte final de ton message en ${langInfo.name} (sans guillemets ni préfixe de nom).`
             ].filter(Boolean).join('\n');
 
-            const modelsToTry = ['gemini-2.5-flash'];
-            for (const modelName of modelsToTry) {
-                try {
-                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`;
-                    const resp = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: promptText }] }],
-                            generationConfig: {
-                                temperature: 0.9,
-                                maxOutputTokens: 320,
-                                topP: 0.95,
-                                thinkingConfig: { thinkingBudget: 0 }
-                            }
-                        })
-                    });
-                    if (!resp.ok) {
-                        markGeminiBrainQuotaState(false);
-                        continue;
-                    }
-                    const data = await resp.json();
-                    let generated = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join(' ').trim() || '';
-                    generated = generated.replace(/^["'«»]+|["'«»]+$/g, '').replace(/^@[^:\s]+\s*:\s*/i, '').trim();
-                    if (generated && generated.length >= 1) {
-                        markGeminiBrainQuotaState(true);
-                        return generated;
-                    }
-                } catch (e) {
-                    markGeminiBrainQuotaState(false);
+            const result = await executeGemini25FlashWithKeyRotation({
+                contents: [{ parts: [{ text: promptText }] }],
+                generationConfig: {
+                    temperature: 0.9,
+                    maxOutputTokens: 320,
+                    topP: 0.95,
+                    thinkingConfig: { thinkingBudget: 0 }
+                }
+            });
+            if (result.ok && result.data) {
+                let generated = result.data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join(' ').trim() || '';
+                generated = generated.replace(/^["'«»]+|["'«»]+$/g, '').replace(/^@[^:\s]+\s*:\s*/i, '').trim();
+                if (generated && generated.length >= 1) {
+                    return generated;
                 }
             }
             return null;
@@ -11634,42 +11729,28 @@
             }
             setStatusHtml(`<div class="p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-200 text-[11px] font-bold">⏳ Vérification de la clé API auprès de Google Gemini Flash...</div>`);
 
-            const modelsToTry = ['gemini-2.5-flash'];
-            let lastErrorMsg = "Impossible de joindre l'API Gemini 2.5 Flash.";
+            rvExhaustedGeminiKeysMap.clear();
+            const rotResult = await executeGemini25FlashWithKeyRotation({
+                contents: [{ parts: [{ text: "Réponds uniquement par cette phrase exacte : Connexion Gemini Flash opérationnelle." }] }],
+                generationConfig: { maxOutputTokens: 200, temperature: 0.1, thinkingConfig: { thinkingBudget: 0 } }
+            });
 
-            for (const modelName of modelsToTry) {
-                try {
-                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`;
-                    const resp = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: "Réponds uniquement par cette phrase exacte : Connexion Gemini Flash opérationnelle." }] }],
-                            generationConfig: { maxOutputTokens: 200, temperature: 0.1, thinkingConfig: { thinkingBudget: 0 } }
-                        })
-                    });
-                    const data = await resp.json().catch(() => ({}));
-                    if (resp.ok && data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-                        markGeminiBrainQuotaState(true);
-                        const reply = String(data.candidates[0].content.parts[0].text).trim();
-                        const okHtml = `<div class="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-400/40 text-emerald-200 text-[11px] font-bold space-y-1">
-                            <div>✅ Clé API valide et fonctionnelle avec Gemini !</div>
-                            <div class="text-[10px] text-emerald-300 font-normal">Modèle connecté : <b>${modelName}</b> • Réponse : « ${escapeHtml(reply)} »</div>
-                        </div>`;
-                        setStatusHtml(okHtml);
-                        if (typeof showToast === 'function') showToast(`✅ Clé API fonctionnelle (${modelName}) !`, "success");
-                        if (btnEl) {
-                            btnEl.disabled = false;
-                            btnEl.innerHTML = origBtnHtml;
-                        }
-                        return;
-                    } else {
-                        lastErrorMsg = data?.error?.message || `Erreur HTTP ${resp.status}`;
-                    }
-                } catch (err) {
-                    lastErrorMsg = err?.message || "Erreur réseau lors de l'appel à Gemini.";
+            if (rotResult.ok && rotResult.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+                const reply = String(rotResult.data.candidates[0].content.parts[0].text).trim();
+                const okHtml = `<div class="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-400/40 text-emerald-200 text-[11px] font-bold space-y-1">
+                    <div>✅ Rotation Gemini 2.5 Flash opérationnelle (Clé active : Clé #${rotResult.keyNumber} / ${rotResult.totalKeys}) !</div>
+                    <div class="text-[10px] text-emerald-300 font-normal">Modèle connecté : <b>gemini-2.5-flash</b> • Réponse : « ${escapeHtml(reply)} »</div>
+                </div>`;
+                setStatusHtml(okHtml);
+                if (typeof showToast === 'function') showToast(`✅ Clé #${rotResult.keyNumber}/${rotResult.totalKeys} active (gemini-2.5-flash) !`, "success");
+                if (btnEl) {
+                    btnEl.disabled = false;
+                    btnEl.innerHTML = origBtnHtml;
                 }
+                return;
             }
+
+            const lastErrorMsg = rotResult.errorMessage || "Les 4 clés API Gemini 2.5 Flash sont épuisées ou indisponibles.";
 
             const errHtml = `<div class="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-200 text-[11px] font-bold space-y-1">
                 <div>❌ Échec de la vérification de la Clé API Gemini</div>
