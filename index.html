@@ -9047,7 +9047,7 @@
         const RV_CM_TOTAL_ACCOUNTS = 1600;
         const RV_CM_MIN_LIKES = 30;
         const RV_CM_MAX_LIKES = 1575;
-        const RV_CM_MAX_VIRTUAL_COMMENTS = 15;
+        const RV_CM_MAX_VIRTUAL_COMMENTS = 35; // Permet de couvrir jusqu'à 1 575 likes (1 commentaire min par tranche de 50 likes)
         const RV_CM_MAX_TOTAL_COMMENTS = 80;
         const RV_AUTO_ACCOUNT_INTERVAL_MS = 10 * 60 * 1000; // 1 compte autonome créé après 10 minutes
         const RV_AUTO_COMMENT_INTERVAL_MS = 10 * 60 * 1000; // 1 commentaire autonome toutes les 10 minutes
@@ -9246,6 +9246,8 @@
         // Registre des abonnements (following) et repartages (reposts) des comptes autonomes
         const rvAutonomousFollowingMap = new Map(); // autoUid -> Set<creatorUid>
         const rvAutonomousRepostsMap = new Map();   // autoUid -> Set<videoId>
+        const rvAutonomousFavoritesMap = new Map(); // autoUid -> Set<videoId>
+        const rvAutonomousSharesMap = new Map();    // autoUid -> Set<videoId>
         // Registre global garantissant que 2 comptes autonomes n'ont JAMAIS la même photo de profil
         const rvGlobalUsedProfilePhotos = new Set();
         const rvPhotoByAccountUidMap = new Map();
@@ -9927,10 +9929,63 @@
             return 0;
         }
 
+        // Règle de paliers de viralité pour les likes autonomes (par tranche de 50 likes) :
+        // 50 likes = 1 commentaire min, 5 favoris min, 3 partages min
+        // 100 likes = 2 commentaires min, 10 favoris min, 6 partages min, etc.
+        // (Cette condition ne bloque que l'augmentation des likes autonomes ; un like d'utilisateur réel augmente toujours immédiatement.)
+        const RV_LIKES_PER_REQUIRED_COMMENT = 50;
+        const RV_REQUIRED_COMMENTS_PER_50_LIKES = 1;
+        const RV_REQUIRED_FAVORITES_PER_50_LIKES = 5;
+        const RV_REQUIRED_SHARES_PER_50_LIKES = 3;
+
+        function getRequiredMinCommentsForLikesCount(likesCount) {
+            const tiers = Math.floor(Math.max(0, Math.floor(Number(likesCount) || 0)) / RV_LIKES_PER_REQUIRED_COMMENT);
+            return tiers * RV_REQUIRED_COMMENTS_PER_50_LIKES;
+        }
+
+        function getRequiredMinFavoritesForLikesCount(likesCount) {
+            const tiers = Math.floor(Math.max(0, Math.floor(Number(likesCount) || 0)) / RV_LIKES_PER_REQUIRED_COMMENT);
+            return tiers * RV_REQUIRED_FAVORITES_PER_50_LIKES;
+        }
+
+        function getRequiredMinSharesForLikesCount(likesCount) {
+            const tiers = Math.floor(Math.max(0, Math.floor(Number(likesCount) || 0)) / RV_LIKES_PER_REQUIRED_COMMENT);
+            return tiers * RV_REQUIRED_SHARES_PER_50_LIKES;
+        }
+
+        function getMissingRequiredCommentsForVideo(v) {
+            if (!v || typeof v !== 'object') return 0;
+            const cId = resolveCanonicalVideoId(v, v.id);
+            const currentLikes = getRealLikesCount(v);
+            const requiredComments = getRequiredMinCommentsForLikesCount(currentLikes);
+            if (requiredComments <= 0) return 0;
+            const currentComments = getEffectiveCommentsCount(v, cId);
+            return Math.max(0, requiredComments - currentComments);
+        }
+
+        function getMissingRequiredFavoritesForVideo(v) {
+            if (!v || typeof v !== 'object') return 0;
+            const currentLikes = getRealLikesCount(v);
+            const requiredFavs = getRequiredMinFavoritesForLikesCount(currentLikes);
+            if (requiredFavs <= 0) return 0;
+            const currentFavs = getRealFavoritesCount(v);
+            return Math.max(0, requiredFavs - currentFavs);
+        }
+
+        function getMissingRequiredSharesForVideo(v) {
+            if (!v || typeof v !== 'object') return 0;
+            const currentLikes = getRealLikesCount(v);
+            const requiredShares = getRequiredMinSharesForLikesCount(currentLikes);
+            if (requiredShares <= 0) return 0;
+            const currentShares = getRealSharesCount(v);
+            return Math.max(0, requiredShares - currentShares);
+        }
+
         function computeIntrinsicViralityScoreForQuota(v) {
             if (!v || typeof v !== 'object') return 0;
             const humanLikes = getPureHumanLikesCount(v);
             const realComments = getVerifiedRealCommentsCount(v.id, v);
+            const totalComments = getEffectiveCommentsCount(v, v.id);
             const views = getRealVideoViewsCount(v);
             const favs = getRealFavoritesCount(v);
             const reposts = getRealRepostsCount(v);
@@ -9939,7 +9994,8 @@
             const rewatches = Math.max(0, Number(v.rewatches || 0));
             const authBoost = v.recordedWithRCam ? 45 : 0;
             const hashTieBreaker = (rvHashStr(v.id || v.url || 'vid') % 1000) / 1000;
-            return (rewatches * 35) + (completions * 24) + (reposts * 22) + (shares * 18) + (favs * 16) + (realComments * 15) + (humanLikes * 12) + (views * 1.5) + authBoost + hashTieBreaker;
+            // Ce sont les commentaires qui déclenchent une viralité de plus en plus élevée
+            return (totalComments * 55) + (realComments * 25) + (rewatches * 35) + (completions * 24) + (reposts * 22) + (shares * 18) + (favs * 16) + (humanLikes * 12) + (views * 1.5) + authBoost + hashTieBreaker;
         }
 
         // ============================================================================
@@ -10031,6 +10087,93 @@
                     repostedBy: arrayUnion(autoAcc.uid),
                     reposts: updatedRepostsCount
                 });
+            } catch (e) {}
+        }
+
+        // Permet à un compte autonome de mettre une vidéo en favoris ⭐ (s'affiche dans l'onglet Favoris de son profil)
+        async function recordAutonomousVideoFavorite(autoAcc, videoObj) {
+            if (!autoAcc || !autoAcc.uid || !videoObj || !videoObj.id) return;
+            const vidId = String(videoObj.id).trim();
+            if (!rvAutonomousFavoritesMap.has(autoAcc.uid)) {
+                rvAutonomousFavoritesMap.set(autoAcc.uid, new Set());
+            }
+            rvAutonomousFavoritesMap.get(autoAcc.uid).add(vidId);
+
+            const currentFavorites = Array.isArray(videoObj.favorites)
+                ? videoObj.favorites.filter(u => u && !isVirtualBotIdOrUser(u))
+                : [];
+            if (currentFavorites.includes(autoAcc.uid)) return;
+
+            const updatedFavorites = Array.from(new Set([...currentFavorites, autoAcc.uid]));
+            const updatedFavsCount = updatedFavorites.length;
+            videoObj.favorites = updatedFavorites;
+            if (typeof profileVideosData === 'object' && profileVideosData && profileVideosData[vidId]) {
+                profileVideosData[vidId].favorites = updatedFavorites;
+            }
+            document.querySelectorAll(`.video-card[data-id="${vidId}"] .fav-text`).forEach(el => {
+                el.setAttribute('data-raw-count', String(updatedFavsCount));
+                el.innerText = formatCount(updatedFavsCount);
+            });
+            try {
+                await updateDoc(doc(db, "videos", vidId), {
+                    favorites: arrayUnion(autoAcc.uid)
+                });
+                if (videoObj.userId && !isAutonomousAccountUid(videoObj.userId)) {
+                    const vThumb = videoObj.url ? (typeof getVideoThumbnail === 'function' ? getVideoThumbnail(videoObj.url, videoObj.thumbnailOffset || 0) : '') : '';
+                    await sendNotificationFromAutonomousAccount(
+                        autoAcc,
+                        videoObj.userId,
+                        "favorite",
+                        "a ajouté votre vidéo aux favoris ⭐",
+                        { videoId: vidId, videoUrl: videoObj.url || "", videoThumb: vThumb },
+                        `auto_fav_${vidId}_${autoAcc.uid}`
+                    );
+                }
+            } catch (e) {}
+        }
+
+        // Permet à un compte autonome de partager une vidéo 🔗
+        async function recordAutonomousVideoShare(autoAcc, videoObj) {
+            if (!autoAcc || !autoAcc.uid || !videoObj || !videoObj.id) return;
+            const vidId = String(videoObj.id).trim();
+            if (!rvAutonomousSharesMap.has(autoAcc.uid)) {
+                rvAutonomousSharesMap.set(autoAcc.uid, new Set());
+            }
+            rvAutonomousSharesMap.get(autoAcc.uid).add(vidId);
+
+            const currentSharedBy = Array.isArray(videoObj.sharedBy)
+                ? videoObj.sharedBy.filter(u => u && !isVirtualBotIdOrUser(u))
+                : [];
+            if (currentSharedBy.includes(autoAcc.uid)) return;
+
+            const updatedSharedBy = Array.from(new Set([...currentSharedBy, autoAcc.uid]));
+            const updatedSharesCount = updatedSharedBy.length;
+            videoObj.sharedBy = updatedSharedBy;
+            videoObj.shares = updatedSharesCount;
+            if (typeof profileVideosData === 'object' && profileVideosData && profileVideosData[vidId]) {
+                profileVideosData[vidId].sharedBy = updatedSharedBy;
+                profileVideosData[vidId].shares = updatedSharesCount;
+            }
+            document.querySelectorAll(`.video-card[data-id="${vidId}"] .share-count`).forEach(el => {
+                el.setAttribute('data-raw-count', String(updatedSharesCount));
+                el.innerText = formatCount(updatedSharesCount);
+            });
+            try {
+                await updateDoc(doc(db, "videos", vidId), {
+                    sharedBy: arrayUnion(autoAcc.uid),
+                    shares: updatedSharesCount
+                });
+                if (videoObj.userId && !isAutonomousAccountUid(videoObj.userId)) {
+                    const vThumb = videoObj.url ? (typeof getVideoThumbnail === 'function' ? getVideoThumbnail(videoObj.url, videoObj.thumbnailOffset || 0) : '') : '';
+                    await sendNotificationFromAutonomousAccount(
+                        autoAcc,
+                        videoObj.userId,
+                        "share",
+                        "a partagé votre vidéo 🔗",
+                        { videoId: vidId, videoUrl: videoObj.url || "", videoThumb: vThumb },
+                        `auto_share_${vidId}_${autoAcc.uid}`
+                    );
+                }
             } catch (e) {}
         }
 
@@ -10176,13 +10319,86 @@
                     const targetQuota = rvGraduatedQuotaByVideoId.get(vidId) || RV_CM_MIN_LIKES;
                     const currentLikedBy = Array.isArray(v.likedBy) ? v.likedBy.filter(u => u && !isVirtualBotIdOrUser(u)) : [];
                     const currentLikedSet = new Set(currentLikedBy);
+                    const currentTotalLikes = currentLikedSet.size;
+                    const currentHumanLikesCount = currentLikedBy.filter(u => !isAutonomousAccountUid(u)).length;
                     const currentAutoLikers = currentLikedBy.filter(u => isAutonomousAccountUid(u));
                     const currentAutoLikesCount = currentAutoLikers.length;
 
-                    const maxAllowedNow = Math.min(targetQuota, activeAutoAccounts.length);
+                    // Compléter d'abord les favoris (5 par tranche de 50 likes) et partages (3 par tranche de 50 likes)
+                    // par les comptes autonomes ayant déjà aimé la publication si un palier est atteint
+                    if (currentAutoLikers.length > 0) {
+                        const targetTierForCompletion = Math.max(1, Math.floor(Math.max(currentTotalLikes, RV_LIKES_PER_REQUIRED_COMMENT) / RV_LIKES_PER_REQUIRED_COMMENT));
+                        const neededFavsTotal = targetTierForCompletion * RV_REQUIRED_FAVORITES_PER_50_LIKES;
+                        const neededSharesTotal = targetTierForCompletion * RV_REQUIRED_SHARES_PER_50_LIKES;
+
+                        let curFavsCount = getRealFavoritesCount(v);
+                        if (curFavsCount < neededFavsTotal) {
+                            const favDeficit = neededFavsTotal - curFavsCount;
+                            let addedFavs = 0;
+                            for (let fIdx = 0; fIdx < currentAutoLikers.length && addedFavs < favDeficit; fIdx++) {
+                                const uId = currentAutoLikers[(rvHashStr(`fav_pick_${vidId}`) + fIdx) % currentAutoLikers.length];
+                                if (!Array.isArray(v.favorites) || !v.favorites.includes(uId)) {
+                                    const acc = getAutonomousCameroonianAccount(uId, false);
+                                    if (acc) {
+                                        await recordAutonomousVideoFavorite(acc, v);
+                                        addedFavs++;
+                                    }
+                                }
+                            }
+                        }
+
+                        let curSharesCount = getRealSharesCount(v);
+                        if (curSharesCount < neededSharesTotal) {
+                            const shareDeficit = neededSharesTotal - curSharesCount;
+                            let addedShares = 0;
+                            for (let sIdx = 0; sIdx < currentAutoLikers.length && addedShares < shareDeficit; sIdx++) {
+                                const uId = currentAutoLikers[(rvHashStr(`share_pick_${vidId}`) + sIdx * 3) % currentAutoLikers.length];
+                                if (!Array.isArray(v.sharedBy) || !v.sharedBy.includes(uId)) {
+                                    const acc = getAutonomousCameroonianAccount(uId, false);
+                                    if (acc) {
+                                        await recordAutonomousVideoShare(acc, v);
+                                        addedShares++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Vérifier les 3 conditions obligatoires par tranche de 50 likes (pour les likes AUTONOMES uniquement) :
+                    // 50 likes = 1 commentaire min, 5 favoris min, 3 partages min
+                    // 100 likes = 2 commentaires min, 10 favoris min, 6 partages min, etc.
+                    // Tant que ce n'est pas complété, on N'AUGMENTE PLUS les likes autonomes de la publication !
+                    const currentTotalComments = getEffectiveCommentsCount(v, vidId);
+                    const currentTotalFavorites = getRealFavoritesCount(v);
+                    const currentTotalShares = getRealSharesCount(v);
+
+                    const requiredCommentsForCurrentLikes = getRequiredMinCommentsForLikesCount(currentTotalLikes);
+                    const requiredFavoritesForCurrentLikes = getRequiredMinFavoritesForLikesCount(currentTotalLikes);
+                    const requiredSharesForCurrentLikes = getRequiredMinSharesForLikesCount(currentTotalLikes);
+
+                    const isBlockedWaitingForTierRequirements = (
+                        currentTotalLikes >= RV_LIKES_PER_REQUIRED_COMMENT && (
+                            currentTotalComments < requiredCommentsForCurrentLikes ||
+                            currentTotalFavorites < requiredFavoritesForCurrentLikes ||
+                            currentTotalShares < requiredSharesForCurrentLikes
+                        )
+                    );
+
+                    // Plafond de likes autonomes débloqué par le palier commun atteint (commentaires, favoris, partages) :
+                    const unlockedTierByComments = Math.floor(currentTotalComments / RV_REQUIRED_COMMENTS_PER_50_LIKES);
+                    const unlockedTierByFavorites = Math.floor(currentTotalFavorites / RV_REQUIRED_FAVORITES_PER_50_LIKES);
+                    const unlockedTierByShares = Math.floor(currentTotalShares / RV_REQUIRED_SHARES_PER_50_LIKES);
+                    const effectiveUnlockedTier = Math.min(unlockedTierByComments, unlockedTierByFavorites, unlockedTierByShares);
+
+                    const maxTotalLikesUnlockedByReactions = (effectiveUnlockedTier + 1) * RV_LIKES_PER_REQUIRED_COMMENT;
+                    const maxAutoLikesUnlockedByReactions = Math.max(0, maxTotalLikesUnlockedByReactions - currentHumanLikesCount);
+
+                    const maxAllowedNow = isBlockedWaitingForTierRequirements
+                        ? currentAutoLikesCount
+                        : Math.min(targetQuota, activeAutoAccounts.length, maxAutoLikesUnlockedByReactions);
                     const newAutoLikers = [];
 
-                    if (currentAutoLikesCount < maxAllowedNow && activeAutoAccounts.length > 0) {
+                    if (!isBlockedWaitingForComment && currentAutoLikesCount < maxAllowedNow && activeAutoAccounts.length > 0) {
                         const needed = maxAllowedNow - currentAutoLikesCount;
                         const startOffset = rvHashStr(vidId) % activeAutoAccounts.length;
                         for (let i = 0; i < activeAutoAccounts.length && newAutoLikers.length < needed; i++) {
@@ -10278,6 +10494,18 @@
                                 if (repostScore < repostChance) {
                                     await recordAutonomousVideoRepost(likerAcc, v);
                                 }
+                                // Favoris (au moins ~12-22% des likers autonomes -> >= 5 favoris pour 50 likes)
+                                const favChance = Math.round(14 + viralityRatio * 14);
+                                const favScore = (rvHashStr(`fav_${likerAcc.uid}_${vidId}`) % 100);
+                                if (favScore < favChance) {
+                                    await recordAutonomousVideoFavorite(likerAcc, v);
+                                }
+                                // Partages (au moins ~8-16% des likers autonomes -> >= 3 partages pour 50 likes)
+                                const shareChance = Math.round(9 + viralityRatio * 10);
+                                const shareScore = (rvHashStr(`share_${likerAcc.uid}_${vidId}`) % 100);
+                                if (shareScore < shareChance) {
+                                    await recordAutonomousVideoShare(likerAcc, v);
+                                }
                             }
                         }
                     } else if (authorUid && currentAutoLikers.length > 0) {
@@ -10306,6 +10534,13 @@
                     if (authorUid) {
                         await syncAutonomousStoryViewsAndLikesFromProfileViewers(authorUid);
                     }
+                }
+
+                // Si au moins une publication a >= 50 likes (ou 100, 150...) et qu'il lui manque son ou ses commentaires requis,
+                // déclencher immédiatement la complétion par un compte autonome (cerveau Gemini)
+                const anyVideoMissingComments = allVideos.some(v => getMissingRequiredCommentsForVideo(v) > 0);
+                if (anyVideoMissingComments && typeof scheduleUrgentGeminiCommentForBlockedVideos === 'function') {
+                    scheduleUrgentGeminiCommentForBlockedVideos();
                 }
             } finally {
                 rvIsSyncingAutoLikes = false;
@@ -11101,7 +11336,7 @@
         function pickUniqueCommenterAccountForVideo(vidId, currentAutoComments = []) {
             const usedPhotos = new Set(currentAutoComments.map(c => String(c.userPhotoURL || '').trim()).filter(Boolean));
             const usedUids = new Set(currentAutoComments.map(c => String(c.userId || '').trim()).filter(Boolean));
-            const totalPortraitAccounts = RV_PHOTOS_CM_MEN.length + RV_PHOTOS_CM_WOMEN.length; // 50 comptes avec portraits noirs africains uniques
+            const totalPortraitAccounts = RV_PHOTOS_CM_MEN.length + RV_PHOTOS_CM_WOMEN.length; // 50 premiers comptes
             const startOffset = (rvHashStr(vidId) + currentAutoComments.length * 7 + Math.floor(Date.now() / 60000)) % totalPortraitAccounts;
 
             for (let i = 0; i < totalPortraitAccounts; i++) {
@@ -11158,25 +11393,62 @@
             } catch (e) {}
         }
 
+        let rvIsRunningGeminiCommentCycle = false;
+        let rvUrgentCommentCompletionTimer = null;
+
+        function scheduleUrgentGeminiCommentForBlockedVideos(delayMs = 3500) {
+            if (rvUrgentCommentCompletionTimer || rvIsRunningGeminiCommentCycle) return;
+            rvUrgentCommentCompletionTimer = setTimeout(() => {
+                rvUrgentCommentCompletionTimer = null;
+                runGeminiAutonomousViralCommentCycle().catch(() => {});
+            }, delayMs);
+        }
+
         async function runGeminiAutonomousViralCommentCycle() {
+            if (rvIsRunningGeminiCommentCycle) return;
             const apiKey = getActiveGeminiApiKey();
             if (!apiKey) return;
-            // Pas de réaction des comptes autonomes quand le quota Gemini est épuisé
+            // Pas de commentaire autonome quand le quota Gemini est épuisé
             const isQuotaActive = await checkGeminiBrainQuotaActive();
             if (!isQuotaActive) return;
 
+            rvIsRunningGeminiCommentCycle = true;
+            try {
             assignGraduatedPopularityQuotas();
             const allVideos = Array.from(rvAllKnownVideosCatalog.values()).filter(v => v && v.id && isVideoEligibleForPourToi(v));
             if (allVideos.length === 0) return;
 
-            allVideos.sort((a, b) => computeIntrinsicViralityScoreForQuota(b) - computeIntrinsicViralityScoreForQuota(a));
+            // PRIORITÉ ABSOLUE : Les publications qui ont déjà >= 50 likes (ou 100, 150...) et qui n'ont pas encore
+            // leur quota minimum de commentaires (1 commentaire pour 50 likes, 2 pour 100 likes, etc.),
+            // ou qui sont bloquées à un palier de 50 likes en attente d'un commentaire pour débloquer leur viralité !
+            const videosMissingRequiredComments = allVideos
+                .filter(v => {
+                    const existingAuto = generateSmartAutonomousCommentsForVideo(v.id, v);
+                    if (existingAuto.length >= RV_CM_MAX_VIRTUAL_COMMENTS) return false;
+                    const missing = getMissingRequiredCommentsForVideo(v);
+                    if (missing > 0) return true;
+                    // Ou vidéo arrivée exactement au plafond (ex: 50, 100, 150 likes) dont le quota cible de viralité est supérieur
+                    const curLikes = getRealLikesCount(v);
+                    const curComments = getEffectiveCommentsCount(v, v.id);
+                    const targetQuota = rvGraduatedQuotaByVideoId.get(v.id) || RV_CM_MIN_LIKES;
+                    return curLikes >= (curComments + 1) * RV_LIKES_PER_REQUIRED_COMMENT && targetQuota > curLikes;
+                })
+                .sort((a, b) => {
+                    const missDiff = getMissingRequiredCommentsForVideo(b) - getMissingRequiredCommentsForVideo(a);
+                    if (missDiff !== 0) return missDiff;
+                    return getRealLikesCount(b) - getRealLikesCount(a);
+                });
 
-            let targetVideo = null;
-            for (const v of allVideos) {
-                const existingAuto = generateSmartAutonomousCommentsForVideo(v.id, v);
-                if (existingAuto.length < RV_CM_MAX_VIRTUAL_COMMENTS) {
-                    targetVideo = v;
-                    break;
+            let targetVideo = videosMissingRequiredComments[0] || null;
+
+            if (!targetVideo) {
+                allVideos.sort((a, b) => computeIntrinsicViralityScoreForQuota(b) - computeIntrinsicViralityScoreForQuota(a));
+                for (const v of allVideos) {
+                    const existingAuto = generateSmartAutonomousCommentsForVideo(v.id, v);
+                    if (existingAuto.length < RV_CM_MAX_VIRTUAL_COMMENTS) {
+                        targetVideo = v;
+                        break;
+                    }
                 }
             }
             if (!targetVideo) return;
@@ -11297,6 +11569,25 @@
             syncVideoCommentCountElementsInDom(vidId, updatedTotal);
             if (typeof currentVideoIdForComments !== 'undefined' && currentVideoIdForComments === vidId) {
                 try { loadComments(vidId); } catch (e) {}
+            }
+
+            // Dès qu'un commentaire a été ajouté, recalculer la viralité et débloquer le palier suivant de likes !
+            setTimeout(() => {
+                syncRealLikesFromExistingAutonomousAccounts().catch(() => {});
+            }, 600);
+
+            // S'il reste encore des commentaires obligatoires à compléter (ex: 100 likes = 2 commentaires min),
+            // planifier la suite de la complétion
+            const stillMissing = Array.from(rvAllKnownVideosCatalog.values()).some(v =>
+                v && v.id && isVideoEligibleForPourToi(v) && getMissingRequiredCommentsForVideo(v) > 0
+            );
+            if (stillMissing) {
+                setTimeout(() => {
+                    scheduleUrgentGeminiCommentForBlockedVideos(8000);
+                }, 500);
+            }
+            } finally {
+                rvIsRunningGeminiCommentCycle = false;
             }
         }
 
@@ -12675,6 +12966,7 @@
                             videoThumb: vThumb
                         });
                     }
+                    setTimeout(() => { syncRealLikesFromExistingAutonomousAccounts().catch(() => {}); }, 500);
                 }
             } finally {
                 pendingInteractionLocks.delete(lockKey);
@@ -13993,6 +14285,7 @@
                     if (markUserInteractionOnce('fav_boost', docId)) {
                         await updateUserPreferences(tags);
                     }
+                    setTimeout(() => { syncRealLikesFromExistingAutonomousAccounts().catch(() => {}); }, 500);
                 } else { 
                     await updateDoc(ref, { favorites: arrayRemove(uid) }); 
                 }
@@ -22410,6 +22703,11 @@
             if (videoOwnerId && videoOwnerId !== auth.currentUser.uid && videoOwnerId !== targetReplyUid) {
                 await sendNotification(videoOwnerId, "comment", `a commenté : ${summaryLabel}`, notifExtra);
             }
+
+            // Le nouveau commentaire réel déclenche la hausse de viralité et débloque le palier suivant de likes
+            setTimeout(() => {
+                syncRealLikesFromExistingAutonomousAccounts().catch(() => {});
+            }, 600);
         };
 
         window.switchInboxTab = (tab) => {
@@ -26522,12 +26820,13 @@
             const isAutoProfile = isAutonomousAccountUid(data.uid) || !!data.isAutonomousProfile;
             const myDraftsCheck = isMe ? getUserStudioDraftsList(data.uid) : [];
 
-            // Pour un compte autonome, s'assurer que ses vidéos repartagées (parmi les vidéos qu'il a aimées) sont bien associées
+            // Pour un compte autonome, s'assurer que ses vidéos repartagées et ses vidéos mises en favoris sont bien associées sur son profil
             if (isAutoProfile && allProfileSnapVideos.length > 0) {
+                const likedVids = allProfileSnapVideos.filter(v => Array.isArray(v.likedBy) && v.likedBy.includes(data.uid));
+                const candidatePool = likedVids.length > 0 ? likedVids : allProfileSnapVideos;
+
                 let hasAnyRepost = allProfileSnapVideos.some(v => Array.isArray(v.repostedBy) && v.repostedBy.includes(data.uid));
                 if (!hasAnyRepost) {
-                    const likedVids = allProfileSnapVideos.filter(v => Array.isArray(v.likedBy) && v.likedBy.includes(data.uid));
-                    const candidatePool = likedVids.length > 0 ? likedVids : allProfileSnapVideos;
                     const repostCountForAuto = Math.min(candidatePool.length, 1 + (rvHashStr(`auto_rep_cnt_${data.uid}`) % 3));
                     for (let r = 0; r < repostCountForAuto; r++) {
                         const chosenV = candidatePool[(rvHashStr(`${data.uid}_rep_${r}`) + r) % candidatePool.length];
@@ -26536,6 +26835,20 @@
                             if (!chosenV.repostedBy.includes(data.uid)) {
                                 chosenV.repostedBy.push(data.uid);
                                 chosenV.reposts = chosenV.repostedBy.length;
+                            }
+                        }
+                    }
+                }
+
+                let hasAnyFav = allProfileSnapVideos.some(v => Array.isArray(v.favorites) && v.favorites.includes(data.uid));
+                if (!hasAnyFav) {
+                    const favCountForAuto = Math.min(candidatePool.length, 1 + (rvHashStr(`auto_fav_cnt_${data.uid}`) % 4));
+                    for (let f = 0; f < favCountForAuto; f++) {
+                        const chosenFavV = candidatePool[(rvHashStr(`${data.uid}_fav_${f}`) + f) % candidatePool.length];
+                        if (chosenFavV) {
+                            if (!Array.isArray(chosenFavV.favorites)) chosenFavV.favorites = [];
+                            if (!chosenFavV.favorites.includes(data.uid)) {
+                                chosenFavV.favorites.push(data.uid);
                             }
                         }
                     }
@@ -26586,7 +26899,11 @@
                 if (currentProfileTab === 'videos') { if (!isAutoProfile && v.userId === data.uid) shouldShow = true; }
                 else if (currentProfileTab === 'reposts') { if (isRepostedByThisUser) shouldShow = true; }
                 else if (currentProfileTab === 'liked') { if (Array.isArray(v.likedBy) && v.likedBy.includes(data.uid)) shouldShow = true; }
-                else if (currentProfileTab === 'favs') { if (Array.isArray(v.favorites) && v.favorites.includes(data.uid)) shouldShow = true; }
+                else if (currentProfileTab === 'favs') {
+                    const isFavByThisUser = (Array.isArray(v.favorites) && v.favorites.includes(data.uid)) ||
+                        (rvAutonomousFavoritesMap.has(data.uid) && rvAutonomousFavoritesMap.get(data.uid).has(v.id));
+                    if (isFavByThisUser) shouldShow = true;
+                }
                 if (shouldShow) {
                     profileVideosData[d.id] = v;
                     items.push({ id: d.id, data: v });
@@ -26718,6 +27035,8 @@
                     topBadge = `<div class="absolute top-1.5 left-1.5 bg-emerald-500/90 text-black text-[8px] font-extrabold px-1.5 py-0.5 rounded flex items-center gap-0.5 z-10">🔁 Republié</div>`;
                 } else if (currentProfileTab === 'liked') {
                     topBadge = `<div class="absolute top-1.5 left-1.5 bg-[#ff2a5f]/90 text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded flex items-center gap-0.5 z-10">❤️ Aimé</div>`;
+                } else if (currentProfileTab === 'favs') {
+                    topBadge = `<div class="absolute top-1.5 left-1.5 bg-amber-400/95 text-black text-[8px] font-extrabold px-1.5 py-0.5 rounded flex items-center gap-0.5 z-10">⭐ Favori</div>`;
                 }
                 const div = document.createElement('div');
                 div.className = "bg-[#0c1222] aspect-[3/4] relative rounded-xl overflow-hidden border border-white/10 group cursor-pointer";
