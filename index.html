@@ -2905,14 +2905,14 @@
             // L'application bascule automatiquement sur la clé suivante dès qu'une clé
             // épuise son quota, et s'arrête si les 4 clés sont épuisées.
             // ============================================================================
-            const GEMINI_API_KEYS_POOL = [
+            var GEMINI_API_KEYS_POOL = [
                 "AQ.Ab8RN6LZuKK53b8Dzz1twEXYOEGHsT3cQp6EUZG9y1pS4C5EhQ", // Clé 1
                 "AQ.Ab8RN6IcN7OG8x25M8OpAwqHtJLWY8Sduwbo79CUMpU2uV8a5A", // Clé 2
                 "AQ.Ab8RN6IjgZS9YUUds9hqHlcshsDnjmPLPYg2DO9GNVclrzN-BQ", // Clé 3
                 "AQ.Ab8RN6Kd6plGfYIfIXiWLcOteHCBO8K7BEY8_kbSnxqU_XEzVA"  // Clé 4
             ];
             window.GEMINI_API_KEYS_POOL = GEMINI_API_KEYS_POOL;
-            const GEMINI_API_KEY = GEMINI_API_KEYS_POOL[0];
+            var GEMINI_API_KEY = GEMINI_API_KEYS_POOL[0];
             window.GEMINI_API_KEY = GEMINI_API_KEY;
         </script>
         
@@ -4163,12 +4163,32 @@
                         <span class="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">ADMIN VIP</span>
                     </div>
                     <p class="text-[11px] text-gray-300 leading-relaxed">
-                        Testez en direct si votre clé API (<code class="text-cyan-300">GEMINI_API_KEY</code>) communique bien avec Google Gemini Flash pour piloter les comptes autonomes.
+                        Testez en direct vos 4 clés API (<code class="text-cyan-300">GEMINI_API_KEYS_POOL</code>) avec bascule automatique sur plusieurs versions de Gemini Flash (<code class="text-cyan-300">gemini-3.8-flash</code>, <code class="text-cyan-300">3.7</code>, <code class="text-cyan-300">3.5</code>, <code class="text-cyan-300">3.0</code>, <code class="text-cyan-300">2.5</code>, <code class="text-cyan-300">2.0</code>).
                     </p>
-                    <button type="button" onclick="verifyAdminGeminiApiKey(this)" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/25 active:scale-95 transition">
-                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                        <span>Vérifier si la Clé API fonctionne avec Gemini</span>
-                    </button>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[10px] font-bold text-cyan-300 uppercase tracking-wider">Version Gemini à utiliser / tester :</label>
+                        <select onchange="setPreferredAdminGeminiModel(this.value)" class="admin-gemini-model-select w-full bg-[#0f172a] border border-cyan-400/35 rounded-xl px-2.5 py-2 text-[11px] font-bold text-white outline-none focus:border-cyan-400">
+                            <option value="auto">🔄 Auto Multi-Versions (3.8 → 3.7 → 3.5 → 3.0 → 2.5 → 2.0)</option>
+                            <option value="gemini-3.8-flash">⚡ gemini-3.8-flash (Dernière version recommandée)</option>
+                            <option value="gemini-3.7-flash">⚡ gemini-3.7-flash</option>
+                            <option value="gemini-3.5-flash">⚡ gemini-3.5-flash</option>
+                            <option value="gemini-3.0-flash">⚡ gemini-3.0-flash</option>
+                            <option value="gemini-3-flash-preview">⚡ gemini-3-flash-preview</option>
+                            <option value="gemini-2.5-flash">⚡ gemini-2.5-flash</option>
+                            <option value="gemini-2.5-flash-lite">⚡ gemini-2.5-flash-lite</option>
+                            <option value="gemini-2.0-flash">⚡ gemini-2.0-flash</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <button type="button" onclick="verifyAdminGeminiApiKey(this, false)" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/25 active:scale-95 transition">
+                            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                            <span>🤖 Vérifier la Clé API Gemini Flash</span>
+                        </button>
+                        <button type="button" onclick="verifyAdminGeminiApiKey(this, true)" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-purple-600/25 active:scale-95 transition">
+                            <i data-lucide="layers" class="w-4 h-4"></i>
+                            <span>🧪 Tester toutes les versions Gemini</span>
+                        </button>
+                    </div>
                     <div class="admin-gemini-status-box hidden"></div>
                 </div>
             </div>
@@ -9345,13 +9365,40 @@
         let rvGeminiBrainQuotaActive = true;
         let rvLastAllGeminiKeysExhaustedMs = 0;
 
+        function setCurrentActiveGeminiKeyGlobal(keyStr, keyIndex = -1) {
+            if (!keyStr) return;
+            window.GEMINI_API_KEY = keyStr;
+            try { GEMINI_API_KEY = keyStr; } catch (e) {}
+            if (keyIndex >= 0) {
+                rvCurrentGeminiKeyIndex = keyIndex;
+            }
+        }
+
         function getGeminiApiKeysPool() {
-            const pool = Array.isArray(window.GEMINI_API_KEYS_POOL) && window.GEMINI_API_KEYS_POOL.length > 0
-                ? window.GEMINI_API_KEYS_POOL
-                : [window.GEMINI_API_KEY || (typeof GEMINI_API_KEY !== 'undefined' ? GEMINI_API_KEY : '') || safeGetStorage('rv_gemini_api_key', '')];
-            return pool
-                .map(k => String(k || '').trim())
-                .filter(k => k && k !== 'COLLEZ_VOTRE_CLE_API_GEMINI_ICI' && k !== 'COLLER_VOTRE_CLE_API_ICI');
+            const rawSources = [];
+            if (Array.isArray(window.GEMINI_API_KEYS_POOL)) rawSources.push(...window.GEMINI_API_KEYS_POOL);
+            try {
+                if (typeof GEMINI_API_KEYS_POOL !== 'undefined' && Array.isArray(GEMINI_API_KEYS_POOL)) {
+                    rawSources.push(...GEMINI_API_KEYS_POOL);
+                }
+            } catch (e) {}
+            if (rawSources.length === 0) {
+                rawSources.push(
+                    window.GEMINI_API_KEY ||
+                    (typeof GEMINI_API_KEY !== 'undefined' ? GEMINI_API_KEY : '') ||
+                    safeGetStorage('rv_gemini_api_key', '')
+                );
+            }
+            const seen = new Set();
+            const cleanPool = [];
+            for (const item of rawSources) {
+                const k = String(item || '').trim();
+                if (k && k !== 'COLLEZ_VOTRE_CLE_API_GEMINI_ICI' && k !== 'COLLER_VOTRE_CLE_API_ICI' && !seen.has(k)) {
+                    seen.add(k);
+                    cleanPool.push(k);
+                }
+            }
+            return cleanPool;
         }
 
         function getOrderedCandidateGeminiKeys() {
@@ -9372,19 +9419,21 @@
         }
 
         function getActiveGeminiApiKey() {
+            const pool = getGeminiApiKeysPool();
+            if (pool.length === 0) return '';
             const candidates = getOrderedCandidateGeminiKeys();
             if (candidates.length > 0) {
-                window.GEMINI_API_KEY = candidates[0].key;
+                setCurrentActiveGeminiKeyGlobal(candidates[0].key, candidates[0].index);
                 return candidates[0].key;
             }
-            const pool = getGeminiApiKeysPool();
-            if (pool.length > 0 && (Date.now() - rvLastAllGeminiKeysExhaustedMs) >= RV_ALL_KEYS_EXHAUSTED_COOLDOWN_MS) {
+            if ((Date.now() - rvLastAllGeminiKeysExhaustedMs) >= RV_ALL_KEYS_EXHAUSTED_COOLDOWN_MS) {
                 rvExhaustedGeminiKeysMap.clear();
-                rvCurrentGeminiKeyIndex = (rvCurrentGeminiKeyIndex + 1) % pool.length;
-                window.GEMINI_API_KEY = pool[rvCurrentGeminiKeyIndex];
-                return pool[rvCurrentGeminiKeyIndex];
+                rvLastAllGeminiKeysExhaustedMs = 0;
+                const nextIdx = (rvCurrentGeminiKeyIndex + 1) % pool.length;
+                setCurrentActiveGeminiKeyGlobal(pool[nextIdx], nextIdx);
+                return pool[nextIdx];
             }
-            return '';
+            return pool[rvCurrentGeminiKeyIndex % pool.length] || pool[0];
         }
 
         function markSingleGeminiKeyExhausted(apiKey) {
@@ -9393,14 +9442,15 @@
             rvExhaustedGeminiKeysMap.set(apiKey, Date.now() + RV_SINGLE_KEY_COOLDOWN_MS);
             const curIdx = pool.indexOf(apiKey);
             if (curIdx !== -1 && pool.length > 1) {
-                rvCurrentGeminiKeyIndex = (curIdx + 1) % pool.length;
+                const nextIdx = (curIdx + 1) % pool.length;
+                setCurrentActiveGeminiKeyGlobal(pool[nextIdx], nextIdx);
             }
             const remaining = getOrderedCandidateGeminiKeys();
             if (remaining.length > 0) {
-                window.GEMINI_API_KEY = remaining[0].key;
+                setCurrentActiveGeminiKeyGlobal(remaining[0].key, remaining[0].index);
                 rvGeminiBrainQuotaActive = true;
             } else {
-                // Toutes les 4 clés sont épuisées : arrêt des réactions Gemini
+                // Toutes les 4 clés sont épuisées : arrêt temporaire des réactions Gemini
                 rvGeminiBrainQuotaActive = false;
                 rvLastAllGeminiKeysExhaustedMs = Date.now();
             }
@@ -9414,8 +9464,7 @@
                     rvExhaustedGeminiKeysMap.delete(workingKey);
                     const pool = getGeminiApiKeysPool();
                     const idx = pool.indexOf(workingKey);
-                    if (idx !== -1) rvCurrentGeminiKeyIndex = idx;
-                    window.GEMINI_API_KEY = workingKey;
+                    setCurrentActiveGeminiKeyGlobal(workingKey, idx !== -1 ? idx : rvCurrentGeminiKeyIndex);
                 }
             } else {
                 const remaining = getOrderedCandidateGeminiKeys();
@@ -9437,19 +9486,169 @@
             }
             if ((Date.now() - rvLastAllGeminiKeysExhaustedMs) >= RV_ALL_KEYS_EXHAUSTED_COOLDOWN_MS) {
                 rvExhaustedGeminiKeysMap.clear();
+                rvLastAllGeminiKeysExhaustedMs = 0;
+                const nextIdx = (rvCurrentGeminiKeyIndex + 1) % pool.length;
+                setCurrentActiveGeminiKeyGlobal(pool[nextIdx], nextIdx);
                 rvGeminiBrainQuotaActive = true;
                 return true;
             }
             return false;
         }
 
-        // Exécute un appel Gemini 2.5 Flash en faisant tourner automatiquement les 4 clés
-        // si l'une d'elles est épuisée, et s'arrête immédiatement si les 4 sont épuisées.
-        async function executeGemini25FlashWithKeyRotation(requestBodyObject) {
+        const RV_GEMINI_MODELS_CANDIDATES = [
+            'gemini-3.8-flash',
+            'gemini-3.7-flash',
+            'gemini-3.5-flash',
+            'gemini-3.0-flash',
+            'gemini-3-flash-preview',
+            'gemini-2.5-flash',
+            'gemini-2.5-flash-lite',
+            'gemini-2.0-flash'
+        ];
+        let rvActiveGeminiModel = safeGetStorage('rv_active_gemini_model_v1', '') || 'gemini-3.8-flash';
+        let rvPreferredGeminiModelMode = safeGetStorage('rv_preferred_gemini_model_mode_v1', 'auto') || 'auto';
+        const rvDeprecatedGeminiModelsSet = new Set();
+
+        window.setPreferredAdminGeminiModel = (modeOrModel) => {
+            const clean = String(modeOrModel || 'auto').trim();
+            rvPreferredGeminiModelMode = clean;
+            safeSetStorage('rv_preferred_gemini_model_mode_v1', clean);
+            if (clean !== 'auto') {
+                rvActiveGeminiModel = clean;
+                safeSetStorage('rv_active_gemini_model_v1', clean);
+                rvDeprecatedGeminiModelsSet.delete(clean);
+            }
+            document.querySelectorAll('.admin-gemini-model-select').forEach(sel => {
+                if (sel.value !== clean) sel.value = clean;
+            });
+        };
+
+        function getOrderedCandidateGeminiModels() {
+            const list = [];
+            const addModel = (m) => {
+                const clean = String(m || '').trim().replace(/^models\//i, '');
+                if (clean && !list.includes(clean)) list.push(clean);
+            };
+            if (rvPreferredGeminiModelMode && rvPreferredGeminiModelMode !== 'auto') {
+                addModel(rvPreferredGeminiModelMode);
+            }
+            if (rvActiveGeminiModel && !rvDeprecatedGeminiModelsSet.has(rvActiveGeminiModel)) {
+                addModel(rvActiveGeminiModel);
+            }
+            for (const m of RV_GEMINI_MODELS_CANDIDATES) {
+                if (!rvDeprecatedGeminiModelsSet.has(m)) addModel(m);
+            }
+            // Ajouter en dernier recours les modèles mis de côté si aucun autre n'est dans la liste
+            for (const m of RV_GEMINI_MODELS_CANDIDATES) {
+                addModel(m);
+            }
+            return list;
+        }
+
+        function buildVertexCompatibleRequestBody(requestBodyObject, stripThinkingConfig = false) {
+            if (!requestBodyObject || typeof requestBodyObject !== 'object') return requestBodyObject;
+            const cloned = { ...requestBodyObject };
+            if (Array.isArray(cloned.contents)) {
+                cloned.contents = cloned.contents.map(c => {
+                    if (!c || typeof c !== 'object') return c;
+                    return { role: c.role || 'user', ...c };
+                });
+            }
+            if (stripThinkingConfig && cloned.generationConfig && typeof cloned.generationConfig === 'object') {
+                const genClone = { ...cloned.generationConfig };
+                delete genClone.thinkingConfig;
+                cloned.generationConfig = genClone;
+            }
+            return cloned;
+        }
+
+        function isModelUnavailableOrDeprecatedError(status, errMsg) {
+            const msg = String(errMsg || '').toLowerCase();
+            if (status === 404) return true;
+            return (
+                msg.includes('no longer available') ||
+                msg.includes('is not found') ||
+                msg.includes('not supported for generatecontent') ||
+                msg.includes('deprecated') ||
+                msg.includes('please update your code to use models/') ||
+                msg.includes('model not found')
+            );
+        }
+
+        function extractSuggestedGeminiModelFromError(errMsg) {
+            const match = String(errMsg || '').match(/models\/([a-zA-Z0-9._-]+flash[a-zA-Z0-9._-]*)/i)
+                || String(errMsg || '').match(/models\/(gemini-[a-zA-Z0-9._-]+)/i);
+            return match && match[1] ? String(match[1]).trim() : '';
+        }
+
+        async function callSingleGeminiModelWithKey(apiKey, modelName, requestBodyObject) {
+            const cleanModel = String(modelName || 'gemini-3.8-flash').trim().replace(/^models\//i, '');
+            const endpoints = [
+                `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(cleanModel)}:generateContent?key=${encodeURIComponent(apiKey)}`
+            ];
+            if (String(apiKey).startsWith('AQ.')) {
+                endpoints.push(
+                    `https://aiplatform.googleapis.com/v1/publishers/google/models/${encodeURIComponent(cleanModel)}:generateContent?key=${encodeURIComponent(apiKey)}`
+                );
+            }
+
+            let lastStatus = 0;
+            let lastErrText = '';
+
+            for (const endpoint of endpoints) {
+                for (const stripThinking of [false, true]) {
+                    const bodyObj = buildVertexCompatibleRequestBody(requestBodyObject, stripThinking);
+                    try {
+                        const resp = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(bodyObj)
+                        });
+                        lastStatus = resp.status;
+                        const data = await resp.json().catch(() => ({}));
+                        if (resp.ok && data?.candidates?.[0]?.content?.parts) {
+                            return { ok: true, data, model: cleanModel, status: resp.status };
+                        }
+                        lastErrText = data?.error?.message || `Erreur HTTP ${resp.status}`;
+                        const lowerErr = lastErrText.toLowerCase();
+                        // Si l'erreur ne vient pas de thinkingConfig, inutile de refaire le même endpoint sans thinkingConfig
+                        if (!stripThinking && !(resp.status === 400 && (lowerErr.includes('thinking') || lowerErr.includes('unknown name') || lowerErr.includes('invalid json')))) {
+                            break;
+                        }
+                    } catch (err) {
+                        lastErrText = err?.message || 'Erreur réseau';
+                        break;
+                    }
+                }
+                // Si generativelanguage.googleapis.com indique simplement que ce modèle est obsolète, inutile d'appeler aiplatform pour ce même modèle
+                if (isModelUnavailableOrDeprecatedError(lastStatus, lastErrText)) {
+                    break;
+                }
+            }
+
+            return {
+                ok: false,
+                model: cleanModel,
+                status: lastStatus,
+                errorMessage: lastErrText,
+                isModelDeprecated: isModelUnavailableOrDeprecatedError(lastStatus, lastErrText),
+                suggestedModel: extractSuggestedGeminiModelFromError(lastErrText)
+            };
+        }
+
+        // Exécute un appel Gemini Flash en faisant tourner automatiquement les versions de Gemini (3.8, 3.7, 3.5, 3.0, 2.5, 2.0)
+        // ET les 4 clés du pool si une clé a épuisé son quota.
+        async function executeGemini25FlashWithKeyRotation(requestBodyObject, onKeyAttempt = null) {
+            const pool = getGeminiApiKeysPool();
+            if (pool.length === 0) {
+                markGeminiBrainQuotaState(false);
+                return { ok: false, allExhausted: true, errorMessage: "Aucune clé API Gemini détectée dans GEMINI_API_KEYS_POOL." };
+            }
             let candidates = getOrderedCandidateGeminiKeys();
             if (candidates.length === 0) {
                 if ((Date.now() - rvLastAllGeminiKeysExhaustedMs) >= RV_ALL_KEYS_EXHAUSTED_COOLDOWN_MS) {
                     rvExhaustedGeminiKeysMap.clear();
+                    rvLastAllGeminiKeysExhaustedMs = 0;
                     candidates = getOrderedCandidateGeminiKeys();
                 }
             }
@@ -9459,35 +9658,76 @@
             }
 
             let lastErrorMessage = "Quota épuisé ou clé indisponible.";
+            const triedKeysSummary = [];
+            const testedModelsHistory = [];
+
             for (const cand of candidates) {
-                try {
-                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(cand.key)}`;
-                    const resp = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(requestBodyObject)
+                setCurrentActiveGeminiKeyGlobal(cand.key, cand.index);
+                const modelsQueue = [...getOrderedCandidateGeminiModels()];
+                const triedModelsOnThisKey = new Set();
+                let keyErrorMsg = '';
+
+                while (modelsQueue.length > 0) {
+                    const modelName = modelsQueue.shift();
+                    if (!modelName || triedModelsOnThisKey.has(modelName)) continue;
+                    triedModelsOnThisKey.add(modelName);
+
+                    if (typeof onKeyAttempt === 'function') {
+                        try { onKeyAttempt(cand, pool.length, modelName); } catch (e) {}
+                    }
+
+                    const callRes = await callSingleGeminiModelWithKey(cand.key, modelName, requestBodyObject);
+                    testedModelsHistory.push({
+                        keyNumber: cand.labelNumber,
+                        model: modelName,
+                        ok: callRes.ok,
+                        errorMessage: callRes.errorMessage || ''
                     });
-                    const data = await resp.json().catch(() => ({}));
-                    if (resp.ok && data?.candidates?.[0]?.content?.parts) {
+
+                    if (callRes.ok) {
+                        rvActiveGeminiModel = callRes.model;
+                        safeSetStorage('rv_active_gemini_model_v1', callRes.model);
                         markGeminiBrainQuotaState(true, cand.key);
                         return {
                             ok: true,
-                            data,
+                            data: callRes.data,
                             key: cand.key,
                             keyNumber: cand.labelNumber,
-                            totalKeys: getGeminiApiKeysPool().length
+                            totalKeys: pool.length,
+                            model: callRes.model,
+                            testedModels: testedModelsHistory
                         };
                     }
-                    lastErrorMessage = data?.error?.message || `Erreur HTTP ${resp.status} sur Clé ${cand.labelNumber}`;
-                    markSingleGeminiKeyExhausted(cand.key);
-                } catch (err) {
-                    lastErrorMessage = err?.message || `Erreur réseau sur Clé ${cand.labelNumber}`;
-                    markSingleGeminiKeyExhausted(cand.key);
+
+                    keyErrorMsg = callRes.errorMessage || 'Erreur inconnue';
+
+                    if (callRes.isModelDeprecated) {
+                        rvDeprecatedGeminiModelsSet.add(modelName);
+                        if (callRes.suggestedModel && !triedModelsOnThisKey.has(callRes.suggestedModel)) {
+                            modelsQueue.unshift(callRes.suggestedModel);
+                        }
+                        // Continuer immédiatement avec la version suivante de Gemini sur cette MÊME clé !
+                        continue;
+                    } else {
+                        // Erreur liée à la clé ou au quota (ex: 429 / 401 / 403) : passer à la clé suivante du pool
+                        break;
+                    }
                 }
+
+                lastErrorMessage = `Clé #${cand.labelNumber} : ${keyErrorMsg}`;
+                triedKeysSummary.push(`Clé #${cand.labelNumber} (${keyErrorMsg})`);
+                markSingleGeminiKeyExhausted(cand.key);
             }
 
             markGeminiBrainQuotaState(false);
-            return { ok: false, allExhausted: true, errorMessage: lastErrorMessage };
+            return {
+                ok: false,
+                allExhausted: true,
+                testedModels: testedModelsHistory,
+                errorMessage: triedKeysSummary.length > 1
+                    ? `Rotation effectuée sur ${triedKeysSummary.length}/${pool.length} clés — ${lastErrorMessage}`
+                    : lastErrorMessage
+            };
         }
 
         function startConstantGeminiQuotaMonitor() {
@@ -10525,7 +10765,7 @@
                         : Math.min(targetQuota, activeAutoAccounts.length, maxAutoLikesUnlockedByReactions);
                     const newAutoLikers = [];
 
-                    if (!isBlockedWaitingForComment && currentAutoLikesCount < maxAllowedNow && activeAutoAccounts.length > 0) {
+                    if (!isBlockedWaitingForTierRequirements && currentAutoLikesCount < maxAllowedNow && activeAutoAccounts.length > 0) {
                         const needed = maxAllowedNow - currentAutoLikesCount;
                         const startOffset = rvHashStr(vidId) % activeAutoAccounts.length;
                         for (let i = 0; i < activeAutoAccounts.length && newAutoLikers.length < needed; i++) {
@@ -11701,7 +11941,7 @@
             }
         }
 
-        window.verifyAdminGeminiApiKey = async (btnEl = null) => {
+        window.verifyAdminGeminiApiKey = async (btnEl = null, testAllVersions = false) => {
             if (!isCurrentLoggedUserAdminVip()) {
                 if (typeof showToast === 'function') showToast("Accès réservé à l'administrateur.", "error");
                 return;
@@ -11714,9 +11954,17 @@
                 });
             };
 
+            // Réinitialiser l'état d'épuisement avant le test pour retester toutes les clés et versions du pool
+            rvExhaustedGeminiKeysMap.clear();
+            rvLastAllGeminiKeysExhaustedMs = 0;
+            if (testAllVersions) {
+                rvDeprecatedGeminiModelsSet.clear();
+            }
+
+            const pool = getGeminiApiKeysPool();
             const apiKey = getActiveGeminiApiKey();
-            if (!apiKey) {
-                const msg = "❌ Clé API non détectée : veuillez coller votre clé dans la constante GEMINI_API_KEY (ligne 2906) avant d'exécuter le code.";
+            if (pool.length === 0 || !apiKey) {
+                const msg = "❌ Clé API non détectée : veuillez coller vos clés dans GEMINI_API_KEYS_POOL (ligne 2908) avant d'exécuter le code.";
                 setStatusHtml(`<div class="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-200 text-[11px] font-bold">${msg}</div>`);
                 if (typeof showToast === 'function') showToast(msg, "error");
                 return;
@@ -11725,24 +11973,78 @@
             const origBtnHtml = btnEl ? btnEl.innerHTML : '';
             if (btnEl) {
                 btnEl.disabled = true;
-                btnEl.innerHTML = `<span>⏳ Test de connexion Gemini Flash en cours...</span>`;
+                btnEl.innerHTML = `<span>⏳ Test multi-versions Gemini en cours...</span>`;
             }
-            setStatusHtml(`<div class="p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-200 text-[11px] font-bold">⏳ Vérification de la clé API auprès de Google Gemini Flash...</div>`);
 
-            rvExhaustedGeminiKeysMap.clear();
-            const rotResult = await executeGemini25FlashWithKeyRotation({
-                contents: [{ parts: [{ text: "Réponds uniquement par cette phrase exacte : Connexion Gemini Flash opérationnelle." }] }],
+            const testPayload = {
+                contents: [{ role: "user", parts: [{ text: "Réponds uniquement par cette phrase exacte : Connexion Gemini Flash opérationnelle." }] }],
                 generationConfig: { maxOutputTokens: 200, temperature: 0.1, thinkingConfig: { thinkingBudget: 0 } }
-            });
+            };
 
-            if (rotResult.ok && rotResult.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-                const reply = String(rotResult.data.candidates[0].content.parts[0].text).trim();
-                const okHtml = `<div class="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-400/40 text-emerald-200 text-[11px] font-bold space-y-1">
-                    <div>✅ Rotation Gemini 2.5 Flash opérationnelle (Clé active : Clé #${rotResult.keyNumber} / ${rotResult.totalKeys}) !</div>
-                    <div class="text-[10px] text-emerald-300 font-normal">Modèle connecté : <b>gemini-2.5-flash</b> • Réponse : « ${escapeHtml(reply)} »</div>
-                </div>`;
-                setStatusHtml(okHtml);
-                if (typeof showToast === 'function') showToast(`✅ Clé #${rotResult.keyNumber}/${rotResult.totalKeys} active (gemini-2.5-flash) !`, "success");
+            if (testAllVersions) {
+                const modelsToBenchmark = [...RV_GEMINI_MODELS_CANDIDATES];
+                const versionResults = [];
+                let firstWorkingModel = '';
+                let firstWorkingReply = '';
+                let activeKeyNum = (rvCurrentGeminiKeyIndex % pool.length) + 1;
+                const keyToTest = pool[rvCurrentGeminiKeyIndex % pool.length] || pool[0];
+
+                for (let i = 0; i < modelsToBenchmark.length; i++) {
+                    const mName = modelsToBenchmark[i];
+                    setStatusHtml(`<div class="p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-200 text-[11px] font-bold">⏳ Test des versions Gemini (${i + 1}/${modelsToBenchmark.length}) : essai de <b>${escapeHtml(mName)}</b> sur Clé #${activeKeyNum}/${pool.length}...</div>`);
+                    const res = await callSingleGeminiModelWithKey(keyToTest, mName, testPayload);
+                    const replyTxt = res.ok ? String(res.data?.candidates?.[0]?.content?.parts?.[0]?.text || '').trim() : '';
+                    versionResults.push({
+                        model: mName,
+                        ok: res.ok,
+                        reply: replyTxt,
+                        error: res.errorMessage || ''
+                    });
+                    if (res.ok && !firstWorkingModel) {
+                        firstWorkingModel = mName;
+                        firstWorkingReply = replyTxt;
+                    } else if (!res.ok && res.isModelDeprecated) {
+                        rvDeprecatedGeminiModelsSet.add(mName);
+                    }
+                }
+
+                if (firstWorkingModel) {
+                    rvActiveGeminiModel = firstWorkingModel;
+                    safeSetStorage('rv_active_gemini_model_v1', firstWorkingModel);
+                    markGeminiBrainQuotaState(true, keyToTest);
+                }
+
+                const rowsHtml = versionResults.map(r => {
+                    if (r.ok) {
+                        return `<div class="flex items-center justify-between gap-2 px-2 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/30 text-[10px]">
+                            <span class="font-extrabold text-emerald-200">✅ ${escapeHtml(r.model)}</span>
+                            <span class="text-emerald-300 truncate">Opérationnel</span>
+                        </div>`;
+                    }
+                    const shortErr = r.error.includes('no longer available') ? 'Obsolète (remplacé)' : (r.error.slice(0, 48) || 'Indisponible');
+                    return `<div class="flex items-center justify-between gap-2 px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px]">
+                        <span class="font-bold text-gray-300">⚪ ${escapeHtml(r.model)}</span>
+                        <span class="text-rose-300 truncate" title="${escapeHtml(r.error)}">${escapeHtml(shortErr)}</span>
+                    </div>`;
+                }).join('');
+
+                if (firstWorkingModel) {
+                    const reportHtml = `<div class="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-400/40 text-emerald-200 text-[11px] font-bold space-y-2">
+                        <div>✅ Diagnostic Multi-Versions terminé : Modèle actif verrouillé sur <b>${escapeHtml(firstWorkingModel)}</b> (Clé #${activeKeyNum}/${pool.length}) !</div>
+                        <div class="text-[10px] text-emerald-300 font-normal">Réponse : « ${escapeHtml(firstWorkingReply)} »</div>
+                        <div class="space-y-1 pt-1">${rowsHtml}</div>
+                    </div>`;
+                    setStatusHtml(reportHtml);
+                    if (typeof showToast === 'function') showToast(`✅ Version active : ${firstWorkingModel} (Clé #${activeKeyNum}/${pool.length})`, "success");
+                } else {
+                    const reportErrHtml = `<div class="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-200 text-[11px] font-bold space-y-2">
+                        <div>❌ Aucune version n'a répondu sur Clé #${activeKeyNum}/${pool.length}</div>
+                        <div class="space-y-1 pt-1">${rowsHtml}</div>
+                    </div>`;
+                    setStatusHtml(reportErrHtml);
+                    if (typeof showToast === 'function') showToast("❌ Échec du test multi-versions Gemini", "error");
+                }
+
                 if (btnEl) {
                     btnEl.disabled = false;
                     btnEl.innerHTML = origBtnHtml;
@@ -11750,7 +12052,36 @@
                 return;
             }
 
-            const lastErrorMsg = rotResult.errorMessage || "Les 4 clés API Gemini 2.5 Flash sont épuisées ou indisponibles.";
+            setStatusHtml(`<div class="p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-200 text-[11px] font-bold">⏳ Vérification et rotation automatique des ${pool.length} clés et versions Gemini Flash...</div>`);
+
+            const rotResult = await executeGemini25FlashWithKeyRotation(
+                testPayload,
+                (cand, total, modelName) => {
+                    setStatusHtml(`<div class="p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-200 text-[11px] font-bold">⏳ Clé #${cand.labelNumber}/${total} • Test de la version <b>${escapeHtml(modelName || rvActiveGeminiModel)}</b>...</div>`);
+                }
+            );
+
+            if (rotResult.ok && rotResult.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+                const reply = String(rotResult.data.candidates[0].content.parts[0].text).trim();
+                const usedModel = rotResult.model || rvActiveGeminiModel || 'gemini-3.8-flash';
+                const testedBadges = Array.isArray(rotResult.testedModels) && rotResult.testedModels.length > 1
+                    ? `<div class="text-[9.5px] text-cyan-200 font-normal pt-0.5">Versions testées automatiquement : ${rotResult.testedModels.map(t => `${t.ok ? '✅' : '↪️'} ${escapeHtml(t.model)}`).join(' → ')}</div>`
+                    : '';
+                const okHtml = `<div class="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-400/40 text-emerald-200 text-[11px] font-bold space-y-1">
+                    <div>✅ Rotation Gemini Flash opérationnelle (Clé active : Clé #${rotResult.keyNumber} / ${rotResult.totalKeys}) !</div>
+                    <div class="text-[10px] text-emerald-300 font-normal">Modèle connecté : <b>${escapeHtml(usedModel)}</b> • Réponse : « ${escapeHtml(reply)} »</div>
+                    ${testedBadges}
+                </div>`;
+                setStatusHtml(okHtml);
+                if (typeof showToast === 'function') showToast(`✅ Clé #${rotResult.keyNumber}/${rotResult.totalKeys} active (${usedModel}) !`, "success");
+                if (btnEl) {
+                    btnEl.disabled = false;
+                    btnEl.innerHTML = origBtnHtml;
+                }
+                return;
+            }
+
+            const lastErrorMsg = rotResult.errorMessage || "Les 4 clés API Gemini Flash sont épuisées ou indisponibles.";
 
             const errHtml = `<div class="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-200 text-[11px] font-bold space-y-1">
                 <div>❌ Échec de la vérification de la Clé API Gemini</div>
@@ -13807,7 +14138,7 @@
                     totalUnreadChats = unacknowledgedUnread;
                 }
                 updateGlobalBadge();
-            });
+            }, () => {});
 
             const unreadByUidBucket = new Map();
             const attachNotifListenerForUid = (targetListenUid, isPrimaryBucket) => {
@@ -13866,7 +14197,7 @@
                     updateGlobalBadge();
                     isInitialBucketLoad = false;
                     isInitialLoad = false;
-                });
+                }, () => {});
                 if (isPrimaryBucket) {
                     unreadObserver = unsub;
                 } else {
@@ -16355,7 +16686,7 @@
                 const inboxContent = document.getElementById('inbox-content');
                 if (inboxContent) inboxContent.innerHTML = "";
                 startOnlinePresenceHeartbeat();
-                initBotSystem();
+                initBotSystem().catch(() => {});
                 subscribeToUnreadCount();
                 updateDiscoverEventNavReminder();
                 
@@ -26864,9 +27195,26 @@
             adminContainer.classList.add('hidden'); adminContainer.innerHTML = '';
             if (isMe && isCurrentLoggedUserAdminVip()) {
                 adminContainer.classList.remove('hidden');
+                const curMode = rvPreferredGeminiModelMode || 'auto';
                 adminContainer.innerHTML = `
                     <div class="space-y-2">
-                        <button type="button" onclick="verifyAdminGeminiApiKey(this)" class="w-full bg-gradient-to-r from-cyan-600/90 to-blue-700/90 hover:from-cyan-500 hover:to-blue-600 text-white font-extrabold py-2.5 px-3 rounded-xl border border-cyan-400/40 text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition">
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5">
+                            <select onchange="setPreferredAdminGeminiModel(this.value)" class="admin-gemini-model-select flex-1 bg-[#0f172a] border border-cyan-400/40 rounded-xl px-2.5 py-2 text-[11px] font-bold text-white outline-none focus:border-cyan-400">
+                                <option value="auto" ${curMode === 'auto' ? 'selected' : ''}>🔄 Version : Auto (3.8 → 3.7 → 3.5 → 3.0 → 2.5 → 2.0)</option>
+                                <option value="gemini-3.8-flash" ${curMode === 'gemini-3.8-flash' ? 'selected' : ''}>⚡ gemini-3.8-flash (Recommandé)</option>
+                                <option value="gemini-3.7-flash" ${curMode === 'gemini-3.7-flash' ? 'selected' : ''}>⚡ gemini-3.7-flash</option>
+                                <option value="gemini-3.5-flash" ${curMode === 'gemini-3.5-flash' ? 'selected' : ''}>⚡ gemini-3.5-flash</option>
+                                <option value="gemini-3.0-flash" ${curMode === 'gemini-3.0-flash' ? 'selected' : ''}>⚡ gemini-3.0-flash</option>
+                                <option value="gemini-3-flash-preview" ${curMode === 'gemini-3-flash-preview' ? 'selected' : ''}>⚡ gemini-3-flash-preview</option>
+                                <option value="gemini-2.5-flash" ${curMode === 'gemini-2.5-flash' ? 'selected' : ''}>⚡ gemini-2.5-flash</option>
+                                <option value="gemini-2.5-flash-lite" ${curMode === 'gemini-2.5-flash-lite' ? 'selected' : ''}>⚡ gemini-2.5-flash-lite</option>
+                                <option value="gemini-2.0-flash" ${curMode === 'gemini-2.0-flash' ? 'selected' : ''}>⚡ gemini-2.0-flash</option>
+                            </select>
+                            <button type="button" onclick="verifyAdminGeminiApiKey(this, true)" class="bg-gradient-to-r from-purple-600/90 to-indigo-700/90 hover:from-purple-500 hover:to-indigo-600 text-white font-extrabold py-2 px-3 rounded-xl border border-purple-400/40 text-[11px] flex items-center justify-center gap-1.5 shadow-lg active:scale-95 transition shrink-0">
+                                <span>🧪 Tester toutes les versions</span>
+                            </button>
+                        </div>
+                        <button type="button" onclick="verifyAdminGeminiApiKey(this, false)" class="w-full bg-gradient-to-r from-cyan-600/90 to-blue-700/90 hover:from-cyan-500 hover:to-blue-600 text-white font-extrabold py-2.5 px-3 rounded-xl border border-cyan-400/40 text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition">
                             <span>🤖 Vérifier la Clé API Gemini Flash</span>
                         </button>
                         <div class="admin-gemini-status-box hidden"></div>
@@ -27522,8 +27870,10 @@
 
             // 1. Synchroniser les comptes autonomes déjà présents dans l'application (Firestore `users`)
             //    et synchroniser leurs réactions selon la logique de viralité des publications
-            await syncExistingAutonomousAccountsFromFirestore();
-            await syncRealLikesFromExistingAutonomousAccounts();
+            try {
+                await syncExistingAutonomousAccountsFromFirestore();
+                await syncRealLikesFromExistingAutonomousAccounts();
+            } catch (e) {}
 
             // 2. Créer 1 nouveau compte autonome toutes les 10 minutes (max 1 600 comptes)
             //    et appliquer les réactions autonomes selon la viralité des publications
