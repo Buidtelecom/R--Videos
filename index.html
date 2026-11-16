@@ -10320,10 +10320,37 @@
             return tiers * RV_REQUIRED_SHARES_PER_50_LIKES;
         }
 
+        const rvAutoLikeDiffOffsetByVideoId = new Map();
+        const rvPendingAutoLikesFirestoreSyncSet = new Set();
+        const rvObservedAutoAccountUidsSet = new Set();
+
+        function pickAutonomousLikersToRemoveDeterministically(vidId, autoLikers, removeCount) {
+            if (!Array.isArray(autoLikers) || removeCount <= 0 || autoLikers.length <= 1) return [];
+            const safeRemove = Math.min(autoLikers.length - 1, removeCount);
+            const pool = [...autoLikers];
+            const removed = [];
+            for (let r = 0; r < safeRemove && pool.length > 1; r++) {
+                const pickIdx = rvHashStr(`rv_rem_pick_${vidId}_${r}`) % pool.length;
+                removed.push(pool[pickIdx]);
+                pool.splice(pickIdx, 1);
+            }
+            return removed;
+        }
+
+        function getEffectiveTierCheckLikesCount(v, cIdOverride = null) {
+            if (!v || typeof v !== 'object') return 0;
+            const cId = cIdOverride || resolveCanonicalVideoId(v, v.id);
+            const currentLikes = getRealLikesCount(v);
+            const diffOffset = (cId && rvAutoLikeDiffOffsetByVideoId.has(cId))
+                ? Math.max(0, Number(rvAutoLikeDiffOffsetByVideoId.get(cId) || 0))
+                : 0;
+            return currentLikes + diffOffset;
+        }
+
         function getMissingRequiredCommentsForVideo(v) {
             if (!v || typeof v !== 'object') return 0;
             const cId = resolveCanonicalVideoId(v, v.id);
-            const currentLikes = getRealLikesCount(v);
+            const currentLikes = getEffectiveTierCheckLikesCount(v, cId);
             const requiredComments = getRequiredMinCommentsForLikesCount(currentLikes);
             if (requiredComments <= 0) return 0;
             const currentComments = getEffectiveCommentsCount(v, cId);
@@ -10332,7 +10359,7 @@
 
         function getMissingRequiredFavoritesForVideo(v) {
             if (!v || typeof v !== 'object') return 0;
-            const currentLikes = getRealLikesCount(v);
+            const currentLikes = getEffectiveTierCheckLikesCount(v);
             const requiredFavs = getRequiredMinFavoritesForLikesCount(currentLikes);
             if (requiredFavs <= 0) return 0;
             const currentFavs = getRealFavoritesCount(v);
@@ -10341,7 +10368,7 @@
 
         function getMissingRequiredSharesForVideo(v) {
             if (!v || typeof v !== 'object') return 0;
-            const currentLikes = getRealLikesCount(v);
+            const currentLikes = getEffectiveTierCheckLikesCount(v);
             const requiredShares = getRequiredMinSharesForLikesCount(currentLikes);
             if (requiredShares <= 0) return 0;
             const currentShares = getRealSharesCount(v);
@@ -10373,9 +10400,10 @@
         function assignGraduatedPopularityQuotas(videosInput = []) {
             if (Array.isArray(videosInput)) {
                 videosInput.forEach(item => {
-                    const vObj = (item && item.data && typeof item.data === 'object') ? { id: item.id || item.data.id, ...item.data } : item;
+                    const vObj = (item && item.data && typeof item.data === 'object') ? item.data : item;
                     if (vObj && typeof vObj === 'object') {
-                        const cId = resolveCanonicalVideoId(vObj, vObj.id);
+                        const fallbackId = (item && item.id) ? item.id : vObj.id;
+                        const cId = resolveCanonicalVideoId(vObj, fallbackId);
                         if (cId && cId !== 'vid_default') {
                             vObj.id = cId;
                             rvAllKnownVideosCatalog.set(cId, vObj);
@@ -10414,6 +10442,105 @@
                 }
                 rvGraduatedQuotaByVideoId.set(v.id, targetAutoLikes);
             });
+
+            // Différencier immédiatement les vidéos en diminuant de 1 ou 2 likes des comptes autonomes
+            // afin qu'aucune vidéo dans l'application n'ait le même nombre de likes
+            const totalLikesFreqMap = new Map();
+            allVideos.forEach(v => {
+                if (Array.isArray(v.likedBy)) {
+                    v.likedBy.forEach(u => {
+                        if (u && isAutonomousAccountUid(u)) rvObservedAutoAccountUidsSet.add(u);
+                    });
+                }
+                const tot = getRealLikesCount(v);
+                totalLikesFreqMap.set(tot, (totalLikesFreqMap.get(tot) || 0) + 1);
+            });
+            const knownAutoPoolSize = Math.max(rvCreatedAutonomousAccountsMap.size, getSuccessiveCreatedCmAccountsCount());
+            const usedTotalLikesInCatalog = new Set();
+
+            allVideos.forEach(v => {
+                const vidId = String(v.id || '').trim();
+                if (!vidId) return;
+                const currentLikedBy = Array.isArray(v.likedBy)
+                    ? Array.from(new Set(v.likedBy.filter(u => u && !isVirtualBotIdOrUser(u))))
+                    : [];
+                const humanLikers = currentLikedBy.filter(u => !isAutonomousAccountUid(u));
+                const autoLikers = currentLikedBy.filter(u => isAutonomousAccountUid(u));
+                const currentHumanLikesCount = humanLikers.length;
+                const currentAutoLikesCount = autoLikers.length;
+                const curTotal = currentHumanLikesCount + currentAutoLikesCount;
+                const baseDiff = (rvHashStr('rv_auto_diff_' + vidId) % 2) + 1; // Diminuer de 1 ou 2 likes des comptes autonomes
+
+                const targetQuota = rvGraduatedQuotaByVideoId.get(vidId) || RV_CM_MIN_LIKES;
+                const currentTotalComments = getEffectiveCommentsCount(v, vidId);
+                const currentTotalFavorites = getRealFavoritesCount(v);
+                const currentTotalShares = getRealSharesCount(v);
+                const effectiveUnlockedTier = Math.min(
+                    Math.floor(currentTotalComments / RV_REQUIRED_COMMENTS_PER_50_LIKES),
+                    Math.floor(currentTotalFavorites / RV_REQUIRED_FAVORITES_PER_50_LIKES),
+                    Math.floor(currentTotalShares / RV_REQUIRED_SHARES_PER_50_LIKES)
+                );
+                const maxTotalLikesUnlockedByReactions = (effectiveUnlockedTier + 1) * RV_LIKES_PER_REQUIRED_COMMENT;
+                const maxAutoLikesUnlockedByReactions = Math.max(0, maxTotalLikesUnlockedByReactions - currentHumanLikesCount);
+
+                let desiredAutoLikes = currentAutoLikesCount;
+                if (knownAutoPoolSize > 0) {
+                    const effectivePool = Math.max(knownAutoPoolSize, rvObservedAutoAccountUidsSet.size, currentAutoLikesCount);
+                    const rawAutoCeiling = Math.min(targetQuota, effectivePool, maxAutoLikesUnlockedByReactions);
+                    let targetCeiling = rawAutoCeiling > baseDiff ? (rawAutoCeiling - baseDiff) : Math.max(0, rawAutoCeiling - 1);
+                    let stepAttempt = 0;
+                    while (targetCeiling > 1 && usedTotalLikesInCatalog.has(currentHumanLikesCount + targetCeiling)) {
+                        stepAttempt++;
+                        const step = (rvHashStr(`rv_auto_step_${vidId}_${stepAttempt}`) % 2) + 1;
+                        targetCeiling = Math.max(1, targetCeiling - step);
+                    }
+                    if (currentAutoLikesCount > targetCeiling && currentAutoLikesCount > 1) {
+                        desiredAutoLikes = targetCeiling;
+                    } else if (usedTotalLikesInCatalog.has(curTotal) && currentAutoLikesCount > 1) {
+                        desiredAutoLikes = currentAutoLikesCount > baseDiff ? (currentAutoLikesCount - baseDiff) : Math.max(1, currentAutoLikesCount - 1);
+                        while (desiredAutoLikes > 1 && usedTotalLikesInCatalog.has(currentHumanLikesCount + desiredAutoLikes)) {
+                            stepAttempt++;
+                            const step = (rvHashStr(`rv_auto_step_${vidId}_${stepAttempt}`) % 2) + 1;
+                            desiredAutoLikes = Math.max(1, desiredAutoLikes - step);
+                        }
+                    }
+                    rvAutoLikeDiffOffsetByVideoId.set(vidId, Math.max(baseDiff, rawAutoCeiling - targetCeiling));
+                } else if (currentAutoLikesCount > 1 && (usedTotalLikesInCatalog.has(curTotal) || (totalLikesFreqMap.get(curTotal) || 0) > 1 || (curTotal > 0 && curTotal % RV_LIKES_PER_REQUIRED_COMMENT === 0))) {
+                    desiredAutoLikes = currentAutoLikesCount > baseDiff ? (currentAutoLikesCount - baseDiff) : Math.max(1, currentAutoLikesCount - 1);
+                    let stepAttempt = 0;
+                    while (desiredAutoLikes > 1 && usedTotalLikesInCatalog.has(currentHumanLikesCount + desiredAutoLikes)) {
+                        stepAttempt++;
+                        const step = (rvHashStr(`rv_auto_step_${vidId}_${stepAttempt}`) % 2) + 1;
+                        desiredAutoLikes = Math.max(1, desiredAutoLikes - step);
+                    }
+                    rvAutoLikeDiffOffsetByVideoId.set(vidId, Math.max(baseDiff, currentAutoLikesCount - desiredAutoLikes));
+                } else if (!rvAutoLikeDiffOffsetByVideoId.has(vidId)) {
+                    rvAutoLikeDiffOffsetByVideoId.set(vidId, baseDiff);
+                }
+
+                if (desiredAutoLikes < currentAutoLikesCount) {
+                    const removedArr = pickAutonomousLikersToRemoveDeterministically(vidId, autoLikers, currentAutoLikesCount - desiredAutoLikes);
+                    const removedSet = new Set(removedArr);
+                    const keptAutoLikers = autoLikers.filter(u => !removedSet.has(u));
+                    const updatedLikedBy = [...humanLikers, ...keptAutoLikers];
+                    v.likedBy = updatedLikedBy;
+                    v.likes = updatedLikedBy.length;
+                    if (Array.isArray(v.recentLikers) && removedSet.size > 0) {
+                        v.recentLikers = v.recentLikers.filter(r => !r || !removedSet.has(r.uid));
+                    }
+                    if (typeof profileVideosData === 'object' && profileVideosData && profileVideosData[vidId]) {
+                        profileVideosData[vidId].likedBy = updatedLikedBy;
+                        profileVideosData[vidId].likes = updatedLikedBy.length;
+                        if (Array.isArray(profileVideosData[vidId].recentLikers) && removedSet.size > 0) {
+                            profileVideosData[vidId].recentLikers = profileVideosData[vidId].recentLikers.filter(r => !r || !removedSet.has(r.uid));
+                        }
+                    }
+                    rvPendingAutoLikesFirestoreSyncSet.add(vidId);
+                    syncVideoLikeCountElementsInDom(vidId, updatedLikedBy.length);
+                }
+                usedTotalLikesInCatalog.add(currentHumanLikesCount + desiredAutoLikes);
+            });
+
             if (!rvIsSyncingAutoLikes) {
                 setTimeout(() => { syncRealLikesFromExistingAutonomousAccounts().catch(() => {}); }, 150);
             }
@@ -10680,6 +10807,9 @@
             try {
                 assignGraduatedPopularityQuotas();
                 const allVideos = Array.from(rvAllKnownVideosCatalog.values()).filter(v => v && v.id && isVideoEligibleForPourToi(v));
+                allVideos.sort((a, b) => computeIntrinsicViralityScoreForQuota(b) - computeIntrinsicViralityScoreForQuota(a));
+                const usedTotalLikesInSync = new Set();
+
                 for (const v of allVideos) {
                     const vidId = v.id;
                     const authorUid = v.userId || '';
@@ -10687,14 +10817,16 @@
                     const currentLikedBy = Array.isArray(v.likedBy) ? v.likedBy.filter(u => u && !isVirtualBotIdOrUser(u)) : [];
                     const currentLikedSet = new Set(currentLikedBy);
                     const currentTotalLikes = currentLikedSet.size;
-                    const currentHumanLikesCount = currentLikedBy.filter(u => !isAutonomousAccountUid(u)).length;
-                    const currentAutoLikers = currentLikedBy.filter(u => isAutonomousAccountUid(u));
+                    const currentHumanLikesCount = Array.from(currentLikedSet).filter(u => !isAutonomousAccountUid(u)).length;
+                    const currentAutoLikers = Array.from(currentLikedSet).filter(u => isAutonomousAccountUid(u));
                     const currentAutoLikesCount = currentAutoLikers.length;
+                    currentAutoLikers.forEach(u => rvObservedAutoAccountUidsSet.add(u));
+                    const effectiveLikesForTier = getEffectiveTierCheckLikesCount(v, vidId);
 
                     // Compléter d'abord les favoris (5 par tranche de 50 likes) et partages (3 par tranche de 50 likes)
                     // par les comptes autonomes ayant déjà aimé la publication si un palier est atteint
                     if (currentAutoLikers.length > 0) {
-                        const targetTierForCompletion = Math.max(1, Math.floor(Math.max(currentTotalLikes, RV_LIKES_PER_REQUIRED_COMMENT) / RV_LIKES_PER_REQUIRED_COMMENT));
+                        const targetTierForCompletion = Math.max(1, Math.floor(Math.max(effectiveLikesForTier, RV_LIKES_PER_REQUIRED_COMMENT) / RV_LIKES_PER_REQUIRED_COMMENT));
                         const neededFavsTotal = targetTierForCompletion * RV_REQUIRED_FAVORITES_PER_50_LIKES;
                         const neededSharesTotal = targetTierForCompletion * RV_REQUIRED_SHARES_PER_50_LIKES;
 
@@ -10739,12 +10871,12 @@
                     const currentTotalFavorites = getRealFavoritesCount(v);
                     const currentTotalShares = getRealSharesCount(v);
 
-                    const requiredCommentsForCurrentLikes = getRequiredMinCommentsForLikesCount(currentTotalLikes);
-                    const requiredFavoritesForCurrentLikes = getRequiredMinFavoritesForLikesCount(currentTotalLikes);
-                    const requiredSharesForCurrentLikes = getRequiredMinSharesForLikesCount(currentTotalLikes);
+                    const requiredCommentsForCurrentLikes = getRequiredMinCommentsForLikesCount(effectiveLikesForTier);
+                    const requiredFavoritesForCurrentLikes = getRequiredMinFavoritesForLikesCount(effectiveLikesForTier);
+                    const requiredSharesForCurrentLikes = getRequiredMinSharesForLikesCount(effectiveLikesForTier);
 
                     const isBlockedWaitingForTierRequirements = (
-                        currentTotalLikes >= RV_LIKES_PER_REQUIRED_COMMENT && (
+                        effectiveLikesForTier >= RV_LIKES_PER_REQUIRED_COMMENT && (
                             currentTotalComments < requiredCommentsForCurrentLikes ||
                             currentTotalFavorites < requiredFavoritesForCurrentLikes ||
                             currentTotalShares < requiredSharesForCurrentLikes
@@ -10760,12 +10892,33 @@
                     const maxTotalLikesUnlockedByReactions = (effectiveUnlockedTier + 1) * RV_LIKES_PER_REQUIRED_COMMENT;
                     const maxAutoLikesUnlockedByReactions = Math.max(0, maxTotalLikesUnlockedByReactions - currentHumanLikesCount);
 
-                    const maxAllowedNow = isBlockedWaitingForTierRequirements
-                        ? currentAutoLikesCount
-                        : Math.min(targetQuota, activeAutoAccounts.length, maxAutoLikesUnlockedByReactions);
-                    const newAutoLikers = [];
+                    // Diminuer de 1 ou 2 likes des comptes autonomes pour différencier chaque vidéo
+                    // et garantir qu'aucune vidéo n'ait le même nombre de likes
+                    const effectiveActiveAutoPool = Math.max(activeAutoAccounts.length, getSuccessiveCreatedCmAccountsCount(), rvObservedAutoAccountUidsSet.size, currentAutoLikesCount);
+                    const rawAutoCeiling = Math.min(targetQuota, effectiveActiveAutoPool, maxAutoLikesUnlockedByReactions);
+                    const baseDiff = (rvHashStr('rv_auto_diff_' + vidId) % 2) + 1;
+                    let desiredAutoCeiling = rawAutoCeiling > baseDiff ? (rawAutoCeiling - baseDiff) : Math.max(0, rawAutoCeiling - 1);
+                    let stepAttempt = 0;
+                    while (desiredAutoCeiling > 1 && usedTotalLikesInSync.has(currentHumanLikesCount + desiredAutoCeiling)) {
+                        stepAttempt++;
+                        const step = (rvHashStr(`rv_auto_step_${vidId}_${stepAttempt}`) % 2) + 1;
+                        desiredAutoCeiling = Math.max(1, desiredAutoCeiling - step);
+                    }
+                    rvAutoLikeDiffOffsetByVideoId.set(vidId, Math.max(baseDiff, rawAutoCeiling - desiredAutoCeiling));
 
-                    if (!isBlockedWaitingForTierRequirements && currentAutoLikesCount < maxAllowedNow && activeAutoAccounts.length > 0) {
+                    const maxAllowedNow = isBlockedWaitingForTierRequirements
+                        ? Math.min(currentAutoLikesCount, desiredAutoCeiling)
+                        : desiredAutoCeiling;
+                    const newAutoLikers = [];
+                    let removedAutoUids = [];
+
+                    if (currentAutoLikesCount > maxAllowedNow && currentAutoLikesCount > 1) {
+                        const excessAutoCount = Math.min(currentAutoLikesCount - 1, currentAutoLikesCount - maxAllowedNow);
+                        if (excessAutoCount > 0) {
+                            removedAutoUids = pickAutonomousLikersToRemoveDeterministically(vidId, currentAutoLikers, excessAutoCount);
+                            removedAutoUids.forEach(u => currentLikedSet.delete(u));
+                        }
+                    } else if (!isBlockedWaitingForTierRequirements && currentAutoLikesCount < maxAllowedNow && activeAutoAccounts.length > 0) {
                         const needed = maxAllowedNow - currentAutoLikesCount;
                         const startOffset = rvHashStr(vidId) % activeAutoAccounts.length;
                         for (let i = 0; i < activeAutoAccounts.length && newAutoLikers.length < needed; i++) {
@@ -10779,6 +10932,7 @@
 
                     const updatedLikedBy = Array.from(currentLikedSet);
                     const updatedLikesCount = updatedLikedBy.length;
+                    usedTotalLikesInSync.add(updatedLikesCount);
                     const totalAutoLikesNow = updatedLikedBy.filter(u => isAutonomousAccountUid(u)).length;
 
                     // Règle : Chaque like d'un compte autonome compte pour 2 vues sur la pub (même sur ce qui est déjà en cours)
@@ -10789,8 +10943,14 @@
                     const currentStoredViews = Math.max(0, Number(v.views || 0));
                     const updatedViewsCount = Math.max(currentStoredViews, minExpectedViews);
                     const viewsNeedsSync = updatedViewsCount !== currentStoredViews;
+                    const forceDiffPersist = rvPendingAutoLikesFirestoreSyncSet.has(vidId) || removedAutoUids.length > 0;
 
-                    if (newAutoLikers.length > 0 || viewsNeedsSync) {
+                    if (newAutoLikers.length > 0 || viewsNeedsSync || forceDiffPersist) {
+                        rvPendingAutoLikesFirestoreSyncSet.delete(vidId);
+                        if (removedAutoUids.length > 0 && Array.isArray(v.recentLikers)) {
+                            const remSet = new Set(removedAutoUids);
+                            v.recentLikers = v.recentLikers.filter(r => !r || !remSet.has(r.uid));
+                        }
                         v.likedBy = updatedLikedBy;
                         v.likes = updatedLikesCount;
                         v.views = updatedViewsCount;
@@ -10798,6 +10958,9 @@
                             profileVideosData[vidId].likedBy = updatedLikedBy;
                             profileVideosData[vidId].likes = updatedLikesCount;
                             profileVideosData[vidId].views = updatedViewsCount;
+                            if (Array.isArray(v.recentLikers)) {
+                                profileVideosData[vidId].recentLikers = v.recentLikers;
+                            }
                         }
                         syncVideoLikeCountElementsInDom(vidId, updatedLikesCount);
 
@@ -10817,7 +10980,15 @@
                                 likes: updatedLikesCount,
                                 views: updatedViewsCount
                             };
-                            if (newAutoLikers.length > 0) {
+                            if (forceDiffPersist) {
+                                updatePayload.likedBy = updatedLikedBy;
+                                if (Array.isArray(v.recentLikers)) {
+                                    updatePayload.recentLikers = v.recentLikers;
+                                }
+                                if (newAutoLikers.length > 0) {
+                                    updatePayload.recentLikers = arrayUnion(...likeEntries.slice(-10));
+                                }
+                            } else if (newAutoLikers.length > 0) {
                                 updatePayload.likedBy = arrayUnion(...newAutoLikers.map(a => a.uid));
                                 updatePayload.recentLikers = arrayUnion(...likeEntries.slice(-10));
                             }
@@ -11763,7 +11934,7 @@
                     const missing = getMissingRequiredCommentsForVideo(v);
                     if (missing > 0) return true;
                     // Ou vidéo arrivée exactement au plafond (ex: 50, 100, 150 likes) dont le quota cible de viralité est supérieur
-                    const curLikes = getRealLikesCount(v);
+                    const curLikes = getEffectiveTierCheckLikesCount(v, v.id);
                     const curComments = getEffectiveCommentsCount(v, v.id);
                     const targetQuota = rvGraduatedQuotaByVideoId.get(v.id) || RV_CM_MIN_LIKES;
                     return curLikes >= (curComments + 1) * RV_LIKES_PER_REQUIRED_COMMENT && targetQuota > curLikes;
